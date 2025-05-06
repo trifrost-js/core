@@ -39,7 +39,7 @@ export type TriFrostMiddleware <
     Env extends Record<string, any> = {},
     State extends Record<string, unknown> = {},
     Patch extends Record<string, unknown> = {}
-> = ((ctx: TriFrostContext<Env, State>) => void | TriFrostContext<Env, State & Patch> | Promise<void | TriFrostContext<Env, State & Patch>>) & {
+> = ((ctx: TriFrostContext<Env, State>) => void|TriFrostContext<Env, State & Patch>|Promise<void|TriFrostContext<Env, State & Patch>>) & {
     [Sym_TriFrostType]?: TriFrostType;
     [Sym_TriFrostDescription]?: string;
     [Sym_TriFrostName]?: string;
