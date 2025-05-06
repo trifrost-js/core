@@ -1,0 +1,7 @@
+node_modules/
+coverage/
+.DS_STORE
+.nyc_output
+dist/
+codecov.sh
+codecov

@@ -1,0 +1,192 @@
+/* eslint-disable complexity */
+
+import {addUTC} from '@valkyriestudios/utils/date/addUTC';
+import {diff} from '@valkyriestudios/utils/date/diff';
+import {isObject} from '@valkyriestudios/utils/object/is';
+import {type TriFrostContext} from '../types/context';
+
+export type TriFrostCookieOptions = {
+    expires: Date;
+    maxage: number;
+    path: string;
+    domain: string;
+    secure: boolean;
+    httponly: boolean;
+    samesite: 'Strict' | 'Lax' | 'None';
+};
+
+export type TriFrostCookieDeleteOptions = {
+    path: string;
+    domain: string;
+};
+
+/**
+ * The below regexes validate name and values comply with cookie standards
+ * eg: No control/illegal characters like semicolons
+ */
+const RGX_NAME = /^[a-zA-Z0-9!#$%&'*+\-.^_`|~]+$/;
+const RGX_VALUE = /^[\x20-\x7E]*$/;
+
+export class TriFrostCookies {
+
+    #ctx:TriFrostContext;
+
+    /* Global cookie defaults */
+    #config:Partial<TriFrostCookieOptions>;
+
+    /* Incoming cookies from request */
+    #incoming:Record<string, string>;
+
+    /* Outgoing cookies */
+    #outgoing:Record<string, string> = {};
+
+    /* Incoming/Outgoing values (for usage in eg .all or .get) */
+    #combined:Record<string, string> = {};
+
+    constructor (ctx:TriFrostContext, config:Partial<TriFrostCookieOptions> = {}) {
+        this.#ctx = ctx;
+        this.#config = isObject(config) ? config : {};
+
+        /* Process cookie header into map */
+        const cookies = typeof ctx.headers.cookie === 'string' ? ctx.headers.cookie.split(';') : [];
+        const map:Record<string, string> = {};
+        for (let i = 0; i < cookies.length; i++) {
+            const raw = cookies[i];
+            /* We don't use split here as the following could be a valid cookie x=1=2=3 which would be {x: '1=2=3'} */
+            const idx = raw.indexOf('=');
+            if (idx <= 0) continue;
+            const n_key = raw.slice(0, idx).trim();
+            const val = raw.slice(idx + 1);
+            const n_val = val.length ? decodeURIComponent(val).trim() : null;
+            if (n_key && n_val) map[n_key] = n_val;
+        }
+        this.#incoming = map;
+        this.#combined = {...this.#incoming};
+    }
+
+    get outgoing ():string[] {
+        return Object.values(this.#outgoing);
+    }
+
+    /**
+     * Returns all cookies. Both the ones provided by the client as a KV-Map AND the cookies that are going to be passed to the client
+     */
+    all ():Readonly<Record<string, string>> {
+        return {...this.#combined};
+    }
+
+    /**
+     * Get a cookie value by name
+     *
+     * @param {string} name - Cookie name
+     * @returns Cookie value or null if not found
+     */
+    get (name:string):string|null {
+        if (typeof name !== 'string') return null;
+        return name in this.#combined ? this.#combined[name] : null;
+    }
+
+    /**
+     * Set a cookie.
+     *
+     * Take Note:
+     * - If both maxage and expires are passed we will ignore maxage and set both based on the expires bit
+     * - If either maxage OR expires are passed we will set the other based on the passed value (maxage -> expires, expires -> maxage)
+     * - We will always set secure UNLESS explicitly turned off
+     * - We will always set secure if SameSite=None regardless of passed configuration
+     *
+     * @param {string} name - The cookie name.
+     * @param {string|number} value - The cookie value.
+     * @param {TriFrostCookieOptions} options - Cookie options (e.g., max-age, path, etc.).
+     */
+    set (name: string, value: string|number, options: Partial<TriFrostCookieOptions> = {}):void {
+        const normalized = Number.isFinite(value) ? value.toString() : value;
+        const config = {
+            ...this.#config,
+            ...isObject(options) ? options : {},
+        };
+
+        /* Validate */
+        if (
+            typeof name !== 'string' ||
+            typeof normalized !== 'string' ||
+            !RGX_NAME.test(name) ||
+            !RGX_VALUE.test(normalized)
+        ) {
+            this.#ctx.logger.error('TriFrostCookies@set: Invalid name or value', {name, value, options});
+            return;
+        }
+
+        /* Start cookie construction */
+        let new_cookie = name + '=' + encodeURIComponent(normalized);
+
+        const maxage = Number.isInteger(config.maxage) ? config.maxage : null;
+        const expires = 'expires' in config && config.expires instanceof Date ? config.expires : null;
+
+        /* Max Age */
+        if (expires === null && maxage !== null) {
+            /* Set expires based on max-age if not provided */
+            if (expires === null) new_cookie += '; Expires=' + addUTC(new Date(), maxage, 'seconds').toUTCString();
+            new_cookie += '; Max-Age=' + maxage;
+        }
+
+        /* Expires */
+        if (expires !== null) {
+            new_cookie += '; Expires=' + expires.toUTCString();
+            /* Set maxage based on expires if not provided */
+            if (maxage === null) new_cookie += '; Max-Age=' + Math.ceil(diff(expires, new Date(), 'seconds'));
+        }
+
+        /* Path */
+        if (typeof config.path === 'string') new_cookie += '; Path=' + config.path;
+
+        /* Domain */
+        if (typeof config.domain === 'string') new_cookie += '; Domain=' + config.domain;
+
+        /* Secure */
+        if (config.secure !== false) new_cookie += '; Secure';
+
+        /* HttpOnly */
+        if (config.httponly === true) new_cookie += '; HttpOnly';
+
+        /* SameSite */
+        if (typeof config.samesite === 'string') {
+            new_cookie += '; SameSite=' + config.samesite;
+
+            /* If samesite 'None', ensure ALWAYS secure */
+            if (config.samesite === 'None' && config.secure === false) {
+                this.#ctx.logger.warn('TriFrostCookies@set: SameSite=None requires Secure=true; overriding to ensure security');
+                new_cookie += '; Secure';
+            }
+        }
+
+        /* Push into new cookies */
+        this.#outgoing[name] = new_cookie;
+
+        /* Set on combined */
+        this.#combined[name] = normalized;
+    }
+
+    /**
+     * Delete a cookie by name. Take note that the path/domain for a cookie need to be correct for it to be deleted
+     *
+     * @param {string} name - Name of the cookie to delete
+     * @param {Partial<TriFrostCookieDeleteOptions>} options - Cookie Delete options (path, domain)
+     */
+    del (name: string, options:Partial<TriFrostCookieDeleteOptions> = {}) {
+        if (typeof name !== 'string') return;
+        if (name in this.#outgoing) delete this.#outgoing[name];
+        if (name in this.#incoming) this.set(name, '', {...options, maxage: 0});
+        if (name in this.#combined) delete this.#combined[name];
+    }
+
+    /**
+     * Delete all cookies that were passed by the client
+     *
+     * @param {Partial<TriFrostCookieDeleteOptions>} options - Cookie Delete options (path, domain)
+     */
+    delAll (options:Partial<TriFrostCookieDeleteOptions> = {}):void {
+        for (const name in this.#incoming) this.del(name, options);
+    }
+
+}

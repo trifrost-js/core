@@ -1,0 +1,10 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "esModuleInterop": false,
+        "sourceMap": false,
+        "outDir": "dist/",
+        "declaration": false,
+        "noEmit": false
+    }
+}

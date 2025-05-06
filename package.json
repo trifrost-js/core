@@ -1,0 +1,156 @@
+{
+    "name": "@trifrost/core",
+    "version": "0.1.0",
+    "description": "Blazingly fast, runtime-agnostic server framework for modern edge and node environments",
+    "main": "index.js",
+    "scripts": {
+        "build": "npm run lint && npm run test && tsc -p ./tsconfig.build.json && tsc -p ./tsconfig.types.json && tsc -p ./tsconfig.types_all.json && npm run build:jsx",
+        "build:jsx": "cp ./lib/modules/JSX/jsx.d.ts ./dist/modules/JSX/jsx.d.ts && cp ./lib/jsx-runtime.d.ts ./dist/jsx-runtime.d.ts",
+        "test": "node --require esbuild-register --test ./test/lib/*.test.ts ./test/lib/**/*.test.ts ./test/lib/**/**/*.test.ts ./test/lib/**/**/**/*.test.ts",
+        "test:only": "node --require esbuild-register --test --test-only ./test/lib/*.test.ts ./test/lib/**/*.test.ts ./test/lib/**/**/*.test.ts ./test/lib/**/**/**/*.test.ts",
+        "test:coverage": "nyc npm run test",
+        "lint": "npm run lint:src && npm run lint:test",
+        "lint:src": "./node_modules/.bin/eslint ./lib",
+        "lint:test": "./node_modules/.bin/eslint ./test",
+        "types": "tsc -p ./tsconfig.json --noEmit"
+    },
+    "author": {
+        "name": "Peter Vermeulen",
+        "url": "https://www.linkedin.com/in/petervermeulen1/"
+    },
+    "keywords": [
+        "server",
+        "framework",
+        "edge",
+        "runtime-agnostic",
+        "typescript",
+        "nodejs",
+        "bun",
+        "uWebSockets.js",
+        "trifrost"
+    ],
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/trifrost-js/core.git"
+    },
+    "bugs": {
+        "url": "https://github.com/trifrost-js/core/issues"
+    },
+    "homepage": "https://trifrost.dev",
+    "types": "index.d.ts",
+    "sideEffects": false,
+    "exports": {
+        ".": {
+            "import": {
+                "default": "./index.js",
+                "types": "./index.d.ts"
+            },
+            "require": {
+                "default": "./index.js",
+                "types": "./index.d.ts"
+            },
+            "default": "./index.js",
+            "types": "./index.d.ts"
+        },
+        "./jsx-runtime": {
+            "import": {
+                "default": "./jsx-runtime.js",
+                "types": "./jsx-runtime.d.ts"
+            },
+            "require": {
+                "default": "./jsx-runtime.js",
+                "types": "./jsx-runtime.d.ts"
+            },
+            "default": "./jsx-runtime.js",
+            "types": "./jsx-runtime.d.ts"
+        },
+        "./middleware": {
+            "import": {
+                "default": "./middleware/index.js",
+                "types": "./middleware/index.d.ts"
+            },
+            "require": {
+                "default": "./middleware/index.js",
+                "types": "./middleware/index.d.ts"
+            },
+            "default": "./middleware/index.js",
+            "types": "./middleware/index.d.ts"
+        },
+        "./modules": {
+            "import": {
+                "default": "./modules/index.js",
+                "types": "./modules/index.d.ts"
+            },
+            "require": {
+                "default": "./modules/index.js",
+                "types": "./modules/index.d.ts"
+            },
+            "default": "./modules/index.js",
+            "types": "./modules/index.d.ts"
+        },
+        "./modules/Cache": {
+            "import": {
+                "default": "./modules/Cache/index.js",
+                "types": "./modules/Cache/index.d.ts"
+            },
+            "require": {
+                "default": "./modules/Cache/index.js",
+                "types": "./modules/Cache/index.d.ts"
+            },
+            "default": "./modules/Cache/index.js",
+            "types": "./modules/Cache/index.d.ts"
+        },
+        "./modules/JSX": {
+            "import": {
+                "default": "./modules/JSX/index.js",
+                "types": "./modules/JSX/index.d.ts"
+            },
+            "require": {
+                "default": "./modules/JSX/index.js",
+                "types": "./modules/JSX/index.d.ts"
+            },
+            "default": "./modules/JSX/index.js",
+            "types": "./modules/JSX/index.d.ts"
+        },
+        "./modules/Logger": {
+            "import": {
+                "default": "./modules/Logger/index.js",
+                "types": "./modules/Logger/index.d.ts"
+            },
+            "require": {
+                "default": "./modules/Logger/index.js",
+                "types": "./modules/Logger/index.d.ts"
+            },
+            "default": "./modules/Logger/index.js",
+            "types": "./modules/Logger/index.d.ts"
+        },
+        "./modules/RateLimit": {
+            "import": {
+                "default": "./modules/RateLimit/index.js",
+                "types": "./modules/RateLimit/index.d.ts"
+            },
+            "require": {
+                "default": "./modules/RateLimit/index.js",
+                "types": "./modules/RateLimit/index.d.ts"
+            },
+            "default": "./modules/RateLimit/index.js",
+            "types": "./modules/RateLimit/index.d.ts"
+        }
+    },
+    "dependencies": {
+        "@valkyriestudios/utils": "^12.35.0",
+        "@valkyriestudios/validator": "^10.2.0"
+    },
+    "devDependencies": {
+        "@cloudflare/workers-types": "^4.20250506.0",
+        "@types/node": "^22.15.14",
+        "bun-types": "^1.2.12",
+        "esbuild-register": "^3.6.0",
+        "eslint": "^9.26.0",
+        "nyc": "^17.1.0",
+        "typescript": "^5.8.3",
+        "typescript-eslint": "^8.32.0",
+        "uWebSockets.js": "https://github.com/uNetworking/uWebSockets.js/archive/refs/tags/v20.51.0.tar.gz"
+    }
+}
