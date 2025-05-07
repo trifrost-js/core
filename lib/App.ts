@@ -55,7 +55,7 @@ import {type LazyInitFn} from './utils/Lazy';
 
 const RGX_WILDCARD  = /\*/g;
 const RGX_PARAM     = /:[^/]+/g;
-const RGX_SLASH     = /\//g;
+const RGX_SLASH     = /\/{2,}/g;
 const RGX_RID       = /^[a-z0-9-]{8,100}$/i;
 
 type AppOptions <Env extends Record<string, any>> = {
