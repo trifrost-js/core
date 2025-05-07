@@ -1,25 +1,25 @@
-# Trifrost
+# TriFrost
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/trifrost-js/core/actions/workflows/ci.yml/badge.svg)](https://github.com/trifrost-js/core/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/trifrost-js/core/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/trifrost-js/core/actions/workflows/github-code-scanning/codeql)
 [![npm](https://img.shields.io/npm/v/@trifrost/core.svg)](https://www.npmjs.com/package/@trifrost/core)
 
-**Trifrost** is a blazing-fast, runtime-agnostic server framework built for the modern JavaScript ecosystem — from low-latency edge environments to traditional backend infrastructure.
+**TriFrost** is a blazing-fast, runtime-agnostic server framework built for the modern JavaScript ecosystem — from low-latency edge environments to traditional backend infrastructure.
 
-Whether you're deploying to Node.js, Bun, Cloudflare Workers, or uWebSockets.js, Trifrost provides a unified API and internal architecture that adapts to the runtime — without compromising on performance, developer experience, or clarity.
+Whether you're deploying to Node.js, Bun, Cloudflare Workers, or uWebSockets.js, TriFrost provides a unified API and internal architecture that adapts to the runtime — without compromising on performance, developer experience, or clarity.
 
 ---
 
-## ✨ Why Trifrost?
-Trifrost is the result of deep experience across frameworks, runtimes, and production systems. It combines:
+## ✨ Why TriFrost?
+TriFrost is the result of deep experience across frameworks, runtimes, and production systems. It combines:
 
 - 🧩 **Koa-like composability**: build with middleware that’s small, explicit, and powerful
 - ⚡ **uWS-level performance**: thanks to tight internal control over routing, context, and async flows
 - 🌐 **Edge-native philosophy**: designed from the ground up to support Cloudflare Workers, and other emerging runtimes
 - 🧠 **Observability-first design**: tracing is not an afterthought; it’s a core design concern with built-in support for structured telemetry
 
-Unlike many frameworks, Trifrost doesn't bind itself to Node-specific APIs or assume a single deployment model. It’s truly runtime-flexible, letting you write code once and run it almost anywhere.
+Unlike many frameworks, TriFrost doesn't bind itself to Node-specific APIs or assume a single deployment model. It’s truly runtime-flexible, letting you write code once and run it almost anywhere.
 
 ---
 
@@ -43,7 +43,7 @@ yarn add @trifrost/core
 ---
 
 ## 🧠 Core Principles
-Trifrost is guided by a few key beliefs:
+TriFrost is guided by a few key beliefs:
 
 - **No magic. Ever.** You should be able to trace exactly how data flows and how handlers resolve.
 - **Lean by default.** We ship zero dependencies that aren’t critical to the core behavior.
@@ -53,7 +53,7 @@ Trifrost is guided by a few key beliefs:
 ---
 
 ## 🚀 Project Status
-Trifrost is under active development as we build toward a solid `v1.0` milestone.
+TriFrost is under active development as we build toward a solid `v1.0` milestone.
 
 The internal architecture is already production-grade, but APIs may still evolve as we polish developer ergonomics, refine edge-case behaviors, and finalize DX across runtimes.
 
