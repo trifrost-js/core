@@ -16,7 +16,6 @@ import {
     type TriFrostRootLogger,
 } from './modules/Logger';
 import {
-    type TriFrostCacheControlOptions,
     ParseAndApplyCacheControl,
 } from './middleware/CacheControl';
 import {
@@ -26,7 +25,6 @@ import {
     type HttpStatusCode,
     HttpCodeToStatus,
     type HttpRedirectStatus,
-    type HttpRedirectStatusCode,
     httpRedirectStatuses,
     HttpRedirectStatusesToCode,
     httpStatuses,
@@ -37,13 +35,15 @@ import {
     MimeTypesSet,
 } from './types/constants';
 import {
+    type TriFrostContextFileOptions,
+    type TriFrostContextRedirectOptions,
+    type TriFrostContextResponseOptions,
     type TriFrostContext,
     type TriFrostContextConfig,
     type TriFrostContextInit,
     type TriFrostContextKind,
-    type TriFrostContextRedirectOptions,
 } from './types/context';
-import {hexId} from './utils/String';
+import {encodeFilename, hexId} from './utils/String';
 
 type RequestConfig = {
     method: HttpMethod,
@@ -598,7 +598,7 @@ export abstract class Context <
     /**
      * Respond with a file
      */
-    async file (path:string, cache?:TriFrostCacheControlOptions):Promise<void> {
+    async file (path:string, opts?:TriFrostContextFileOptions):Promise<void> {
         try {
             if (typeof path !== 'string') throw new Error('Context@file: Invalid Payload');
 
@@ -606,7 +606,7 @@ export abstract class Context <
             if (this.isLocked) throw new Error('Context@file: Cannot modify a finalized response');
 
             /* Cache Control */
-            if (cache) ParseAndApplyCacheControl(this as TriFrostContext, cache);
+            if (opts?.cache) ParseAndApplyCacheControl(this as TriFrostContext, opts.cache);
 
             /* Get a streamable */
             const streamer = await this.getStream(path);
@@ -616,40 +616,48 @@ export abstract class Context <
             const mime = ExtensionToMimeType.get(path.split('.').pop() as string);
             if (mime) this.res_headers['Content-Type'] = mime;
 
+            /* Set Content-Disposition header depending on download option */
+            if (opts?.download === true) {
+                this.res_headers['Content-Disposition'] = 'attachment';
+            } else if (isNeString(opts?.download)) {
+                const {encoded, ascii} = encodeFilename(opts.download);
+                /* Take Note, as per RFC 6266 we make use of filename* with UTF-8 */
+                this.res_headers['Content-Disposition'] = isNeString(ascii)
+                    ? 'attachment; filename="' + ascii + '"; filename*=UTF-8\'\'' + encoded
+                    : 'attachment; filename*=UTF-8\'\'' + encoded;
+            }
+
             /* Pass the stream to the runtime-specific stream method */
             this.stream(streamer.stream, streamer.size);
         } catch (err) {
-            this.#logger.error(err, {file: path});
+            this.#logger.error(err, {file: path, opts});
         }
     }
 
     /**
      * Respond with HTML
      */
-    html (body:string|JSXElement = '', status:HttpStatus|HttpStatusCode = HttpStatuses.OK, cache?:TriFrostCacheControlOptions):void {
+    html (body:string|JSXElement = '', opts?:TriFrostContextResponseOptions):void {
         try {
             /* Ensure we dont double write */
             if (this.isLocked) throw new Error('Context@html: Cannot modify a finalized response');
 
             /* Cache Control */
-            if (cache) ParseAndApplyCacheControl(this as TriFrostContext, cache);
+            if (opts?.cache) ParseAndApplyCacheControl(this, opts.cache);
 
             this.res_headers['Content-Type'] = MimeTypes.HTML;
             this.res_body = typeof body === 'string' ? body : render(body);
-            this.setStatus(status);
+            this.setStatus(opts?.status ?? HttpStatuses.OK);
             this.end();
         } catch (err) {
-            this.#logger.error(err, {body, status});
+            this.#logger.error(err, {body, opts});
         }
     }
 
     /**
      * Respond with JSON
      */
-    json (
-        body:Record<string, unknown>|unknown[] = {},
-        status:HttpStatus|HttpStatusCode = HttpStatuses.OK, cache?:TriFrostCacheControlOptions
-    ):void {
+    json (body:Record<string, unknown>|unknown[] = {}, opts?:TriFrostContextResponseOptions):void {
         try {
             if (!isObject(body) && !Array.isArray(body)) throw new Error('Context@json: Invalid Payload');
 
@@ -657,14 +665,14 @@ export abstract class Context <
             if (this.isLocked) throw new Error('Context@json: Cannot modify a finalized response');
 
             /* Cache Control */
-            if (cache) ParseAndApplyCacheControl(this as TriFrostContext, cache);
+            if (opts?.cache) ParseAndApplyCacheControl(this, opts.cache);
 
             this.res_headers['Content-Type'] = MimeTypes.JSON;
             this.res_body = JSON.stringify(body);
-            this.setStatus(status);
+            this.setStatus(opts?.status ?? HttpStatuses.OK);
             this.end();
         } catch (err) {
-            this.#logger.error(err, {body, status});
+            this.#logger.error(err, {body, opts});
         }
     }
 
@@ -686,7 +694,7 @@ export abstract class Context <
     /**
      * Respond with plain text
      */
-    text (body:string, status:HttpStatus|HttpStatusCode = HttpStatuses.OK, cache?:TriFrostCacheControlOptions):void {
+    text (body:string, opts?:TriFrostContextResponseOptions):void {
         try {
             if (typeof body !== 'string') throw new Error('Context@text: Invalid Payload');
 
@@ -694,29 +702,31 @@ export abstract class Context <
             if (this.isLocked) throw new Error('Context@text: Cannot modify a finalized response');
 
             /* Cache Control */
-            if (cache) ParseAndApplyCacheControl(this as TriFrostContext, cache);
+            if (opts?.cache) ParseAndApplyCacheControl(this, opts.cache);
 
             this.res_headers['Content-Type'] = MimeTypes.TEXT;
             this.res_body = body;
-            this.setStatus(status);
+            this.setStatus(opts?.status ?? HttpStatuses.OK);
             this.end();
         } catch (err) {
-            this.#logger.error(err, {body, status});
+            this.#logger.error(err, {body, opts});
         }
     }
 
     /**
      * Respond by redirecting
+     * 
+     * @note Default status is 307 Temporary Redirect
+     * @note Default keep_query is true
      */
-    redirect (
-        to:string,
-        status:HttpRedirectStatus|HttpRedirectStatusCode = HttpStatuses.TemporaryRedirect,
-        opts:TriFrostContextRedirectOptions = {keep_query:true}
-    ):void {
+    redirect (to:string, opts?:TriFrostContextRedirectOptions):void {
         try {
             if (
                 typeof to !== 'string' ||
-                (!(status in HttpRedirectStatusesToCode) && !httpRedirectStatuses.has(status as HttpRedirectStatus))
+                (
+                    opts?.status &&
+                    (!(opts.status in HttpRedirectStatusesToCode) && !httpRedirectStatuses.has(opts.status as HttpRedirectStatus))
+                )
             ) throw new Error('Context@redirect: Invalid Payload');
 
             /* Ensure we dont double write */
@@ -736,15 +746,15 @@ export abstract class Context <
             }
 
             /* If keep_query is passed as true and a query exists add it to normalized to */
-            if (opts?.keep_query === true && this.query.size) normalized_to = `${normalized_to}?${this.query}`;
+            if (opts?.keep_query === true && this.query.size) normalized_to += '?' + this.query;
 
             /* This is a redirect, as such a body should not be present */
             this.res_body = '';
             this.res_headers.Location = normalized_to;
-            this.setStatus(status);
+            this.setStatus(opts?.status ?? HttpStatuses.TemporaryRedirect);
             this.end();
         } catch (err) {
-            this.#logger.error(err, {to, status, opts});
+            this.#logger.error(err, {to, opts});
         }
     }
 

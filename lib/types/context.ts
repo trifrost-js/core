@@ -57,16 +57,31 @@ export type TriFrostContextInit = {
     kind    : TriFrostContextKind;
 };
 
-export type TriFrostContextRedirectOptions = {
+export type TriFrostContextFileOptions = {
+    cache?: TriFrostCacheControlOptions;
     /**
-     * Set to true (default is true) to ensure any query on the original url is retained. Set to false to strip query.
-     *
-     * Example:
-     * redirect(ctx, '/one') -> '/two?hello=three' -> '/one?hello=three'
-     * redirect(ctx, '/one', '307 Temporary Redirect', {keep_query: true}) -> '/two?hello=three' -> '/one?hello=three'
-     * redirect(ctx, '/one', '307 Temporary Redirect', {keep_query: false}) -> '/two?hello=three' -> '/one'
+     * Whether to force browser download behavior.
+     * Set to true to instruct consumer system to download rather than display the file.
+     * Set to a string to define the name the file will be downloaded as.
+     * Default = false
      */
-    keep_query: boolean;
+    download?: boolean|string;
+};
+
+export type TriFrostContextResponseOptions = {
+    status?: HttpStatus|HttpStatusCode;
+    cache?: TriFrostCacheControlOptions;
+};
+
+export type TriFrostContextRedirectOptions = {
+    status?: HttpRedirectStatus|HttpRedirectStatusCode;
+    /**
+     * Whether or not to keep the query string (defaults to true), example:
+     * redirect(ctx, '/one') -> '/two?hello=three' -> '/one?hello=three'
+     * redirect(ctx, '/one', {keep_query: true}) -> '/two?hello=three' -> '/one?hello=three'
+     * redirect(ctx, '/one', {keep_query: false}) -> '/two?hello=three' -> '/one'
+     */
+    keep_query?: boolean;
 };
 
 export type TriFrostContext<
@@ -117,9 +132,9 @@ export type TriFrostContext<
     addAfter: (fn: () => Promise<void>) => void;
     runAfter: () => void;
 
-    json: (body?:Record<string, unknown>|unknown[], status?:HttpStatus|HttpStatusCode, cache?:TriFrostCacheControlOptions) => void;
-    html: (body?:string|JSXElement, status?:HttpStatus|HttpStatusCode, cache?:TriFrostCacheControlOptions) => void;
-    text: (body:string, status?:HttpStatus|HttpStatusCode, cache?:TriFrostCacheControlOptions) => void;
-    redirect: (to:string, status?:HttpRedirectStatus|HttpRedirectStatusCode, opts?:TriFrostContextRedirectOptions) => void;
-    file: (path:string, cache?:TriFrostCacheControlOptions) => Promise<void>;
+    json: (body?:Record<string, unknown>|unknown[], opts?:TriFrostContextResponseOptions) => void;
+    html: (body?:string|JSXElement, opts?:TriFrostContextResponseOptions) => void;
+    text: (body:string, opts?:TriFrostContextResponseOptions) => void;
+    redirect: (to:string, opts?:TriFrostContextRedirectOptions) => void;
+    file: (path:string, opts?:TriFrostContextFileOptions) => Promise<void>;
 };
