@@ -6,10 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 ### Improved
+- **misc**: Make use of new barrel exports in valkyrie utils
 - **deps**: Upgrade @cloudflare/workers-types to 4.20250508.0
 - **deps**: Upgrade @types/node to 22.15.16
 - **deps**: Upgrade @valkyriestudios/utils to 12.36.0
 - **deps**: Upgrade @valkyriestudios/validator to 10.3.0
+
+### Breaking
+- **misc**: Renamed runtimes/Node/Types.ts to runtimes/Node/types.ts (alignment)
+- **misc**: Renamed runtimes/UWS/Types.ts to runtimes/UWS/types.ts (alignment)
+- **misc**: Renamed runtimes/Types.ts to runtimes/types.ts (alignment)
 
 ## [0.1.0] - 2025-05-06
 ### Breaking
