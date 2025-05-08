@@ -1,4 +1,4 @@
-import {isIntegerBetween} from '@valkyriestudios/utils/number/isIntegerBetween';
+import {isIntBetween} from '@valkyriestudios/utils/number';
 import {
     ConsoleExporter,
     type TriFrostRootLogger,
@@ -7,12 +7,12 @@ import {
     type TriFrostRuntime,
     type TriFrostRuntimeOnIncoming,
     type TriFrostRuntimeBootOptions,
-} from '../Types';
+} from '../types';
 import {NodeContext} from './Context';
 import {
     type IncomingMessage,
     type ServerResponse,
-} from './Types';
+} from './types';
 
 export class NodeRuntime implements TriFrostRuntime {
 
@@ -55,7 +55,7 @@ export class NodeRuntime implements TriFrostRuntime {
 
         return new Promise((resolve, reject) => {
             /* Ensure port is valid */
-            if (!isIntegerBetween(opts?.cfg?.port, 1, 65535)) {
+            if (!isIntBetween(opts?.cfg?.port, 1, 65535)) {
                 return reject(new Error('NodeRuntime@boot: Port needs to be in range of 1-65535'));
             }
 

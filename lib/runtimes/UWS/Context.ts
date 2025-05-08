@@ -1,5 +1,5 @@
-import {toObject} from '@valkyriestudios/utils/formdata/toObject';
-import {isIntegerAbove} from '@valkyriestudios/utils/number/isIntegerAbove';
+import {toObject} from '@valkyriestudios/utils/formdata';
+import {isIntGt} from '@valkyriestudios/utils/number';
 import {Context} from '../../Context';
 import {
     type TriFrostRootLogger,
@@ -176,7 +176,7 @@ export class UWSContext extends Context {
 
         /* End without body if head */
         if (this.method === 'head') {
-            if (isIntegerAbove(stream_size, 0)) {
+            if (isIntGt(stream_size, 0)) {
                 this.#uws_res.writeHeader('content-length', stream_size+'');
             }
             this.#uws_res.endWithoutBody();

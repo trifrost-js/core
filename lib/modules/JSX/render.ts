@@ -1,7 +1,7 @@
 /* eslint-disable no-underscore-dangle */
 
-import {isObject} from '@valkyriestudios/utils/object/is';
-import {isString} from '@valkyriestudios/utils/string/is';
+import {isObject} from '@valkyriestudios/utils/object';
+import {isString} from '@valkyriestudios/utils/string';
 import {type JSXElement} from './types';
 import {Fragment} from './runtime';
 

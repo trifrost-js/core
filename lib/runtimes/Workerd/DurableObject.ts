@@ -1,6 +1,6 @@
 /// <reference types="@cloudflare/workers-types" />
 
-import {split} from '@valkyriestudios/utils/array/split';
+import {split} from '@valkyriestudios/utils/array';
 
 /* We bucket ttl per 10 seconds */
 const BUCKET_INTERVAL = 10_000;

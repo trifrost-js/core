@@ -1,4 +1,4 @@
-import {isFunction} from '@valkyriestudios/utils/function/is';
+import {isFn} from '@valkyriestudios/utils/function';
 import {
     Lazy,
     type LazyInitFn,
@@ -43,7 +43,7 @@ export class TriFrostRootLogger <Env extends Record<string, any> = Record<string
             debug: this.#debug,
             trifrost: this.#trifrost,
             exporters: [cfg.rootExporter],
-            spanAwareExporters: isFunction(cfg.rootExporter.pushSpan) ? [cfg.rootExporter] : [],
+            spanAwareExporters: isFn(cfg.rootExporter.pushSpan) ? [cfg.rootExporter] : [],
         });
     }
 
@@ -82,7 +82,7 @@ export class TriFrostRootLogger <Env extends Record<string, any> = Record<string
                 const spanAware:TriFrostLoggerExporter[] = [];
                 for (let i = 0; i < exporters.length; i++) {
                     const exp = exporters[i];
-                    if (isFunction(exp.pushSpan)) spanAware.push(exp);
+                    if (isFn(exp.pushSpan)) spanAware.push(exp);
                 }
                 this.#spanAwareExporters = spanAware;
             }

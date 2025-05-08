@@ -1,4 +1,4 @@
-import {type TriFrostRuntime} from './Types';
+import {type TriFrostRuntime} from './types';
 import {WorkerdRuntime} from './Workerd/Runtime';
 
 /**

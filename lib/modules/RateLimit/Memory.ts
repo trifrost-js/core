@@ -1,4 +1,4 @@
-import {isNotEmptyArray} from '@valkyriestudios/utils/array/isNotEmpty';
+import {isNeArray} from '@valkyriestudios/utils/array';
 import {type LazyInitFn} from '../../utils/Lazy';
 import {MemoryStore} from '../_stores/Memory';
 import {type TriFrostRateLimitObject} from './strategies/_Strategy';
@@ -23,7 +23,7 @@ export class MemoryRateLimit<Env extends Record<string, any> = Record<string, an
         const store = cfg.strategy === 'sliding'
             ? new MemoryStore<number[]>({
                 gc_interval: 60_000,
-                gc_filter: (_, timestamps, now) => isNotEmptyArray(timestamps) && timestamps[timestamps.length - 1] < (now - window),
+                gc_filter: (_, timestamps, now) => isNeArray(timestamps) && timestamps[timestamps.length - 1] < (now - window),
             })
             : new MemoryStore<TriFrostRateLimitObject>({
                 gc_interval: 60_000,

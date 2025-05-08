@@ -1,6 +1,6 @@
-import {isObject} from '@valkyriestudios/utils/object/is';
-import {isIntegerAbove} from '@valkyriestudios/utils/number/isIntegerAbove';
-import {isNotEmptyString} from '@valkyriestudios/utils/string/isNotEmpty';
+import {isObject} from '@valkyriestudios/utils/object';
+import {isIntGt} from '@valkyriestudios/utils/number';
+import {isNeString} from '@valkyriestudios/utils/string';
 import {
     type TriFrostStore,
     type TriFrostStoreValue,
@@ -16,7 +16,7 @@ export class MemoryStore <T extends TriFrostStoreValue = Record<string, unknown>
 
     constructor (opts?: {gc_interval?: number; gc_filter?: GCFilter<T>}) {
         const interval = opts?.gc_interval;
-        const filter = opts?.gc_filter ?? ((_key, _v, now, _exp) => isIntegerAbove(_exp, 0) && _exp <= now);
+        const filter = opts?.gc_filter ?? ((_key, _v, now, _exp) => isIntGt(_exp, 0) && _exp <= now);
 
         if (interval) {
             this.#gc = setInterval(() => {
@@ -29,12 +29,12 @@ export class MemoryStore <T extends TriFrostStoreValue = Record<string, unknown>
     }
 
     async get (key: string): Promise<T|null> {
-        if (!isNotEmptyString(key)) throw new Error('TriFrostMemoryStore@get: Invalid key');
+        if (!isNeString(key)) throw new Error('TriFrostMemoryStore@get: Invalid key');
 
         const val = this.#store.get(key);
         if (!val) return null;
 
-        if (isIntegerAbove(val.expires, 0) && Date.now() > val.expires) {
+        if (isIntGt(val.expires, 0) && Date.now() > val.expires) {
             this.#store.delete(key);
             return null;
         }
@@ -51,20 +51,20 @@ export class MemoryStore <T extends TriFrostStoreValue = Record<string, unknown>
         value: T,
         opts?: {ttl?: number}
     ): Promise<void> {
-        if (!isNotEmptyString(key)) throw new Error('TriFrostMemoryStore@set: Invalid key');
+        if (!isNeString(key)) throw new Error('TriFrostMemoryStore@set: Invalid key');
         if (
             !isObject(value) &&
             !Array.isArray(value)
         ) throw new Error('TriFrostMemoryStore@set: Invalid value');
 
-        const expires = isIntegerAbove(opts?.ttl, 0)
+        const expires = isIntGt(opts?.ttl, 0)
             ? Date.now() + (opts.ttl * 1000)
             : undefined;
         this.#store.set(key, {value, expires});
     }
 
     async delete (key: string): Promise<void> {
-        if (!isNotEmptyString(key)) throw new Error('TriFrostMemoryStore@delete: Invalid key');
+        if (!isNeString(key)) throw new Error('TriFrostMemoryStore@delete: Invalid key');
 
         this.#store.delete(key);
     }

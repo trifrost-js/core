@@ -1,10 +1,10 @@
 /* eslint-disable complexity, @typescript-eslint/no-empty-object-type */
 
-import {isBoolean} from '@valkyriestudios/utils/boolean/is';
-import {memoize} from '@valkyriestudios/utils/caching/memoize';
-import {isIntegerBetween} from '@valkyriestudios/utils/number/isIntegerBetween';
-import {isObject} from '@valkyriestudios/utils/object/is';
-import {isNotEmptyString} from '@valkyriestudios/utils/string/isNotEmpty';
+import {isBoolean} from '@valkyriestudios/utils/boolean';
+import {memoize} from '@valkyriestudios/utils/caching';
+import {isIntBetween} from '@valkyriestudios/utils/number';
+import {isObject} from '@valkyriestudios/utils/object';
+import {isNeString} from '@valkyriestudios/utils/string';
 import {
     MemoryCache,
     type TriFrostCache,
@@ -23,7 +23,7 @@ import {getRuntime} from './runtimes/Runtime';
 import {
     type TriFrostRuntime,
     type TriFrostRuntimeOnIncoming,
-} from './runtimes/Types';
+} from './runtimes/types';
 import {
     type TriFrostRouter,
     type TriFrostMiddleware,
@@ -242,7 +242,7 @@ class App <
 
         /* Configure host */
         if ('host' in options) {
-            if (!isNotEmptyString(options.host)) throw new Error('TriFrost@ctor: Host not a string with content');
+            if (!isNeString(options.host)) throw new Error('TriFrost@ctor: Host not a string with content');
             this.#host = options.host;
         }
 
@@ -253,10 +253,10 @@ class App <
         }
 
         /* Configure app name */
-        if (isNotEmptyString(options.name)) this.#name = options.name.trim();
+        if (isNeString(options.name)) this.#name = options.name.trim();
 
         /* Configure app version */
-        if (isNotEmptyString(options.version)) this.#version = options.version.trim();
+        if (isNeString(options.version)) this.#version = options.version.trim();
 
         /* Configure app meta */
         if (isObject(options.meta)) this.#meta = options.meta;
@@ -366,7 +366,7 @@ class App <
                     cookies: this.#cookies.config,
                     cache: this.#cache as TriFrostCache,
                     host: this.#host,
-                    port: isIntegerBetween(options?.port, 1, 65535) ? options?.port : 3000,
+                    port: isIntBetween(options?.port, 1, 65535) ? options?.port : 3000,
                     env: this.#env,
                     timeout: this.timeout ?? null,
                     requestId: this.#requestId,
@@ -586,7 +586,7 @@ class App <
     #extractDomainFromHost (val:string|null) {
         if (typeof val !== 'string' || val === 'localhost' || /^[\d.]+$/.test(val)) return null;
         const match = val.match(/^(?:www\d?\.)?(?<domain>[\w-]+\.(?:[\w-]+\.\w+|\w+))$/i);
-        if (isNotEmptyString(match?.groups?.domain)) return match.groups.domain;
+        if (isNeString(match?.groups?.domain)) return match.groups.domain;
         return null;
     }
 

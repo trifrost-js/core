@@ -1,7 +1,7 @@
-import {isNotEmptyObject}   from '@valkyriestudios/utils/object/isNotEmpty';
-import {isNotEmptyString}   from '@valkyriestudios/utils/string/isNotEmpty';
-import {isIntegerAbove}     from '@valkyriestudios/utils/number/isIntegerAbove';
-import {isNotEmptyArray}    from '@valkyriestudios/utils/array/isNotEmpty';
+import {isNeObject} from '@valkyriestudios/utils/object';
+import {isNeString} from '@valkyriestudios/utils/string';
+import {isIntGt} from '@valkyriestudios/utils/number';
+import {isNeArray} from '@valkyriestudios/utils/array';
 import {
     Sym_TriFrostDescription,
     Sym_TriFrostName,
@@ -215,8 +215,8 @@ function header (
 
     /* Validation check */
     if (
-        !isNotEmptyString(val) ||
-        !isNotEmptyArray(options) ||
+        !isNeString(val) ||
+        !isNeArray(options) ||
         options.indexOf(val) < 0
     ) throw new Error(`TriFrostMiddleware@Security: Invalid configuration for ${name}`);
 
@@ -234,7 +234,7 @@ function header (
 function contentSecurityPolicy (map: Record<string, string>, val:TriFrostSecurityOptions['contentSecurityPolicy']) {
     if (val === null) return;
 
-    if (!isNotEmptyObject(val)) throw new Error('TriFrostMiddleware@Security: Invalid configuration for contentSecurityPolicy');
+    if (!isNeObject(val)) throw new Error('TriFrostMiddleware@Security: Invalid configuration for contentSecurityPolicy');
 
     /* Loop through each key in the csp object being passed */
     const parts: string[] = [];
@@ -251,17 +251,17 @@ function contentSecurityPolicy (map: Record<string, string>, val:TriFrostSecurit
          * Otherwise values can come in form of singular string "'self'" or string array ["'self'", "example.com"]
          */
         if (key === ContentSecurityPolicy.BaseUri) {
-            if (!isNotEmptyString(chunk)) throw new Error('TriFrostMiddleware@Security: Invalid value for directive "base-uri"');
+            if (!isNeString(chunk)) throw new Error('TriFrostMiddleware@Security: Invalid value for directive "base-uri"');
             finalized_chunk = chunk.trim();
-        } else if (isNotEmptyString(chunk)) {
+        } else if (isNeString(chunk)) {
             finalized_chunk = chunk.trim();
-        } else if (isNotEmptyArray(chunk)) {
+        } else if (isNeArray(chunk)) {
             const normalized = [];
             const seen = new Set();
             for (let i = 0; i < chunk.length; i++) {
                 let el = chunk[i];
                 if (
-                    !isNotEmptyString(el)
+                    !isNeString(el)
                 ) throw new Error(`TriFrostMiddleware@Security: Invalid value for directive "${key}" in contentSecurityPolicy`);
 
                 el = el.trim();
@@ -274,7 +274,7 @@ function contentSecurityPolicy (map: Record<string, string>, val:TriFrostSecurit
             throw new Error(`TriFrostMiddleware@Security: Invalid value for directive "${key}"`);
         }
 
-        if (isNotEmptyString(finalized_chunk)) parts.push(`${key} ${finalized_chunk.trim()}`);
+        if (isNeString(finalized_chunk)) parts.push(`${key} ${finalized_chunk.trim()}`);
     }
 
     map['Content-Security-Policy'] = parts.join('; ');
@@ -346,14 +346,14 @@ function referrerPolicy (map:Record<string, string>, val:TriFrostSecurityOptions
 function strictTransportSecurity (map:Record<string, string>, val:TriFrostSecurityOptions['strictTransportSecurity']) {
     if (val === null) return;
 
-    if (isIntegerAbove(val?.maxAge, 0)) {
+    if (isIntGt(val?.maxAge, 0)) {
         const parts = [`max-age=${val.maxAge}`];
 
         /* includeSubDomains */
         if (val.includeSubDomains === true) parts.push('includeSubDomains');
 
         /* preload (only allowed if max age is above 31536000 and subdomains is set) */
-        if (parts.length === 2 && val.preload === true && isIntegerAbove(val.maxAge, 31536000)) parts.push('preload');
+        if (parts.length === 2 && val.preload === true && isIntGt(val.maxAge, 31536000)) parts.push('preload');
 
         /* Only set header if we have parts */
         return map['Strict-Transport-Security'] = parts.join('; ');
@@ -404,7 +404,7 @@ export function Security (opts:TriFrostSecurityOptions = {}) {
         xFrameOptions                       : XFrameOptions.SameOrigin,
         xXssProtection                      : '0',
         /* Configuration overrides */
-        ...isNotEmptyObject(opts) && opts,
+        ...isNeObject(opts) && opts,
     };
 
     /* Generate configuration */

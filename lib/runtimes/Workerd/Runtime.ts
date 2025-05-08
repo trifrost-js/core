@@ -8,7 +8,7 @@ import {
     type TriFrostRuntime,
     type TriFrostRuntimeOnIncoming,
     type TriFrostRuntimeBootOptions,
-} from '../Types';
+} from '../types';
 import {WorkerdContext} from './Context';
 
 export class WorkerdRuntime implements TriFrostRuntime {

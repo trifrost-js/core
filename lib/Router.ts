@@ -1,11 +1,10 @@
 /* eslint-disable complexity */
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
-import {isNotEmptyArray} from '@valkyriestudios/utils/array/isNotEmpty';
-import {isIntegerAbove} from '@valkyriestudios/utils/number/isIntegerAbove';
-import {isObject} from '@valkyriestudios/utils/object/is';
-import {isNotEmptyObject} from '@valkyriestudios/utils/object/isNotEmpty';
-import {isNotEmptyString} from '@valkyriestudios/utils/string/isNotEmpty';
+import {isNeArray} from '@valkyriestudios/utils/array';
+import {isIntGt} from '@valkyriestudios/utils/number';
+import {isObject, isNeObject} from '@valkyriestudios/utils/object';
+import {isNeString} from '@valkyriestudios/utils/string';
 import {
     type TriFrostRateLimit,
     type TriFrostRateLimitLimitFunction,
@@ -81,7 +80,7 @@ class Router <
         /* Configure timeout */
         if ('timeout' in options) {
             if (
-                !isIntegerAbove(options.timeout, 0) &&
+                !isIntGt(options.timeout, 0) &&
                 options.timeout !== null
             ) throw new Error('TriFrostRouter@ctor: Timeout should be null or an integer above 0');
             this.#timeout = options.timeout;
@@ -164,7 +163,7 @@ class Router <
 
             /* Get name */
             let fn_name = Reflect.get(fn, Sym_TriFrostName) ?? fn.name;
-            fn_name = isNotEmptyString(fn_name) ? fn_name : 'anonymous';
+            fn_name = isNeString(fn_name) ? fn_name : 'anonymous';
 
             /* Add symbols for introspection/use further down the line */
             fn[Sym_TriFrostName] = fn_name;
@@ -334,17 +333,17 @@ class Router <
 
         /* Validate route */
         if (
-            !isNotEmptyString(path) ||
-            !isNotEmptyArray(methods) ||
+            !isNeString(path) ||
+            !isNeArray(methods) ||
             !methods.every(val => HttpMethodsSet.has(val)) ||
             typeof config.fn !== 'function' ||
-            ('timeout' in config && !isIntegerAbove(config.timeout, 0) && config.timeout !== null)
+            ('timeout' in config && !isIntGt(config.timeout, 0) && config.timeout !== null)
         ) return false;
 
         const n_path = path.trim();
-        const kind = isNotEmptyString(config.kind) ? config.kind : 'std';
-        const name = isNotEmptyString(config.name) ? config.name : Reflect.get(config.fn, Sym_TriFrostName) || null;
-        const desc = isNotEmptyString(config.description) ? config.description : null;
+        const kind = isNeString(config.kind) ? config.kind : 'std';
+        const name = isNeString(config.name) ? config.name : Reflect.get(config.fn, Sym_TriFrostName) || null;
+        const desc = isNeString(config.description) ? config.description : null;
 
         /* Timeout */
         const timeout:undefined|number|null = 'timeout' in config
@@ -355,7 +354,7 @@ class Router <
 
         for (let i = 0; i < methods.length; i++) {
             const routeName = name || `${methods[i]}_${this.path}${n_path}`;
-            const routeMeta = isNotEmptyObject(config.meta) ? config.meta : {};
+            const routeMeta = isNeObject(config.meta) ? config.meta : {};
             const loggerMeta = {
                 name: routeName,
                 kind,

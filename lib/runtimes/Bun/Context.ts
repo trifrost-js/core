@@ -1,7 +1,7 @@
 /// <reference types="bun-types" />
 
-import {toObject} from '@valkyriestudios/utils/formdata/toObject';
-import {isIntegerAbove} from '@valkyriestudios/utils/number/isIntegerAbove';
+import {toObject} from '@valkyriestudios/utils/formdata';
+import {isIntGt} from '@valkyriestudios/utils/number';
 import {Context} from '../../Context';
 import {type TriFrostRootLogger} from '../../modules/Logger';
 import {
@@ -134,7 +134,7 @@ export class BunContext extends Context {
         this.is_done = true;
 
         /* Set content-length if provided */
-        if (isIntegerAbove(size, 0)) this.res_headers['content-length'] = size.toString();
+        if (isIntGt(size, 0)) this.res_headers['content-length'] = size.toString();
 
         /* Set response with stream */
         this.#response = new Response(stream, {

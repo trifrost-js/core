@@ -1,6 +1,6 @@
-import {isObject} from '@valkyriestudios/utils/object/is';
-import {isIntegerAbove} from '@valkyriestudios/utils/number/isIntegerAbove';
-import {isNotEmptyString} from '@valkyriestudios/utils/string/isNotEmpty';
+import {isObject} from '@valkyriestudios/utils/object';
+import {isIntGt} from '@valkyriestudios/utils/number';
+import {isNeString} from '@valkyriestudios/utils/string';
 import {
     type TriFrostCFDurableObjectId,
     type TriFrostCFDurableObjectNamespace,
@@ -29,7 +29,7 @@ export class DurableObjectStore <T extends TriFrostStoreValue = Record<string, u
     }
 
     async get (key:string): Promise<T|null> {
-        if (!isNotEmptyString(key)) throw new Error('TriFrostDurableObjectStore@get: Invalid key');
+        if (!isNeString(key)) throw new Error('TriFrostDurableObjectStore@get: Invalid key');
 
         const res = await this.#ns.get(this.#id).fetch(this.keyUrl(key), {method: 'GET'});
         if (!res.ok) return null;
@@ -43,21 +43,21 @@ export class DurableObjectStore <T extends TriFrostStoreValue = Record<string, u
     }
 
     async set (key:string, value:T, opts?:{ttl?:number}):Promise<void> {
-        if (!isNotEmptyString(key)) throw new Error('TriFrostDurableObjectStore@set: Invalid key');
+        if (!isNeString(key)) throw new Error('TriFrostDurableObjectStore@set: Invalid key');
         if (!isObject(value) && !Array.isArray(value)) throw new Error('TriFrostDurableObjectStore@set: Invalid value');
 
         await this.#ns.get(this.#id).fetch(this.keyUrl(key), {
             method: 'PUT',
             body: JSON.stringify({
                 v: value,
-                ttl: isIntegerAbove(opts?.ttl, 0) ? opts.ttl : 60,
+                ttl: isIntGt(opts?.ttl, 0) ? opts.ttl : 60,
             }),
             headers: {'Content-Type': 'application/json'},
         });
     }
 
     async delete (key: string): Promise<void> {
-        if (!isNotEmptyString(key)) throw new Error('TriFrostDurableObjectStore@delete: Invalid key');
+        if (!isNeString(key)) throw new Error('TriFrostDurableObjectStore@delete: Invalid key');
 
         const res = await this.#ns.get(this.#id).fetch(this.keyUrl(key), {method: 'DELETE'});
         if (!res.ok && res.status !== 404) {

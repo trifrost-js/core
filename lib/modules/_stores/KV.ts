@@ -1,6 +1,6 @@
-import {isObject} from '@valkyriestudios/utils/object/is';
-import {isIntegerAbove} from '@valkyriestudios/utils/number/isIntegerAbove';
-import {isNotEmptyString} from '@valkyriestudios/utils/string/isNotEmpty';
+import {isObject} from '@valkyriestudios/utils/object';
+import {isIntGt} from '@valkyriestudios/utils/number';
+import {isNeString} from '@valkyriestudios/utils/string';
 import {type TriFrostCFKVNamespace} from '../../types/providers';
 import {
     type TriFrostStore,
@@ -16,26 +16,26 @@ export class KVStore <T extends TriFrostStoreValue = Record<string, unknown>> im
     }
 
     async get (key:string): Promise<T|null> {
-        if (!isNotEmptyString(key)) throw new Error('TriFrostKVStore@get: Invalid key');
+        if (!isNeString(key)) throw new Error('TriFrostKVStore@get: Invalid key');
 
         const val = await this.#kv.get<T>(key, 'json');
         return isObject(val) || Array.isArray(val) ? val as T : null;
     }
 
     async set (key:string, value:T, opts?:{ttl?:number}): Promise<void> {
-        if (!isNotEmptyString(key)) throw new Error('TriFrostKVStore@set: Invalid key');
+        if (!isNeString(key)) throw new Error('TriFrostKVStore@set: Invalid key');
         if (
             !isObject(value) ||
             !Array.isArray(value)
         ) throw new Error('TriFrostKVStore@set: Invalid value');
 
         await this.#kv.put(key, JSON.stringify(value), {
-            expirationTtl: isIntegerAbove(opts?.ttl, 0) ? opts.ttl : 60,
+            expirationTtl: isIntGt(opts?.ttl, 0) ? opts.ttl : 60,
         });
     }
 
     async delete (key:string):Promise<void> {
-        if (!isNotEmptyString(key)) throw new Error('TriFrostKVStore@delete: Invalid key');
+        if (!isNeString(key)) throw new Error('TriFrostKVStore@delete: Invalid key');
         await this.#kv.delete(key);
     }
 

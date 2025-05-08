@@ -1,4 +1,4 @@
-import {isIntegerAbove} from '@valkyriestudios/utils/number/isIntegerAbove';
+import {isIntGt} from '@valkyriestudios/utils/number';
 import {type LazyInitFn} from '../../utils/Lazy';
 import {MemoryStore} from '../_stores/Memory';
 import {TriFrostCache} from './_Cache';
@@ -10,7 +10,7 @@ export class MemoryCache <Env extends Record<string, any> = Record<string, any>>
     } = {gc_interval: 60_000}) {
         super({
             store: (() => new MemoryStore({
-                gc_interval: isIntegerAbove(cfg.gc_interval, 0) ? cfg.gc_interval : 60_000,
+                gc_interval: isIntGt(cfg.gc_interval, 0) ? cfg.gc_interval : 60_000,
             })) as LazyInitFn<MemoryStore, Env>,
         });
     }

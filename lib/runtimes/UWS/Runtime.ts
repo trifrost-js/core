@@ -1,9 +1,9 @@
-import {isIntegerBetween} from '@valkyriestudios/utils/number/isIntegerBetween';
+import {isIntBetween} from '@valkyriestudios/utils/number';
 import {
     type TriFrostRuntimeOnIncoming,
     type TriFrostRuntimeBootOptions,
     type TriFrostRuntime,
-} from '../Types';
+} from '../types';
 import {UWSContext} from './Context';
 import {
     type TriFrostRootLogger,
@@ -54,7 +54,7 @@ export class UWSRuntime implements TriFrostRuntime {
         }
 
         /* Ensure port is valid */
-        if (!isIntegerBetween(opts?.cfg?.port, 1, 65535)) {
+        if (!isIntBetween(opts?.cfg?.port, 1, 65535)) {
             throw new Error('UWSRuntime@boot: Port needs to be in range of 1-65535');
         }
 

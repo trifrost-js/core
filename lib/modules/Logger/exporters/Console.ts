@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-import {isNotEmptyObject} from '@valkyriestudios/utils/object/isNotEmpty';
+import {isNeObject} from '@valkyriestudios/utils/object';
 import {
     type TriFrostLoggerLogPayload,
     type TriFrostLoggerExporter,
@@ -24,7 +24,7 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
         if (log.context) meta.context = log.context;
         if (log.data) meta.data = log.data;
         if (this.#trifrost) meta.$trifrost = this.#trifrost;
-        if (!isNotEmptyObject(meta)) meta = null;
+        if (!isNeObject(meta)) meta = null;
 
         switch (log.level) {
             case 'error':

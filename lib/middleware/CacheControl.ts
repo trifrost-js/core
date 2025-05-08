@@ -1,6 +1,6 @@
-import {join}               from '@valkyriestudios/utils/array/join';
-import {isNotEmptyObject}   from '@valkyriestudios/utils/object/isNotEmpty';
-import {isIntegerAbove}     from '@valkyriestudios/utils/number/isIntegerAbove';
+import {join} from '@valkyriestudios/utils/array';
+import {isNeObject} from '@valkyriestudios/utils/object';
+import {isIntGt} from '@valkyriestudios/utils/number';
 import {
     Sym_TriFrostDescription,
     Sym_TriFrostName,
@@ -50,10 +50,10 @@ export type TriFrostCacheControlOptions = {
  * @param {TriFrostCacheControlOptions} opts - Cache Header Options
  */
 function parse (opts:TriFrostCacheControlOptions):string|null {
-    if (!isNotEmptyObject(opts)) return null;
+    if (!isNeObject(opts)) return null;
 
     const type    = CacheControlSet.has(opts.type!) ? opts.type : null;
-    const maxage  = isIntegerAbove(opts.maxage, 0) ? 'max-age=' + opts.maxage : null;
+    const maxage  = isIntGt(opts.maxage, 0) ? 'max-age=' + opts.maxage : null;
     if (type === null && maxage === null) return null;
 
     return join([type, maxage], {delim: ', '});

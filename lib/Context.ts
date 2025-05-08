@@ -1,11 +1,11 @@
 /* eslint-disable complexity,@typescript-eslint/no-empty-object-type */
 
-import {join} from '@valkyriestudios/utils/array/join';
-import {noopresolve} from '@valkyriestudios/utils/function/noopresolve';
-import {isIntegerAbove} from '@valkyriestudios/utils/number/isIntegerAbove';
-import {isObject} from '@valkyriestudios/utils/object/is';
-import {isNotEmptyString} from '@valkyriestudios/utils/string/isNotEmpty';
-import {vUrl} from '@valkyriestudios/validator/functions/vUrl';
+import {join} from '@valkyriestudios/utils/array';
+import {noopresolve} from '@valkyriestudios/utils/function';
+import {isIntGt} from '@valkyriestudios/utils/number';
+import {isObject} from '@valkyriestudios/utils/object';
+import {isNeString} from '@valkyriestudios/utils/string';
+import {vUrl} from '@valkyriestudios/validator/functions';
 import {type TriFrostCache} from './modules/Cache';
 import {TriFrostCookies} from './modules/Cookies';
 import {
@@ -353,7 +353,7 @@ export abstract class Context <
      * Sets the timeout
      */
     setTimeout (val:number|null):void {
-        if (isIntegerAbove(val, 0)) {
+        if (isIntGt(val, 0)) {
             this.clearTimeout();
             this.#timeout = val;
             this.#timeout_id = setTimeout(() => {
@@ -726,7 +726,7 @@ export abstract class Context <
             /* If the url is not fully qualified prepend the protocol and host */
             if (!vUrl(normalized_to)) {
                 const host = this.host;
-                if (!isNotEmptyString(host)) throw new Error('Context@redirect: Not able to determine host for redirect');
+                if (!isNeString(host)) throw new Error('Context@redirect: Not able to determine host for redirect');
 
                 normalized_to = join([
                     !RGX_PROTO.test(host) ? 'https://' : false,

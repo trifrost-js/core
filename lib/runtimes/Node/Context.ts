@@ -1,11 +1,11 @@
-import {toObject} from '@valkyriestudios/utils/formdata/toObject';
-import {isIntegerAbove} from '@valkyriestudios/utils/number/isIntegerAbove';
+import {toObject} from '@valkyriestudios/utils/formdata';
+import {isIntGt} from '@valkyriestudios/utils/number';
 import {Context} from '../../Context';
 import {type TriFrostRootLogger} from '../../modules/Logger';
 import {
     type IncomingMessage,
     type ServerResponse,
-} from './Types';
+} from './types';
 import {
     type TriFrostContextConfig,
     type TriFrostContextInit,
@@ -137,7 +137,7 @@ export class NodeContext extends Context {
         this.is_done = true;
 
         /* Add content-length to headers */
-        if (isIntegerAbove(size, 0)) this.res_headers['content-length'] = size.toString();
+        if (isIntGt(size, 0)) this.res_headers['content-length'] = size.toString();
 
         /* Write headers */
         this.#node_res.writeHead(

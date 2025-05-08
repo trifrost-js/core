@@ -1,8 +1,7 @@
 /* eslint-disable complexity */
 
-import {addUTC} from '@valkyriestudios/utils/date/addUTC';
-import {diff} from '@valkyriestudios/utils/date/diff';
-import {isObject} from '@valkyriestudios/utils/object/is';
+import {addUTC, diff} from '@valkyriestudios/utils/date';
+import {isObject} from '@valkyriestudios/utils/object';
 import {type TriFrostContext} from '../types/context';
 
 export type TriFrostCookieOptions = {

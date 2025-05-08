@@ -1,7 +1,6 @@
 /// <reference types="bun-types" />
 
-import {isInteger} from '@valkyriestudios/utils/number/isInteger';
-import {isIntegerBetween} from '@valkyriestudios/utils/number/isIntegerBetween';
+import {isInt, isIntBetween} from '@valkyriestudios/utils/number';
 import {
     ConsoleExporter,
     type TriFrostRootLogger,
@@ -11,7 +10,7 @@ import {
     type TriFrostRuntime,
     type TriFrostRuntimeOnIncoming,
     type TriFrostRuntimeBootOptions,
-} from '../Types';
+} from '../types';
 
 export class BunRuntime implements TriFrostRuntime {
 
@@ -49,7 +48,7 @@ export class BunRuntime implements TriFrostRuntime {
         }
 
         /* Ensure port is valid */
-        if (!isIntegerBetween(opts?.cfg?.port, 1, 65535)) {
+        if (!isIntBetween(opts?.cfg?.port, 1, 65535)) {
             throw new Error('BunRuntime@boot: Port needs to be in range of 1-65535');
         }
 
@@ -93,10 +92,10 @@ export class BunRuntime implements TriFrostRuntime {
         } as {port:number; hostname: string; fetch: (req:Request) => Promise<Response>; idleTimeout?: number};
 
         /* Use timeout as idleTimeout if configured */
-        if (isInteger(cfg.timeout)) {
+        if (isInt(cfg.timeout)) {
             const timeout_s = cfg.timeout/1000;
             /* Ensure timeout stays within 255 seconds as bun limitation */
-            serveOpts.idleTimeout = isIntegerBetween(timeout_s, 0, 255) ? timeout_s : 255;
+            serveOpts.idleTimeout = isIntBetween(timeout_s, 0, 255) ? timeout_s : 255;
         }
 
         /* Bun serve */

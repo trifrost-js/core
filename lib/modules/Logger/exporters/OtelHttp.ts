@@ -1,4 +1,4 @@
-import {sleep} from '@valkyriestudios/utils/function/sleep';
+import {sleep} from '@valkyriestudios/utils/function';
 import {
     type TriFrostLoggerSpanPayload,
     type TriFrostLogLevel,

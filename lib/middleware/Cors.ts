@@ -1,6 +1,6 @@
-import {isNotEmptyArray} from '@valkyriestudios/utils/array/isNotEmpty';
-import {isIntegerAboveOrEqual} from '@valkyriestudios/utils/number/isIntegerAboveOrEqual';
-import {isNotEmptyString} from '@valkyriestudios/utils/string/isNotEmpty';
+import {isNeArray} from '@valkyriestudios/utils/array';
+import {isIntGte} from '@valkyriestudios/utils/number';
+import {isNeString} from '@valkyriestudios/utils/string';
 import {
     Sym_TriFrostDescription,
     Sym_TriFrostName,
@@ -42,10 +42,10 @@ export function Cors (opts: TriFrostCorsOptions = {}) {
     const computed: Record<string, string> = {Vary: 'Origin'};
 
     /* Access-Control-Allow-Origin */
-    if (isNotEmptyString(origin)) computed['Access-Control-Allow-Origin'] = origin;
+    if (isNeString(origin)) computed['Access-Control-Allow-Origin'] = origin;
 
     /* Access-Control-Allow-Methods */
-    if (isNotEmptyArray(methods)) {
+    if (isNeArray(methods)) {
         const normalized = new Set();
         for (let i = 0; i < methods.length; i++) {
             const method = methods[i];
@@ -58,22 +58,22 @@ export function Cors (opts: TriFrostCorsOptions = {}) {
     }
 
     /* Access-Control-Allow-Headers */
-    if (isNotEmptyArray(headers)) {
+    if (isNeArray(headers)) {
         const normalized = new Set();
         for (let i = 0; i < headers.length; i++) {
             const el = headers[i];
-            if (!isNotEmptyString(el)) throw new Error('TriFrostMiddleware@Cors: Invalid header "' + el + '"');
+            if (!isNeString(el)) throw new Error('TriFrostMiddleware@Cors: Invalid header "' + el + '"');
             normalized.add(el.trim());
         }
         computed['Access-Control-Allow-Headers'] = [...normalized.values()].join(', ');
     }
 
     /* Access-Control-Expose-Headers */
-    if (isNotEmptyArray(expose)) {
+    if (isNeArray(expose)) {
         const normalized = new Set();
         for (let i = 0; i < expose.length; i++) {
             const el = expose[i];
-            if (!isNotEmptyString(el)) throw new Error('TriFrostMiddleware@Cors: Invalid expose "' + el + '"');
+            if (!isNeString(el)) throw new Error('TriFrostMiddleware@Cors: Invalid expose "' + el + '"');
             normalized.add(el.trim());
         }
         computed['Access-Control-Expose-Headers'] = [...normalized.values()].join(', ');
@@ -85,7 +85,7 @@ export function Cors (opts: TriFrostCorsOptions = {}) {
     }
 
     /* Access-Control-Max-Age */
-    if (isIntegerAboveOrEqual(maxage, 0)) {
+    if (isIntGte(maxage, 0)) {
         computed['Access-Control-Max-Age'] = `${maxage}`;
     }
 
