@@ -139,12 +139,12 @@
         }
     },
     "dependencies": {
-        "@valkyriestudios/utils": "^12.35.0",
-        "@valkyriestudios/validator": "^10.2.0"
+        "@valkyriestudios/utils": "^12.36.0",
+        "@valkyriestudios/validator": "^10.3.0"
     },
     "devDependencies": {
-        "@cloudflare/workers-types": "^4.20250506.0",
-        "@types/node": "^22.15.14",
+        "@cloudflare/workers-types": "^4.20250508.0",
+        "@types/node": "^22.15.16",
         "bun-types": "^1.2.12",
         "esbuild-register": "^3.6.0",
         "eslint": "^9.26.0",
