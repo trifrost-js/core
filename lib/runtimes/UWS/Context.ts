@@ -19,7 +19,7 @@ import {
     type MultipartField,
     type HttpResponse,
     type HttpRequest,
-} from './Types';
+} from './types';
 
 function loadBody (logger:TriFrostLogger, res:HttpResponse):Promise<Buffer|undefined> {
     return new Promise(resolve => {
