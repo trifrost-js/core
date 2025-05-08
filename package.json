@@ -139,8 +139,7 @@
         }
     },
     "dependencies": {
-        "@valkyriestudios/utils": "^12.36.0",
-        "@valkyriestudios/validator": "^10.3.0"
+        "@valkyriestudios/utils": "^12.36.0"
     },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20250508.0",

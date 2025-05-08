@@ -17,6 +17,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **misc**: Renamed runtimes/UWS/Types.ts to runtimes/UWS/types.ts (alignment)
 - **misc**: Renamed runtimes/Types.ts to runtimes/types.ts (alignment)
 
+### Removed
+- **deps**: @valkyriestudios/validator (as no longer in use)
+
 ## [0.1.0] - 2025-05-06
 ### Breaking
 - **rename**: Project renamed from **Falcon** to **Trifrost**.

@@ -5,7 +5,6 @@ import {noopresolve} from '@valkyriestudios/utils/function';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {isObject} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
-import {vUrl} from '@valkyriestudios/validator/functions';
 import {type TriFrostCache} from './modules/Cache';
 import {TriFrostCookies} from './modules/Cookies';
 import {
@@ -55,6 +54,7 @@ type RequestConfig = {
 
 const RGX_PROTO = /^((http:\/\/)|(https:\/\/))/;
 const RGX_IP = /^(?:\d{1,3}\.){3}\d{1,3}$|^(?:[A-Fa-f0-9]{1,4}:){2,7}[A-Fa-f0-9]{1,4}$/;
+const RGX_URL = /^(https?:\/\/)[^\s/$.?#].[^\s]*$/i;
 
 export abstract class Context <
     Env extends Record<string, any> = {},
@@ -724,7 +724,7 @@ export abstract class Context <
 
             let normalized_to = to;
             /* If the url is not fully qualified prepend the protocol and host */
-            if (!vUrl(normalized_to)) {
+            if (!RGX_URL.test(normalized_to)) {
                 const host = this.host;
                 if (!isNeString(host)) throw new Error('Context@redirect: Not able to determine host for redirect');
 
