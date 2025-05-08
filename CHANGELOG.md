@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **feat**: ctx.file now has support for the `download` option, when set it instructs the client browser to download the file using the Content-Disposition header. Take note: As per RFC 6266 we automatically encode the filename when set.
+```typescript
+/**
+ * The below would result in the following Content-Disposition header: 
+ * 
+ * attachment; filename="Strasse_(draft)*v1.0.pdf"; filename*=UTF-8''Stra%C3%9Fe_%28draft%29%2Av1.0.pdf
+ */
+ctx.file('storage/487348932483.pdf', {download: 'Straße_(draft)*v1.0.pdf'});
+```
+
 ### Improved
 - **misc**: Make use of new barrel exports in valkyrie utils
 - **deps**: Upgrade @cloudflare/workers-types to 4.20250508.0
@@ -13,6 +24,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **deps**: Upgrade @valkyriestudios/validator to 10.3.0
 
 ### Breaking
+- **feat**: Signature for `ctx.json`, `ctx.text` and `ctx.html` has changed from `(val, status?, cache?:CacheControlOptions)` to `(val, opts?:{status?, cache?:CacheControlOptions})`, this bag-of-options approach allows for future options to be added without further polluting the argument space.
+- **feat**: Signature for `ctx.file` has changed from `(val, cache?:CacheControlOptions)` to `(val, opts?:{cache?:CacheControlOptions, download?:boolean|string})`, this bag-of-options approach allows for future options to be added without further polluting the argument space.
+- **feat**: Signature for `ctx.redirect` has changed from `(to, status?, opts?:TriFrostContextRedirectOptions)` to `(to, opts?:{status?, keep_query?:boolean})`, this bag-of-options approach allows for future options to be added without further polluting the argument space.
 - **misc**: Renamed runtimes/Node/Types.ts to runtimes/Node/types.ts (alignment)
 - **misc**: Renamed runtimes/UWS/Types.ts to runtimes/UWS/types.ts (alignment)
 - **misc**: Renamed runtimes/Types.ts to runtimes/types.ts (alignment)
