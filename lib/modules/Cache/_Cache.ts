@@ -22,14 +22,14 @@ export class TriFrostCache <Env extends Record<string, any> = Record<string, any
         this.#store.resolve({env});
     }
 
-    async get<TVal extends TriFrostStoreValue = Record<string, unknown>> (
+    async get<TVal extends TriFrostStoreValue = TriFrostStoreValue> (
         key: string
     ): Promise<TVal | null> {
         if (!this.#store.resolved) throw new Error('TriFrostCache@get: Cache needs to be initialized first');
         return this.#store.resolved.get(key) as unknown as TVal | null;
     }
 
-    async set<TVal extends TriFrostStoreValue = Record<string, unknown>> (
+    async set<TVal extends TriFrostStoreValue = TriFrostStoreValue> (
         key: string,
         value: TVal,
         opts?: {ttl?: number}
@@ -46,7 +46,7 @@ export class TriFrostCache <Env extends Record<string, any> = Record<string, any
     /**
      * Wraps a get + set combined as a utility method.
      */
-    async wrap <TVal extends TriFrostStoreValue = Record<string, unknown>> (
+    async wrap <TVal extends TriFrostStoreValue = TriFrostStoreValue> (
         key:string,
         compute: () => Promise<TVal>,
         opts?: {ttl?: number}

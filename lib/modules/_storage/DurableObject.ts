@@ -10,7 +10,7 @@ import {
     type TriFrostStoreValue,
 } from './types';
 
-export class DurableObjectStore <T extends TriFrostStoreValue = Record<string, unknown>> implements TriFrostStore<T> {
+export class DurableObjectStore <T extends TriFrostStoreValue = TriFrostStoreValue> implements TriFrostStore<T> {
 
     #ns: TriFrostCFDurableObjectNamespace;
 

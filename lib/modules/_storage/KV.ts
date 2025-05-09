@@ -7,7 +7,7 @@ import {
     type TriFrostStoreValue,
 } from './types';
 
-export class KVStore <T extends TriFrostStoreValue = Record<string, unknown>|unknown[]> implements TriFrostStore<T> {
+export class KVStore <T extends TriFrostStoreValue = TriFrostStoreValue> implements TriFrostStore<T> {
 
     #kv:TriFrostCFKVNamespace;
 

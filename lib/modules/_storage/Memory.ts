@@ -6,9 +6,9 @@ import {
     type TriFrostStoreValue,
 } from './types';
 
-type GCFilter<Value> = (key: string, value: Value, now:number, exp:number|null) => boolean;
+type GCFilter<Value> = (key: string, value: Value, now:number, exp?:number) => boolean;
 
-export class MemoryStore <T extends TriFrostStoreValue = Record<string, unknown>> implements TriFrostStore<T> {
+export class MemoryStore <T extends TriFrostStoreValue = TriFrostStoreValue> implements TriFrostStore<T> {
 
     #store = new Map<string, {value:T; expires?:number}>();
 

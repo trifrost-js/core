@@ -7,7 +7,7 @@ import {
     type TriFrostStoreValue,
 } from './types';
 
-export class RedisStore <T extends TriFrostStoreValue = Record<string, unknown>|unknown[]> implements TriFrostStore<T> {
+export class RedisStore <T extends TriFrostStoreValue = TriFrostStoreValue> implements TriFrostStore<T> {
 
     #redis:TriFrostRedis;
 
