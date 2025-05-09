@@ -1,6 +1,5 @@
-import {isAsyncFunction} from '@valkyriestudios/utils/function/isAsync';
-import {describe, it} from 'node:test';
-import * as assert from 'node:assert/strict';
+import {isAsyncFn} from '@valkyriestudios/utils/function';
+import {describe, it, expect} from 'vitest';
 import {Cors} from '../../../lib/middleware/Cors';
 import CONSTANTS from '../../constants';
 import {MockContext} from '../../MockContext';
@@ -13,24 +12,21 @@ import {
 describe('Middleware - Cors', () => {
     it('Returns a function that is non-async', () => {
         const fn = Cors();
-        assert.ok(typeof fn === 'function');
-        assert.ok(!isAsyncFunction(fn));
+        expect(typeof fn).toBe('function');
+        expect(isAsyncFn(fn)).toBe(false);
     });
 
     it('Returns a function with TriFrost symbols set', () => {
         const fn = Cors();
-        assert.ok(Reflect.get(fn, Sym_TriFrostName), 'TriFrostCors');
-        assert.ok(Reflect.get(fn, Sym_TriFrostType), 'middleware');
-        assert.ok(
-            Reflect.get(fn, Sym_TriFrostDescription),
-            'Middleware for Cross Origin Resource Sharing'
-        );
+        expect(Reflect.get(fn, Sym_TriFrostName)).toBe('TriFrostCors');
+        expect(Reflect.get(fn, Sym_TriFrostType)).toBe('middleware');
+        expect(Reflect.get(fn, Sym_TriFrostDescription)).toBe('Middleware for Cross Origin Resource Sharing');
     });
 
     it('Sets default headers when no options provided', () => {
         const ctx = new MockContext();
         Cors()(ctx);
-        assert.deepEqual(ctx.headers, {
+        expect(ctx.headers).toEqual({
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, HEAD, POST',
             Vary: 'Origin',
@@ -40,7 +36,7 @@ describe('Middleware - Cors', () => {
     it('Sets custom static origin', () => {
         const ctx = new MockContext();
         Cors({origin: 'https://trifrost.land'})(ctx);
-        assert.deepEqual(ctx.headers, {
+        expect(ctx.headers).toEqual({
             'Access-Control-Allow-Methods': 'GET, HEAD, POST',
             Vary: 'Origin',
             'Access-Control-Allow-Origin': 'https://trifrost.land',
@@ -53,7 +49,7 @@ describe('Middleware - Cors', () => {
             if (el === 'https://foo.com') return 'https://bar.com';
             return null;
         }})(ctx);
-        assert.deepEqual(ctx.headers, {
+        expect(ctx.headers).toEqual({
             Origin: 'https://foo.com',
             'Access-Control-Allow-Methods': 'GET, HEAD, POST',
             Vary: 'Origin',
@@ -64,7 +60,7 @@ describe('Middleware - Cors', () => {
     it('Does not set origin header if dynamic origin returns null', () => {
         const ctx = new MockContext({headers: {Origin: 'https://deny.com'}});
         Cors({origin: () => null})(ctx);
-        assert.deepEqual(ctx.headers, {
+        expect(ctx.headers).toEqual({
             'Access-Control-Allow-Methods': 'GET, HEAD, POST',
             Vary: 'Origin',
             Origin: 'https://deny.com',
@@ -72,13 +68,13 @@ describe('Middleware - Cors', () => {
     });
 
     it('Throws if invalid method passed', () => {
-        assert.throws(() => Cors({methods: ['GET', 'FOOBAR'] as any}));
+        expect(() => Cors({methods: ['GET', 'FOOBAR'] as any})).toThrow();
     });
 
     it('Supports wildcard methods', () => {
         const ctx = new MockContext();
         Cors({methods: '*'})(ctx);
-        assert.deepEqual(ctx.headers, {
+        expect(ctx.headers).toEqual({
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': '*',
             Vary: 'Origin',
@@ -88,7 +84,7 @@ describe('Middleware - Cors', () => {
     it('Joins custom headers', () => {
         const ctx = new MockContext();
         Cors({headers: ['X-Custom', 'Authorization']})(ctx);
-        assert.deepEqual(ctx.headers, {
+        expect(ctx.headers).toEqual({
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, HEAD, POST',
             Vary: 'Origin',
@@ -99,7 +95,7 @@ describe('Middleware - Cors', () => {
     it('Joins exposed headers', () => {
         const ctx = new MockContext();
         Cors({expose: ['X-Expose-This', 'X-Also-This']})(ctx);
-        assert.deepEqual(ctx.headers, {
+        expect(ctx.headers).toEqual({
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, HEAD, POST',
             Vary: 'Origin',
@@ -110,7 +106,7 @@ describe('Middleware - Cors', () => {
     it('Sets credentials to true when specified', () => {
         const ctx = new MockContext();
         Cors({credentials: true})(ctx);
-        assert.deepEqual(ctx.headers, {
+        expect(ctx.headers).toEqual({
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, HEAD, POST',
             Vary: 'Origin',
@@ -121,7 +117,7 @@ describe('Middleware - Cors', () => {
     it('Sets max-age if valid', () => {
         const ctx = new MockContext();
         Cors({maxage: 86400})(ctx);
-        assert.deepEqual(ctx.headers, {
+        expect(ctx.headers).toEqual({
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, HEAD, POST',
             Vary: 'Origin',
@@ -132,7 +128,7 @@ describe('Middleware - Cors', () => {
     it('Returns 204 status on OPTIONS method', () => {
         const ctx = new MockContext({method: 'options'});
         Cors()(ctx);
-        assert.equal(ctx.$status, 204);
+        expect(ctx.$status).toBe(204);
     });
 
     it('Applies all options together (maximal config)', () => {
@@ -145,7 +141,7 @@ describe('Middleware - Cors', () => {
             credentials: true,
             maxage: 3600,
         })(ctx);
-        assert.deepEqual(ctx.headers, {
+        expect(ctx.headers).toEqual({
             Vary: 'Origin',
             'Access-Control-Allow-Origin': 'https://trifrost.land',
             'Access-Control-Allow-Methods': 'GET, POST, DELETE',
@@ -164,7 +160,7 @@ describe('Middleware - Cors', () => {
             credentials: true,
             expose: ['X-Auth'],
         })(ctx);
-        assert.deepEqual(ctx.headers, {
+        expect(ctx.headers).toEqual({
             Vary: 'Origin',
             'Access-Control-Allow-Origin': 'https://trifrost.land',
             'Access-Control-Allow-Methods': 'GET, HEAD, POST',
@@ -180,7 +176,7 @@ describe('Middleware - Cors', () => {
             headers: ['X-Test', 'X-Another'],
             maxage: 999,
         })(ctx);
-        assert.deepEqual(ctx.headers, {
+        expect(ctx.headers).toEqual({
             Vary: 'Origin',
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': '*',
@@ -199,7 +195,7 @@ describe('Middleware - Cors', () => {
             credentials: true,
             methods: ['GET', 'PUT'],
         })(ctx);
-        assert.deepEqual(ctx.headers, {
+        expect(ctx.headers).toEqual({
             Origin: 'https://trusted.com',
             Vary: 'Origin',
             'Access-Control-Allow-Methods': 'GET, PUT',
@@ -218,7 +214,7 @@ describe('Middleware - Cors', () => {
             credentials: true,
             methods: ['GET', 'PUT'],
         })(ctx);
-        assert.deepEqual(ctx.headers, {
+        expect(ctx.headers).toEqual({
             Vary: 'Origin',
             'Access-Control-Allow-Methods': 'GET, PUT',
             'Access-Control-Allow-Credentials': 'true',
@@ -227,27 +223,27 @@ describe('Middleware - Cors', () => {
     });
 
     it('Throws on methods array containing invalid and valid entries', () => {
-        assert.throws(() => {
+        expect(() => {
             Cors({methods: ['GET', 'INVALID', 'POST'] as any});
-        }, /Invalid method "INVALID"/);
+        }).toThrow(/Invalid method "INVALID"/);
     });
 
     it('Throws on methods array with all invalid values', () => {
-        assert.throws(() => {
+        expect(() => {
             Cors({methods: ['FOO', 'BAR'] as any});
-        }, /Invalid method "FOO"/);
+        }).toThrow(/Invalid method "FOO"/);
     });
 
     it('Throws when headers contain non-string values', () => {
-        assert.throws(() => {
+        expect(() => {
             Cors({headers: ['X-Test', ...CONSTANTS.NOT_STRING_WITH_EMPTY] as string[]});
-        }, /Invalid header "/);
+        }).toThrow(/Invalid header "/);
     });
 
     it('Throws when expose contains non-string values', () => {
-        assert.throws(() => {
+        expect(() => {
             Cors({expose: [...CONSTANTS.NOT_STRING_WITH_EMPTY, 'X-Expose'] as string[]});
-        }, /Invalid expose "/);
+        }).toThrow(/Invalid expose "/);
     });
 
     it('Ignores non/empty-array methods without throwing but omits header', () => {
@@ -255,7 +251,7 @@ describe('Middleware - Cors', () => {
             if (el === undefined) continue;
             const ctx = new MockContext();
             Cors({methods: el as any})(ctx);
-            assert.deepEqual(ctx.headers, {
+            expect(ctx.headers).toEqual({
                 Vary: 'Origin',
                 'Access-Control-Allow-Origin': '*',
             });
@@ -265,18 +261,18 @@ describe('Middleware - Cors', () => {
     it('Omits allow-headers if empty or invalid header list', () => {
         const ctx = new MockContext();
         Cors({headers: []})(ctx);
-        assert.ok(!('Access-Control-Allow-Headers' in ctx.headers));
+        expect('Access-Control-Allow-Headers' in ctx.headers).toBe(false);
     });
 
     it('Omits expose-headers if not valid', () => {
         const ctx = new MockContext();
         Cors({expose: []})(ctx);
-        assert.ok(!('Access-Control-Expose-Headers' in ctx.headers));
+        expect('Access-Control-Expose-Headers' in ctx.headers).toBe(false);
     });
 
     it('Omits max-age if not a valid integer', () => {
         const ctx = new MockContext();
         Cors({maxage: -5})(ctx);
-        assert.ok(!('Access-Control-Max-Age' in ctx.headers));
+        expect('Access-Control-Max-Age' in ctx.headers).toBe(false);
     });
 });

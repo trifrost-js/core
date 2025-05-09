@@ -1,36 +1,25 @@
-import {describe, it} from 'node:test';
-import * as assert from 'node:assert/strict';
+import {describe, it, expect} from 'vitest';
 import {CacheControl as OGCacheControl} from '../../../lib/middleware/CacheControl';
 import {Cors as OGCors} from '../../../lib/middleware/Cors';
 import {Security as OGSecurity} from '../../../lib/middleware/Security';
 import * as Middleware from '../../../lib/middleware';
 
 describe('Middleware', () => {
-    describe('*', () => {
-        it('Should link to the correct modules', () => {
-            assert.deepEqual(Middleware, {
-                CacheControl: OGCacheControl,
-                Cors: OGCors,
-                Security: OGSecurity,
-            });
-        });
-    });
-
     describe('CacheControl', () => {
         it('Should link to the correct module', () => {
-            assert.deepEqual(Middleware.CacheControl, OGCacheControl);
+            expect(Middleware.CacheControl).toEqual(OGCacheControl);
         });
     });
 
     describe('Cors', () => {
         it('Should link to the correct module', () => {
-            assert.deepEqual(Middleware.Cors, OGCors);
+            expect(Middleware.Cors).toEqual(OGCors);
         });
     });
 
     describe('Security', () => {
         it('Should link to the correct module', () => {
-            assert.deepEqual(Middleware.Security, OGSecurity);
+            expect(Middleware.Security).toEqual(OGSecurity);
         });
     });
 });

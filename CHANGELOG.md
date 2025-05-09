@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 ### Added
+- **misc**: Migrate existing tests using node assertion to vitest
 - **deps**: vitest (dev dependency)
 - **deps**: @vitest/coverage-v8 (dev dependency)
 

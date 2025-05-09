@@ -6,8 +6,6 @@ import {
     type HttpMethod,
     type HttpStatus,
     type HttpStatusCode,
-    type HttpRedirectStatus,
-    type HttpRedirectStatusCode,
     type MimeType,
 } from '../lib/types/constants';
 import {
@@ -15,6 +13,8 @@ import {
     type TriFrostContextKind,
     type TriFrostContextInit,
     type TriFrostContextRedirectOptions,
+    type TriFrostContextResponseOptions,
+    type TriFrostContextFileOptions,
 } from '../lib/types/context';
 
 import {TriFrostCookies} from '../lib/modules/Cookies';
@@ -156,9 +156,9 @@ export class MockContext <
 
     runAfter: () => void;
 
-    json = (_body?: Record<string, unknown>|unknown[], _status?: HttpStatus | HttpStatusCode, _cache?: TriFrostCacheControlOptions): void => {};
-    html = (_body?: string|JSXElement, _status?: HttpStatus | HttpStatusCode, _cache?: TriFrostCacheControlOptions): void => {};
-    text = (_body: string, _status?: HttpStatus | HttpStatusCode, _cache?: TriFrostCacheControlOptions): void => {};
-    redirect = (_to: string, _status?: HttpRedirectStatus | HttpRedirectStatusCode, _opts?: TriFrostContextRedirectOptions): void => {};
-    file = async (_path: string, _cache?: TriFrostCacheControlOptions): Promise<void> => {};
+    json = (_body?: Record<string, unknown>|unknown[], _opts?:TriFrostContextResponseOptions): void => {};
+    html = (_body?: string|JSXElement, _opts?:TriFrostContextResponseOptions): void => {};
+    text = (_body: string, _opts?:TriFrostContextResponseOptions): void => {};
+    redirect = (_to: string, _opts?:TriFrostContextRedirectOptions): void => {};
+    file = async (_path: string, _opts?:TriFrostContextFileOptions): Promise<void> => {};
 }
