@@ -1,9 +1,11 @@
 # TriFrost
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CodeCov](https://codecov.io/gh/trifrost-js/core/graph/badge.svg?token=WGGKOQH7MB)](https://codecov.io/gh/trifrost-js/core)
 [![CI](https://github.com/trifrost-js/core/actions/workflows/ci.yml/badge.svg)](https://github.com/trifrost-js/core/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/trifrost-js/core/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/trifrost-js/core/actions/workflows/github-code-scanning/codeql)
 [![npm](https://img.shields.io/npm/v/@trifrost/core.svg)](https://www.npmjs.com/package/@trifrost/core)
+[![npm](https://img.shields.io/npm/dm/@trifrost/core.svg)](https://www.npmjs.com/package/@trifrost/core)
 
 **TriFrost** is a blazing-fast, runtime-agnostic server framework built for the modern JavaScript ecosystem — from low-latency edge environments to traditional backend infrastructure.
 
