@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ## [Unreleased]
 ### Added
 - **misc**: Migrate existing tests using node assertion to vitest
+- **misc**: Add test runs to CI for both node (20, 22) and bun runtime jobs
+- **misc**: Add coverage reporting to codecov to CI
 - **deps**: vitest (dev dependency)
 - **deps**: @vitest/coverage-v8 (dev dependency)
 
