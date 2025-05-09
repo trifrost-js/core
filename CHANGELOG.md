@@ -13,6 +13,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **deps**: vitest (dev dependency)
 - **deps**: @vitest/coverage-v8 (dev dependency)
 
+### Improved
+- **feat**: MemoryCache will now by default act as an LRU (least-recently-used) cache, in addition to ttl-based. **By default any MemoryCache instance will now be limited to 1000 entries** and automatically evicted when its size grows above that (based on least recently used). You can configure this behavior by passing the optional `max_items` option which allows you to configure the MemoryCache's max item limit. Passing `max_items` as `null` disables the LRU eviction. For example:
+```typescript
+/**
+ * Default capped to 1000 entries.
+ */
+new MemoryCache();
+
+/**
+ * Capped to 500 entries.
+ */
+new MemoryCache({max_items: 500});
+
+/**
+ * Unbounded, no LRU eviction
+ */
+new MemoryCache({max_items: null});
+
+/**
+ * Of course can be combined with existing gc interval.
+ * Capped to 500 entries with garbage collection interval checks every second
+ */
+new MemoryCache({max_items: 500, gc_interval: 1_000});
+```
+
 ### Fixed
 - Fixed an issue in KV storage module where set would not work due to a conflicting object vs array conditional check
 - Fixed an issue in Redis storage module where set would not work due to a conflicting object vs array conditional check

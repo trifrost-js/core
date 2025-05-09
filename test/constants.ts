@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-array-constructor */
-
 function testFunction ():void {}
 const testArrowFunction = ():void => {};
 async function testAsync ():Promise<void> {}
