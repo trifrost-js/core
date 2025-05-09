@@ -33,7 +33,7 @@ describe('Modules - Storage - KV', () => {
             const result = await store.get('obj');
             expect(result).toEqual({x: 1});
             expect(kv.calls).toEqual([
-                ['put', ['obj', "{\"x\":1}", undefined]],
+                ['put', ['obj', '{"x":1}', undefined]],
                 ['get', ['obj', 'json']],
             ]);
         });
@@ -43,7 +43,7 @@ describe('Modules - Storage - KV', () => {
             const result = await store.get('val');
             expect(result).toEqual([0, 1, 2, {x: 1}]);
             expect(kv.calls).toEqual([
-                ['put', ['val', "[0,1,2,{\"x\":1}]", undefined]],
+                ['put', ['val', '[0,1,2,{"x":1}]', undefined]],
                 ['get', ['val', 'json']],
             ]);
         });
@@ -53,7 +53,7 @@ describe('Modules - Storage - KV', () => {
             const result = await store.get('bad-json');
             expect(result).toBeNull();
             expect(kv.calls).toEqual([
-                ['put', ['bad-json', "not:json", undefined]],
+                ['put', ['bad-json', 'not:json', undefined]],
                 ['get', ['bad-json', 'json']],
             ]);
         });
@@ -70,7 +70,7 @@ describe('Modules - Storage - KV', () => {
         it('Defaults TTL to 60 if not provided', async () => {
             await store.set('ttl-default', {hello: 'world'});
             expect(kv.calls).toEqual([
-                ['put', ['ttl-default', "{\"hello\":\"world\"}", {expirationTtl: 60}]],
+                ['put', ['ttl-default', '{"hello":"world"}', {expirationTtl: 60}]],
             ]);
         });
 
@@ -79,7 +79,7 @@ describe('Modules - Storage - KV', () => {
             const result = await store.get('thing');
             expect(result).toEqual({test: true});
             expect(kv.calls).toEqual([
-                ['put', ['thing', "{\"test\":true}", {expirationTtl: 60}]],
+                ['put', ['thing', '{"test":true}', {expirationTtl: 60}]],
                 ['get', ['thing', 'json']],
             ]);
         });
@@ -89,7 +89,7 @@ describe('Modules - Storage - KV', () => {
             const result = await store.get('thing');
             expect(result).toEqual([0, 1, 2, {test: true}]);
             expect(kv.calls).toEqual([
-                ['put', ['thing', "[0,1,2,{\"test\":true}]", {expirationTtl: 60}]],
+                ['put', ['thing', '[0,1,2,{"test":true}]', {expirationTtl: 60}]],
                 ['get', ['thing', 'json']],
             ]);
         });
@@ -97,7 +97,7 @@ describe('Modules - Storage - KV', () => {
         it('Respects provided TTL if valid', async () => {
             await store.set('ttl-key', {y: 2}, {ttl: 300});
             expect(kv.calls).toEqual([
-                ['put', ['ttl-key', "{\"y\":2}", {expirationTtl: 300}]],
+                ['put', ['ttl-key', '{"y":2}', {expirationTtl: 300}]],
             ]);
         });
 
@@ -105,7 +105,7 @@ describe('Modules - Storage - KV', () => {
             for (const el of [...CONSTANTS.NOT_INTEGER, 0, -1, 10.5]) {
                 await store.set('ttl-key', {y: 2}, {ttl: el as number});
                 expect(kv.calls).toEqual([
-                    ['put', ['ttl-key', "{\"y\":2}", {expirationTtl: 60}]],
+                    ['put', ['ttl-key', '{"y":2}', {expirationTtl: 60}]],
                 ]);
                 kv.reset();
             }
@@ -141,7 +141,7 @@ describe('Modules - Storage - KV', () => {
             expect(await store.get('toremove')).toBe(null);
 
             expect(kv.calls).toEqual([
-                ['put', ['toremove', "{\"z\":9}", {expirationTtl: 60}]],
+                ['put', ['toremove', '{"z":9}', {expirationTtl: 60}]],
                 ['get', ['toremove', 'json']],
                 ['delete', ['toremove']],
                 ['get', ['toremove', 'json']],

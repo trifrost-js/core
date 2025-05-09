@@ -33,7 +33,7 @@ describe('Modules - Storage - Redis', () => {
             const result = await store.get('obj');
             expect(result).toEqual({x: 1});
             expect(redis.calls).toEqual([
-                ['set', ['obj', "{\"x\":1}", []]],
+                ['set', ['obj', '{"x":1}', []]],
                 ['get', ['obj']],
             ]);
         });
@@ -43,7 +43,7 @@ describe('Modules - Storage - Redis', () => {
             const result = await store.get('arr');
             expect(result).toEqual([0, 1, 2]);
             expect(redis.calls).toEqual([
-                ['set', ['arr', "[0,1,2]", []]],
+                ['set', ['arr', '[0,1,2]', []]],
                 ['get', ['arr']],
             ]);
         });
@@ -53,7 +53,7 @@ describe('Modules - Storage - Redis', () => {
             const result = await store.get('bad-json');
             expect(result).toBe(null);
             expect(redis.calls).toEqual([
-                ['set', ['bad-json', "{invalid}", []]],
+                ['set', ['bad-json', '{invalid}', []]],
                 ['get', ['bad-json']],
             ]);
         });
@@ -70,21 +70,21 @@ describe('Modules - Storage - Redis', () => {
         it('Stores object with default TTL', async () => {
             await store.set('foo', {a: 1});
             expect(redis.calls).toEqual([
-                ['set', ['foo', "{\"a\":1}", ['EX', 60]]],
+                ['set', ['foo', '{"a":1}', ['EX', 60]]],
             ]);
         });
 
         it('Stores array with default TTL', async () => {
             await store.set('arr', [1, 2, 3]);
             expect(redis.calls).toEqual([
-                ['set', ['arr', "[1,2,3]", ['EX', 60]]],
+                ['set', ['arr', '[1,2,3]', ['EX', 60]]],
             ]);
         });
 
         it('Respects custom TTL', async () => {
             await store.set('foo', {x: 2}, {ttl: 120});
             expect(redis.calls).toEqual([
-                ['set', ['foo', "{\"x\":2}", ['EX', 120]]],
+                ['set', ['foo', '{"x":2}', ['EX', 120]]],
             ]);
         });
 
@@ -92,7 +92,7 @@ describe('Modules - Storage - Redis', () => {
             for (const el of [...CONSTANTS.NOT_INTEGER, 0, -1, 10.5]) {
                 await store.set('fallback', {y: 1}, {ttl: el as number});
                 expect(redis.calls).toEqual([
-                    ['set', ['fallback', "{\"y\":1}", ['EX', 60]]],
+                    ['set', ['fallback', '{"y":1}', ['EX', 60]]],
                 ]);
                 redis.reset();
             }
@@ -125,7 +125,7 @@ describe('Modules - Storage - Redis', () => {
             await store.set('to-del', {z: 9});
             await store.delete('to-del');
             expect(redis.calls).toEqual([
-                ['set', ['to-del', "{\"z\":9}", ['EX', 60]]],
+                ['set', ['to-del', '{"z":9}', ['EX', 60]]],
                 ['del', ['to-del']],
             ]);
         });
