@@ -41,100 +41,52 @@
     "sideEffects": false,
     "exports": {
         ".": {
-            "import": {
-                "default": "./index.js",
-                "types": "./index.d.ts"
-            },
-            "require": {
-                "default": "./index.js",
-                "types": "./index.d.ts"
-            },
-            "default": "./index.js",
-            "types": "./index.d.ts"
+            "types": "./index.d.ts",
+            "import": "./index.js",
+            "require": "./index.js",
+            "default": "./index.js"
         },
         "./jsx-runtime": {
-            "import": {
-                "default": "./jsx-runtime.js",
-                "types": "./jsx-runtime.d.ts"
-            },
-            "require": {
-                "default": "./jsx-runtime.js",
-                "types": "./jsx-runtime.d.ts"
-            },
-            "default": "./jsx-runtime.js",
-            "types": "./jsx-runtime.d.ts"
+            "types": "./jsx-runtime.d.ts",
+            "import": "./jsx-runtime.js",
+            "require": "./jsx-runtime.js",
+            "default": "./jsx-runtime.js"
         },
         "./middleware": {
-            "import": {
-                "default": "./middleware/index.js",
-                "types": "./middleware/index.d.ts"
-            },
-            "require": {
-                "default": "./middleware/index.js",
-                "types": "./middleware/index.d.ts"
-            },
-            "default": "./middleware/index.js",
-            "types": "./middleware/index.d.ts"
+            "types": "./middleware/index.d.ts",
+            "import": "./middleware/index.js",
+            "require": "./middleware/index.js",
+            "default": "./middleware/index.js"
         },
         "./modules": {
-            "import": {
-                "default": "./modules/index.js",
-                "types": "./modules/index.d.ts"
-            },
-            "require": {
-                "default": "./modules/index.js",
-                "types": "./modules/index.d.ts"
-            },
-            "default": "./modules/index.js",
-            "types": "./modules/index.d.ts"
+            "types": "./modules/index.d.ts",
+            "import": "./modules/index.js",
+            "require": "./modules/index.js",
+            "default": "./modules/index.js"
         },
         "./modules/Cache": {
-            "import": {
-                "default": "./modules/Cache/index.js",
-                "types": "./modules/Cache/index.d.ts"
-            },
-            "require": {
-                "default": "./modules/Cache/index.js",
-                "types": "./modules/Cache/index.d.ts"
-            },
-            "default": "./modules/Cache/index.js",
-            "types": "./modules/Cache/index.d.ts"
+            "types": "./modules/Cache/index.d.ts",
+            "import": "./modules/Cache/index.js",
+            "require": "./modules/Cache/index.js",
+            "default": "./modules/Cache/index.js"
         },
         "./modules/JSX": {
-            "import": {
-                "default": "./modules/JSX/index.js",
-                "types": "./modules/JSX/index.d.ts"
-            },
-            "require": {
-                "default": "./modules/JSX/index.js",
-                "types": "./modules/JSX/index.d.ts"
-            },
-            "default": "./modules/JSX/index.js",
-            "types": "./modules/JSX/index.d.ts"
+            "types": "./modules/JSX/index.d.ts",
+            "import": "./modules/JSX/index.js",
+            "require": "./modules/JSX/index.js",
+            "default": "./modules/JSX/index.js"
         },
         "./modules/Logger": {
-            "import": {
-                "default": "./modules/Logger/index.js",
-                "types": "./modules/Logger/index.d.ts"
-            },
-            "require": {
-                "default": "./modules/Logger/index.js",
-                "types": "./modules/Logger/index.d.ts"
-            },
-            "default": "./modules/Logger/index.js",
-            "types": "./modules/Logger/index.d.ts"
+            "types": "./modules/Logger/index.d.ts",
+            "import": "./modules/Logger/index.js",
+            "require": "./modules/Logger/index.js",
+            "default": "./modules/Logger/index.js"
         },
         "./modules/RateLimit": {
-            "import": {
-                "default": "./modules/RateLimit/index.js",
-                "types": "./modules/RateLimit/index.d.ts"
-            },
-            "require": {
-                "default": "./modules/RateLimit/index.js",
-                "types": "./modules/RateLimit/index.d.ts"
-            },
-            "default": "./modules/RateLimit/index.js",
-            "types": "./modules/RateLimit/index.d.ts"
+            "types": "./modules/RateLimit/index.d.ts",
+            "import": "./modules/RateLimit/index.js",
+            "require": "./modules/RateLimit/index.js",
+            "default": "./modules/RateLimit/index.js"
         }
     },
     "dependencies": {
