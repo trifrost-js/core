@@ -1,4 +1,4 @@
-import {type TriFrostStore} from '../../_stores';
+import {type TriFrostStore} from '../../_storage';
 import {
     type TriFrostRateLimitObject,
     type TriFrostRateLimitStrategizedStore,

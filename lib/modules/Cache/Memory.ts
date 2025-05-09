@@ -1,6 +1,6 @@
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {type LazyInitFn} from '../../utils/Lazy';
-import {MemoryStore} from '../_stores/Memory';
+import {MemoryStore} from '../_storage/Memory';
 import {TriFrostCache} from './_Cache';
 
 export class MemoryCache <Env extends Record<string, any> = Record<string, any>> extends TriFrostCache<Env> {

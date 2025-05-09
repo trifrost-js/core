@@ -6,4 +6,6 @@ export interface TriFrostStore <T extends TriFrostStoreValue = Record<string, un
     set (key: string, value: T, opts?: {ttl?: number}): Promise<void>;
 
     delete(key: string):Promise<void>;
+
+    stop ():Promise<void>;
 }

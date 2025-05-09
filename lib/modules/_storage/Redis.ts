@@ -7,7 +7,7 @@ import {
     type TriFrostStoreValue,
 } from './types';
 
-export class RedisStore <T extends TriFrostStoreValue = Record<string, unknown>> implements TriFrostStore<T> {
+export class RedisStore <T extends TriFrostStoreValue = Record<string, unknown>|unknown[]> implements TriFrostStore<T> {
 
     #redis:TriFrostRedis;
 
@@ -29,10 +29,7 @@ export class RedisStore <T extends TriFrostStoreValue = Record<string, unknown>>
 
     async set (key:string, value:T, opts?:{ttl?:number}): Promise<void> {
         if (!isNeString(key)) throw new Error('TriFrostRedisStore@set: Invalid key');
-        if (
-            !isObject(value) ||
-            !Array.isArray(value)
-        ) throw new Error('TriFrostRedisStore@set: Invalid value');
+        if (!isObject(value) && !Array.isArray(value)) throw new Error('TriFrostRedisStore@set: Invalid value');
 
         const TTL = isIntGt(opts?.ttl, 0) ? opts.ttl : 60;
         await this.#redis.set(key, JSON.stringify(value), 'EX', TTL);
@@ -41,6 +38,10 @@ export class RedisStore <T extends TriFrostStoreValue = Record<string, unknown>>
     async delete (key:string):Promise<void> {
         if (!isNeString(key)) throw new Error('TriFrostRedisStore@delete: Invalid key');
         await this.#redis.del(key);
+    }
+
+    async stop () {
+        /* Nothing to do here */
     }
 
 }

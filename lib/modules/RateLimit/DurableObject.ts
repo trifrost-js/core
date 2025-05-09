@@ -1,6 +1,6 @@
 import {type TriFrostCFDurableObjectNamespace} from '../../types/providers';
 import {type LazyInitFn} from '../../utils/Lazy';
-import {DurableObjectStore} from '../_stores/DurableObject';
+import {DurableObjectStore} from '../_storage/DurableObject';
 import {
     TriFrostRateLimit,
     type TriFrostRateLimitStrategy,

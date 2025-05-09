@@ -1,6 +1,6 @@
 import {type TriFrostRedis} from '../../types/providers';
 import {type LazyInitFn} from '../../utils/Lazy';
-import {RedisStore} from '../_stores/Redis';
+import {RedisStore} from '../_storage/Redis';
 import {
     TriFrostRateLimit,
     type TriFrostRateLimitStrategy,

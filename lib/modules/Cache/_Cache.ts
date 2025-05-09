@@ -5,7 +5,7 @@ import {
 import {
     type TriFrostStore,
     type TriFrostStoreValue,
-} from '../_stores/types';
+} from '../_storage/types';
 
 export class TriFrostCache <Env extends Record<string, any> = Record<string, any>> {
 

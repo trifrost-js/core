@@ -65,4 +65,8 @@ export class DurableObjectStore <T extends TriFrostStoreValue = Record<string, u
         }
     }
 
+    async stop () {
+        /* Nothing to do here */
+    }
+
 }

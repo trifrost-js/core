@@ -42,20 +42,13 @@ export class MemoryStore <T extends TriFrostStoreValue = Record<string, unknown>
         return val.value as T;
     }
 
-    async has (key:string) {
-        return typeof key === 'string' && this.#store.has(key);
-    }
-
     async set (
         key: string,
         value: T,
         opts?: {ttl?: number}
     ): Promise<void> {
         if (!isNeString(key)) throw new Error('TriFrostMemoryStore@set: Invalid key');
-        if (
-            !isObject(value) &&
-            !Array.isArray(value)
-        ) throw new Error('TriFrostMemoryStore@set: Invalid value');
+        if (!isObject(value) && !Array.isArray(value)) throw new Error('TriFrostMemoryStore@set: Invalid value');
 
         const expires = isIntGt(opts?.ttl, 0)
             ? Date.now() + (opts.ttl * 1000)
@@ -65,11 +58,10 @@ export class MemoryStore <T extends TriFrostStoreValue = Record<string, unknown>
 
     async delete (key: string): Promise<void> {
         if (!isNeString(key)) throw new Error('TriFrostMemoryStore@delete: Invalid key');
-
         this.#store.delete(key);
     }
 
-    stop () {
+    async stop () {
         if (!this.#gc) return;
         clearInterval(this.#gc);
         this.#gc = null;

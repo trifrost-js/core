@@ -2,7 +2,7 @@
 
 import {Lazy, type LazyInitFn} from '../../utils/Lazy';
 import {type TriFrostContext} from '../../types/context';
-import {type TriFrostStore} from '../_stores';
+import {type TriFrostStore} from '../_storage';
 import {type TriFrostMiddleware} from '../../types/routing';
 import {
     Sym_TriFrostDescription,

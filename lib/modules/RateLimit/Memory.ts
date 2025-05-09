@@ -1,6 +1,6 @@
 import {isNeArray} from '@valkyriestudios/utils/array';
 import {type LazyInitFn} from '../../utils/Lazy';
-import {MemoryStore} from '../_stores/Memory';
+import {MemoryStore} from '../_storage/Memory';
 import {type TriFrostRateLimitObject} from './strategies/_Strategy';
 import {
     TriFrostRateLimit,

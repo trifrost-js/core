@@ -7,7 +7,7 @@ import {
     type TriFrostStoreValue,
 } from './types';
 
-export class KVStore <T extends TriFrostStoreValue = Record<string, unknown>> implements TriFrostStore<T> {
+export class KVStore <T extends TriFrostStoreValue = Record<string, unknown>|unknown[]> implements TriFrostStore<T> {
 
     #kv:TriFrostCFKVNamespace;
 
@@ -24,10 +24,7 @@ export class KVStore <T extends TriFrostStoreValue = Record<string, unknown>> im
 
     async set (key:string, value:T, opts?:{ttl?:number}): Promise<void> {
         if (!isNeString(key)) throw new Error('TriFrostKVStore@set: Invalid key');
-        if (
-            !isObject(value) ||
-            !Array.isArray(value)
-        ) throw new Error('TriFrostKVStore@set: Invalid value');
+        if (!isObject(value) && !Array.isArray(value)) throw new Error('TriFrostKVStore@set: Invalid value');
 
         await this.#kv.put(key, JSON.stringify(value), {
             expirationTtl: isIntGt(opts?.ttl, 0) ? opts.ttl : 60,
@@ -37,6 +34,10 @@ export class KVStore <T extends TriFrostStoreValue = Record<string, unknown>> im
     async delete (key:string):Promise<void> {
         if (!isNeString(key)) throw new Error('TriFrostKVStore@delete: Invalid key');
         await this.#kv.delete(key);
+    }
+
+    async stop () {
+        /* Nothing to do here */
     }
 
 }
