@@ -18,13 +18,14 @@ new MemoryCache({max_items: null});
 ```
 - **perf**: Improved `ctx.ip` resolution when `trustProxy` is enabled: the header containing a valid IP is now promoted to the front of the candidate list for future lookups, improving subsequent request performance.
 - **misc**: RedisRateLimit, KVRateLimit and DurableObjectRateLimit will now throw if not called with a store initializer
+- **deps**: Upgrade @types/node to 22.15.17
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250510.0
 
 ## [0.3.0] - 2025-05-10
 ### Added
 - **misc**: Migrate existing tests using node assertion to vitest
 - **misc**: Add test runs to CI for both node (20, 22) and bun runtime jobs
 - **misc**: Add coverage reporting to codecov to CI
-- **misc**: Add tests for KV, Redis, Memory, DurableObject storage modules
 - **deps**: vitest (dev dependency)
 - **deps**: @vitest/coverage-v8 (dev dependency)
 
