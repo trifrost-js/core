@@ -11,10 +11,8 @@ export class TriFrostCache <Env extends Record<string, any> = Record<string, any
 
     #store: Lazy<TriFrostStore, Env>;
 
-    constructor (cfg:{
-        store: LazyInitFn<TriFrostStore, Env>
-    }) {
-        this.#store = new Lazy(cfg.store);
+    constructor (opts:{store: LazyInitFn<TriFrostStore, Env>}) {
+        this.#store = new Lazy(opts.store);
     }
 
     init (env:Env) {
@@ -64,11 +62,13 @@ export class TriFrostCache <Env extends Record<string, any> = Record<string, any
         return value;
     }
 
-    stop () {
-        if (
-            'stop' in this.#store &&
-            typeof this.#store.stop === 'function'
-        ) this.#store.stop();
+    /**
+     * Stops the cache, for most storage adapters this is a no-op, but some storage adapters (eg: Memory) use
+     * this to kill internal timers and what not.
+     */
+    async stop () {
+        if (!this.#store.resolved) return;
+        await this.#store.resolved.stop();
     }
 
 }

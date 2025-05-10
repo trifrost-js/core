@@ -52,6 +52,32 @@ describe('MemoryStore', () => {
             expect(await store.get('expiring')).toBeNull();
         });
 
+        it('[is:slow] Removes expired key from both store and LRU via get()', async () => {
+            const lruStore = new MemoryStore({
+                max_items: 3,
+                /* no gc_interval on purpose */
+            });
+
+            /* Expires in 1s */
+            await lruStore.set('a', {foo: 1}, {ttl: 1});
+            await lruStore.set('b', {foo: 2});
+            /* wait for 'a' to expire */
+            await sleep(1010);
+
+            /* Accessing 'a' should trigger internal TTL logic and remove from both store + LRU */
+            const result = await lruStore.get('a');
+            expect(result).toBe(null);
+
+            /* Add two more entries to trigger LRU logic */
+            await lruStore.set('c', {foo: 3});
+            await lruStore.set('d', {foo: 4});
+
+            /* Only b, c, d should remain — 'a' must not have blocked eviction */
+            expect(await lruStore.get('b')).toEqual({foo: 2});
+            expect(await lruStore.get('c')).toEqual({foo: 3});
+            expect(await lruStore.get('d')).toEqual({foo: 4});
+        });
+
         it('Throws on invalid key', async () => {
             for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
                 await expect(store.get(el as string)).rejects.toThrow(/TriFrostMemoryStore@get: Invalid key/);
@@ -117,7 +143,7 @@ describe('MemoryStore', () => {
     });
 
     describe('behavior:GC', () => {
-        it('[intentional slow] Automatically removes expired items when gc_interval is set', async () => {
+        it('[is:slow] Automatically removes expired items when gc_interval is set', async () => {
             const storeWithGC = new MemoryStore({gc_interval: 10});
             await storeWithGC.set('foo', {x: 1}, {ttl: 1});
             await sleep(1100);
@@ -231,6 +257,85 @@ describe('MemoryStore', () => {
             expect(await lruStore.get('y')).toEqual({foo: 2});
             expect(await lruStore.get('z')).toEqual({foo: 3});
             expect(await lruStore.get('w')).toEqual({foo: 4});
+        });
+    });
+
+    describe('behavior:GC_LRU', () => {
+        it('[is:slow] Evicts expired keys via GC and then oldest via LRU', async () => {
+            const gcLruStore = new MemoryStore({
+                gc_interval: 10,
+                max_items: 2,
+            });
+
+            /* Set two keys, one will expire */
+            await gcLruStore.set('a', {v: 1}, {ttl: 1});
+            await gcLruStore.set('b', {v: 2});
+
+            /* Allow GC to clean up 'a' */
+            await sleep(1100);
+
+            /* Now add a new key, LRU should not evict anything since 'a' is gone */
+            await gcLruStore.set('c', {v: 3});
+
+            expect(await gcLruStore.get('a')).toBe(null);
+            expect(await gcLruStore.get('b')).toEqual({v: 2});
+            expect(await gcLruStore.get('c')).toEqual({v: 3});
+
+            await gcLruStore.stop();
+        });
+
+        it('Does not exceed max_items when GC runs', async () => {
+            const gcLruStore = new MemoryStore({
+                gc_interval: 10,
+                max_items: 2,
+            });
+
+            await gcLruStore.set('x', {v: 1});
+            await gcLruStore.set('y', {v: 2});
+            /* LRU should evict 'x' */
+            await gcLruStore.set('z', {v: 3});
+
+            /* Let gc interval run, this won't do anything but we should not see gc evictions */
+            await sleep(20);
+
+            /* Should evict 'y' */
+            await gcLruStore.set('w', {v: 4});
+
+            const keys = ['x', 'y', 'z', 'w'];
+            const values = await Promise.all(keys.map(k => gcLruStore.get(k)));
+
+            expect(values[0]).toBe(null);
+            expect(values[1]).toBe(null);
+            expect(values[2]).toEqual({v: 3});
+            expect(values[3]).toEqual({v: 4});
+
+            await gcLruStore.stop();
+        });
+
+        it('Handles GC-filtered values + LRU without conflict', async () => {
+            const gcLruStore = new MemoryStore({
+                gc_interval: 10,
+                max_items: 3,
+                gc_filter: (key, val) => (val as any).evict === true,
+            });
+
+            /* Filtered out by GC */
+            await gcLruStore.set('1', {evict: true} as any);  
+            await gcLruStore.set('2', {evict: false} as any);
+            await gcLruStore.set('3', {evict: false} as any);
+
+            /* Let GC evict */
+            await sleep(20);                             
+
+            /* Should not evict '2' as '1' should have already been evicted */
+            await gcLruStore.set('4', {evict: false} as any);
+
+            expect(await gcLruStore.get('1')).toBe(null);
+            expect(await gcLruStore.get('2')).toEqual({evict: false});
+            expect(await gcLruStore.get('3')).toEqual({evict: false});
+            expect(await gcLruStore.get('4')).toEqual({evict: false});
+
+            await gcLruStore.stop();
         });
     });
 });

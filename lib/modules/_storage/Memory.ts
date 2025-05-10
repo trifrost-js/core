@@ -1,3 +1,4 @@
+import {isArray} from '@valkyriestudios/utils/array';
 import {isFunction} from '@valkyriestudios/utils/function';
 import {isObject} from '@valkyriestudios/utils/object';
 import {isIntGt} from '@valkyriestudios/utils/number';
@@ -79,7 +80,7 @@ export class MemoryStore <T extends TriFrostStoreValue = TriFrostStoreValue> imp
         opts?: {ttl?: number}
     ): Promise<void> {
         if (!isNeString(key)) throw new Error('TriFrostMemoryStore@set: Invalid key');
-        if (!isObject(value) && !Array.isArray(value)) throw new Error('TriFrostMemoryStore@set: Invalid value');
+        if (!isObject(value) && !isArray(value)) throw new Error('TriFrostMemoryStore@set: Invalid value');
 
         /* If configured as an LRU, update and see if we need to evict any keys */
         if (this.isLRU) {

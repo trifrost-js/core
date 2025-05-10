@@ -1,3 +1,4 @@
+import {isArray} from '@valkyriestudios/utils/array';
 import {isObject} from '@valkyriestudios/utils/object';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {isNeString} from '@valkyriestudios/utils/string';
@@ -19,12 +20,12 @@ export class KVStore <T extends TriFrostStoreValue = TriFrostStoreValue> impleme
         if (!isNeString(key)) throw new Error('TriFrostKVStore@get: Invalid key');
 
         const val = await this.#kv.get<T>(key, 'json');
-        return isObject(val) || Array.isArray(val) ? val as T : null;
+        return isObject(val) || isArray(val) ? val as T : null;
     }
 
     async set (key:string, value:T, opts?:{ttl?:number}): Promise<void> {
         if (!isNeString(key)) throw new Error('TriFrostKVStore@set: Invalid key');
-        if (!isObject(value) && !Array.isArray(value)) throw new Error('TriFrostKVStore@set: Invalid value');
+        if (!isObject(value) && !isArray(value)) throw new Error('TriFrostKVStore@set: Invalid value');
 
         await this.#kv.put(key, JSON.stringify(value), {
             expirationTtl: isIntGt(opts?.ttl, 0) ? opts.ttl : 60,

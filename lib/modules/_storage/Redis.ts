@@ -1,3 +1,4 @@
+import {isArray} from '@valkyriestudios/utils/array';
 import {isObject} from '@valkyriestudios/utils/object';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {isNeString} from '@valkyriestudios/utils/string';
@@ -29,7 +30,7 @@ export class RedisStore <T extends TriFrostStoreValue = TriFrostStoreValue> impl
 
     async set (key:string, value:T, opts?:{ttl?:number}): Promise<void> {
         if (!isNeString(key)) throw new Error('TriFrostRedisStore@set: Invalid key');
-        if (!isObject(value) && !Array.isArray(value)) throw new Error('TriFrostRedisStore@set: Invalid value');
+        if (!isObject(value) && !isArray(value)) throw new Error('TriFrostRedisStore@set: Invalid value');
 
         const TTL = isIntGt(opts?.ttl, 0) ? opts.ttl : 60;
         await this.#redis.set(key, JSON.stringify(value), 'EX', TTL);

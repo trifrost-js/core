@@ -1,3 +1,4 @@
+import {isArray} from '@valkyriestudios/utils/array';
 import {isObject} from '@valkyriestudios/utils/object';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {isNeString} from '@valkyriestudios/utils/string';
@@ -25,7 +26,7 @@ export class DurableObjectStore <T extends TriFrostStoreValue = TriFrostStoreVal
     }
 
     private keyUrl (key:string) {
-        return `https://do/trifrost-${this.#path}?key=${encodeURIComponent(key)}`;
+        return 'https://do/trifrost-' + this.#path + '?key=' + encodeURIComponent(key);
     }
 
     async get (key:string): Promise<T|null> {
@@ -36,7 +37,7 @@ export class DurableObjectStore <T extends TriFrostStoreValue = TriFrostStoreVal
 
         try {
             const data = await res.json();
-            return isObject(data) || Array.isArray(data) ? data as T : null;
+            return isObject(data) || isArray(data) ? data as T : null;
         } catch {
             return null;
         }
@@ -44,7 +45,7 @@ export class DurableObjectStore <T extends TriFrostStoreValue = TriFrostStoreVal
 
     async set (key:string, value:T, opts?:{ttl?:number}):Promise<void> {
         if (!isNeString(key)) throw new Error('TriFrostDurableObjectStore@set: Invalid key');
-        if (!isObject(value) && !Array.isArray(value)) throw new Error('TriFrostDurableObjectStore@set: Invalid value');
+        if (!isObject(value) && !isArray(value)) throw new Error('TriFrostDurableObjectStore@set: Invalid value');
 
         await this.#ns.get(this.#id).fetch(this.keyUrl(key), {
             method: 'PUT',
@@ -60,7 +61,7 @@ export class DurableObjectStore <T extends TriFrostStoreValue = TriFrostStoreVal
         if (!isNeString(key)) throw new Error('TriFrostDurableObjectStore@delete: Invalid key');
 
         const res = await this.#ns.get(this.#id).fetch(this.keyUrl(key), {method: 'DELETE'});
-        if (!res.ok && res.status !== 404) {
+        if (!res?.ok && res?.status !== 404) {
             throw new Error(`TriFrostDurableObjectStore@delete: Failed with status ${res.status}`);
         }
     }
