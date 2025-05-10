@@ -4,17 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] - 2025-05-10
 ### Added
 - **misc**: Migrate existing tests using node assertion to vitest
 - **misc**: Add test runs to CI for both node (20, 22) and bun runtime jobs
 - **misc**: Add coverage reporting to codecov to CI
-- **misc**: Add tests for KV, Redis storage modules
+- **misc**: Add tests for KV, Redis, Memory, DurableObject storage modules
 - **deps**: vitest (dev dependency)
 - **deps**: @vitest/coverage-v8 (dev dependency)
 
 ### Improved
-- **feat**: MemoryCache will now by default act as an LRU (least-recently-used) cache, in addition to ttl-based. **By default any MemoryCache instance will now be limited to 1000 entries** and automatically evicted when its size grows above that (based on least recently used). You can configure this behavior by passing the optional `max_items` option which allows you to configure the MemoryCache's max item limit. Passing `max_items` as `null` disables the LRU eviction. For example:
+- **feat**: MemoryStore now has built-in LRU capabilities that work seamlessly with the built-in TTL behaviors. These are **not enabled by default** and can be enabled by passing `max_items` options.
+- **feat**: MemoryCache (which runs on MemoryStore) will now by default act as an LRU (least-recently-used) cache, in addition to ttl-based. **By default any MemoryCache instance will now be limited to 1000 entries** and automatically evicted when its size grows above that (based on least recently used). You can configure this behavior by passing the optional `max_items` option which allows you to configure the MemoryCache's max item limit. Passing `max_items` as `null` disables the LRU eviction. For example:
 ```typescript
 /**
  * Default capped to 1000 entries.
