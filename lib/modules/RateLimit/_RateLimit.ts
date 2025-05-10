@@ -140,22 +140,22 @@ export class TriFrostRateLimit <Env extends Record<string, any> = Record<string,
             if (usage.amt > n_limit) {
                 if (this.#headers) {
                     ctx.setHeaders({
-                        'Retry-After': `${Math.ceil((usage.reset - Date.now()) / 1000)}`,
-                        'X-RateLimit-Limit': `${n_limit}`,
+                        'Retry-After': Math.ceil((usage.reset - Date.now()) / 1000),
+                        'X-RateLimit-Limit': n_limit,
                         'X-RateLimit-Remaining': '0',
-                        'X-RateLimit-Reset': `${Math.floor(usage.reset / 1000)}`,
+                        'X-RateLimit-Reset': Math.floor(usage.reset / 1000),
                     });
                 } else {
-                    ctx.setHeader('Retry-After', `${Math.ceil((usage.reset - Date.now())/1000)}`);
+                    ctx.setHeader('Retry-After', Math.ceil((usage.reset - Date.now())/1000));
                 }
                 return this.#exceeded(ctx);
             }
 
             if (this.#headers) {
                 ctx.setHeaders({
-                    'X-RateLimit-Limit': `${n_limit}`,
-                    'X-RateLimit-Remaining': `${n_limit - usage.amt}`,
-                    'X-RateLimit-Reset': `${Math.floor(usage.reset / 1000)}`,
+                    'X-RateLimit-Limit': n_limit,
+                    'X-RateLimit-Remaining': n_limit - usage.amt,
+                    'X-RateLimit-Reset': Math.floor(usage.reset / 1000),
                 });
             }
         };

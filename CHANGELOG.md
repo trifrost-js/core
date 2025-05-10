@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 ### Improved
+- **feat**: `ctx.setHeader` now accepts `number` values and will coerce them to strings internally.
+- **feat**: `ctx.setHeaders` now accepts `number` values in the object and coerces them to strings.
 - **feat**: Passing `max_items` as `null` to MemoryCache will now disable the LRU added in trifrost 0.3.0. For example:
 ```typescript
 /* Capped to 500 entries */

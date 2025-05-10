@@ -406,9 +406,9 @@ export abstract class Context <
      * Example:
      *  ctx.setHeader('Content-Type', 'application/json');
      */
-    setHeader (key:string, value:string):void {
-        if (typeof key !== 'string' || typeof value !== 'string') return;
-        this.res_headers[key] = value;
+    setHeader (key:string, val:string|number):void {
+        if (typeof key !== 'string') return;
+        this.res_headers[key] = String(val);
     }
 
     /**
@@ -417,11 +417,8 @@ export abstract class Context <
      * Example:
      *  ctx.setHeader('Content-Type', 'application/json');
      */
-    setHeaders (obj: Record<string, string>):void {
-        for (const key in obj) {
-            const val = obj[key];
-            if (typeof val === 'string') this.res_headers[key] = val;
-        }
+    setHeaders (obj: Record<string, string|number>):void {
+        for (const key in obj) this.res_headers[key] = String(obj[key]);
     }
 
     /**

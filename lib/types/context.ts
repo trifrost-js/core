@@ -113,8 +113,8 @@ export type TriFrostContext<
     setState: <Patch extends Record<string, unknown>>(patch: Patch) => TriFrostContext<Env, State & Patch>;
     delState: <K extends keyof State>(keys: K[]) => TriFrostContext<Env, Omit<State, K>>;
 
-    setHeader: (key:string, value:string) => void;
-    setHeaders: (obj: Record<string, string>) => void;
+    setHeader: (key:string, value:string|number) => void;
+    setHeaders: (obj: Record<string, string|number>) => void;
     delHeader: (key:string) => void;
 
     setType: (val:MimeType) => void;
