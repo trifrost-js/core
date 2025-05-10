@@ -1,4 +1,4 @@
-/* eslint-disable complexity,@typescript-eslint/no-empty-object-type */
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 
 import {join} from '@valkyriestudios/utils/array';
 import {noopresolve} from '@valkyriestudios/utils/function';

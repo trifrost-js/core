@@ -20,6 +20,10 @@ export class TriFrostCache <Env extends Record<string, any> = Record<string, any
         this.#store.resolve({env});
     }
 
+    protected get resolvedStore (): TriFrostStore|null {
+        return this.#store?.resolved;
+    }
+
     async get<TVal extends TriFrostStoreValue = TriFrostStoreValue> (
         key: string
     ): Promise<TVal | null> {
