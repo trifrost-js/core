@@ -56,6 +56,24 @@ const RGX_PROTO = /^((http:\/\/)|(https:\/\/))/;
 const RGX_IP = /^(?:\d{1,3}\.){3}\d{1,3}$|^(?:[A-Fa-f0-9]{1,4}:){2,7}[A-Fa-f0-9]{1,4}$/;
 const RGX_URL = /^(https?:\/\/)[^\s/$.?#].[^\s]*$/i;
 
+/**
+ * Used to get ip from headers under a trusted proxy, take note that this array will
+ * be re-ordered automatically.
+ */
+const IP_HEADER_CANDIDATES:string[] = [
+    'x-client-ip',
+    'x-forwarded-for',
+    'cf-connecting-ip',
+    'fastly-client-ip',
+    'true-client-ip',
+    'x-real-ip',
+    'x-cluster-client-ip',
+    'x-forwarded',
+    'forwarded-for',
+    'forwarded',
+    'x-appengine-user-ip',
+];
+
 export abstract class Context <
     Env extends Record<string, any> = {},
     State extends Record<string, unknown> = {}
@@ -341,7 +359,7 @@ export abstract class Context <
      */
     delState <K extends keyof State> (keys: K[]) {
         /* Delete each key from the copy */
-        for (const key of keys) delete this.#state[key];
+        for (let i = 0; i < keys.length; i++) delete this.#state[keys[i]];
         return this as TriFrostContext<Env, Omit<State, K>>;
     }
 
@@ -768,36 +786,28 @@ export abstract class Context <
     #getIPFromHeaders ():string|null {
         if (this.ctx_config.trustProxy !== true) return null;
 
-        const {
-            'x-client-ip': xClientIp,
-            'x-forwarded-for': xForwardedFor,
-            'cf-connecting-ip': cfConnectingIp,
-            'fastly-client-ip': fastlyClientIp,
-            'true-client-ip': trueClientIp,
-            'x-real-ip': xRealIp,
-            'x-cluster-client-ip': xClusterClientIp,
-            'x-forwarded': xForwarded,
-            'forwarded-for': forwardedFor,
-            forwarded,
-            'x-appengine-user-ip': appEngineIp,
-        } = this.headers;
+        const headers = this.headers;
+        for (let i = 0; i < IP_HEADER_CANDIDATES.length; i++) {
+            const name = IP_HEADER_CANDIDATES[i];
+            let val = headers[name];
+            if (typeof val !== 'string') continue;
+            
+            val = val.trim();
+            if (!val.length) continue;
+    
+            const candidate:string|null = name === 'x-forwarded-for'
+                ? val.split(',', 1)[0]?.trim() ?? null
+                : val;
+            if (!candidate || !RGX_IP.test(candidate)) continue;
 
-        if (xClientIp && RGX_IP.test(xClientIp)) return xClientIp;
-
-        if (xForwardedFor && typeof xForwardedFor === 'string') {
-            const ip = xForwardedFor.split(',', 1)[0]?.trim();
-            if (ip && RGX_IP.test(ip)) return ip;
+            /* Promote to front of the array for next call */
+            if (i !== 0) {
+                IP_HEADER_CANDIDATES.splice(i, 1);
+                IP_HEADER_CANDIDATES.unshift(name);
+            }
+            return candidate;
         }
 
-        if (cfConnectingIp && RGX_IP.test(cfConnectingIp)) return cfConnectingIp;
-        if (fastlyClientIp && RGX_IP.test(fastlyClientIp)) return fastlyClientIp;
-        if (trueClientIp && RGX_IP.test(trueClientIp)) return trueClientIp;
-        if (xRealIp && RGX_IP.test(xRealIp)) return xRealIp;
-        if (xClusterClientIp && RGX_IP.test(xClusterClientIp)) return xClusterClientIp;
-        if (xForwarded && RGX_IP.test(xForwarded)) return xForwarded;
-        if (forwardedFor && RGX_IP.test(forwardedFor)) return forwardedFor;
-        if (forwarded && RGX_IP.test(forwarded)) return forwarded;
-        if (appEngineIp && RGX_IP.test(appEngineIp)) return appEngineIp;
         return null;
     }
 
