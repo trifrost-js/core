@@ -49,4 +49,8 @@ export class Fixed implements TriFrostRateLimitStrategizedStore {
         return {amt, reset};
     }
 
+    async stop () {
+        await this.#store.stop();
+    }
+
 }

@@ -17,6 +17,7 @@ new MemoryCache({max_items: 500});
 new MemoryCache({max_items: null});
 ```
 - **perf**: Improved `ctx.ip` resolution when `trustProxy` is enabled: the header containing a valid IP is now promoted to the front of the candidate list for future lookups, improving subsequent request performance.
+- **misc**: RedisRateLimit, KVRateLimit and DurableObjectRateLimit will now throw if not called with a store initializer
 
 ## [0.3.0] - 2025-05-10
 ### Added

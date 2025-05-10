@@ -67,9 +67,9 @@ export const TriFrostRateLimitKeyGeneratorRegistry:Record<TriFrostRateLimitKeyGe
  * TriFrost RateLimit Options
  */
 export type TriFrostRateLimitOptions <Env extends Record<string, any> = {}> = {
-    strategy  : TriFrostRateLimitStrategy;
+    strategy? : TriFrostRateLimitStrategy;
     store     : LazyInitFn<TriFrostStore, Env>;
-    window    : number;
+    window?   : number;
     keygen?   : TriFrostRateLimitKeyGenerator | TriFrostRateLimitKeyGeneratorFn;
     exceeded? : TriFrostRateLimitExceededFunction;
     headers?  : boolean;
@@ -103,11 +103,13 @@ export class TriFrostRateLimit <Env extends Record<string, any> = Record<string,
 
         /* Create lazy store */
         this.#store = new Lazy<TriFrostRateLimitStrategizedStore, Env>((opts:{env:Env}) => {
+            const window = isIntGt(options?.window, 0) ? options?.window : 60_000;
+
             switch (options.strategy) {
                 case 'sliding':
-                    return new Sliding(options.window, options.store(opts) as unknown as TriFrostStore<number[]>);
+                    return new Sliding(window, options.store(opts) as unknown as TriFrostStore<number[]>);
                 default:
-                    return new Fixed(options.window, options.store(opts) as unknown as TriFrostStore<TriFrostRateLimitObject>);
+                    return new Fixed(window, options.store(opts) as unknown as TriFrostStore<TriFrostRateLimitObject>);
             }
         });
     }
@@ -172,15 +174,10 @@ export class TriFrostRateLimit <Env extends Record<string, any> = Record<string,
 
     /**
      * This function is meant specifically to call a 'stop' function on implementing stores.
-     * Not all stores have this as such the check for existence prior to calling.
      */
     stop () {
-        if (
-            !this.#store.resolved ||
-            !('stop' in this.#store.resolved) ||
-            typeof this.#store.resolved.stop !== 'function'
-        ) return;
-        this.#store.resolved?.stop?.();
+        if (!this.#store.resolved) return;
+        this.#store.resolved.stop();
     }
 
 }

@@ -48,4 +48,8 @@ export class Sliding implements TriFrostRateLimitStrategizedStore {
         return {amt: timestamps.length, reset};
     }
 
+    async stop () {
+        await this.#store.stop();
+    }
+
 }

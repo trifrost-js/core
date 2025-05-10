@@ -14,4 +14,6 @@ export interface TriFrostRateLimitStrategizedStore {
 
     consume: (key:string, limit:number) => Promise<TriFrostRateLimitObject>;
 
+    stop ():Promise<void>;
+
 }
