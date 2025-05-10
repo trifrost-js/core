@@ -74,5 +74,17 @@ If you're early-adopting:
 
 ---
 
+## 🤝 Contributing
+Contributions are very welcome!
+
+If you're looking to get involved:
+- 📄 Check the [open issues](https://github.com/trifrost-js/core/issues) or [discussion threads](https://github.com/trifrost-js/core/discussions)
+- 🧪 Run tests with `npm run test` or check coverage with `npm run test:coverage`
+- 🔧 Code is written in modern TypeScript — **type safety and performance matter**
+
+Whether it's a bug fix, new module, test case, or doc improvement — PRs are appreciated and reviewed quickly.
+
+---
+
 ## 👤 Author
 Created and maintained by [Peter Vermeulen](https://github.com/peterver)
