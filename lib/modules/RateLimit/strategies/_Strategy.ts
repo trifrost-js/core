@@ -7,7 +7,7 @@ export type TriFrostRateLimitObject = {
 }
 
 /**
- * Interface a TriFrost RateLimit store should satisfy
+ * Interface a TriFrost RateLimit strategy should satisfy
  */
 export interface TriFrostRateLimitStrategizedStore {
     get window () :number;

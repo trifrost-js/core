@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 ### Improved
+- **feat**: Passing `max_items` as `null` to MemoryCache will now disable the LRU added in trifrost 0.3.0. For example:
+```typescript
+/* Capped to 500 entries */
+new MemoryCache({max_items: 500});
+
+/* (NEW) Unbounded, no LRU eviction */
+new MemoryCache({max_items: null});
+```
 - **perf**: Improved `ctx.ip` resolution when `trustProxy` is enabled: the header containing a valid IP is now promoted to the front of the candidate list for future lookups, improving subsequent request performance.
 
 ## [0.3.0] - 2025-05-10
@@ -19,7 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Improved
 - **feat**: MemoryStore now has built-in LRU capabilities that work seamlessly with the built-in TTL behaviors. These are **not enabled by default** and can be enabled by passing `max_items` options.
-- **feat**: MemoryCache (which runs on MemoryStore) will now by default act as an LRU (least-recently-used) cache, in addition to ttl-based. **By default any MemoryCache instance will now be limited to 1000 entries** and automatically evicted when its size grows above that (based on least recently used). You can configure this behavior by passing the optional `max_items` option which allows you to configure the MemoryCache's max item limit. Passing `max_items` as `null` disables the LRU eviction. For example:
+- **feat**: MemoryCache (which runs on MemoryStore) will now by default act as an LRU (least-recently-used) cache, in addition to ttl-based. **By default any MemoryCache instance will now be limited to 1000 entries** and automatically evicted when its size grows above that (based on least recently used). You can configure this behavior by passing the optional `max_items` option which allows you to configure the MemoryCache's max item limit. For Example:
 ```typescript
 /**
  * Default capped to 1000 entries.
@@ -30,11 +38,6 @@ new MemoryCache();
  * Capped to 500 entries.
  */
 new MemoryCache({max_items: 500});
-
-/**
- * Unbounded, no LRU eviction
- */
-new MemoryCache({max_items: null});
 
 /**
  * Of course can be combined with existing gc interval.

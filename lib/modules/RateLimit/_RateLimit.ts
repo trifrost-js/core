@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
+import {isIntGt} from '@valkyriestudios/utils/number';
+import {isFn} from '@valkyriestudios/utils/function';
+import {isString} from '@valkyriestudios/utils/string';
 import {Lazy, type LazyInitFn} from '../../utils/Lazy';
 import {type TriFrostContext} from '../../types/context';
 import {type TriFrostStore} from '../_storage';
@@ -54,10 +57,10 @@ export type TriFrostRateLimitExceededFunction = (ctx:TriFrostContext) => void|Pr
  * Prebuilt Key Gen Registry
  */
 export const TriFrostRateLimitKeyGeneratorRegistry:Record<TriFrostRateLimitKeyGeneratorVal, TriFrostRateLimitKeyGeneratorFn> = {
-    ip              : ctx => `${ctx.ip || 'unknown'}`,
-    ip_name         : ctx => `${ctx.ip || 'unknown'}:${ctx.name}`,
-    ip_method       : ctx => `${ctx.ip || 'unknown'}:${ctx.method}`,
-    ip_name_method  : ctx => `${ctx.ip || 'unknown'}:${ctx.name}:${ctx.method}`,
+    ip              : ctx => ctx.ip || 'unknown',
+    ip_name         : ctx => (ctx.ip || 'unknown') + ':' + ctx.name,
+    ip_method       : ctx => (ctx.ip || 'unknown') + ':' + ctx.method,
+    ip_name_method  : ctx => (ctx.ip || 'unknown') + ':' + ctx.name + ':' + ctx.method,
 };
 
 /**
@@ -83,18 +86,22 @@ export class TriFrostRateLimit <Env extends Record<string, any> = Record<string,
     #headers:boolean;
 
     constructor (options:TriFrostRateLimitOptions<Env>) {
-        this.#keygen = typeof options?.keygen === 'function'
+        /* Define keygen or fallback to ip_name_method */
+        this.#keygen = (isFn(options?.keygen)
             ? options.keygen
-            : typeof options?.keygen === 'string'
+            : isString(options?.keygen)
                 ? TriFrostRateLimitKeyGeneratorRegistry[options.keygen]
-                : TriFrostRateLimitKeyGeneratorRegistry.ip_name_method;
+                : TriFrostRateLimitKeyGeneratorRegistry.ip_name_method) as TriFrostRateLimitKeyGeneratorFn;
 
-        this.#exceeded = typeof options?.exceeded === 'function'
+        /* Define exceeded behavior */
+        this.#exceeded = isFn(options?.exceeded)
             ? options.exceeded
             : (ctx:TriFrostContext) => ctx.status(429);
 
+        /* Whether or not rate limit headers should be set (Defaults to true) */
         this.#headers = options?.headers !== false;
 
+        /* Create lazy store */
         this.#store = new Lazy<TriFrostRateLimitStrategizedStore, Env>((opts:{env:Env}) => {
             switch (options.strategy) {
                 case 'sliding':
@@ -114,7 +121,7 @@ export class TriFrostRateLimit <Env extends Record<string, any> = Record<string,
         E extends Env = Env,
         S extends Record<string, unknown> = {},
     > (limit:number|TriFrostRateLimitLimitFunction<E, S>):TriFrostMiddleware<E, S> {
-        const limit_fn: TriFrostRateLimitLimitFunction<E, S> = typeof limit === 'function' ? limit : () => limit;
+        const limit_fn = (isFn(limit) ? limit : () => limit) as TriFrostRateLimitLimitFunction<E, S>;
 
         const mware = async function TriFrostRateLimitedMiddleware (
             this: TriFrostRateLimit<E>, ctx: TriFrostContext<E, S>
@@ -123,17 +130,13 @@ export class TriFrostRateLimit <Env extends Record<string, any> = Record<string,
 
             /* Get limit for context */
             const n_limit = limit_fn(ctx);
-            if (!Number.isInteger(n_limit) || n_limit <= 0) return ctx.status(500);
+            if (!isIntGt(n_limit, 0)) return ctx.status(500);
 
             /* Resolve our store */
             const store = this.#store.resolve(ctx);
 
             /* Consume */
-            const usage = await store.consume(
-                this.#keygen(ctx) || 'unknown',
-                n_limit
-            );
-
+            const usage = await store.consume(this.#keygen(ctx) || 'unknown', n_limit);
             if (usage.amt > n_limit) {
                 if (this.#headers) {
                     ctx.setHeaders({

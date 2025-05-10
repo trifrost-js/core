@@ -1,3 +1,5 @@
+import {isIntGt} from '@valkyriestudios/utils/number';
+import {isNeString} from '@valkyriestudios/utils/string';
 import {type TriFrostStore} from '../../_storage';
 import {
     type TriFrostRateLimitObject,
@@ -11,12 +13,9 @@ export class Sliding implements TriFrostRateLimitStrategizedStore {
     #store:TriFrostStore<number[]>;
 
     constructor (window: number = 60_000, store:TriFrostStore<number[]>) {
-        if (!Number.isInteger(window) || window <= 0) {
-            throw new Error('TriFrostRateLimit: Store requires an integer window above 0');
-        }
+        if (!isIntGt(window, 0)) throw new Error('TriFrostRateLimit: Store requires an integer window above 0');
 
         this.#window = window;
-
         this.#store = store;
     }
 
@@ -25,27 +24,19 @@ export class Sliding implements TriFrostRateLimitStrategizedStore {
     }
 
     async consume (key: string, limit: number): Promise<TriFrostRateLimitObject> {
-        if (typeof key !== 'string' || !key.length) {
-            throw new Error('TriFrostRateLimit: Store@consume requires a key string');
-        }
-
-        if (!Number.isInteger(limit) || limit <= 0) {
-            throw new Error('TriFrostRateLimit: Store@consume requires a limit integer');
-        }
+        if (!isNeString(key)) throw new Error('TriFrostRateLimit: Store@consume requires a key string');
+        if (!isIntGt(limit, 0)) throw new Error('TriFrostRateLimit: Store@consume requires a limit integer');
 
         const now = Date.now();
-        const cutoff = now - this.#window;
-
         const timestamps = await this.#store.get(key) || [];
 
         /* Prune ONLY the first entry if it's outside the window */
-        if (timestamps.length && timestamps[0] < cutoff) {
-            timestamps.shift();
-        }
+        if (timestamps.length && timestamps[0] < (now - this.#window)) timestamps.shift();
 
         /* Push the current timestamp */
         timestamps.push(now);
 
+        /* Compute the reset time */
         const reset = timestamps[0] + this.#window;
 
         /* Avoid writes if we've already exceeded the limit */

@@ -1,3 +1,5 @@
+import {isIntGt} from '@valkyriestudios/utils/number';
+import {isNeString} from '@valkyriestudios/utils/string';
 import {type TriFrostStore} from '../../_storage';
 import {
     type TriFrostRateLimitObject,
@@ -11,9 +13,7 @@ export class Fixed implements TriFrostRateLimitStrategizedStore {
     #store:TriFrostStore<TriFrostRateLimitObject>;
 
     constructor (window: number = 60_000, store:TriFrostStore<TriFrostRateLimitObject>) {
-        if (!Number.isInteger(window) || window <= 0) {
-            throw new Error('TriFrostRateLimit: Store requires an integer window above 0');
-        }
+        if (!isIntGt(window, 0)) throw new Error('TriFrostRateLimit: Store requires an integer window above 0');
 
         this.#window = window;
         this.#store = store;
@@ -24,19 +24,14 @@ export class Fixed implements TriFrostRateLimitStrategizedStore {
     }
 
     async consume (key: string, limit:number): Promise<TriFrostRateLimitObject> {
-        if (typeof key !== 'string' || !key.length) {
-            throw new Error('TriFrostRateLimit: Store@consume requires a key string');
-        }
-
-        if (!Number.isInteger(limit) || limit <= 0) {
-            throw new Error('TriFrostRateLimit: Store@consume requires a limit integer');
-        }
+        if (!isNeString(key)) throw new Error('TriFrostRateLimit: Store@consume requires a key string');
+        if (!isIntGt(limit, 0)) throw new Error('TriFrostRateLimit: Store@consume requires a limit integer');
 
         const now = Date.now();
         const record = await this.#store.get(key);
 
-        let amt: number;
-        let reset: number;
+        let amt:number;
+        let reset:number;
         if (!record || record.reset <= now) {
             amt = 1;
             reset = now + this.#window;
@@ -45,6 +40,7 @@ export class Fixed implements TriFrostRateLimitStrategizedStore {
             reset = record.reset;
         }
 
+        /* Avoid writes if we've already exceeded the limit */
         if (amt <= limit) {
             const ttl = Math.ceil((reset - now) / 1000);
             await this.#store.set(key, {amt, reset}, {ttl: ttl >= 1 ? ttl : 1});
