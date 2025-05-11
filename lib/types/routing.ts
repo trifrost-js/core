@@ -93,7 +93,7 @@ export type TriFrostRoute <
 export type TriFrostGrouper<
     Env extends Record<string, any>,
     State extends Record<string, unknown> = {},
-> = (router: TriFrostRouter<Env, State>) => void | Promise<void>;
+> = (router: TriFrostRouter<Env, State>) => void|Promise<void>|TriFrostRouter<Env,State>|Promise<TriFrostRouter<Env,State>>;
 
 export type TriFrostGrouperConfig<
   Env extends Record<string, any> = {},
