@@ -10,7 +10,8 @@ import {
     type TriFrostContextInit,
 } from '../../types/context';
 import {
-    type HttpMethod,
+    HttpMethods,
+    HttpMethodToNormal,
     type HttpStatus,
     type HttpStatusCode,
     MimeTypes,
@@ -84,16 +85,13 @@ export class UWSContext extends Context {
         res:HttpResponse,
         req:HttpRequest
     ) {
-        const method = req.getMethod() as HttpMethod;
-        const path = req.getUrl();
-
         /* Hydrate headers */
         const headers:Record<string, string> = {};
         req.forEach((k, v) => headers[k] = v);
 
         super(logger, cfg, {
-            method,
-            path,
+            method: HttpMethodToNormal[req.getMethod()],
+            path: req.getUrl(),
             headers,
             query: req.getQuery(),
         });
@@ -175,7 +173,7 @@ export class UWSContext extends Context {
         this.#writeCookies();
 
         /* End without body if head */
-        if (this.method === 'head') {
+        if (this.method === HttpMethods.HEAD) {
             if (isIntGt(stream_size, 0)) {
                 this.#uws_res.writeHeader('content-length', stream_size+'');
             }
@@ -283,7 +281,7 @@ export class UWSContext extends Context {
 
             /* Write and end */
             switch (this.method) {
-                case 'head':
+                case HttpMethods.HEAD:
                     this.#uws_res
                         .writeHeader('content-length', typeof this.res_body === 'string' ? this.res_body.length.toString() : '0')
                         .endWithoutBody();

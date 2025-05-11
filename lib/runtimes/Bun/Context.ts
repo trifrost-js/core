@@ -9,11 +9,13 @@ import {
     type TriFrostContextInit,
 } from '../../types/context';
 import {
-    type HttpMethod,
+    HttpMethods,
+    HttpMethodToNormal,
     type HttpStatus,
     type HttpStatusCode,
     MimeTypes,
 } from '../../types/constants';
+import {extractPartsFromUrl} from '../../utils/Http';
 
 export class BunContext extends Context {
 
@@ -32,32 +34,21 @@ export class BunContext extends Context {
         bunApis:{file: typeof import('bun').file},
         req: Request
     ) {
-        const url = req.url;
-        const method = req.method.toLowerCase() as HttpMethod;
-
-        /* Find protocol end and path start */
-        const proto_end_idx = url.indexOf('://') + 3;
-        const path_start_idx = url.indexOf('/', proto_end_idx);
-
-        let path = '/';
-        let query = '';
-        if (path_start_idx >= 0) {
-            const query_idx = url.indexOf('?', path_start_idx);
-            if (query_idx >= 0) {
-                path = url.slice(path_start_idx, query_idx); /* Extract path up to '?' */
-                query = url.slice(query_idx + 1); /* Extract query after '?' */
-            } else {
-                path = url.slice(path_start_idx); /* Extract entire path */
-            }
-        }
+        /* Extract path and query */
+        const {path, query} = extractPartsFromUrl(req.url);
 
         /* Hydrate headers */
-        const headers: Record<string, string> = {};
+        const headers:Record<string, string> = {};
         for (const [key, value] of req.headers.entries()) {
             headers[key] = value;
         }
 
-        super(logger, cfg, {path, method, headers, query});
+        super(logger, cfg, {
+            path,
+            method: HttpMethodToNormal[req.method],
+            headers,
+            query,
+        });
 
         this.#bun = bunApis;
         this.#bun_req = req;
@@ -175,7 +166,7 @@ export class BunContext extends Context {
         super.end();
 
         switch (this.method) {
-            case 'head': {
+            case HttpMethods.HEAD: {
                 this.res_headers['Content-Length'] = typeof this.res_body === 'string'
                     ? new TextEncoder().encode(this.res_body).length.toString()
                     : '0';

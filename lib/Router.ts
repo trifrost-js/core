@@ -2,13 +2,14 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
 import {isNeArray} from '@valkyriestudios/utils/array';
+import {isFn} from '@valkyriestudios/utils/function';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {isObject, isNeObject} from '@valkyriestudios/utils/object';
-import {isNeString} from '@valkyriestudios/utils/string';
+import {isString, isNeString} from '@valkyriestudios/utils/string';
 import {
     type TriFrostRateLimit,
     type TriFrostRateLimitLimitFunction,
-} from './modules/RateLimit';
+} from './modules/RateLimit/_RateLimit';
 import {
     type TriFrostRouter,
     type TriFrostRouterOptions,
@@ -24,6 +25,7 @@ import {
 } from './types/routing';
 import {
     type HttpMethod,
+    HttpMethods,
     HttpMethodsSet,
     Sym_TriFrostDescription,
     Sym_TriFrostLoggerMeta,
@@ -72,7 +74,7 @@ class Router <
  */
 
     constructor (path:string, options:TriFrostRouterOptions<Env>) {
-        if (typeof path !== 'string') throw new Error('TriFrostRouter@ctor: Path is required');
+        if (!isString(path)) throw new Error('TriFrostRouter@ctor: Path is required');
 
         /* Verify that the options passed are in the form of an object */
         if (!isObject(options)) throw new Error('TriFrostRouter@ctor: options should be an object');
@@ -158,7 +160,7 @@ class Router <
     ):TriFrostRouter<Env, State & Patch> {
         if (val instanceof Router) {
             this.#routers.push(val as TriFrostRouter<Env, State>);
-        } else if (typeof val === 'function') {
+        } else if (isFn(val)) {
             const fn = val as TriFrostMiddleware<Env, State>;
 
             /* Get name */
@@ -181,7 +183,7 @@ class Router <
      * Attach a rate limit to the middleware chain for this router
      */
     limit (limit: number | TriFrostRateLimitLimitFunction<Env, State>) {
-        if (!this.#rateLimit) throw new Error('TriFrostRouter@limit: RateLimit is not configured on App');
+        if (!this.#rateLimit) throw new Error('TriFrostRoute@limit: RateLimit is not configured on App');
 
         this.#limit = this.#rateLimit.limit<Env, State>(limit);
         return this;
@@ -194,14 +196,14 @@ class Router <
         path: Path,
         handler: TriFrostGrouperHandler<Env, State & PathParam<Path>>
     ) {
-        if (!handler) throw new Error(`TriFrost@group: No handler provided for "${path}"`);
+        if (!handler) throw new Error('TriFrostRoute@group: No handler provided for "' + path + '"');
 
         /* Create config */
-        const config = (typeof handler === 'function'
+        const config = (isFn(handler)
             ? {fn: handler}
             : handler
         ) as TriFrostGrouperConfig<Env, State & PathParam<Path>>;
-        if (typeof config.fn !== 'function') throw new Error('TriFrost@group: Last argument must be a function or config object');
+        if (!isFn(config.fn)) throw new Error('TriFrostRoute@group: Last argument must be a function or config object');
 
         /* Add our rate limit to the config */
         config.rateLimit = config.rateLimit || this.#rateLimit;
@@ -222,7 +224,7 @@ class Router <
         path: Path,
         handler: TriFrostRouteBuilderHandler<Env, State & PathParam<Path>>
     ) {
-        if (!handler) throw new Error(`TriFrost@route: No handler provided for "${path}"`);
+        if (!handler) throw new Error(`TriFrostRoute@route: No handler provided for "${path}"`);
 
         /* Instantiate route builder */
         const route = new Route<Env, State & PathParam<Path>>({
@@ -231,7 +233,7 @@ class Router <
 
         handler(route);
 
-        if (!route.stack.length) throw new Error('TriFrost@route: Builder did not return valid routes');
+        if (!route.stack.length) throw new Error('TriFrostRoute@route: Builder did not return valid routes');
 
         for (let i = 0; i < route.stack.length; i++) {
             const el = route.stack[i];
@@ -247,9 +249,7 @@ class Router <
      * @param {Handler} handler - Configuration for the route
      */
     notfound (fn:TriFrostHandler<Env, State>) {
-        /* Validate route */
-        if (typeof fn === 'function') this.#notfound = fn;
-
+        if (isFn(fn)) this.#notfound = fn;
         return this;
     }
 
@@ -260,7 +260,11 @@ class Router <
         path: Path,
         handler: TriFrostRouteHandler<Env, State & PathParam<Path>>
     ) {
-        if (!this.#register(path, [handler], ['get', 'head'])) throw new Error(`TriFrost@get: Invalid payload for "${path}"`);
+        if (!this.#register(
+            path,
+            [handler],
+            [HttpMethods.GET, HttpMethods.HEAD]
+        )) throw new Error('TriFrostRoute@get: Invalid payload for "' + path + '"');
         return this;
     }
 
@@ -271,7 +275,11 @@ class Router <
         path: Path,
         handler: TriFrostRouteHandler<Env, State & PathParam<Path>>
     ) {
-        if (!this.#register(path, [handler], ['post'])) throw new Error('TriFrostRouter@post: Invalid Payload');
+        if (!this.#register(
+            path,
+            [handler],
+            [HttpMethods.POST]
+        )) throw new Error('TriFrostRoute@post: Invalid payload for "' + path + '"');
         return this;
     }
 
@@ -282,7 +290,11 @@ class Router <
         path: Path,
         handler: TriFrostRouteHandler<Env, State & PathParam<Path>>
     ) {
-        if (!this.#register(path, [handler], ['put'])) throw new Error('TriFrostRouter@put: Invalid Payload');
+        if (!this.#register(
+            path,
+            [handler],
+            [HttpMethods.PUT]
+        )) throw new Error('TriFrostRoute@put: Invalid payload for "' + path + '"');
         return this;
     }
 
@@ -293,7 +305,11 @@ class Router <
         path: Path,
         handler: TriFrostRouteHandler<Env, State & PathParam<Path>>
     ) {
-        if (!this.#register(path, [handler], ['patch'])) throw new Error('TriFrostRouter@patch: Invalid Payload');
+        if (!this.#register(
+            path,
+            [handler],
+            [HttpMethods.PATCH]
+        )) throw new Error('TriFrostRoute@patch: Invalid payload for "' + path + '"');
         return this;
     }
 
@@ -304,7 +320,11 @@ class Router <
         path: Path,
         handler: TriFrostRouteHandler<Env, State & PathParam<Path>>
     ) {
-        if (!this.#register(path, [handler], ['del'])) throw new Error('TriFrostRouter@del: Invalid Payload');
+        if (!this.#register(
+            path,
+            [handler],
+            [HttpMethods.DELETE]
+        )) throw new Error('TriFrostRoute@del: Invalid payload for "' + path + '"');
         return this;
     }
 
@@ -321,7 +341,7 @@ class Router <
         methods:HttpMethod[],
         limit?: TriFrostMiddleware<Env, State>|null
     ):boolean {
-        if (!handlers.length) throw new Error(`TriFrost@get: No handlers provided for "${path}"`);
+        if (!handlers.length) return false;
 
         const fn = handlers[handlers.length - 1];
         const middleware = handlers.slice(0, -1);
@@ -334,9 +354,9 @@ class Router <
         /* Validate route */
         if (
             !isNeString(path) ||
+            !isFn(config.fn) ||
             !isNeArray(methods) ||
             !methods.every(val => HttpMethodsSet.has(val)) ||
-            typeof config.fn !== 'function' ||
             ('timeout' in config && !isIntGt(config.timeout, 0) && config.timeout !== null)
         ) return false;
 

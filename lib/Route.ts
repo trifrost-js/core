@@ -4,11 +4,11 @@ import {
     type TriFrostMiddleware,
     type TriFrostRouteHandler,
 } from './types/routing';
-import {type HttpMethod} from './types/constants';
+import {HttpMethods, type HttpMethod} from './types/constants';
 import {
     type TriFrostRateLimit,
     type TriFrostRateLimitLimitFunction,
-} from './modules/RateLimit';
+} from './modules/RateLimit/_RateLimit';
 
 export class Route <
     Env extends Record<string, any> = {},
@@ -79,35 +79,35 @@ export class Route <
      * Finalize with a GET method
      */
     get (handler: TriFrostRouteHandler<Env, State>) {
-        this.#routes.push([['get', 'head'], handler]);
+        this.#routes.push([[HttpMethods.GET, HttpMethods.HEAD], handler]);
     }
 
     /**
      * Finalize with a POST method
      */
     post (handler: TriFrostRouteHandler<Env, State>) {
-        this.#routes.push([['post'], handler]);
+        this.#routes.push([[HttpMethods.POST], handler]);
     }
 
     /**
      * Finalize with a PUT method
      */
     put (handler: TriFrostRouteHandler<Env, State>) {
-        this.#routes.push([['put'], handler]);
+        this.#routes.push([[HttpMethods.PUT], handler]);
     }
 
     /**
      * Finalize with a PATCH method
      */
     patch (handler: TriFrostRouteHandler<Env, State>) {
-        this.#routes.push([['patch'], handler]);
+        this.#routes.push([[HttpMethods.PATCH], handler]);
     }
 
     /**
      * Finalize with a DELETE method
      */
     del (handler: TriFrostRouteHandler<Env, State>) {
-        this.#routes.push([['del'], handler]);
+        this.#routes.push([[HttpMethods.DELETE], handler]);
     }
 
 }

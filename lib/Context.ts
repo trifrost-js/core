@@ -33,6 +33,7 @@ import {
     type MimeType,
     MimeTypes,
     MimeTypesSet,
+    HttpMethods,
 } from './types/constants';
 import {
     type TriFrostContextFileOptions,
@@ -43,7 +44,8 @@ import {
     type TriFrostContextInit,
     type TriFrostContextKind,
 } from './types/context';
-import {encodeFilename, hexId} from './utils/String';
+import {encodeFilename} from './utils/Http';
+import {hexId} from './utils/String';
 
 type RequestConfig = {
     method: HttpMethod,
@@ -512,10 +514,10 @@ export abstract class Context <
 
             /* If we have a method that allows writing to we need to load up the body from the request */
             switch (this.req_config.method) {
-                case 'post':
-                case 'patch':
-                case 'put':
-                case 'del': {
+                case HttpMethods.POST:
+                case HttpMethods.PATCH:
+                case HttpMethods.PUT:
+                case HttpMethods.DELETE: {
                     const body = await handler();
                     if (!body) throw new Error('Context@init: Failed to load body');
                     this.req_body = body as Record<string, unknown>|unknown[];

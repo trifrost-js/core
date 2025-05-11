@@ -13,7 +13,7 @@ import {type TriFrostCookieOptions} from './modules/Cookies';
 import {
     type TriFrostRateLimit,
     type TriFrostRateLimitLimitFunction,
-} from './modules/RateLimit';
+} from './modules/RateLimit/_RateLimit';
 import {
     TriFrostRootLogger,
     type TriFrostLoggerExporter,
@@ -49,7 +49,6 @@ import {
     Sym_TriFrostPath,
     Sym_TriFrostParams,
     Sym_TriFrostLoggerMeta,
-    HttpMethodToUpper,
 } from './types/constants';
 import {type LazyInitFn} from './utils/Lazy';
 
@@ -392,7 +391,7 @@ class App <
 
                         /* Add matched http attributes to tracer */
                         ctx.logger.setAttributes({
-                            'http.method': HttpMethodToUpper[method],
+                            'http.method': method,
                             'http.target': path,
                             'http.route': match.route[Sym_TriFrostPath],
                             'user_agent.original': ctx.headers['user-agent'] ?? '',
@@ -822,7 +821,7 @@ class App <
                 ctx.status(204);
             };
 
-            fn.allowed = [...route_val.methods].map(m => m.toUpperCase()).join(', ');
+            fn.allowed = [...route_val.methods].join(', ');
 
             const entry: AppRouteTableEntry<Env, State> = {
                 ...route_val.route,
@@ -831,7 +830,7 @@ class App <
                 timeout: router.timeout !== undefined ? router.timeout : this.timeout ?? null,
                 weight: this.#computeRouteWeight(route_path),
                 kind: 'options',
-                [Sym_TriFrostMethod]: 'options',
+                [Sym_TriFrostMethod]: HttpMethods.OPTIONS,
                 [Sym_TriFrostPath]: route_path,
                 [Sym_TriFrostParams]: route_val.params,
             };

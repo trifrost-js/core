@@ -54,26 +54,40 @@ export const Sym_TriFrostLoggerMeta = Symbol('TriFrost.LoggerMeta');
  */
 
 export enum HttpMethods {
-    GET     = 'get',
-    HEAD    = 'head',
-    POST    = 'post',
-    PUT     = 'put',
-    PATCH   = 'patch',
-    DELETE  = 'del',
-    OPTIONS = 'options',
+    GET     = 'GET',
+    HEAD    = 'HEAD',
+    POST    = 'POST',
+    PUT     = 'PUT',
+    PATCH   = 'PATCH',
+    DELETE  = 'DELETE',
+    OPTIONS = 'OPTIONS',
 }
 
 export type HttpMethod = `${HttpMethods}`;
 export const HttpMethodsSet:Set<HttpMethod> = new Set([...Object.values(HttpMethods)]);
 
-export const HttpMethodToUpper:Record<HttpMethod, string> = {
+export const HttpMethodToNormal:Record<string, HttpMethod> = {
+    /* GET */
     get: 'GET',
+    GET: 'GET',
+    /* POST */
     post: 'POST',
+    POST: 'POST',
+    /* PUT */
     put: 'PUT',
+    PUT: 'PUT',
+    /* PATCH */
     patch: 'PATCH',
-    del: 'DELETE',
+    PATCH: 'PATCH',
+    /* DELETE */
+    delete: 'DELETE',
+    DELETE: 'DELETE',
+    /* HEAD */
     head: 'HEAD',
+    HEAD: 'HEAD',
+    /* OPTIONS */
     options: 'OPTIONS',
+    OPTIONS: 'OPTIONS',
 };
 
 /**

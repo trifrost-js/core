@@ -11,7 +11,8 @@ import {
     type TriFrostContextInit,
 } from '../../types/context';
 import {
-    type HttpMethod,
+    HttpMethods,
+    HttpMethodToNormal,
     type HttpStatus,
     type HttpStatusCode,
     MimeTypes,
@@ -57,8 +58,6 @@ export class NodeContext extends Context {
         req:IncomingMessage,
         res:ServerResponse
     ) {
-        const method = req.method?.toLowerCase() as HttpMethod;
-
         /* Hydrate headers */
         const headers: Record<string, string> = {};
         for (const key in req.headers) {
@@ -68,7 +67,12 @@ export class NodeContext extends Context {
         /* Determine path and query */
         const [path, query = ''] = (req.url || '/').split('?', 2);
 
-        super(logger, cfg, {path, method, headers, query});
+        super(logger, cfg, {
+            path,
+            method: HttpMethodToNormal[req.method!],
+            headers,
+            query,
+        });
 
         this.#node = nodeApis;
         this.#node_req = req;
@@ -149,7 +153,7 @@ export class NodeContext extends Context {
         this.#writeCookies();
 
         switch (this.method) {
-            case 'head':
+            case HttpMethods.HEAD:
                 this.#node_res.end();
                 stream.destroy?.();
                 break;
@@ -205,7 +209,7 @@ export class NodeContext extends Context {
         this.#writeCookies();
 
         switch (this.method) {
-            case 'head':
+            case HttpMethods.HEAD:
                 this.res_headers['Content-Length'] = typeof this.res_body === 'string'
                     ? new TextEncoder().encode(this.res_body).length.toString()
                     : '0';

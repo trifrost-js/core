@@ -7,12 +7,14 @@ import {
     type TriFrostContextInit,
 } from '../../types/context';
 import {
-    type HttpMethod,
+    HttpMethods,
+    HttpMethodToNormal,
     type HttpStatus,
     type HttpStatusCode,
     MimeTypes,
 } from '../../types/constants';
 import {type TriFrostCFFetcher} from '../../types/providers';
+import {extractPartsFromUrl} from '../../utils/Http';
 
 export class WorkerdContext extends Context {
 
@@ -32,37 +34,21 @@ export class WorkerdContext extends Context {
         env:TriFrostContextConfig['env'],
         ctx:ExecutionContext
     ) {
-        const url = req.url;
-        const method = req.method.toLowerCase() as HttpMethod;
-
-        /* Find protocol end and path start */
-        const proto_end_idx = url.indexOf('://') + 3;
-        const path_start_idx = url.indexOf('/', proto_end_idx);
-
-        let path = '/';
-        let query = '';
-
-        if (path_start_idx >= 0) {
-            const query_idx = url.indexOf('?', path_start_idx);
-            if (query_idx >= 0) {
-                path = url.slice(path_start_idx, query_idx); /* Extract path up to '?' */
-                query = url.slice(query_idx + 1); /* Extract query after '?' */
-            } else {
-                path = url.slice(path_start_idx); /* Extract entire path */
-            }
-        }
+        /* Extract path and query */
+        const {path, query} = extractPartsFromUrl(req.url);
 
         /* Hydrate headers */
-        const headers: Record<string, string> = {};
+        const headers:Record<string, string> = {};
         for (const [key, value] of req.headers.entries()) {
             headers[key] = value;
         }
 
-        super(
-            logger,
-            {...cfg, env: {...env, ...cfg.env}},
-            {path, method, headers, query}
-        );
+        super(logger, {...cfg, env}, {
+            path,
+            method: HttpMethodToNormal[req.method],
+            headers,
+            query,
+        });
 
         this.#workerd_req = req;
         this.#workerd_ctx = ctx;
@@ -193,7 +179,7 @@ export class WorkerdContext extends Context {
         super.end();
 
         switch (this.method) {
-            case 'head': {
+            case HttpMethods.HEAD: {
                 this.res_headers['Content-Length'] = typeof this.res_body === 'string'
                     ? new TextEncoder().encode(this.res_body).length.toString()
                     : '0';
