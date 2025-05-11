@@ -4,6 +4,44 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2025-05-11
+### Improved
+- **feat**: `Router.get/post/put/patch/del` now accepts an empty path (`''`) as valid. Useful for mounting a handler directly at a group base path:
+```typescript
+.group('/api/v1/', r => r
+    .get('', ...))
+    .get('users/:id', ...)
+```
+- **feat**: `Router.group` now accepts both `void` and `Router` return types, allowing cleaner chaining in TypeScript:
+```typescript
+/* ✅ Now valid in TypeScript */
+.group('/api/v1/', r => r
+    .get('users/:id', ...)
+    .get('posts/:id', ...))
+
+/* (Previous) Typescript-safe way */
+.group('/api/v1/', r => {
+    r
+        .get('users/:id', ...)
+        .get('posts/:id', ...);
+})
+```
+- **jsx**: Enhanced support for rendering multiple JSX elements via `.map(...)`, fragments, or sibling arrays — now fully supported in runtime output. For example, this JSX block now correctly renders all spans:
+```tsx
+const nav = ['Home', 'Docs', 'Blog'];
+
+return (<header>
+    <div>Logo</div>
+    {nav.map((label) => (
+        <span>{label}</span>
+    ))}
+</header>);
+```
+- **deps**: Upgrade bun-types to 1.2.13
+
+### Fixed
+- **jsx**: Fixed issue where falsy-but-valid props (`0`, `false`, `''`) were being skipped during render. These are now correctly serialized unless explicitly `null` or `undefined`.
+
 ## [0.5.0] - 2025-05-11
 ### Added
 - **feat**: `ctx.statusCode` as a getter to retrieve the currently set response status code. This is useful in situations where middleware sets a status code using `ctx.setStatus` which then needs to be picked up further down the chain.
