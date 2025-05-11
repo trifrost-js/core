@@ -95,16 +95,26 @@ function toKebab (key:string):string {
     return converted;
 }
 
+/**
+ * Renders properties such as style/attributes
+ * 
+ * @param {string} acc - Accumulator to add to
+ * @param {Record<string, unknown>} props - Props to render
+ */
 function renderProps (acc:string, props:Record<string, unknown>|null) {
     if (!isObject(props)) return acc;
 
     for (const key in props) {
         const val = props[key];
-        if (key === 'children' || !val) {
+        if (key === 'children' || val === undefined || val === null) {
             continue;
         } else if (key === 'style' && isObject(val)) {
             let style = '';
-            for (const attr in val) style += toKebab(attr) + ':' + val[attr] + ';';
+            for (const attr in val) {
+                const attr_val = val[attr];
+                if (attr_val === undefined || attr_val === null) continue;
+                style += toKebab(attr) + ':' + attr_val + ';';
+            }
             acc += ' style="' + escape(style) + '"';
         } else if (props[key] === true && BOOL_PROPS.has(key)) {
             acc += ' ' + key;
@@ -114,6 +124,19 @@ function renderProps (acc:string, props:Record<string, unknown>|null) {
     }
 
     return acc;
+}
+
+/**
+ * Renders child elements
+ */
+function renderChildren (children:JSXElement|string|number|boolean|null|JSXElement[]|string[]|number[]|boolean[]|null[]) {
+    if (Array.isArray(children)) {
+        let output = '';
+        for (let i = 0; i < children.length; i++) output += render(children[i]);
+        return output;
+    }
+    
+    return children ? render(children) : '';
 }
 
 /**
@@ -129,19 +152,12 @@ export function render (node: JSXElement | string | number | boolean | null): st
         case 'number':
             return node + '';
         default: {
-            if (!isObject(node)) {
+            if (Array.isArray(node)) {
+                return renderChildren(node);
+            } else if (!isObject(node) || !node.type) {
                 return '';
             } else if (node.type === Fragment) {
-                const children = node.props?.children;
-                if (Array.isArray(children)) {
-                    let output = '';
-                    for (let i = 0; i < children.length; i++) {
-                        output += render(children[i]);
-                    }
-                    return output;
-                } else {
-                    return render(children as JSXElement | string | number | boolean | null);
-                }
+                return renderChildren(node.props?.children  as JSXElement | string | number | boolean | null)
             } else if (typeof node.type === 'function') {
                 return render(node.type(node.props || {}));
             } else {
@@ -159,13 +175,7 @@ export function render (node: JSXElement | string | number | boolean | null): st
                     output += node.props.dangerouslySetInnerHTML.__html;
                 } else {
                     const children = node.props?.children;
-                    if (Array.isArray(children)) {
-                        for (let i = 0; i < children.length; i++) {
-                            output += render(children[i]);
-                        }
-                    } else if (children) {
-                        output += render(children as JSXElement | string | number | boolean | null);
-                    }
+                    output += renderChildren(children  as JSXElement | string | number | boolean | null);
                 }
 
                 return output + '</' + tag + '>';
