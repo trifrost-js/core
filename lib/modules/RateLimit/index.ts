@@ -5,7 +5,7 @@ export {
     type TriFrostRateLimitLimitFunction,
     type TriFrostRateLimitExceededFunction,
     type TriFrostRateLimitOptions,
-    RateLimitKeyGeneratorRegistry,
+    RateLimitKeyGeneratorRegistry
 } from './_RateLimit';
 export {DurableObjectRateLimit} from './DurableObject';
 export {KVRateLimit} from './KV';

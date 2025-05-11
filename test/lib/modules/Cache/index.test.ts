@@ -1,8 +1,8 @@
 import {describe, it, expect} from 'vitest';
-import {DurableObjectCache as OGDurableObjectCache} from '../../../../lib/modules/Cache/DurableObject.ts';
-import {KVCache as OGKVCache} from '../../../../lib/modules/Cache/KV.ts';
-import {MemoryCache as OGMemoryCache} from '../../../../lib/modules/Cache/Memory.ts';
-import {RedisCache as OGRedisCache} from '../../../../lib/modules/Cache/Redis.ts';
+import {DurableObjectCache as OGDurableObjectCache} from '../../../../lib/modules/Cache/DurableObject';
+import {KVCache as OGKVCache} from '../../../../lib/modules/Cache/KV';
+import {MemoryCache as OGMemoryCache} from '../../../../lib/modules/Cache/Memory';
+import {RedisCache as OGRedisCache} from '../../../../lib/modules/Cache/Redis';
 import * as Cache from '../../../../lib/modules/Cache';
 
 describe('Modules - Cache', () => {

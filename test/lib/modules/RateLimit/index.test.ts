@@ -1,8 +1,8 @@
 import {describe, it, expect} from 'vitest';
-import {DurableObjectRateLimit as OGDurableObjectRateLimit} from '../../../../lib/modules/RateLimit/DurableObject.ts';
-import {KVRateLimit as OGKVRateLimit} from '../../../../lib/modules/RateLimit/KV.ts';
-import {MemoryRateLimit as OGMemoryRateLimit} from '../../../../lib/modules/RateLimit/Memory.ts';
-import {RedisRateLimit as OGRedisRateLimit} from '../../../../lib/modules/RateLimit/Redis.ts';
+import {DurableObjectRateLimit as OGDurableObjectRateLimit} from '../../../../lib/modules/RateLimit/DurableObject';
+import {KVRateLimit as OGKVRateLimit} from '../../../../lib/modules/RateLimit/KV';
+import {MemoryRateLimit as OGMemoryRateLimit} from '../../../../lib/modules/RateLimit/Memory';
+import {RedisRateLimit as OGRedisRateLimit} from '../../../../lib/modules/RateLimit/Redis';
 import * as RateLimit from '../../../../lib/modules/RateLimit';
 
 describe('Modules - RateLimit', () => {

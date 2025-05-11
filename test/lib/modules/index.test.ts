@@ -106,5 +106,4 @@ describe('Modules - Index', () => {
             expect(Modules.OtelHttpExporter).toEqual(OtelHttpExporter);
         });
     });
-
 });

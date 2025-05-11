@@ -1,7 +1,9 @@
 /* eslint-disable no-use-before-define,@typescript-eslint/no-empty-object-type,@typescript-eslint/no-unused-vars */
 
-import {type TriFrostRateLimitLimitFunction} from '../modules/RateLimit';
-import {type TriFrostRateLimit} from '../modules/RateLimit';
+import {
+    type TriFrostRateLimitLimitFunction,
+    type TriFrostRateLimit,
+} from '../modules/RateLimit/_RateLimit';
 import {type Route} from '../Route';
 import {
     type HttpMethod,

@@ -2,6 +2,7 @@ import {isNeArray} from '@valkyriestudios/utils/array';
 import {isIntGte} from '@valkyriestudios/utils/number';
 import {isNeString} from '@valkyriestudios/utils/string';
 import {
+    HttpMethods,
     Sym_TriFrostDescription,
     Sym_TriFrostName,
     Sym_TriFrostType,
@@ -101,7 +102,7 @@ export function Cors (opts: TriFrostCorsOptions = {}) {
         }
 
         /* If it's an options call simply return a 204 status */
-        if (ctx.method === 'options') return ctx.status(204);
+        if (ctx.method === HttpMethods.OPTIONS) return ctx.status(204);
     };
 
     /* Add symbols for introspection/use further down the line */
