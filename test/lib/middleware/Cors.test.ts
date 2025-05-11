@@ -4,6 +4,7 @@ import {Cors} from '../../../lib/middleware/Cors';
 import CONSTANTS from '../../constants';
 import {MockContext} from '../../MockContext';
 import {
+    HttpMethods,
     Sym_TriFrostDescription,
     Sym_TriFrostName,
     Sym_TriFrostType,
@@ -126,13 +127,13 @@ describe('Middleware - Cors', () => {
     });
 
     it('Returns 204 status on OPTIONS method', () => {
-        const ctx = new MockContext({method: 'options'});
+        const ctx = new MockContext({method: HttpMethods.OPTIONS});
         Cors()(ctx);
         expect(ctx.$status).toBe(204);
     });
 
     it('Applies all options together (maximal config)', () => {
-        const ctx = new MockContext({headers: {Origin: 'https://client.com'}, method: 'get'});
+        const ctx = new MockContext({headers: {Origin: 'https://client.com'}, method: HttpMethods.GET});
         Cors({
             origin: 'https://trifrost.land',
             methods: ['GET', 'POST', 'DELETE'],
