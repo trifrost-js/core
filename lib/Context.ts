@@ -334,6 +334,13 @@ export abstract class Context <
     }
 
     /**
+     * Returns the response code for the context
+     */
+    get statusCode ():HttpStatusCode {
+        return this.res_code;
+    }
+
+    /**
      * Returns the currently configured timeout value
      */
     get timeout ():number|null {

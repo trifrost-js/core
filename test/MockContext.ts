@@ -3,6 +3,7 @@
 import {type TriFrostCacheControlOptions} from '../lib/middleware/CacheControl';
 import {type TriFrostRateLimitLimitFunction} from '../lib/modules/RateLimit';
 import {
+    HttpStatusToCode,
     type HttpMethod,
     type HttpStatus,
     type HttpStatusCode,
@@ -91,6 +92,7 @@ export class MockContext <
     get logger() { return this.#logger; }
     get cookies() { return this.#cookies; }
     get cache() { return this.#cache; }
+    get statusCode() { return this.#status as HttpStatusCode; }
     get requestId() { return this.#requestId; }
     get state() { return this.#state; }
     get timeout() { return null; }
@@ -127,7 +129,7 @@ export class MockContext <
     };
 
     setStatus = (status: HttpStatus | HttpStatusCode): void => {
-        this.#status = status;
+        this.#status = (typeof status === 'string' ? HttpStatusToCode.get(status) : status) as HttpStatusCode;
     };
 
     setBody = (value: string | null): void => {

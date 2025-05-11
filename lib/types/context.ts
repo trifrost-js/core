@@ -107,6 +107,7 @@ export type TriFrostContext<
     get cookies         ():Cookies;
     get cache           ():TriFrostCache;
     get state           ():Readonly<State>;
+    get statusCode      ():HttpStatusCode;
     get timeout         ():number|null;
     get afterHooks      ():(() => Promise<void>)[];
 
