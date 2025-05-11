@@ -353,7 +353,7 @@ class Router <
 
         /* Validate route */
         if (
-            !isNeString(path) ||
+            !isString(path) ||
             !isFn(config.fn) ||
             !isNeArray(methods) ||
             !methods.every(val => HttpMethodsSet.has(val)) ||
