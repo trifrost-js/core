@@ -3,30 +3,30 @@ import {DurableObjectCache as OGDurableObjectCache} from '../../../../lib/module
 import {KVCache as OGKVCache} from '../../../../lib/modules/Cache/KV.ts';
 import {MemoryCache as OGMemoryCache} from '../../../../lib/modules/Cache/Memory.ts';
 import {RedisCache as OGRedisCache} from '../../../../lib/modules/Cache/Redis.ts';
-import * as Storage from '../../../../lib/modules/Cache';
+import * as Cache from '../../../../lib/modules/Cache';
 
 describe('Modules - Cache', () => {
     describe('DurableObject', () => {
         it('Should link to the correct module', () => {
-            expect(Storage.DurableObjectCache).toEqual(OGDurableObjectCache);
+            expect(Cache.DurableObjectCache).toEqual(OGDurableObjectCache);
         });
     });
 
     describe('KV', () => {
         it('Should link to the correct module', () => {
-            expect(Storage.KVCache).toEqual(OGKVCache);
+            expect(Cache.KVCache).toEqual(OGKVCache);
         });
     });
 
     describe('Memory', () => {
         it('Should link to the correct module', () => {
-            expect(Storage.MemoryCache).toEqual(OGMemoryCache);
+            expect(Cache.MemoryCache).toEqual(OGMemoryCache);
         });
     });
 
     describe('Redis', () => {
         it('Should link to the correct module', () => {
-            expect(Storage.RedisCache).toEqual(OGRedisCache);
+            expect(Cache.RedisCache).toEqual(OGRedisCache);
         });
     });
 });

@@ -6,7 +6,7 @@ import {isIntGt} from '@valkyriestudios/utils/number';
 import {isObject} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
 import {type TriFrostCache} from './modules/Cache';
-import {TriFrostCookies} from './modules/Cookies';
+import {Cookies} from './modules/Cookies';
 import {
     render,
     type JSXElement,
@@ -145,7 +145,7 @@ export abstract class Context <
     protected res_body:string|null = null;
 
     /* TriFrost Cookies. We compute this on an as-needed basis */
-    protected $cookies:TriFrostCookies|null = null;
+    protected $cookies:Cookies|null = null;
 
 /**
  * MARK: Constructor
@@ -287,6 +287,9 @@ export abstract class Context <
         return this.#query;
     }
 
+    /**
+     * Cache Instance
+     */
     get cache ():TriFrostCache {
         this.ctx_config.cache.init(this.ctx_config.env);
         return this.ctx_config.cache as TriFrostCache;
@@ -295,8 +298,8 @@ export abstract class Context <
     /**
      * Cookies for context
      */
-    get cookies ():TriFrostCookies {
-        if (!this.$cookies) this.$cookies = new TriFrostCookies(this as TriFrostContext, this.ctx_config.cookies);
+    get cookies ():Cookies {
+        if (!this.$cookies) this.$cookies = new Cookies(this as TriFrostContext, this.ctx_config.cookies);
         return this.$cookies;
     }
 

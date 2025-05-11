@@ -1,7 +1,9 @@
 /* eslint-disable complexity */
 
-import {addUTC, diff} from '@valkyriestudios/utils/date';
+import {isInt} from '@valkyriestudios/utils/number';
+import {isDate, addUTC, diff} from '@valkyriestudios/utils/date';
 import {isObject} from '@valkyriestudios/utils/object';
+import {isString} from '@valkyriestudios/utils/string';
 import {type TriFrostContext} from '../types/context';
 
 export type TriFrostCookieOptions = {
@@ -26,7 +28,7 @@ export type TriFrostCookieDeleteOptions = {
 const RGX_NAME = /^[a-zA-Z0-9!#$%&'*+\-.^_`|~]+$/;
 const RGX_VALUE = /^[\x20-\x7E]*$/;
 
-export class TriFrostCookies {
+export class Cookies {
 
     #ctx:TriFrostContext;
 
@@ -47,7 +49,7 @@ export class TriFrostCookies {
         this.#config = isObject(config) ? config : {};
 
         /* Process cookie header into map */
-        const cookies = typeof ctx.headers.cookie === 'string' ? ctx.headers.cookie.split(';') : [];
+        const cookies = isString(ctx.headers.cookie) ? ctx.headers.cookie.split(';') : [];
         const map:Record<string, string> = {};
         for (let i = 0; i < cookies.length; i++) {
             const raw = cookies[i];
@@ -81,8 +83,9 @@ export class TriFrostCookies {
      * @returns Cookie value or null if not found
      */
     get (name:string):string|null {
-        if (typeof name !== 'string') return null;
-        return name in this.#combined ? this.#combined[name] : null;
+        return isString(name) && name in this.#combined
+            ? this.#combined[name]
+            : null;
     }
 
     /**
@@ -99,34 +102,30 @@ export class TriFrostCookies {
      * @param {TriFrostCookieOptions} options - Cookie options (e.g., max-age, path, etc.).
      */
     set (name: string, value: string|number, options: Partial<TriFrostCookieOptions> = {}):void {
-        const normalized = Number.isFinite(value) ? value.toString() : value;
+        const normalized = Number.isFinite(value) ? String(value) : value;
         const config = {
             ...this.#config,
-            ...isObject(options) ? options : {},
+            ...isObject(options) && options,
         };
 
         /* Validate */
         if (
-            typeof name !== 'string' ||
-            typeof normalized !== 'string' ||
+            !isString(name) ||
+            !isString(normalized) ||
             !RGX_NAME.test(name) ||
             !RGX_VALUE.test(normalized)
-        ) {
-            this.#ctx.logger.error('TriFrostCookies@set: Invalid name or value', {name, value, options});
-            return;
-        }
+        ) return this.#ctx.logger.error('TriFrostCookies@set: Invalid name or value', {name, value, options});
 
         /* Start cookie construction */
         let new_cookie = name + '=' + encodeURIComponent(normalized);
 
-        const maxage = Number.isInteger(config.maxage) ? config.maxage : null;
-        const expires = 'expires' in config && config.expires instanceof Date ? config.expires : null;
+        const maxage = isInt(config.maxage) ? config.maxage : null;
+        const expires = isDate(config.expires) ? config.expires : null;
 
         /* Max Age */
         if (expires === null && maxage !== null) {
             /* Set expires based on max-age if not provided */
-            if (expires === null) new_cookie += '; Expires=' + addUTC(new Date(), maxage, 'seconds').toUTCString();
-            new_cookie += '; Max-Age=' + maxage;
+            new_cookie += '; Expires=' + addUTC(new Date(), maxage, 'seconds').toUTCString() + '; Max-Age=' + maxage;
         }
 
         /* Expires */
@@ -137,10 +136,10 @@ export class TriFrostCookies {
         }
 
         /* Path */
-        if (typeof config.path === 'string') new_cookie += '; Path=' + config.path;
+        if (isString(config.path)) new_cookie += '; Path=' + config.path;
 
         /* Domain */
-        if (typeof config.domain === 'string') new_cookie += '; Domain=' + config.domain;
+        if (isString(config.domain)) new_cookie += '; Domain=' + config.domain;
 
         /* Secure */
         if (config.secure !== false) new_cookie += '; Secure';
@@ -149,7 +148,7 @@ export class TriFrostCookies {
         if (config.httponly === true) new_cookie += '; HttpOnly';
 
         /* SameSite */
-        if (typeof config.samesite === 'string') {
+        if (isString(config.samesite)) {
             new_cookie += '; SameSite=' + config.samesite;
 
             /* If samesite 'None', ensure ALWAYS secure */
@@ -173,7 +172,7 @@ export class TriFrostCookies {
      * @param {Partial<TriFrostCookieDeleteOptions>} options - Cookie Delete options (path, domain)
      */
     del (name: string, options:Partial<TriFrostCookieDeleteOptions> = {}) {
-        if (typeof name !== 'string') return;
+        if (!isString(name)) return;
         if (name in this.#outgoing) delete this.#outgoing[name];
         if (name in this.#incoming) this.set(name, '', {...options, maxage: 0});
         if (name in this.#combined) delete this.#combined[name];

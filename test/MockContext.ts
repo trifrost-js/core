@@ -17,7 +17,7 @@ import {
     type TriFrostContextFileOptions,
 } from '../lib/types/context';
 
-import {TriFrostCookies} from '../lib/modules/Cookies';
+import {Cookies} from '../lib/modules/Cookies';
 import {type TriFrostCache, MemoryCache } from '../lib/modules/Cache';
 import {Logger, type TriFrostLogger} from '../lib/modules/Logger';
 import {type JSXElement} from '../lib/modules/JSX';
@@ -38,6 +38,7 @@ export class MockContext <
     #kind:TriFrostContextKind;
     #ip:string|null;
     #limit:TriFrostRateLimitLimitFunction|null;
+    #name:string;
     #requestId:string = '123456789';
     #cache:TriFrostCache;
     #after:(() => Promise<void>)[];
@@ -53,6 +54,7 @@ export class MockContext <
         ip?: string|null;
         limit?: TriFrostRateLimitLimitFunction|null;
         cache?: TriFrostCache|null;
+        name?: string;
     } = {}) {
         this.#method = (opts.method ?? 'get') as HttpMethod;
         this.#path = opts.path ?? '/test';
@@ -62,9 +64,10 @@ export class MockContext <
         this.#query = typeof opts.query === 'string' ? new URLSearchParams(opts.query) : opts.query ?? new URLSearchParams();
         this.#kind = opts.kind ?? 'std';
         this.#logger = new Logger({debug: false, exporters: [], spanAwareExporters: []});
-        this.#cookies = new TriFrostCookies({headers: this.#headers, logger: this.#logger} as any, {});
+        this.#cookies = new Cookies({headers: this.#headers, logger: this.#logger} as any, {});
         this.#ip = 'ip' in opts ? opts.ip || null : '127.0.0.1';
         this.#limit = opts.limit ?? null;
+        this.#name = opts.name ?? 'mock-handler';
         this.#cache = opts.cache ?? new MemoryCache();
         this.#cache?.stop?.();
         this.#after = [];
@@ -73,7 +76,7 @@ export class MockContext <
     get env() { return this.#env; }
     get method() { return this.#method; }
     get path() { return this.#path; }
-    get name() { return 'mock-handler'; }
+    get name() { return this.#name; }
     get limit() { return this.#limit; }
     get kind() { return this.#kind; }
     get host() { return null; }
@@ -107,11 +110,11 @@ export class MockContext <
         return this as TriFrostContext<any, any>;
     };
 
-    setHeader = (key: string, value: string): void => {
-        this.#headers[key] = value;
+    setHeader = (key: string, value: string|number): void => {
+        this.#headers[key] = String(value);
     };
 
-    setHeaders = (map: Record<string, string>): void => {
+    setHeaders = (map: Record<string, string|number>): void => {
         Object.assign(this.#headers, map);
     };
 

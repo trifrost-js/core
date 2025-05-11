@@ -3,7 +3,7 @@
 import {type TriFrostCacheControlOptions} from '../middleware/CacheControl';
 import {type TriFrostCache} from '../modules/Cache';
 import {
-    type TriFrostCookies,
+    type Cookies,
     type TriFrostCookieOptions,
 } from '../modules/Cookies';
 import {type JSXElement} from '../modules/JSX';
@@ -104,7 +104,7 @@ export type TriFrostContext<
     get isLocked        ():boolean;
     get headers         ():Readonly<Record<string, string>>;
     get logger          ():TriFrostLogger;
-    get cookies         ():TriFrostCookies;
+    get cookies         ():Cookies;
     get cache           ():TriFrostCache;
     get state           ():Readonly<State>;
     get timeout         ():number|null;
