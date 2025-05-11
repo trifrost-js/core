@@ -2,7 +2,7 @@
 
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {isFn} from '@valkyriestudios/utils/function';
-import {isString} from '@valkyriestudios/utils/string';
+import {isNeString, isString} from '@valkyriestudios/utils/string';
 import {Lazy, type LazyInitFn} from '../../utils/Lazy';
 import {type TriFrostContext} from '../../types/context';
 import {type TriFrostStore} from '../_storage';
@@ -56,7 +56,7 @@ export type TriFrostRateLimitExceededFunction = (ctx:TriFrostContext) => void|Pr
 /**
  * Prebuilt Key Gen Registry
  */
-export const TriFrostRateLimitKeyGeneratorRegistry:Record<TriFrostRateLimitKeyGeneratorVal, TriFrostRateLimitKeyGeneratorFn> = {
+export const RateLimitKeyGeneratorRegistry:Record<TriFrostRateLimitKeyGeneratorVal, TriFrostRateLimitKeyGeneratorFn> = {
     ip              : ctx => ctx.ip || 'unknown',
     ip_name         : ctx => (ctx.ip || 'unknown') + ':' + ctx.name,
     ip_method       : ctx => (ctx.ip || 'unknown') + ':' + ctx.method,
@@ -85,13 +85,17 @@ export class TriFrostRateLimit <Env extends Record<string, any> = Record<string,
 
     #headers:boolean;
 
+    #strategy:TriFrostRateLimitStrategy;
+
+    #window:number;
+
     constructor (options:TriFrostRateLimitOptions<Env>) {
         /* Define keygen or fallback to ip_name_method */
         this.#keygen = (isFn(options?.keygen)
             ? options.keygen
             : isString(options?.keygen)
-                ? TriFrostRateLimitKeyGeneratorRegistry[options.keygen]
-                : TriFrostRateLimitKeyGeneratorRegistry.ip_name_method) as TriFrostRateLimitKeyGeneratorFn;
+                ? RateLimitKeyGeneratorRegistry[options.keygen]
+                : RateLimitKeyGeneratorRegistry.ip_name_method) as TriFrostRateLimitKeyGeneratorFn;
 
         /* Define exceeded behavior */
         this.#exceeded = isFn(options?.exceeded)
@@ -101,17 +105,39 @@ export class TriFrostRateLimit <Env extends Record<string, any> = Record<string,
         /* Whether or not rate limit headers should be set (Defaults to true) */
         this.#headers = options?.headers !== false;
 
+        /* Set strategy */
+        this.#strategy = options?.strategy === 'sliding' ? 'sliding' : 'fixed';
+
+        /* Set window */
+        this.#window = isIntGt(options?.window, 0) ? options?.window : 60;
+
         /* Create lazy store */
         this.#store = new Lazy<TriFrostRateLimitStrategizedStore, Env>((opts:{env:Env}) => {
-            const window = isIntGt(options?.window, 0) ? options?.window : 60_000;
-
-            switch (options.strategy) {
+            switch (this.#strategy) {
                 case 'sliding':
-                    return new Sliding(window, options.store(opts) as unknown as TriFrostStore<number[]>);
+                    return new Sliding(this.#window, options.store(opts) as unknown as TriFrostStore<number[]>);
                 default:
-                    return new Fixed(window, options.store(opts) as unknown as TriFrostStore<TriFrostRateLimitObject>);
+                    return new Fixed(this.#window, options.store(opts) as unknown as TriFrostStore<TriFrostRateLimitObject>);
             }
         });
+    }
+
+    protected get resolvedStore (): TriFrostRateLimitStrategizedStore|null {
+        return this.#store?.resolved;
+    }
+
+    /**
+     * The configured strategy type (default=fixed)
+     */
+    get strategy () {
+        return this.#strategy;
+    }
+
+    /**
+     * The configured window (default=60) in seconds
+     */
+    get window () {
+        return this.#window;
     }
 
     /**
@@ -138,17 +164,18 @@ export class TriFrostRateLimit <Env extends Record<string, any> = Record<string,
             const store = this.#store.resolve(ctx);
 
             /* Consume */
-            const usage = await store.consume(this.#keygen(ctx) || 'unknown', n_limit);
+            const key = this.#keygen(ctx);
+            const usage = await store.consume(isNeString(key) ? key : 'unknown', n_limit);
             if (usage.amt > n_limit) {
                 if (this.#headers) {
                     ctx.setHeaders({
-                        'Retry-After': Math.ceil((usage.reset - Date.now()) / 1000),
+                        'Retry-After': usage.reset - Math.floor(Date.now()/1000),
                         'X-RateLimit-Limit': n_limit,
                         'X-RateLimit-Remaining': '0',
-                        'X-RateLimit-Reset': Math.floor(usage.reset / 1000),
+                        'X-RateLimit-Reset': usage.reset,
                     });
                 } else {
-                    ctx.setHeader('Retry-After', Math.ceil((usage.reset - Date.now())/1000));
+                    ctx.setHeader('Retry-After', usage.reset - Math.floor(Date.now()/1000));
                 }
                 return this.#exceeded(ctx);
             }
@@ -157,7 +184,7 @@ export class TriFrostRateLimit <Env extends Record<string, any> = Record<string,
                 ctx.setHeaders({
                     'X-RateLimit-Limit': n_limit,
                     'X-RateLimit-Remaining': n_limit - usage.amt,
-                    'X-RateLimit-Reset': Math.floor(usage.reset / 1000),
+                    'X-RateLimit-Reset': usage.reset,
                 });
             }
         };
@@ -175,9 +202,9 @@ export class TriFrostRateLimit <Env extends Record<string, any> = Record<string,
     /**
      * This function is meant specifically to call a 'stop' function on implementing stores.
      */
-    stop () {
+    async stop () {
         if (!this.#store.resolved) return;
-        this.#store.resolved.stop();
+        await this.#store.resolved.stop();
     }
 
 }

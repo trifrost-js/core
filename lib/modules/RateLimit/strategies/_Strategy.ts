@@ -10,7 +10,6 @@ export type TriFrostRateLimitObject = {
  * Interface a TriFrost RateLimit strategy should satisfy
  */
 export interface TriFrostRateLimitStrategizedStore {
-    get window () :number;
 
     consume: (key:string, limit:number) => Promise<TriFrostRateLimitObject>;
 

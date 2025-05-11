@@ -1,5 +1,3 @@
-import {isIntGt} from '@valkyriestudios/utils/number';
-import {isNeString} from '@valkyriestudios/utils/string';
 import {type TriFrostStore} from '../../_storage';
 import {
     type TriFrostRateLimitObject,
@@ -12,22 +10,17 @@ export class Fixed implements TriFrostRateLimitStrategizedStore {
 
     #store:TriFrostStore<TriFrostRateLimitObject>;
 
-    constructor (window: number = 60_000, store:TriFrostStore<TriFrostRateLimitObject>) {
-        if (!isIntGt(window, 0)) throw new Error('TriFrostRateLimit: Store requires an integer window above 0');
-
+    constructor (window: number = 60, store:TriFrostStore<TriFrostRateLimitObject>) {
         this.#window = window;
         this.#store = store;
     }
 
-    get window () {
-        return this.#window;
+    protected get store ():TriFrostStore|null {
+        return this.#store;
     }
 
     async consume (key: string, limit:number): Promise<TriFrostRateLimitObject> {
-        if (!isNeString(key)) throw new Error('TriFrostRateLimit: Store@consume requires a key string');
-        if (!isIntGt(limit, 0)) throw new Error('TriFrostRateLimit: Store@consume requires a limit integer');
-
-        const now = Date.now();
+        const now = Math.floor(Date.now()/1000);
         const record = await this.#store.get(key);
 
         let amt:number;
@@ -42,8 +35,8 @@ export class Fixed implements TriFrostRateLimitStrategizedStore {
 
         /* Avoid writes if we've already exceeded the limit */
         if (amt <= limit) {
-            const ttl = Math.ceil((reset - now) / 1000);
-            await this.#store.set(key, {amt, reset}, {ttl: ttl >= 1 ? ttl : 1});
+            const ttl = reset - now;
+            await this.#store.set(key, {amt, reset}, {ttl: Math.max(ttl, 1)});
         }
 
         return {amt, reset};
