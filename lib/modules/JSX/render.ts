@@ -1,4 +1,4 @@
-/* eslint-disable no-underscore-dangle */
+/* eslint-disable no-underscore-dangle,no-use-before-define */
 
 import {isObject} from '@valkyriestudios/utils/object';
 import {isString} from '@valkyriestudios/utils/string';
@@ -157,7 +157,7 @@ export function render (node: JSXElement | string | number | boolean | null): st
             } else if (!isObject(node) || !node.type) {
                 return '';
             } else if (node.type === Fragment) {
-                return renderChildren(node.props?.children  as JSXElement | string | number | boolean | null)
+                return renderChildren(node.props?.children  as JSXElement | string | number | boolean | null);
             } else if (typeof node.type === 'function') {
                 return render(node.type(node.props || {}));
             } else {
@@ -174,8 +174,7 @@ export function render (node: JSXElement | string | number | boolean | null): st
                 if (isString(node.props?.dangerouslySetInnerHTML?.__html)) {
                     output += node.props.dangerouslySetInnerHTML.__html;
                 } else {
-                    const children = node.props?.children;
-                    output += renderChildren(children  as JSXElement | string | number | boolean | null);
+                    output += renderChildren(node.props?.children  as JSXElement | string | number | boolean | null);
                 }
 
                 return output + '</' + tag + '>';
