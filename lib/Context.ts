@@ -773,7 +773,12 @@ export abstract class Context <
             }
 
             /* If keep_query is passed as true and a query exists add it to normalized to */
-            if (opts?.keep_query === true && this.query.size) normalized_to += '?' + this.query;
+            if (
+                this.query.size && (
+                    (!opts || !('keep_query' in opts)) || 
+                    opts.keep_query === true
+                )
+            ) normalized_to += '?' + this.query;
 
             /* This is a redirect, as such a body should not be present */
             this.res_body = '';

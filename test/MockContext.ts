@@ -56,6 +56,7 @@ export class MockContext <
         limit?: TriFrostRateLimitLimitFunction|null;
         cache?: TriFrostCache|null;
         name?: string;
+        logger?: Logger;
     } = {}) {
         this.#method = (opts.method ?? 'get') as HttpMethod;
         this.#path = opts.path ?? '/test';
@@ -64,7 +65,7 @@ export class MockContext <
         this.#state = (opts.state ?? {}) as State;
         this.#query = typeof opts.query === 'string' ? new URLSearchParams(opts.query) : opts.query ?? new URLSearchParams();
         this.#kind = opts.kind ?? 'std';
-        this.#logger = new Logger({debug: false, exporters: [], spanAwareExporters: []});
+        this.#logger = opts.logger ?? new Logger({debug: false, exporters: [], spanAwareExporters: []});
         this.#cookies = new Cookies({headers: this.#headers, logger: this.#logger} as any, {});
         this.#ip = 'ip' in opts ? opts.ip || null : '127.0.0.1';
         this.#limit = opts.limit ?? null;

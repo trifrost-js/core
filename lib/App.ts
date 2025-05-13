@@ -51,6 +51,7 @@ import {
     Sym_TriFrostLoggerMeta,
 } from './types/constants';
 import {type LazyInitFn} from './utils/Lazy';
+import { Sym_TriFrostSpan } from './modules/Logger/util';
 
 const RGX_WILDCARD  = /\*/g;
 const RGX_PARAM     = /:[^/]+/g;
@@ -411,10 +412,14 @@ class App <
                         const last_idx = match.route.chain.length - 1;
                         for (let i = 0; i <= last_idx; i++) {
                             const fn = match.route.chain[i];
-                            await ctx.logger.span(
-                                last_idx === i ? name : Reflect.get(fn, Sym_TriFrostName) ?? `anonymous_${i}`,
-                                async () => fn(ctx as TriFrostContext<Env, State>)
-                            );
+                            if (Reflect.get(fn, Sym_TriFrostSpan)) {
+                                await fn(ctx);
+                            } else {
+                                await ctx.logger.span(
+                                    last_idx === i ? name : Reflect.get(fn, Sym_TriFrostName) ?? `anonymous_${i}`,
+                                    async () => fn(ctx as TriFrostContext<Env, State>)
+                                );
+                            }
 
                             /* If context is locked at this point, return as the route has been handled */
                             if (ctx.isLocked) return;

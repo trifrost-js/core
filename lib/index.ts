@@ -40,7 +40,9 @@ export {
 export {
     ConsoleExporter,
     JsonExporter,
-    OtelHttpExporter
+    OtelHttpExporter,
+    span,
+    spanFn,
 } from './modules/Logger';
 
 /* Runtime-Specifics */

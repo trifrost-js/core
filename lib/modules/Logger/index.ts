@@ -6,3 +6,7 @@ export {
     JsonExporter,
     OtelHttpExporter
 } from './exporters';
+export {
+    span,
+    spanFn,
+} from './util';
