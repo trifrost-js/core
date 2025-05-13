@@ -8,5 +8,5 @@ export {
 } from './exporters';
 export {
     span,
-    spanFn,
+    spanFn
 } from './util';

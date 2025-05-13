@@ -18,6 +18,7 @@ import {
     TriFrostRootLogger,
     type TriFrostLoggerExporter,
 } from './modules/Logger';
+import {Sym_TriFrostSpan} from './modules/Logger/util';
 import {Router} from './Router';
 import {getRuntime} from './runtimes/Runtime';
 import {
@@ -51,7 +52,6 @@ import {
     Sym_TriFrostLoggerMeta,
 } from './types/constants';
 import {type LazyInitFn} from './utils/Lazy';
-import { Sym_TriFrostSpan } from './modules/Logger/util';
 
 const RGX_WILDCARD  = /\*/g;
 const RGX_PARAM     = /:[^/]+/g;

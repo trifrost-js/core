@@ -42,7 +42,7 @@ export {
     JsonExporter,
     OtelHttpExporter,
     span,
-    spanFn,
+    spanFn
 } from './modules/Logger';
 
 /* Runtime-Specifics */
