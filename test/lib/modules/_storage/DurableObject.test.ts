@@ -138,10 +138,10 @@ describe('Modules - Storage - DurableObject', () => {
         });
     });
 
-    describe('delete', () => {
+    describe('del', () => {
         it('Deletes key successfully', async () => {
             await store.set('to-del', {z: 9});
-            await store.delete('to-del');
+            await store.del('to-del');
             expect(stub.calls).toEqual([
                 [
                     'https://do/trifrost-test?key=to-del',
@@ -155,7 +155,7 @@ describe('Modules - Storage - DurableObject', () => {
         });
 
         it('Does nothing for missing key', async () => {
-            await store.delete('ghost');
+            await store.del('ghost');
             expect(stub.calls).toEqual([
                 [
                     'https://do/trifrost-test?key=ghost',
@@ -166,13 +166,13 @@ describe('Modules - Storage - DurableObject', () => {
 
         it('Throws when DO returns an error', async () => {
             stub.fetch = async () => new Response('fail', {status: 500});
-            await expect(store.delete('key')).rejects.toThrow(/TriFrostDurableObjectStore@delete: Failed with status 500/);
+            await expect(store.del('key')).rejects.toThrow(/TriFrostDurableObjectStore@del: Failed with status 500/);
             expect(stub.calls).toEqual([]);
         });
 
         it('Throws on invalid key', async () => {
             for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
-                await expect(store.delete(el as string)).rejects.toThrow(/TriFrostDurableObjectStore@delete: Invalid key/);
+                await expect(store.del(el as string)).rejects.toThrow(/TriFrostDurableObjectStore@del: Invalid key/);
             }
             expect(stub.isEmpty).toBe(true);
         });

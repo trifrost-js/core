@@ -5,7 +5,7 @@ export interface TriFrostStore <T extends TriFrostStoreValue = TriFrostStoreValu
 
     set (key: string, value: T, opts?: {ttl?: number}): Promise<void>;
 
-    delete(key: string):Promise<void>;
+    del(key: string):Promise<void>;
 
     stop ():Promise<void>;
 }

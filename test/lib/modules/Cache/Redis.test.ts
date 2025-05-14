@@ -32,9 +32,9 @@ describe('Modules - Cache - RedisCache', () => {
         });
 
         it('Throws on delete before init', async () => {
-            await expect(cache.delete('x'))
+            await expect(cache.del('x'))
                 .rejects
-                .toThrow(/TriFrostCache@delete: Cache needs to be initialized first/);
+                .toThrow(/TriFrostCache@del: Cache needs to be initialized first/);
         });
 
         it('Throws on wrap before init', async () => {
@@ -185,17 +185,17 @@ describe('Modules - Cache - RedisCache', () => {
 
         it('Deletes a key', async () => {
             await cache.set('gone', {v: 1});
-            await cache.delete('gone');
+            await cache.del('gone');
             expect(await cache.get('gone')).toBe(null);
         });
 
         it('Does nothing on missing key', async () => {
-            await expect(cache.delete('ghost')).resolves.toBe(undefined);
+            await expect(cache.del('ghost')).resolves.toBe(undefined);
         });
 
-        it('Delegates to internal store.delete', async () => {
+        it('Delegates to internal store.del', async () => {
             const spy = vi.spyOn(mockRedis, 'del');
-            await cache.delete('x');
+            await cache.del('x');
             expect(spy).toHaveBeenCalledWith('x');
             expect(mockRedis.calls).toEqual([['del', ['x']]]);
         });

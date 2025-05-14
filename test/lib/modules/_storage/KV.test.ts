@@ -132,12 +132,12 @@ describe('Modules - Storage - KV', () => {
         });
     });
 
-    describe('delete', () => {
+    describe('del', () => {
         it('Removes a key if it exists', async () => {
             await store.set('toremove', {z: 9});
             expect(await store.get('toremove')).toEqual({z: 9});
             
-            await store.delete('toremove');
+            await store.del('toremove');
             expect(await store.get('toremove')).toBe(null);
 
             expect(kv.calls).toEqual([
@@ -149,7 +149,7 @@ describe('Modules - Storage - KV', () => {
         });
 
         it('does nothing for non-existent key', async () => {
-            await expect(store.delete('ghost')).resolves.toBe(undefined);
+            await expect(store.del('ghost')).resolves.toBe(undefined);
             expect(kv.calls).toEqual([
                 ['delete', ['ghost']],
             ]);
@@ -157,7 +157,7 @@ describe('Modules - Storage - KV', () => {
 
         it('throws on invalid key', async () => {
             for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
-                await expect(store.delete(el as string)).rejects.toThrow(/TriFrostKVStore@delete: Invalid key/);
+                await expect(store.del(el as string)).rejects.toThrow(/TriFrostKVStore@del: Invalid key/);
             }
             expect(kv.isEmpty);
         });

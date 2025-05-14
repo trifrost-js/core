@@ -68,9 +68,9 @@ export class TriFrostCache <Env extends Record<string, any> = Record<string, any
      * 
      * @param {string} key - Key of the value you wish to delete
      */
-    async delete (key: string): Promise<void> {
-        if (!this.#store.resolved) throw new Error('TriFrostCache@delete: Cache needs to be initialized first');
-        await this.#store.resolved.delete(key);
+    async del (key: string): Promise<void> {
+        if (!this.#store.resolved) throw new Error('TriFrostCache@del: Cache needs to be initialized first');
+        await this.#store.resolved.del(key);
     }
 
     /**

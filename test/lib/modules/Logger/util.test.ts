@@ -82,6 +82,28 @@ describe('Modules - Logger - Utils', () => {
             expect(spy).toHaveBeenCalledWith('my-happy-path', expect.any(Function));
         });
 
+        it('Uses this.ctx.logger if ctx and this.logger are missing', () => {
+            const spy = vi.fn((_name, run) => run());
+        
+            class Example {
+                
+                ctx = {logger: {span: spy}};
+        
+                @span('fallback-to-this.ctx.logger')
+                
+                run () {
+                    return 'ctx-logger';
+                }
+
+            }
+        
+            const inst = new Example();
+            const result = inst.run();
+        
+            expect(result).toBe('ctx-logger');
+            expect(spy).toHaveBeenCalledWith('fallback-to-this.ctx.logger', expect.any(Function));
+        });
+
         it('Respects custom span name', () => {
             const spy = vi.fn((_name, run) => run());
 
@@ -288,6 +310,20 @@ describe('Modules - Logger - Utils', () => {
             expect(result).toBe(123);
             expect(logspan).toHaveBeenCalledWith('from-this', expect.any(Function));
         });
+
+        it('Uses this.ctx.logger if ctx and this.logger are missing', () => {
+            const logspan = vi.fn((_name, run) => run());
+        
+            const obj = {
+                ctx: {logger: {span: logspan}},
+                run: spanFn('ctx-fallback', () => 'ctx-fallback-result'),
+            };
+        
+            const result = obj.run();
+            expect(result).toBe('ctx-fallback-result');
+            expect(logspan).toHaveBeenCalledWith('ctx-fallback', expect.any(Function));
+        });
+        
 
         it('Uses this.logger if ctx.logger is missing but arguments are available', () => {
             const spy = vi.fn((_name, run) => run());

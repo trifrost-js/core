@@ -104,8 +104,8 @@ export class MemoryStore <T extends TriFrostStoreValue = TriFrostStoreValue> imp
         this.#store.set(key, {value, expires});
     }
 
-    async delete (key: string): Promise<void> {
-        if (!isNeString(key)) throw new Error('TriFrostMemoryStore@delete: Invalid key');
+    async del (key: string): Promise<void> {
+        if (!isNeString(key)) throw new Error('TriFrostMemoryStore@del: Invalid key');
         this.#store.delete(key);
         
         /* Remove from lru */

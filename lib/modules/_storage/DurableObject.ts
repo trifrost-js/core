@@ -57,12 +57,12 @@ export class DurableObjectStore <T extends TriFrostStoreValue = TriFrostStoreVal
         });
     }
 
-    async delete (key: string): Promise<void> {
-        if (!isNeString(key)) throw new Error('TriFrostDurableObjectStore@delete: Invalid key');
+    async del (key: string): Promise<void> {
+        if (!isNeString(key)) throw new Error('TriFrostDurableObjectStore@del: Invalid key');
 
         const res = await this.#ns.get(this.#id).fetch(this.keyUrl(key), {method: 'DELETE'});
         if (!res?.ok && res?.status !== 404) {
-            throw new Error(`TriFrostDurableObjectStore@delete: Failed with status ${res.status}`);
+            throw new Error(`TriFrostDurableObjectStore@del: Failed with status ${res.status}`);
         }
     }
 

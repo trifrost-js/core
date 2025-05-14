@@ -32,8 +32,8 @@ export class KVStore <T extends TriFrostStoreValue = TriFrostStoreValue> impleme
         });
     }
 
-    async delete (key:string):Promise<void> {
-        if (!isNeString(key)) throw new Error('TriFrostKVStore@delete: Invalid key');
+    async del (key:string):Promise<void> {
+        if (!isNeString(key)) throw new Error('TriFrostKVStore@del: Invalid key');
         await this.#kv.delete(key);
     }
 

@@ -31,9 +31,9 @@ describe('Modules - Cache - MemoryCache', () => {
         });
   
         it('Throws on delete before init', async () => {
-            await expect(cache.delete('x'))
+            await expect(cache.del('x'))
                 .rejects
-                .toThrow(/TriFrostCache@delete: Cache needs to be initialized first/);
+                .toThrow(/TriFrostCache@del: Cache needs to be initialized first/);
         });
   
         it('Throws on wrap before init', async () => {
@@ -193,20 +193,20 @@ describe('Modules - Cache - MemoryCache', () => {
 
         it('Removes an existing key', async () => {
             await cache.set('gone', {v: 1});
-            await cache.delete('gone');
+            await cache.del('gone');
             expect(await cache.get('gone')).toBe(null);
         });
 
         it('Does nothing on non-existent key', async () => {
-            await expect(cache.delete('ghost')).resolves.toBe(undefined);
+            await expect(cache.del('ghost')).resolves.toBe(undefined);
         });
 
-        it('Delegates to internal store.delete', async () => {
+        it('Delegates to internal store.del', async () => {
             /* @ts-ignore we're testing this */
-            const spy = vi.spyOn(cache.resolvedStore, 'delete');
+            const spy = vi.spyOn(cache.resolvedStore, 'del');
       
             await cache.set('x', {v: 1});
-            await cache.delete('x');
+            await cache.del('x');
       
             expect(spy).toHaveBeenCalledWith('x');
         });

@@ -118,13 +118,13 @@ describe('MemoryStore', () => {
     describe('delete', () => {
         it('Removes stored value', async () => {
             await store.set('gone', {hello: 'world'});
-            await store.delete('gone');
+            await store.del('gone');
             expect(await store.get('gone')).toBeNull();
         });
 
         it('Throws on invalid key', async () => {
             for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
-                await expect(store.delete(el as string)).rejects.toThrow(/TriFrostMemoryStore@delete: Invalid key/);
+                await expect(store.del(el as string)).rejects.toThrow(/TriFrostMemoryStore@del: Invalid key/);
             }
         });
     });
@@ -227,7 +227,7 @@ describe('MemoryStore', () => {
             const lruStore = new MemoryStore({max_items: 2});
 
             await lruStore.set('delme', {a: 1});
-            await lruStore.delete('delme');
+            await lruStore.del('delme');
 
             /* Should allow us to set 2 more keys without hitting max */
             await lruStore.set('x', {v: 1});

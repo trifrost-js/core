@@ -36,8 +36,8 @@ export class RedisStore <T extends TriFrostStoreValue = TriFrostStoreValue> impl
         await this.#redis.set(key, JSON.stringify(value), 'EX', TTL);
     }
 
-    async delete (key:string):Promise<void> {
-        if (!isNeString(key)) throw new Error('TriFrostRedisStore@delete: Invalid key');
+    async del (key:string):Promise<void> {
+        if (!isNeString(key)) throw new Error('TriFrostRedisStore@del: Invalid key');
         await this.#redis.del(key);
     }
 

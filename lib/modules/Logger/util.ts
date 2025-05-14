@@ -24,7 +24,7 @@ export function span (name?: string) {
             /* Get our logger from the context (as first arg) OR from a potential logger getter on this */
             const logger = isNeArray(fn_args)
                 ? fn_args[0]?.logger ?? (this as any)?.logger
-                : (this as any)?.logger;
+                : (this as any)?.logger ?? (this as any)?.ctx?.logger;
             if (!isFn(logger?.span)) return method.call(this, ...fn_args);
 
             return logger.span(span_name, () => method.call(this, ...fn_args));
@@ -61,7 +61,7 @@ export function spanFn <T extends Fn> (...args:[string,T]|[T]):T {
     const fn_span = function (this: any, ...fn_args: Parameters<T>): ReturnType<T> {
         const logger = isNeArray(fn_args)
             ? fn_args[0]?.logger ?? this?.logger
-            : this?.logger;
+            : this?.logger ?? this?.ctx?.logger;
 
         if (!isFn(logger?.span)) return fn.apply(this, fn_args);
 

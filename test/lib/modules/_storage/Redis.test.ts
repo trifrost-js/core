@@ -120,10 +120,10 @@ describe('Modules - Storage - Redis', () => {
         });
     });
 
-    describe('delete', () => {
+    describe('del', () => {
         it('Deletes key successfully', async () => {
             await store.set('to-del', {z: 9});
-            await store.delete('to-del');
+            await store.del('to-del');
             expect(redis.calls).toEqual([
                 ['set', ['to-del', '{"z":9}', ['EX', 60]]],
                 ['del', ['to-del']],
@@ -131,7 +131,7 @@ describe('Modules - Storage - Redis', () => {
         });
 
         it('Does nothing for missing key', async () => {
-            await store.delete('ghost');
+            await store.del('ghost');
             expect(redis.calls).toEqual([
                 ['del', ['ghost']],
             ]);
@@ -139,7 +139,7 @@ describe('Modules - Storage - Redis', () => {
 
         it('Throws on invalid key', async () => {
             for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
-                await expect(store.delete(el as string)).rejects.toThrow(/TriFrostRedisStore@delete: Invalid key/);
+                await expect(store.del(el as string)).rejects.toThrow(/TriFrostRedisStore@del: Invalid key/);
             }
             expect(redis.isEmpty).toBe(true);
         });

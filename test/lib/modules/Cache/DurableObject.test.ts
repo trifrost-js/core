@@ -36,9 +36,9 @@ describe('Modules - Cache - DurableObjectCache', () => {
         });
 
         it('Throws on delete before init', async () => {
-            await expect(cache.delete('x'))
+            await expect(cache.del('x'))
                 .rejects
-                .toThrow(/TriFrostCache@delete: Cache needs to be initialized first/);
+                .toThrow(/TriFrostCache@del: Cache needs to be initialized first/);
         });
 
         it('Throws on wrap before init', async () => {
@@ -265,17 +265,17 @@ describe('Modules - Cache - DurableObjectCache', () => {
 
         it('Deletes an existing key', async () => {
             await cache.set('gone', {x: 1});
-            await cache.delete('gone');
+            await cache.del('gone');
             expect(await cache.get('gone')).toBe(null);
         });
 
         it('Does nothing on non-existent key', async () => {
-            await expect(cache.delete('ghost')).resolves.toBe(undefined);
+            await expect(cache.del('ghost')).resolves.toBe(undefined);
         });
 
         it('Delegates to internal fetch DELETE', async () => {
             const spy = vi.spyOn(durable.get(stubId), 'fetch');
-            await cache.delete('test-del');
+            await cache.del('test-del');
             expect(spy).toHaveBeenCalledWith(expect.stringContaining('test-del'), expect.objectContaining({method: 'DELETE'}));
             expect(stub.calls).toEqual([
                 ['https://do/trifrost-cache?key=test-del', {
