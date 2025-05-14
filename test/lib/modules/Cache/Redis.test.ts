@@ -1,6 +1,7 @@
 import {describe, it, expect, beforeEach, vi, afterEach} from 'vitest';
 import {RedisCache} from '../../../../lib/modules/Cache/Redis';
 import {MockRedis} from '../../../MockRedis';
+import {cacheSkip} from '../../../../lib/modules/Cache/util';
 
 describe('Modules - Cache - RedisCache', () => {
     let cache: RedisCache;
@@ -71,20 +72,51 @@ describe('Modules - Cache - RedisCache', () => {
             expect(await cache.get('missing')).toBe(null);
         });
 
-        it('Returns parsed object', async () => {
-            await mockRedis.set('foo', JSON.stringify({bar: 1}));
+        it('Returns null if value in Redis is malformed or not wrapped', async () => {
+            await mockRedis.set('corrupt', JSON.stringify({not_v: 123}));
+            expect(await cache.get('corrupt')).toBe(null);
+        
+            await mockRedis.set('not-json', 'plain string');
+            expect(await cache.get('not-json')).toBe(null);
+        });        
+
+        it('Returns stored object', async () => {
+            await mockRedis.set('foo', JSON.stringify({v: {bar: 1}}));
             expect(await cache.get('foo')).toEqual({bar: 1});
+            expect(mockRedis.calls).toEqual([
+                ['set', ['foo', JSON.stringify({v: {bar: 1}}), []]],
+                ['get', ['foo']],
+            ]);
         });
 
-        it('Returns parsed array', async () => {
-            await mockRedis.set('arr', JSON.stringify([1, 2, 3]));
+        it('Returns stored array', async () => {
+            await mockRedis.set('arr', JSON.stringify({v: [1, 2, 3]}));
             expect(await cache.get('arr')).toEqual([1, 2, 3]);
+            expect(mockRedis.calls).toEqual([
+                ['set', ['arr', JSON.stringify({v: [1,2,3]}), []]],
+                ['get', ['arr']],
+            ]);
         });
 
-        it('Delegates to internal redis.get', async () => {
+        it('Returns stored primitive', async () => {
+            for (const el of [true, false, null, 1, 'hello', '', 99.999, -100]) {
+                await mockRedis.set('val', JSON.stringify({v: el}));
+                expect(await cache.get('val')).toEqual(el);
+                expect(mockRedis.calls).toEqual([
+                    ['set', ['val', JSON.stringify({v: el}), []]],
+                    ['get', ['val']],
+                ]);
+                mockRedis.reset();
+            }
+        });
+
+        it('Delegates to internal store.get', async () => {
             const spy = vi.spyOn(mockRedis, 'get');
             await cache.get('key');
             expect(spy).toHaveBeenCalledWith('key');
+            expect(mockRedis.calls).toEqual([
+                ['get', ['key']],
+            ]);
         });
     });
 
@@ -93,28 +125,56 @@ describe('Modules - Cache - RedisCache', () => {
             cache.init({env: true});
         });
 
+        it('Throws if provided undefined', async () => {
+            /* @ts-ignore This is what we're testing */
+            await expect(cache.set('x'))
+                .rejects
+                .toThrow(/TriFrostCache@set: Value can not be undefined/);
+            expect(mockRedis.isEmpty);
+        });
+
         it('Stores an object', async () => {
             await cache.set('obj', {x: 1});
             expect(await cache.get('obj')).toEqual({x: 1});
+            expect(mockRedis.calls).toEqual([
+                ['set', ['obj', JSON.stringify({v: {x: 1}}), ['EX', 60]]],
+                ['get', ['obj']],
+            ]);
         });
 
         it('Stores an array', async () => {
             await cache.set('arr', [1, 2]);
             expect(await cache.get('arr')).toEqual([1, 2]);
+            expect(mockRedis.calls).toEqual([
+                ['set', ['arr', JSON.stringify({v: [1, 2]}), ['EX', 60]]],
+                ['get', ['arr']],
+            ]);
+        });
+
+        it('Stores primitives', async () => {
+            for (const el of [true, false, null, 1, 'hello', '', 99.999, -100]) {
+                await cache.set('val', el);
+                expect(await cache.get('val')).toEqual(el);
+                expect(mockRedis.calls).toEqual([
+                    ['set', ['val', JSON.stringify({v: el}), ['EX', 60]]],
+                    ['get', ['val']],
+                ]);
+                mockRedis.reset();
+            }
         });
 
         it('Respects TTL', async () => {
             await cache.set('with-ttl', {v: 9}, {ttl: 120});
             expect(mockRedis.calls.at(-1)).toEqual([
                 'set',
-                ['with-ttl', JSON.stringify({v: 9}), ['EX', 120]],
+                ['with-ttl', JSON.stringify({v: {v: 9}}), ['EX', 120]],
             ]);
         });
 
-        it('Delegates to internal redis.set', async () => {
+        it('Delegates to internal store.set', async () => {
             const spy = vi.spyOn(mockRedis, 'set');
             await cache.set('spy', {val: 1}, {ttl: 55});
-            expect(spy).toHaveBeenCalledWith('spy', JSON.stringify({val: 1}), 'EX', 55);
+            expect(spy).toHaveBeenCalledWith('spy', JSON.stringify({v: {val: 1}}), 'EX', 55);
         });
     });
 
@@ -133,10 +193,11 @@ describe('Modules - Cache - RedisCache', () => {
             await expect(cache.delete('ghost')).resolves.toBe(undefined);
         });
 
-        it('Delegates to internal redis.del', async () => {
+        it('Delegates to internal store.delete', async () => {
             const spy = vi.spyOn(mockRedis, 'del');
             await cache.delete('x');
             expect(spy).toHaveBeenCalledWith('x');
+            expect(mockRedis.calls).toEqual([['del', ['x']]]);
         });
     });
 
@@ -149,12 +210,42 @@ describe('Modules - Cache - RedisCache', () => {
             await cache.set('wrapped', {a: 1});
             const result = await cache.wrap('wrapped', async () => ({fail: true}));
             expect(result).toEqual({a: 1});
+            expect(mockRedis.calls).toEqual([
+                ['set', ['wrapped', JSON.stringify({v: {a: 1}}), ['EX', 60]]],
+                ['get', ['wrapped']],
+            ]);
         });
 
         it('Computes and stores value if missing', async () => {
             const result = await cache.wrap('miss', async () => ({hit: true}));
             expect(result).toEqual({hit: true});
             expect(await cache.get('miss')).toEqual({hit: true});
+            expect(mockRedis.calls).toEqual([
+                ['get', ['miss']],
+                ['set', ['miss', JSON.stringify({v: {hit: true}}), ['EX', 60]]],
+                ['get', ['miss']],
+            ]);
+        });
+
+        it('Computes and does not store anything if function returns nada', async () => {
+            /* @ts-ignore this is what we're testing */
+            const result = await cache.wrap('noret', async () => {});
+            expect(result).toEqual(undefined);
+            expect(await cache.get('noret')).toEqual(null);
+            expect(mockRedis.calls).toEqual([
+                ['get', ['noret']],
+                ['get', ['noret']],
+            ]);
+        });
+
+        it('Computes and does not store anything if function decided to skip', async () => {
+            const result = await cache.wrap('nocache', async () => cacheSkip('you_shall_not_pass'));
+            expect(result).toEqual('you_shall_not_pass');
+            expect(await cache.get('nocache')).toEqual(null);
+            expect(mockRedis.calls).toEqual([
+                ['get', ['nocache']],
+                ['get', ['nocache']],
+            ]);
         });
 
         it('Respects TTL during wrap', async () => {
@@ -164,22 +255,38 @@ describe('Modules - Cache - RedisCache', () => {
                 {ttl: 80}
             );
             expect(result).toEqual({cached: true});
-            const last = mockRedis.calls.at(-1);
-            expect(last?.[0]).toBe('set');
-            expect(last?.[1]![2]).toEqual(['EX', 80]);
+            expect(mockRedis.calls).toEqual([
+                ['get', ['with-ttl']],
+                ['set', ['with-ttl', JSON.stringify({v: {cached: true}}), ['EX', 80]]],
+            ]);
         });
+
+        it('Caches null as a valid value from wrap', async () => {
+            const result = await cache.wrap('null-key', async () => null);
+            expect(result).toBe(null);
+            expect(await cache.get('null-key')).toBe(null);
+            expect(mockRedis.calls).toEqual([
+                ['get', ['null-key']],
+                ['set', ['null-key', JSON.stringify({v: null}), ['EX', 60]]],
+                ['get', ['null-key']],
+            ]);
+        });        
 
         it('Delegates to internal get/set during wrap', async () => {
             const getSpy = vi.spyOn(mockRedis, 'get');
-            const setSpy = vi.spyOn(mockRedis, 'set');
+            const putSpy = vi.spyOn(mockRedis, 'set');
             await cache.wrap('combo', async () => ({cool: true}), {ttl: 99});
             expect(getSpy).toHaveBeenCalledWith('combo');
-            expect(setSpy).toHaveBeenCalledWith(
+            expect(putSpy).toHaveBeenCalledWith(
                 'combo',
-                JSON.stringify({cool: true}),
+                JSON.stringify({v: {cool: true}}),
                 'EX',
                 99
             );
+            expect(mockRedis.calls).toEqual([
+                ['get', ['combo']],
+                ['set', ['combo', JSON.stringify({v: {cool: true}}), ['EX', 99]]],
+            ]);
         });
     });
 
