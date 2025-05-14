@@ -33,7 +33,10 @@ export {
     DurableObjectCache,
     KVCache,
     MemoryCache,
-    RedisCache
+    RedisCache,
+    cache,
+    cacheFn,
+    cacheSkip
 } from './modules/Cache';
 
 /* Modules - Logger */
