@@ -1,3 +1,4 @@
+import {isObject} from '@valkyriestudios/utils/object';
 import {
     Lazy,
     type LazyInitFn,
@@ -6,6 +7,13 @@ import {
     type TriFrostStore,
     type TriFrostStoreValue,
 } from '../_storage/types';
+import {cacheSkipped} from './util';
+
+export type CacheOptions = {
+    ttl?: number;
+};
+
+export type TriFrostCacheValue = number|string|boolean|null|TriFrostStoreValue;
 
 export class TriFrostCache <Env extends Record<string, any> = Record<string, any>> {
 
@@ -24,22 +32,42 @@ export class TriFrostCache <Env extends Record<string, any> = Record<string, any
         return this.#store?.resolved;
     }
 
-    async get<TVal extends TriFrostStoreValue = TriFrostStoreValue> (
+    /**
+     * Retrieves a cached value by key.
+     * 
+     * @note If value doesn't exist will return null
+     * @param {string} key - Key of the value you wish to retrieve
+     */
+    async get<TVal extends TriFrostCacheValue = TriFrostCacheValue> (
         key: string
     ): Promise<TVal | null> {
         if (!this.#store.resolved) throw new Error('TriFrostCache@get: Cache needs to be initialized first');
-        return this.#store.resolved.get(key) as unknown as TVal | null;
+        const stored = await this.#store.resolved.get(key);
+        return isObject(stored) && 'v' in stored ? stored.v as TVal : null;
     }
 
-    async set<TVal extends TriFrostStoreValue = TriFrostStoreValue> (
+    /**
+     * Sets a value in cache
+     * 
+     * @param {string} key - Key to set the value on in cache
+     * @param {TVal} value - Value to set
+     * @param {CacheOptions?} opts - Options for caching, eg: {ttl: 3600} means cache for 1 hour
+     */
+    async set<TVal extends TriFrostCacheValue = TriFrostCacheValue> (
         key: string,
         value: TVal,
-        opts?: {ttl?: number}
+        opts?: CacheOptions
     ): Promise<void> {
         if (!this.#store.resolved) throw new Error('TriFrostCache@set: Cache needs to be initialized first');
-        await this.#store.resolved.set(key, value as Record<string, unknown>, opts);
+        if (value === undefined) throw new Error('TriFrostCache@set: Value can not be undefined');
+        await this.#store.resolved.set(key, {v: value}, opts);
     }
 
+    /**
+     * Deletes a cached value by key
+     * 
+     * @param {string} key - Key of the value you wish to delete
+     */
     async delete (key: string): Promise<void> {
         if (!this.#store.resolved) throw new Error('TriFrostCache@delete: Cache needs to be initialized first');
         await this.#store.resolved.delete(key);
@@ -47,11 +75,15 @@ export class TriFrostCache <Env extends Record<string, any> = Record<string, any
 
     /**
      * Wraps a get + set combined as a utility method.
+     * 
+     * @param {string} key - Key the value is/will be cached on
+     * @param {Function} compute - Function to wrap which computes the value to cache
+     * @param {CacheOptions?} opts - Options for caching, eg: {ttl: 3600} means cache for 1 hour
      */
-    async wrap <TVal extends TriFrostStoreValue = TriFrostStoreValue> (
+    async wrap <TVal extends TriFrostCacheValue = TriFrostCacheValue> (
         key:string,
         compute: () => Promise<TVal>,
-        opts?: {ttl?: number}
+        opts?: CacheOptions
     ):Promise<TVal> {
         if (!this.#store.resolved) throw new Error('TriFrostCache@wrap: Cache needs to be initialized first');
 
@@ -60,10 +92,15 @@ export class TriFrostCache <Env extends Record<string, any> = Record<string, any
         if (existing !== null) return existing;
 
         /* If not exists, compute the value and set */
-        const value = await compute();
-        if (value) await this.set(key, value, opts);
+        const result = await compute();
+        if (result === undefined) return result;
 
-        return value;
+        /* If cache was skipped from inside the method do not cache */
+        if (cacheSkipped<TVal>(result)) return result.value;
+
+        await this.set(key, result, opts);
+
+        return result;
     }
 
     /**
