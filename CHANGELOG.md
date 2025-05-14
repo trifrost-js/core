@@ -4,11 +4,119 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.8.0] - 2025-05-14
+TriFrost now ships with a caching system that’s not only powerful — but *invisible*. 🪄
+
+Caching is one of those things you want to do *wherever possible*: inside services, on expensive lookups, even conditional branches. But until now, you had two options:
+1. Write your own cache keys and wrap logic manually — again and again (think **very generic boilerplate**).
+2. Forget to cache at all.
+
+Let’s fix that.
+
+### Added
+- **feat**: `@cache` decorator — Automatically wraps your method in cache logic:
+```typescript
+import {cache} from '@trifrost/core';
+
+class Releases {
+    @cache('releases')
+    async getReleases(ctx: Context) {
+        return fetchFromUpstream();
+    }
+
+    /* Supports dynamic keys via ctx (ps: the function you pass will be typed based on the context it gets) */
+    @cache(ctx => `release:${ctx.state.id}`)
+    async getRelease <State extends {id:string}> (ctx:Context<State>) {
+        return fetchRelease(ctx.state.id);
+    }
+}
+```
+- **feat**: `cacheFn` function — Wrap standalone or arrow functions with cache logic:
+```typescript
+import {cacheFn} from '@trifrost/core';
+
+const getReleases = cacheFn('releases', (ctx) => fetchFromUpstream(...));
+
+const getRelease = cacheFn(
+    ctx => `release:${ctx.state.id}`,
+    <State extends {id:string}> (ctx:Context<State>) => fetchRelease(ctx.state.id)
+);
+```
+- **feat**: `cacheSkip()` — Want to **bail from caching**? Just return your result wrapped in `cacheSkip()`.
+Works when manually using cache wrap:
+```typescript
+export async function getReleases (ctx:Context) {
+    return ctx.cache.wrap('myKey', async () => {
+        try {
+            const data = await maybeFails();
+            return data;
+        } catch (err) {
+            ctx.logger.error(err);
+            return cacheSkip(null);
+        }
+    });
+}
+```
+Work within **@cache** decorated methods:
+```typescript
+import {cacheSkip} from '@trifrost/core';
+
+class Releases {
+    @cache('releases')
+    async getReleases(ctx: Context) {
+        try {
+            ...
+            return fetchFromUpstream();
+        } catch (err) {
+            ctx.logger.error(err);
+            return cacheSkip(null);
+        }
+        
+    }
+}
+```
+Work within cacheFn wrapped methods:
+```typescript
+import {cacheFn, cacheSkip} from '@trifrost/core';
+
+const getRelease = cacheFn('getRelease', async (ctx:Context) => {
+    try {
+        return await fetchRelease(ctx.state.id);
+    } catch (err) {
+        ctx.logger.error(err);        
+        return cacheSkip(null);
+    }
+});
+```
+
 ### Improved
+- **feat**: Caches now accept primitives as values — `null`, `true`, `false`, `0`, `"hello"`, etc. No need to always wrap things in objects.
+- **feat**: `@span` and `spanFn` now support `this.ctx.logger` as a fallback if neither `ctx.logger` nor `this.logger` is available.
+```typescript
+class Releases {
+    constructor(ctx: Context) {
+        this.ctx = ctx;
+    }
+
+    @span()
+    @cache('releases')
+    async getReleases() {
+        return fetchFromUpstream();
+    }
+}
+```
+No ctx needed — both @span and @cache find what they need.
 - **deps**: Upgrade @cloudflare/workers-types to 4.20250514.0
 - **deps**: Upgrade @types/node to 22.15.18
 - **deps**: Upgrade typescript-eslint to 8.32.1
+
+### Breaking
+- **feat**: `ctx.cache.delete` has been renamed to `ctx.cache.del`. This saves 4 keystrokes 🚀 and aligns with the rest of the ecosystem:
+```typescript
+ctx.cookies.del('token');
+ctx.router.del('/route', handler);
+ctx.cache.del('myKey');
+```
 
 ## [0.7.0] - 2025-05-13
 TriFrost traces middleware and route handlers out of the box — but what about everything else? In any real backend, there’s a whole ecosystem beyond routing: services, utilities, classes with methods that get reused across flows. Can we take our tracing a level deeper, without cluttering the code?
