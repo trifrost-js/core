@@ -1,5 +1,7 @@
 /* eslint-disable array-element-newline */
 
+import {isIntGt} from '@valkyriestudios/utils/number';
+
 const HEX_LUT = [
     '00', '01', '02', '03', '04', '05', '06', '07', '08', '09',
     '0a', '0b', '0c', '0d', '0e', '0f', '10', '11', '12', '13',
@@ -30,6 +32,8 @@ const HEX_LUT = [
 ];
 
 export function hexId (lng:number): string {
+    if (!isIntGt(lng, 0)) return '';
+
     switch (lng) {
         case 8: {
             const a = (Math.random() * 0xffffffff) >>> 0;

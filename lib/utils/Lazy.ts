@@ -10,7 +10,7 @@ export class Lazy <T, Env extends Record<string, any> = Record<string, any>> {
     constructor (val: LazyInit<T, Env>) {
         if (typeof val === 'function') {
             this.#fn = val as LazyInitFn<T, Env>;
-        } else {
+        } else if (val) {
             this.#val = val;
         }
     }
@@ -21,7 +21,6 @@ export class Lazy <T, Env extends Record<string, any> = Record<string, any>> {
 
     resolve (opts:{env:Env}):T {
         if (this.#val) return this.#val;
-        
         if (!this.#fn) throw new Error('Lazy@resolve: No initializer provided');
         
         this.#val = this.#fn(opts);

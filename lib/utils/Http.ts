@@ -50,10 +50,15 @@ export function encodeFilename (val:string):{ascii:string; encoded:string} {
         if (
             code >= 0x20 &&
             code !== 0x7F &&
-            char !== '"' &&
-            char !== '\\'
+            char !== '"'
         ) {
-            ascii += code <= 0x7E ? char : TRANSLITERATOR[char] || '';
+            /* ASCII: skip \ and ' */
+            if (code <= 0x7E && char !== '\\' && char !== '\'') {
+                ascii += char;
+            } else if (code > 0x7E) {
+                ascii += TRANSLITERATOR[char] || '';
+            }
+
             switch (char) {
                 case '*':
                     encoded += '%2A';

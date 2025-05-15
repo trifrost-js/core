@@ -43,20 +43,26 @@ describe('Utils - Http', () => {
             expect(result.encoded).toBe('file%281%29.pdf');
         });
 
+        it('Encodes single quote using custom rule (%27)', () => {
+            // eslint-disable-next-line quotes
+            const result = encodeFilename("O'Reilly's Guide.pdf");
+            expect(result.ascii).toBe('OReillys Guide.pdf');
+            expect(result.encoded).toBe('O%27Reilly%27s%20Guide.pdf');
+        });        
+
         it('Skips control characters and forbidden characters', () => {
             const input = 'my\nfi\0le.pdf';
             const result = encodeFilename(input);
             expect(result.ascii).toBe('myfile.pdf');
-            expect(result.encoded).not.toContain('%0A'); // \n
-            expect(result.encoded).not.toContain('%00'); // \0
+            expect(result.encoded).not.toContain('%0A');
+            expect(result.encoded).not.toContain('%00');
         });
 
         it('Skips quote and backslash characters', () => {
             const input = 'name\\"quote.pdf';
             const result = encodeFilename(input);
             expect(result.ascii).toBe('namequote.pdf');
-            expect(result.encoded).not.toContain('%22'); // "
-            expect(result.encoded).not.toContain('%5C'); // \
+            expect(result.encoded).toEqual('name%5Cquote.pdf');
         });
 
         it('Preserves safe punctuation and symbols', () => {
@@ -204,7 +210,7 @@ describe('Utils - Http', () => {
 
         it('Handles URLs with hash fragments (ignores them)', () => {
             const result = extractPartsFromUrl('https://example.com/path#section?x=1');
-            expect(result).toEqual({path: '/path', query: ''}); // hash is ignored
+            expect(result).toEqual({path: '/path', query: ''});
         });
         
         it('Handles URLs with query but no path (just domain)', () => {
