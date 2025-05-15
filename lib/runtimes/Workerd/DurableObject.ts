@@ -1,9 +1,13 @@
 /// <reference types="@cloudflare/workers-types" />
 
 import {split} from '@valkyriestudios/utils/array';
+import {isIntGt, isNum, isNumGt, isNumGte} from '@valkyriestudios/utils/number';
+import {isNeString} from '@valkyriestudios/utils/string';
 
 /* We bucket ttl per 10 seconds */
 const BUCKET_INTERVAL = 10_000;
+const BUCKET_ALARM = 60_000;
+const BUCKET_PREFIX = 'ttl:bucket';
 
 /* Computes the ttl bucket for a specific timestamp */
 const bucketFor = (ts: number): number => Math.floor(ts / BUCKET_INTERVAL) * BUCKET_INTERVAL;
@@ -23,38 +27,35 @@ export class TriFrostDurableObject {
 	 * Alarm — deletes expired keys from current and past buckets
 	 */
     async alarm (): Promise<void> {
-        const now = Date.now();
-        const storage = this.#state.storage;
-        const allBuckets = await storage.list({prefix: 'ttl:bucket:'});
+        const now       = Date.now();
+        const buckets   = await this.#state.storage.list({prefix: BUCKET_PREFIX});
 
-        let nextAlarm = Number.POSITIVE_INFINITY;
-        const keysToDelete: string[] = [];
-        const bucketsToDelete: string[] = [];
+        /* The next alarm will be scheduled to our bucket alarm (default of 60 seconds) */
+        let next_alarm = Date.now() + BUCKET_ALARM;
 
-        for (const [bucketKey, keys] of allBuckets.entries()) {
-            const ts = parseInt(bucketKey.slice('ttl:bucket:'.length), 10);
-            if (Number.isNaN(ts)) continue;
+        const to_delete: string[] = [];
 
-            if (ts <= now) {
-                bucketsToDelete.push(bucketKey);
+        for (const [bucket_key, keys] of buckets.entries()) {
+            const ts = parseInt(bucket_key.slice(BUCKET_PREFIX.length), 10);
+            /* If either the stored timestamp is below our current time OR the bucket timestamp is invalid, purge it */
+            if (!isNum(ts) || isNumGte(now, ts)) {
+                to_delete.push(bucket_key);
                 if (Array.isArray(keys)) {
-                    for (const k of keys as string[]) keysToDelete.push(k);
+                    for (let i = 0; i < keys.length; i++) to_delete.push(keys[i]);
                 }
-            } else if (ts < nextAlarm) {
-                nextAlarm = ts;
+            } else if (isNumGt(next_alarm, ts)) {
+                /* Next alarm earlier */
+                next_alarm = ts;
             }
         }
 
-        for (const batch of split(keysToDelete, 128)) {
-            await storage.delete(batch);
-        }
+        /* Set next alarm */
+        await this.#state.storage.setAlarm(next_alarm);
 
-        for (const batch of split(bucketsToDelete, 128)) {
-            await storage.delete(batch);
-        }
 
-        if (nextAlarm < Number.POSITIVE_INFINITY) {
-            await storage.setAlarm(nextAlarm);
+        /* Evict keys */
+        for (const batch of split(to_delete, 128)) {
+            await this.#state.storage.delete(batch);
         }
     }
 
@@ -66,42 +67,57 @@ export class TriFrostDurableObject {
 
         /* Ensure key exists */
         const key = url.searchParams.get('key');
-        if (!key) return new Response('Missing key', {status: 400});
+        if (!isNeString(key)) return new Response('Missing key', {status: 400});
 
         /* Get namespace */
         const match = url.pathname.match(/^\/trifrost-([a-z0-9_-]+)$/i);
-        if (!match || match.length < 1) return new Response('Not Found', {status: 404});
-
-        const namespace = match[1];
-        if (typeof namespace !== 'string') return new Response('Invalid namespace', {status: 400});
+        if (
+            !match ||
+            match.length < 1 || 
+            !isNeString(match[1])
+        ) return new Response('Invalid namespace', {status: 400});
 
         /* Namespace key */
-        const N_KEY = `${namespace}:${key}`;
+        const N_KEY = `${match[1]}:${key}`;
 
         switch (request.method) {
             case 'GET': {
-                const val = await this.#state.storage.get(N_KEY);
-                return new Response(JSON.stringify(val ?? null), {
-                    status: 200,
-                    headers: {'Content-Type': 'application/json'},
-                });
+                try {
+                    const stored = await this.#state.storage.get<{v: unknown; exp: number}>(N_KEY);
+                    if (!stored) return new Response('null', {status: 200, headers: {'Content-Type': 'application/json'}});
+
+                    /* Lazy delete on read */
+                    const now = Date.now();
+                    if (!isNum(stored.exp) || isNumGte(now, stored.exp)) {
+                        await this.#state.storage.delete(N_KEY);
+                        return new Response('null', {status: 200, headers: {'Content-Type': 'application/json'}});
+                    }
+
+                    return new Response(JSON.stringify(stored.v), {status: 200, headers: {'Content-Type': 'application/json'}});
+                } catch {
+                    return new Response('Internal Error', {status: 500});
+                }
             }
             case 'PUT': {
                 try {
-                    const {v, ttl} = await request.json() as {v: unknown; ttl: number};
+                    if (
+                        (request.headers.get('Content-Type') || '').indexOf('application/json') < 0
+                    ) return new Response('Unsupported content type', {status: 415});
 
-                    await this.#state.storage.put(N_KEY, v);
+                    const {v, ttl} = await request.json() as {v: unknown; ttl: number};
+                    if (!isIntGt(ttl, 0)) return new Response('Invalid TTL', {status: 400});
 
                     const now = Date.now();
-                    const expires = now + (ttl * 1000);
-                    const bucket = bucketFor(expires);
-                    const bucketKey = `ttl:bucket:${bucket}`;
+                    const exp = now + (ttl * 1000);
+                    const bucket = bucketFor(exp);
+                    const bucket_key = BUCKET_PREFIX + bucket;
 
-                    const list = await this.#state.storage.get<string[]>(bucketKey) || [];
-                    list.push(N_KEY);
+                    const set = new Set(await this.#state.storage.get<string[]>(bucket_key) || []);
+                    set.add(N_KEY);
 
                     await Promise.all([
-                        this.#state.storage.put(bucketKey, [...new Set(list)]),
+                        this.#state.storage.put(N_KEY, {v, exp}),
+                        this.#state.storage.put(bucket_key, [...set]),
                         this.#state.storage.setAlarm(bucket),
                     ]);
 
@@ -111,11 +127,15 @@ export class TriFrostDurableObject {
                 }
             }
             case 'DELETE': {
-                await this.#state.storage.delete(N_KEY);
-                return new Response(null, {status: 204});
+                try {
+                    await this.#state.storage.delete(N_KEY);
+                    return new Response(null, {status: 204});
+                } catch {
+                    return new Response('Internal Error', {status: 500});
+                }
             }
             default:
-                return new Response('Not Found', {status: 404});
+                return new Response('Method not allowed', {status: 405});
         }
     }
 
