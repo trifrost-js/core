@@ -100,6 +100,9 @@ export class TriFrostDurableObject {
             }
             case 'PUT': {
                 try {
+                    /* Prevent consumers from writing to the ttl namespace */
+                    if (N_KEY.startsWith(BUCKET_PREFIX)) return new Response('Invalid key: reserved prefix', {status: 400});
+                    
                     if (
                         (request.headers.get('Content-Type') || '').indexOf('application/json') < 0
                     ) return new Response('Unsupported content type', {status: 415});

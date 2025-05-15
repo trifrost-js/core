@@ -32,7 +32,7 @@ describe('Runtimes - Workerd - DurableObject', () => {
             const res = await durable.fetch(new Request('https://do/trifrost-cache?key=foo', {method: 'PATCH'}));
             expect(res.status).toBe(405);
             expect(await res.text()).toContain('Method not allowed');
-        });        
+        });
 
         describe('GET', () => {
             it('Returns 400 if key is missing in url', async () => {
@@ -106,7 +106,7 @@ describe('Runtimes - Workerd - DurableObject', () => {
                 const res = await durable.fetch(req);
                 expect(res.status).toBe(500);
                 expect(await res.text()).toContain('Internal Error');
-            });            
+            });
         });
 
         describe('PUT', () => {
@@ -153,7 +153,18 @@ describe('Runtimes - Workerd - DurableObject', () => {
                 const res = await durable.fetch(req);
                 expect(res.status).toBe(400);
                 expect(await res.text()).toContain('Invalid body');
-            });        
+            });
+
+            it('Rejects keys using reserved ttl:bucket prefix', async () => {
+                /* Note the selected namespace is ttl and the key is our bucket prefix */
+                const res = await durable.fetch(new Request('https://do/trifrost-ttl?key=bucket:1234', {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({v: 'a', ttl: 60}),
+                }));
+                expect(res.status).toBe(400);
+                expect(await res.text()).toEqual('Invalid key: reserved prefix');
+            });
 
             it('Stores value with TTL and schedules alarm', async () => {
                 const res = await durable.fetch(makeRequest('PUT', 'foo', {v: 'hello', ttl: 60}));
@@ -175,7 +186,7 @@ describe('Runtimes - Workerd - DurableObject', () => {
                 const bucketContents = await state.storage.get(bucketKey);
 
                 expect(bucketContents).toContain('cache:foo');
-                expect(new Set(bucketContents).size).toBe(bucketContents.length); // no duplicates
+                expect(new Set(bucketContents).size).toBe(bucketContents.length);
             });
 
             it('Rejects missing Content-Type', async () => {
@@ -242,7 +253,7 @@ describe('Runtimes - Workerd - DurableObject', () => {
                 const res = await durable.fetch(makeRequest('DELETE', 'foo'));
                 expect(res.status).toBe(500);
                 expect(await res.text()).toContain('Internal Error');
-            });            
+            });
         });
     });
 
@@ -316,7 +327,7 @@ describe('Runtimes - Workerd - DurableObject', () => {
         
             expect(await state.storage.get(`${BUCKET_PREFIX}garbage`)).toBe(undefined);
             expect(await state.storage.get('cache:k1')).toBe(undefined);
-        });        
+        });
 
         it('Does not delete future buckets or keys', async () => {
             const now = Date.now();
@@ -347,6 +358,6 @@ describe('Runtimes - Workerd - DurableObject', () => {
             for (const k of keys) {
                 expect(await state.storage.get(k)).toBe(undefined);
             }
-        });        
+        });
     });
 });
