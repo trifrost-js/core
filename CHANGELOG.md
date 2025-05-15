@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.9.0] - 2025-05-15
 ### Improved
 - **qol**: Strengthened internal DurableObject TTL handling with always-set alarms, lazy expiration, and better resilience under unexpected conditions.
 - **qol**: Download filenames now support Cyrillic, Greek, Turkish, and Eastern European characters via extended transliteration.
@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 // ascii: 'Primer_dokument_2024.pdf'
 // encoded: '%D0%9F%D1%80%D0%B8%D0%BC%D0%B5%D1%80_%D0%B4%D0%BE%D0%BA%D1%83%D0%BC%D0%B5%D0%BD%D1%82_2024.pdf'
 
-'Überprüfung_(v1)™.pdf' becomes 
+'Überprüfung_(v1)™.pdf' becomes
 // ascii: 'Uberprufung_(v1)(tm).pdf'
 // encoded: '%C3%9Cberpr%C3%BCfung_%28v1%29%E2%84%A2.pdf'
 ```
@@ -88,7 +88,7 @@ class Releases {
             ctx.logger.error(err);
             return cacheSkip(null);
         }
-        
+
     }
 }
 ```
@@ -100,7 +100,7 @@ const getRelease = cacheFn('getRelease', async (ctx:Context) => {
     try {
         return await fetchRelease(ctx.state.id);
     } catch (err) {
-        ctx.logger.error(err);        
+        ctx.logger.error(err);
         return cacheSkip(null);
     }
 });
