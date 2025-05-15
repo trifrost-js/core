@@ -7,7 +7,7 @@ import {isNeString} from '@valkyriestudios/utils/string';
 /* We bucket ttl per 10 seconds */
 const BUCKET_INTERVAL = 10_000;
 const BUCKET_ALARM = 60_000;
-const BUCKET_PREFIX = 'ttl:bucket';
+const BUCKET_PREFIX = 'ttl:bucket:';
 
 /* Computes the ttl bucket for a specific timestamp */
 const bucketFor = (ts: number): number => Math.floor(ts / BUCKET_INTERVAL) * BUCKET_INTERVAL;

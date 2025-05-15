@@ -4,7 +4,7 @@ import {MockDurableObjectStorage} from '../../../MockDurableObjectStorage';
 import CONSTANTS from '../../../constants';
 
 const BUCKET_INTERVAL = 10_000;
-const BUCKET_PREFIX = 'ttl:bucket';
+const BUCKET_PREFIX = 'ttl:bucket:';
 
 const makeRequest = (method: string, key?: string, body?: any) => {
     const req = new Request(`https://do/trifrost-cache${key ? `?key=${key}` : ''}`, {
