@@ -51,6 +51,13 @@ describe('Utils - BodyParser - Request', () => {
             expect(res).toEqual({foo: 'bar'});
         });
 
+        it('Handles content-type with charset', async () => {
+            const ctx = new MockContext({headers: {'content-type': 'application/json; charset=utf-8'}});
+            const req = makeRequest('application/json; charset=utf-8', JSON.stringify({foo: 'bar'}));
+            const res = await parseBody(ctx, req);
+            expect(res).toEqual({foo: 'bar'});
+        });
+
         it('Returns empty object on malformed json', async () => {
             const ctx = new MockContext({headers: {'content-type': 'application/json'}});
             ctx.logger.debug = vi.fn();
@@ -93,6 +100,13 @@ describe('Utils - BodyParser - Request', () => {
             expect(res).toEqual({foo: 'bar'});
         });
 
+        it('Handles content-type with charset', async () => {
+            const ctx = new MockContext({headers: {'content-type': 'text/json; charset=utf-8'}});
+            const req = makeRequest('text/json; charset=utf-8', JSON.stringify({foo: 'bar'}));
+            const res = await parseBody(ctx, req);
+            expect(res).toEqual({foo: 'bar'});
+        });
+
         it('Returns empty object on malformed json', async () => {
             const ctx = new MockContext({headers: {'content-type': 'text/json'}});
             ctx.logger.debug = vi.fn();
@@ -131,6 +145,13 @@ describe('Utils - BodyParser - Request', () => {
         it('Parses', async () => {
             const ctx = new MockContext({headers: {'content-type': 'application/ld+json'}});
             const req = makeRequest('application/ld+json', JSON.stringify({foo: 'bar'}));
+            const res = await parseBody(ctx, req);
+            expect(res).toEqual({foo: 'bar'});
+        });
+
+        it('Handles content-type with charset', async () => {
+            const ctx = new MockContext({headers: {'content-type': 'application/ld+json; charset=utf-8'}});
+            const req = makeRequest('application/ld+json; charset=utf-8', JSON.stringify({foo: 'bar'}));
             const res = await parseBody(ctx, req);
             expect(res).toEqual({foo: 'bar'});
         });

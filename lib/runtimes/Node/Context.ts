@@ -1,11 +1,6 @@
-import {toObject} from '@valkyriestudios/utils/formdata';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {Context} from '../../Context';
 import {type TriFrostRootLogger} from '../../modules/Logger';
-import {
-    type IncomingMessage,
-    type ServerResponse,
-} from './types';
 import {
     type TriFrostContextConfig,
     type TriFrostContextInit,
@@ -15,18 +10,22 @@ import {
     HttpMethodToNormal,
     type HttpStatus,
     type HttpStatusCode,
-    MimeTypes,
 } from '../../types/constants';
+import {parseBody} from '../../utils/BodyParser/Uint8Array';
+import {
+    type IncomingMessage,
+    type ServerResponse,
+} from './types';
 
 /**
  * Utility to load request body
  *
  * @param {IncomingMessage} req - Incoming Request
  */
-async function loadBody (req:IncomingMessage): Promise<Buffer> {
+async function loadBody (req:IncomingMessage): Promise<Uint8Array> {
     return new Promise((resolve, reject) => {
         const chunks: Buffer[] = [];
-        req.on('data', chunk => chunks.push(Buffer.from(chunk as Buffer)));
+        req.on('data', chunk => chunks.push(Buffer.from(chunk)));
         req.on('end', () => resolve(Buffer.concat(chunks)));
         req.on('error', reject);
     });
@@ -85,27 +84,7 @@ export class NodeContext extends Context {
     async init (val:TriFrostContextInit) {
         await super.init(val, async () => {
             const raw_body = await loadBody(this.#node_req);
-            const type = this.headers['content-type'] || '';
-
-            if (type.includes(MimeTypes.JSON)) {
-                return JSON.parse(raw_body.toString());
-            } else if (
-                type.includes(MimeTypes.HTML) ||
-                type.includes(MimeTypes.TEXT) ||
-                type.includes(MimeTypes.CSV)
-            ) {
-                return {raw: raw_body.toString()};
-            } else if (type.includes(MimeTypes.FORM_MULTIPART)) {
-                const form = new FormData();
-                const parts = raw_body.toString().split('&');
-                parts.forEach(part => {
-                    const [key, value] = part.split('=');
-                    if (key && value) form.append(decodeURIComponent(key), decodeURIComponent(value));
-                });
-                return toObject(form);
-            }
-
-            return {raw: raw_body};
+            return parseBody(this, raw_body);
         });
     }
 

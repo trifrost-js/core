@@ -84,10 +84,3 @@ export interface HttpRequest {
 
     setYield(_yield:boolean):HttpRequest;
 }
-
-export interface MultipartField {
-    data:ArrayBuffer;
-    name:string;
-    type?:string;
-    filename?:string;
-}

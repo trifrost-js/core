@@ -1,4 +1,3 @@
-import {toObject} from '@valkyriestudios/utils/formdata';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {Context} from '../../Context';
 import {
@@ -14,23 +13,38 @@ import {
     HttpMethodToNormal,
     type HttpStatus,
     type HttpStatusCode,
-    MimeTypes,
 } from '../../types/constants';
+import {parseBody} from '../../utils/BodyParser/Uint8Array';
 import {
-    type MultipartField,
     type HttpResponse,
     type HttpRequest,
 } from './types';
 
-function loadBody (logger:TriFrostLogger, res:HttpResponse):Promise<Buffer|undefined> {
+function loadBody (logger: TriFrostLogger, res: HttpResponse):Promise<Uint8Array|undefined> {
     return new Promise(resolve => {
         try {
-            let buffer = Buffer.from('');
-            res.onData((ab:ArrayBuffer, is_last:boolean) => {
+            let buffer = new Uint8Array(0);
+            let offset = 0;
+
+            res.onData((ab: ArrayBuffer, is_last: boolean) => {
                 try {
-                    buffer = Buffer.concat([buffer, Buffer.from(ab)]);
-                    if (is_last) return resolve(buffer);
-                } catch {
+                    const chunk = new Uint8Array(ab);
+                    /* First chunk, initialize buffer to exact size if known */
+                    if (offset === 0) buffer = new Uint8Array(chunk.length);
+
+                    /* Grow buffer if necessary (rare, only happens once) */
+                    if (offset + chunk.length > buffer.length) {
+                        const next = new Uint8Array(offset + chunk.length);
+                        next.set(buffer);
+                        buffer = next;
+                    }
+
+                    buffer.set(chunk, offset);
+                    offset += chunk.length;
+
+                    if (is_last) return resolve(buffer.subarray(0, offset));
+                } catch (err) {
+                    logger.debug('UWSContext@loadBody: Failed to concat', {msg: (err as Error).message});
                     return resolve(undefined);
                 }
             });
@@ -39,27 +53,6 @@ function loadBody (logger:TriFrostLogger, res:HttpResponse):Promise<Buffer|undef
             return resolve(undefined);
         }
     });
-}
-
-function multipartFieldToFormData (logger:TriFrostLogger, parts:MultipartField[]):Record<string,any>|undefined {
-    try {
-        if (!parts.length) return undefined;
-
-        const form = new FormData();
-        for (let x = 0; x < parts.length; x++) {
-            const {name, data, filename} = parts[x];
-            if (filename) {
-                form.append(name, new Blob([Buffer.from(data)]), filename);
-            } else {
-                form.append(name, new Blob([Buffer.from(data)]));
-            }
-        }
-
-        return toObject(form);
-    } catch (err) {
-        logger.error('UWSContext@multipartFieldToFormData: Failed to convert', {msg: (err as Error).message});
-        return undefined;
-    }
 }
 
 export class UWSContext extends Context {
@@ -109,22 +102,7 @@ export class UWSContext extends Context {
     async init (val:TriFrostContextInit) {
         await super.init(val, async () => {
             const raw_body = await loadBody(this.logger, this.#uws_res);
-            if (!raw_body) return null;
-
-            /* Get content type, we use this to determine how to handle the raw body */
-            const type:string = this.headers['content-type'] || '';
-            if (type.includes(MimeTypes.JSON)) {
-                return JSON.parse(raw_body.toString());
-            } else if (
-                type.includes(MimeTypes.HTML) ||
-                type.includes(MimeTypes.TEXT) ||
-                type.includes(MimeTypes.CSV)
-            ) {
-                return {raw: raw_body.toString()};
-            } else if (type.includes(MimeTypes.FORM_MULTIPART)) {
-                const parts = this.#apis.getParts(raw_body, type);
-                if (parts) return multipartFieldToFormData(this.logger, parts);
-            }
+            return parseBody(this, raw_body as Uint8Array);
         });
     }
 

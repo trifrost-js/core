@@ -26,13 +26,10 @@ export async function parseBody <T extends ParsedBody = ParsedBody> (
             }
             case MimeTypes.JSON_ND: {
                 const text = await req.text();
-                try {
-                    const result = text.trim().split('\n').map(line => JSON.parse(line));
-                    return {raw: result} as T;
-                } catch (err: any) {
-                    ctx.logger.debug('parseBody: Failed to parse', {type, msg: err.message});
-                    return {} as T;
-                }
+                const lines = text.trim().split('\n');
+                const acc = [];
+                for (let i = 0; i < lines.length; i++) acc.push(JSON.parse(lines[i]));
+                return {raw: acc} as T;
             }
             case MimeTypes.HTML:
             case MimeTypes.TEXT:
