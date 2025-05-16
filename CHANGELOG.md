@@ -16,6 +16,7 @@ This release brings with it an overhaul of the Falcon-era body parser and replac
 
 ### Improved
 - **qol**: Body parsing is now consistent, robust, and intelligent. Forms, uploads, and edge cases just work — with proper type casting, nested keys, arrays, dates, booleans, and more (thanks to [toObject()](https://github.com/valkyriestudios/utils/?tab=readme-ov-file#formdatatoobjectvalformdata-rawstringtruesinglestringnormalize_boolbooleannormalize_dateboolnormalize_numberbool--))
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250515.0
 
 Here’s what that looks like in practice:
 
