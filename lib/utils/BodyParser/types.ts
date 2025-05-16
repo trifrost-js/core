@@ -1,0 +1,1 @@
+export type ParsedBody = Record<string, unknown>|{raw?:unknown};

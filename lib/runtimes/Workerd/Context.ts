@@ -1,4 +1,3 @@
-import {toObject} from '@valkyriestudios/utils/formdata';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {Context} from '../../Context';
 import {type TriFrostRootLogger} from '../../modules/Logger';
@@ -11,9 +10,9 @@ import {
     HttpMethodToNormal,
     type HttpStatus,
     type HttpStatusCode,
-    MimeTypes,
 } from '../../types/constants';
 import {type TriFrostCFFetcher} from '../../types/providers';
+import {parseBody} from '../../utils/BodyParser/Request';
 import {extractPartsFromUrl} from '../../utils/Http';
 
 export class WorkerdContext extends Context {
@@ -65,22 +64,7 @@ export class WorkerdContext extends Context {
      * Initializes the context, this happens when a route is matched and tied to this context.
      */
     async init (val:TriFrostContextInit) {
-        await super.init(val, async () => {
-            const type = this.headers['content-type'] || '';
-            if (type.includes(MimeTypes.JSON)) {
-                return this.#workerd_req.json();
-            } else if (
-                type.includes(MimeTypes.HTML) ||
-                type.includes(MimeTypes.TEXT) ||
-                type.includes(MimeTypes.CSV)
-            ) {
-                const body = await this.#workerd_req.text();
-                return {raw: body};
-            } else if (type.includes(MimeTypes.FORM_MULTIPART)) {
-                const formdata = await this.#workerd_req.formData();
-                return toObject(formdata);
-            }
-        });
+        await super.init(val, async () => parseBody(this, this.#workerd_req));
     }
 
     /**

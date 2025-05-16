@@ -1,6 +1,5 @@
 /// <reference types="bun-types" />
 
-import {toObject} from '@valkyriestudios/utils/formdata';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {Context} from '../../Context';
 import {type TriFrostRootLogger} from '../../modules/Logger';
@@ -13,8 +12,8 @@ import {
     HttpMethodToNormal,
     type HttpStatus,
     type HttpStatusCode,
-    MimeTypes,
 } from '../../types/constants';
+import {parseBody} from '../../utils/BodyParser/Request';
 import {extractPartsFromUrl} from '../../utils/Http';
 
 export class BunContext extends Context {
@@ -65,23 +64,7 @@ export class BunContext extends Context {
      * Initializes the context, this happens when a route is matched and tied to this context.
      */
     async init (val:TriFrostContextInit) {
-        await super.init(val, (async () => {
-            const type = this.headers['content-type'] || '';
-            if (type.includes(MimeTypes.JSON)) {
-                const body = await this.#bun_req.json();
-                return body;
-            } else if (
-                type.includes(MimeTypes.HTML) ||
-                type.includes(MimeTypes.TEXT) ||
-                type.includes(MimeTypes.CSV)
-            ) {
-                const body = await this.#bun_req.text();
-                return {raw: body};
-            } else if (type.includes(MimeTypes.FORM_MULTIPART)) {
-                const formdata = await this.#bun_req.formData();
-                return toObject(formdata);
-            }
-        }) as () => Promise<Record<string, unknown>|undefined>);
+        await super.init(val, async () => parseBody(this, this.#bun_req));
     }
 
     /**
