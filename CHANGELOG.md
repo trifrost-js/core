@@ -4,6 +4,69 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2025-05-16
+TriFrost always came with a body parser — it handled JSON, plain text, and buffers just fine. But real-world backends need more. Forms. File uploads. Multilingual characters. Legacy formats. Inconsistent charsets. It adds up fast.
+
+This release brings with it an overhaul of the Falcon-era body parser and replaces it with a modern, reliable body parsing layer that just works across everything — `utf-8`, `utf-16`, nested forms, typed values, file uploads — no matter the runtime.
+
+### Added
+- **feat**: Richer body parsing — Full support for `application/x-www-form-urlencoded` and `multipart/form-data`. Clean objects out of the box. File uploads return modern `File` instances.
+- **feat**: Smart decoding — UTF-8 and UTF-16 (LE/BE, with or without BOM) are parsed seamlessly, across all supported runtimes.
+- **feat**: More JSON types — Now handles `text/json` (for those pesky legacy servers), `application/ld+json`, and newline-delimited `application/x-ndjson`.
+
+### Improved
+- **qol**: Body parsing is now consistent, robust, and intelligent. Forms, uploads, and edge cases just work — with proper type casting, nested keys, arrays, dates, booleans, and more (thanks to [toObject()](https://github.com/valkyriestudios/utils/?tab=readme-ov-file#formdatatoobjectvalformdata-rawstringtruesinglestringnormalize_boolbooleannormalize_dateboolnormalize_numberbool--))
+
+Here’s what that looks like in practice:
+
+### 🧾 LDJSON
+**In**:
+```text
+{"id":1,"name":"Tri"}
+{"id":2,"name":"Frost"}
+```
+**Out**:
+```typescript
+/* ctx.body */
+{raw: [{id: 1, name: 'Tri'}, {id: 2, name: 'Frost'}]}
+```
+
+### 📮 URL-encoded form
+**In**:
+```text
+username=TriFrost&admin=true&joined=2025-01-01T00%3A00%3A00Z&tags[]=alpha&tags[]=beta
+```
+**Out**:
+```typescript
+/* ctx.body */
+{
+  username: 'TriFrost',
+  admin: true,
+  joined: new Date('2025-01-01T00:00:00Z'),
+  tags: ['alpha', 'beta']
+}
+```
+
+### 📤 Multipart form-data
+**In**:
+```text
+Content-Disposition: form-data; name="bio"
+> loves fast APIs
+
+Content-Disposition: form-data; name="avatar"; filename="me.png"
+> binary image data
+```
+**Out**:
+```typescript
+/* ctx.body */
+{
+  bio: 'loves fast APIs',
+  avatar: File // with name, type, size, etc.
+}
+```
+
+**Bottom line**: Whether you're posting a login form, uploading a file, or streaming NDJSON from a service — TriFrost now parses it all for you. Automatically. Reliably. Cross-runtime.
+
 ## [0.9.0] - 2025-05-15
 ### Improved
 - **qol**: Strengthened internal DurableObject TTL handling with always-set alarms, lazy expiration, and better resilience under unexpected conditions.
