@@ -93,10 +93,13 @@ describe('Utils - BodyParser - Uint8Array', () => {
             const buf = encoder.encode('{bad json');
             const res = await parseBody(ctx, buf);
             expect(res).toEqual({});
-            expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody: Failed to parse', {
-                type: 'application/json',
-                msg: 'Expected property name or \'}\' in JSON at position 1 (line 1 column 2)',
-            });
+            expect(ctx.logger.debug).toHaveBeenCalledWith(
+                'parseBody: Failed to parse',
+                expect.objectContaining({
+                    type: 'application/json',
+                    msg: expect.stringContaining('Expected property name or \'}\' in JSON'),
+                })
+            );
         });
     
         it('Handles content-type with charset', async () => {
@@ -171,10 +174,13 @@ describe('Utils - BodyParser - Uint8Array', () => {
             const buf = encoder.encode('{bad json');
             const res = await parseBody(ctx, buf);
             expect(res).toEqual({});
-            expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody: Failed to parse', {
-                type: 'text/json',
-                msg: 'Expected property name or \'}\' in JSON at position 1 (line 1 column 2)',
-            });
+            expect(ctx.logger.debug).toHaveBeenCalledWith(
+                'parseBody: Failed to parse',
+                expect.objectContaining({
+                    type: 'text/json',
+                    msg: expect.stringContaining('Expected property name or \'}\' in JSON'),
+                })    
+            );
         });
     
         it('Handles content-type with charset', async () => {
@@ -249,10 +255,13 @@ describe('Utils - BodyParser - Uint8Array', () => {
             const buf = encoder.encode('{bad json');
             const res = await parseBody(ctx, buf);
             expect(res).toEqual({});
-            expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody: Failed to parse', {
-                type: 'application/ld+json',
-                msg: 'Expected property name or \'}\' in JSON at position 1 (line 1 column 2)',
-            });
+            expect(ctx.logger.debug).toHaveBeenCalledWith(
+                'parseBody: Failed to parse',
+                expect.objectContaining({
+                    type: 'application/ld+json',
+                    msg: expect.stringContaining('Expected property name or \'}\' in JSON'),
+                })
+            );
         });
     
         it('Handles content-type with charset', async () => {

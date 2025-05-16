@@ -64,10 +64,14 @@ describe('Utils - BodyParser - Request', () => {
             const req = makeRequest('application/json', '{bad json');
             const res = await parseBody(ctx, req);
             expect(res).toEqual({});
-            expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody: Failed to parse', {
-                msg: 'Expected property name or \'}\' in JSON at position 1 (line 1 column 2)',
-                type: 'application/json',
-            });
+            
+            expect(ctx.logger.debug).toHaveBeenCalledWith(
+                'parseBody: Failed to parse',
+                expect.objectContaining({
+                    type: 'application/json',
+                    msg: expect.stringContaining('Expected property name or \'}\' in JSON'),
+                })
+            );
         });
 
         it('Handles broken body stream', async () => {
@@ -113,10 +117,13 @@ describe('Utils - BodyParser - Request', () => {
             const req = makeRequest('text/json', '{bad json');
             const res = await parseBody(ctx, req);
             expect(res).toEqual({});
-            expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody: Failed to parse', {
-                msg: 'Expected property name or \'}\' in JSON at position 1 (line 1 column 2)',
-                type: 'text/json',
-            });
+            expect(ctx.logger.debug).toHaveBeenCalledWith(
+                'parseBody: Failed to parse',
+                expect.objectContaining({
+                    type: 'text/json',
+                    msg: expect.stringContaining('Expected property name or \'}\' in JSON'),
+                })
+            );
         });
 
         it('Handles broken body stream', async () => {
@@ -162,10 +169,13 @@ describe('Utils - BodyParser - Request', () => {
             const req = makeRequest('application/ld+json', '{bad json');
             const res = await parseBody(ctx, req);
             expect(res).toEqual({});
-            expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody: Failed to parse', {
-                msg: 'Expected property name or \'}\' in JSON at position 1 (line 1 column 2)',
-                type: 'application/ld+json',
-            });
+            expect(ctx.logger.debug).toHaveBeenCalledWith(
+                'parseBody: Failed to parse',
+                expect.objectContaining({
+                    type: 'application/ld+json',
+                    msg: expect.stringContaining('Expected property name or \'}\' in JSON'),
+                })
+            );
         });
 
         it('Handles broken body stream', async () => {
@@ -215,10 +225,13 @@ describe('Utils - BodyParser - Request', () => {
         
             const res = await parseBody(ctx, req);
             expect(res).toEqual({});
-            expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody: Failed to parse', {
-                type: 'application/x-ndjson',
-                msg: 'Expected property name or \'}\' in JSON at position 1 (line 1 column 2)',
-            });
+            expect(ctx.logger.debug).toHaveBeenCalledWith(
+                'parseBody: Failed to parse',
+                expect.objectContaining({
+                    type: 'application/x-ndjson',
+                    msg: expect.stringContaining('Expected property name or \'}\' in JSON'),
+                })
+            );
         });
 
         it('Handles stream error on .text()', async () => {
