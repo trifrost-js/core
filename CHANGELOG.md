@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Improved
+- **deps**: Upgrade eslint to 9.27.0
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250517.0
+- **deps**: Upgrade @valkyriestudios/utils to 12.37.0
+
 ## [0.10.0] - 2025-05-16
 TriFrost always came with a body parser — it handled JSON, plain text, and buffers just fine. But real-world backends need more. Forms. File uploads. Multilingual characters. Legacy formats. Inconsistent charsets. It adds up fast.
 
