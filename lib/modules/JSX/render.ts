@@ -4,6 +4,7 @@ import {isObject} from '@valkyriestudios/utils/object';
 import {isString} from '@valkyriestudios/utils/string';
 import {type JSXElement} from './types';
 import {Fragment} from './runtime';
+import {styleToString} from './style/util'; 
 
 const VOID_TAGS = new Set([
     'area',
@@ -45,54 +46,25 @@ const BOOL_PROPS = new Set([
     'reversed',
     'selected',
 ]);
-
-const KEBAB_CACHE = new Map<string, string>();
-const KEBAB_REGEX = /[A-Z]/g;
-
+  
+const ESCAPE_REGEX = /(?:&(?![a-z#0-9]+;))|[<>"']/gi;
+  
 /**
  * Escape HTML entities in strings to prevent XSS attacks.
- * @param str - Input string to escape.
+ * 
+ * @param {string} str - Input string to escape.
  */
-function escape (str: string): string {
-    let escaped = '';
-    for (let i = 0; i < str.length; i++) {
-        const ch = str[i];
-        switch (ch) {
-            case '&':
-                escaped += '&amp;';
-                break;
-            case '<':
-                escaped += '&lt;';
-                break;
-            case '>':
-                escaped += '&gt;';
-                break;
-            case '"':
-                escaped += '&quot;';
-                break;
-            case '\'':
-                escaped += '&#39;';
-                break;
-            default:
-                escaped += ch;
-                break;
+export function escape (str:string):string {
+    return str.replace(ESCAPE_REGEX, (char:string) => {
+        switch (char) {
+            case '&': return '&amp;';
+            case '<': return '&lt;';
+            case '>': return '&gt;';
+            case '"': return '&quot;';
+            case '\'': return '&#39;';
+            default: return char;
         }
-    }
-    return escaped;
-}
-
-/**
- * Converts a string to kebab case for use in styling
- *
- * @param {string} key - string to convert
- */
-function toKebab (key:string):string {
-    const cached = KEBAB_CACHE.get(key);
-    if (cached) return cached;
-
-    const converted = key.replace(KEBAB_REGEX, m => '-' + m.toLowerCase());
-    KEBAB_CACHE.set(key, converted);
-    return converted;
+    });
 }
 
 /**
@@ -106,20 +78,15 @@ function renderProps (acc:string, props:Record<string, unknown>|null) {
 
     for (const key in props) {
         const val = props[key];
-        if (key === 'children' || val === undefined || val === null) {
-            continue;
-        } else if (key === 'style' && isObject(val)) {
-            let style = '';
-            for (const attr in val) {
-                const attr_val = val[attr];
-                if (attr_val === undefined || attr_val === null) continue;
-                style += toKebab(attr) + ':' + attr_val + ';';
+        if (key !== 'children' && val !== undefined && val !== null) {
+            if (key === 'style' && isObject(val)) {
+                const style = styleToString(val);
+                if (style) acc += ' style="' + escape(style) + '"';
+            } else if (props[key] === true && BOOL_PROPS.has(key)) {
+                acc += ' ' + key;
+            } else if (key !== 'dangerouslySetInnerHTML') {
+                acc += ' ' + (key === 'className' ? 'class' : key) + '="' + escape(props[key] + '') + '"';
             }
-            acc += ' style="' + escape(style) + '"';
-        } else if (props[key] === true && BOOL_PROPS.has(key)) {
-            acc += ' ' + key;
-        } else if (key !== 'dangerouslySetInnerHTML') {
-            acc += ' ' + (key === 'className' ? 'class' : key) + '="' + escape(props[key] + '') + '"';
         }
     }
 
