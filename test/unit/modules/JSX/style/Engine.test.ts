@@ -11,25 +11,25 @@ describe('Modules – JSX – style – Engine', () => {
     });
 
     describe('hash()', () => {
-        it('generates consistent deterministic hashes', () => {
+        it('Generates consistent deterministic hashes', () => {
             const h1 = engine.hash('color:red');
             const h2 = engine.hash('color:red');
             expect(h1).toBe(h2);
         });
 
-        it('prefixes hashes with "tf-"', () => {
+        it('Prefixes hashes with "tf-"', () => {
             expect(engine.hash('x')).toMatch(/^tf-/);
         });
     });
 
     describe('register()', () => {
-        it('registers base styles correctly under default selector', () => {
+        it('Registers base styles correctly under default selector', () => {
             const cls = engine.hash('color:red');
             engine.register('color:red', cls, {});
             expect(engine.flush()).toContain(`.${cls}{color:red}`);
         });
 
-        it('registers media query styles correctly', () => {
+        it('Registers media query styles correctly', () => {
             const cls = engine.hash('font-size:1rem');
             engine.register('font-size:1rem', cls, {
                 query: '@media (max-width: 600px)',
@@ -37,7 +37,7 @@ describe('Modules – JSX – style – Engine', () => {
             expect(engine.flush()).toBe('<style>@media (max-width: 600px){.tf-1970c6n{font-size:1rem}}</style>');
         });
 
-        it('registers multiple rules under the same media query correctly', () => {
+        it('Registers multiple rules under the same media query correctly', () => {
             const query = '@media screen and (min-width: 768px)';
             engine.register('margin:1rem', 'tf-m1', {query});
             engine.register('padding:2rem', 'tf-p2', {query});
@@ -49,14 +49,14 @@ describe('Modules – JSX – style – Engine', () => {
             ].join(''));
         });
 
-        it('respects custom selectors', () => {
+        it('Respects custom selectors', () => {
             engine.register('opacity:0.5', 'tf-opacity', {
                 selector: '.fade-in:hover',
             });
             expect(engine.flush()).toBe('<style>.fade-in:hover{opacity:0.5}</style>');
         });
 
-        it('allows different rules with the same class name if selector differs', () => {
+        it('Allows different rules with the same class name if selector differs', () => {
             const cls = 'tf-custom';
             engine.register('font-weight:bold', cls, {selector: '.foo'});
             engine.register('text-decoration:underline', cls, {selector: '.bar'});
@@ -64,7 +64,7 @@ describe('Modules – JSX – style – Engine', () => {
             expect(engine.flush()).toBe('<style>.foo{font-weight:bold}.bar{text-decoration:underline}</style>');
         });
 
-        it('correctly separates base and media rules', () => {
+        it('Correctly separates base and media rules', () => {
             engine.register('color:black', 'tf-black', {});
             engine.register('font-size:2rem', 'tf-black', {query: '@media (prefers-color-scheme: dark)'});
             engine.register('color:white', 'tf-white', {query: '@media (prefers-color-scheme: dark)'});
@@ -80,31 +80,31 @@ describe('Modules – JSX – style – Engine', () => {
             ].join(''));
         });
 
-        it('deduplicates duplicate rules', () => {
+        it('Deduplicates duplicate rules', () => {
             const cls = engine.hash('padding:1rem');
             engine.register('padding:1rem', cls, {});
             engine.register('padding:1rem', cls, {});
             expect(engine.flush()).toBe('<style>.tf-3pou9x{padding:1rem}</style>');
         });
 
-        it('trims input', () => {
+        it('Trims input', () => {
             engine.register('   margin:1rem   ', 'bla', {});
             expect(engine.flush()).toBe('<style>.bla{margin:1rem}</style>');
         });
 
-        it('ignores rule when selector is an empty string', () => {
+        it('Ignores rule when selector is an empty string', () => {
             engine.register('font-size:1rem', 'tf-empty', {selector: ''});
             expect(engine.flush()).toBe('');
         });        
 
-        it('ignores non/empty string', () => {
+        it('Ignores non/empty string', () => {
             for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
                 engine.register(el as string, 'tf-empty', {});
             }
             expect(engine.flush()).toBe('');
         });
 
-        it('ignores rule if null or undefined', () => {
+        it('Ignores rule if null or undefined', () => {
 			/* @ts-ignore testing invalid input */
             engine.register(undefined, 'tf-null', {});
 			/* @ts-ignore testing invalid input */
@@ -114,17 +114,17 @@ describe('Modules – JSX – style – Engine', () => {
     });
 
     describe('flush()', () => {
-        it('returns empty string if no rules registered', () => {
+        it('Returns empty string if no rules registered', () => {
             expect(engine.flush()).toBe('');
         });
 
-        it('wraps output in a <style> tag', () => {
+        it('Wraps output in a <style> tag', () => {
             const cls = engine.hash('gap:2rem');
             engine.register('gap:2rem', cls, {});
             expect(engine.flush()).toBe('<style>.tf-jibc5d{gap:2rem}</style>');
         });
 
-        it('flushes large number of base rules correctly', () => {
+        it('Flushes large number of base rules correctly', () => {
             for (let i = 0; i < 50; i++) {
                 const rule = `padding:${i}px`;
                 const cls = engine.hash(rule);
@@ -189,19 +189,19 @@ describe('Modules – JSX – style – Engine', () => {
     });
 
     describe('inject()', () => {
-        it('replaces marker if present', () => {
+        it('Replaces marker if present', () => {
             const cls = engine.hash('color:red');
             engine.register('color:red', cls, {});
             expect(engine.inject(`<div>${MARKER}Hello there</div>`)).toBe('<div><style>.tf-1tlgz3l{color:red}</style>Hello there</div>');
         });
 
-        it('prepends styles if marker is not present', () => {
+        it('Prepends styles if marker is not present', () => {
             const cls = engine.hash('color:red');
             engine.register('color:red', cls, {});
             expect(engine.inject('<main>hello</main>')).toBe('<style>.tf-1tlgz3l{color:red}</style><main>hello</main>');
         });
 
-        it('only replaces the first occurrence of the style marker and strips the rest', () => {
+        it('Only replaces the first occurrence of the style marker and strips the rest', () => {
             const cls = engine.hash('border:1px solid red');
             engine.register('border:1px solid red', cls, {});
             expect(
@@ -209,13 +209,13 @@ describe('Modules – JSX – style – Engine', () => {
             ).toBe('<div><style>.tf-12bzjpg{border:1px solid red}</style><span></span></div>');
         });
 
-        it('strips the markers even if engine is empty', () => {
+        it('Strips the markers even if engine is empty', () => {
             expect(
                 engine.inject(`<div>${MARKER}<span>${MARKER}</span></div>`)
             ).toBe('<div><span></span></div>');
         });
 
-        it('does not fail if passed a non/empty-string html', () => {
+        it('Does not fail if passed a non/empty-string html', () => {
             for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
                 const cls = engine.hash('line-height:1.5');
                 engine.register('line-height:1.5', cls, {});
@@ -225,19 +225,19 @@ describe('Modules – JSX – style – Engine', () => {
             }
         });
 
-        it('simply returns an empty string if no html is passed and engine is empty', () => {
+        it('Simply returns an empty string if no html is passed and engine is empty', () => {
             expect(engine.inject('')).toBe('');
         });
     });
 
     describe('reset()', () => {
-        it('does not throw if nothing to reset', () => {
+        it('Does not throw if nothing to reset', () => {
             expect(engine.flush()).toBe('');
             engine.reset();
             expect(engine.flush()).toBe('');
         });
 
-        it('clears all rules even after large number of registrations', () => {
+        it('Clears all rules even after large number of registrations', () => {
             for (let i = 0; i < 20; i++) {
                 const rule = `border-radius:${i}px`;
                 engine.register(rule, engine.hash(rule), {});
@@ -271,7 +271,7 @@ describe('Modules – JSX – style – Engine', () => {
             expect(engine.flush()).toBe('');
         });
         
-        it('clears both base and media style maps', () => {
+        it('Clears both base and media style maps', () => {
             engine.register('font-weight:bold', engine.hash('font-weight:bold'), {});
             engine.register('font-size:0.9rem', engine.hash('font-size:0.9rem'), {
                 query: '@media (min-width: 800px)',

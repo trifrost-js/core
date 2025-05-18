@@ -48,5 +48,14 @@ export {
     spanFn
 } from './modules/Logger';
 
+/* Modules - JSX */
+export {
+    SELECTOR as CSS,
+    SELECTOR,
+    MEDIA as CSS_MEDIA,
+    MEDIA,
+    css
+} from './modules/JSX/style';
+
 /* Runtime-Specifics */
 export {TriFrostDurableObject} from './runtimes/Workerd/DurableObject';

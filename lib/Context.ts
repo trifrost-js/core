@@ -7,10 +7,8 @@ import {isObject} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
 import {type TriFrostCache} from './modules/Cache';
 import {Cookies} from './modules/Cookies';
-import {
-    render,
-    type JSXElement,
-} from './modules/JSX';
+import {type JSXElement} from './modules/JSX';
+import {rootRender} from './modules/JSX/render';
 import {
     type TriFrostLogger,
     type TriFrostRootLogger,
@@ -673,7 +671,7 @@ export abstract class Context <
             if (opts?.cache) ParseAndApplyCacheControl(this, opts.cache);
 
             this.res_headers['Content-Type'] = MimeTypes.HTML;
-            this.res_body = typeof body === 'string' ? body : render(body);
+            this.res_body = typeof body === 'string' ? body : rootRender(body);
             this.setStatus(opts?.status ?? HttpStatuses.OK);
             this.end();
         } catch (err) {

@@ -1,7 +1,7 @@
 import {isObject} from '@valkyriestudios/utils/object';
 
 const KEBAB_REGEX = /[A-Z]/g;
-const KEBAB_VENDOR_REGEX = /^(webkit|moz|ms|o)([A-Z])/i;
+const KEBAB_VENDOR_REGEX = /^(webkit|moz|ms|o)([A-Z])/;
 
 /* eslint-disable-next-line max-len */
 const RGX_FUNCTION = /\b(blur|brightness|calc|clamp|contrast|counter|counters|drop-shadow|env|fit-content|grayscale|hsl|hsla|invert|max|min|opacity|repeat|rgb|rgba|rotate|saturate|scale|sepia|translate|url|var)\(/i;

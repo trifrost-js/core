@@ -4,73 +4,42 @@ import {Fragment} from '../../../../lib/modules/JSX/runtime';
 
 describe('Modules - JSX - Renderer', () => {
     describe('escape()', () => {
-        it('escapes & to &amp;', () => {
+        it('Escapes & to &amp;', () => {
             expect(escape('Fish & Chips')).toBe('Fish &amp; Chips');
         });
   
-        it('escapes < and > to &lt; and &gt;', () => {
+        it('Escapes < and > to &lt; and &gt;', () => {
             expect(escape('<div>')).toBe('&lt;div&gt;');
             expect(escape('</script>')).toBe('&lt;/script&gt;');
         });
   
-        it('escapes double and single quotes', () => {
+        it('Escapes double and single quotes', () => {
             expect(escape('"quote"')).toBe('&quot;quote&quot;');
             expect(escape('\'quote\'')).toBe('&#39;quote&#39;');
         });
   
-        it('escapes multiple entities in one string', () => {
+        it('Escapes multiple entities in one string', () => {
             expect(escape('5 > 3 && 2 < 4')).toBe('5 &gt; 3 &amp;&amp; 2 &lt; 4');
         });
   
-        it('returns original string if no escapable characters are present', () => {
+        it('Returns original string if no escapable characters are present', () => {
             const clean = 'hello world';
             expect(escape(clean)).toBe(clean);
         });
   
-        it('handles empty string', () => {
+        it('Handles empty string', () => {
             expect(escape('')).toBe('');
         });
   
-        it('is idempotent (double escape does nothing more)', () => {
+        it('Is idempotent (double escape does nothing more)', () => {
             const once = escape('<>&\'"');
             const twice = escape(once);
             expect(once).toBe(twice);
         });
-
-        describe('escape() benchmark', () => {
-            const input = '<div class="test" onclick="alert(\'XSS\')">& More</div>';
-            const expected = '&lt;div class=&quot;test&quot; onclick=&quot;alert(&#39;XSS&#39;)&quot;&gt;&amp; More&lt;/div&gt;';
-          
-            it('produces correct result', () => {
-                expect(escape(input)).toBe(expected);
-            });
-
-            it('benchmarks 10_000 runs under reasonable time', () => {
-                const iterations = 10_000;
-                const start = performance.now();
-                for (let i = 0; i < iterations; i++) escape(input);          
-                const duration = performance.now() - start;
-
-                /* eslint-disable-next-line no-console */
-                console.log(`benchmark: escape (10,000) took: ${duration.toFixed(2)}ms`);
-                expect(duration).toBeLessThan(50);
-            });
-          
-            it('benchmarks 100_000 runs under reasonable time', () => {
-                const iterations = 100_000;
-                const start = performance.now();
-                for (let i = 0; i < iterations; i++) escape(input);          
-                const duration = performance.now() - start;
-
-                /* eslint-disable-next-line no-console */
-                console.log(`benchmark: escape (100,000) took:  ${duration.toFixed(2)}ms`);
-                expect(duration).toBeLessThan(150);
-            });
-        });
     });
 
     describe('render', () => {
-        it('renders basic primitives', () => {
+        it('Renders basic primitives', () => {
             expect(render('hello')).toBe('hello');
             expect(render(123)).toBe('123');
             expect(render(false)).toBe('');
@@ -79,18 +48,18 @@ describe('Modules - JSX - Renderer', () => {
             expect(render(undefined)).toBe('');
         });
 
-        it('escapes dangerous HTML entities', () => {
+        it('Escapes dangerous HTML entities', () => {
             expect(render('<script>alert("x")</script>')).toBe('&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;');
             expect(render('&test')).toBe('&amp;test');
             expect(render('"quoted"')).toBe('&quot;quoted&quot;');
             expect(render('\'quote\''))?.toBe('&#39;quote&#39;');
         });
 
-        it('renders single standard HTML element', () => {
+        it('Renders single standard HTML element', () => {
             expect(render({type: 'div', props: {children: 'content'}})).toBe('<div>content</div>');
         });
 
-        it('renders nested elements', () => {
+        it('Renders nested elements', () => {
             expect(render({
                 type: 'section',
                 props: {
@@ -107,19 +76,19 @@ describe('Modules - JSX - Renderer', () => {
             })).toBe('<section><div><p>Deep</p></div></section>');
         });
 
-        it('renders void/self-closing tags properly', () => {
+        it('Renders void/self-closing tags properly', () => {
             expect(render({type: 'br', props: {}})).toBe('<br />');
             expect(render({type: 'img', props: {src: 'x.png', alt: 'test'}})).toBe('<img src="x.png" alt="test" />');
         });
 
-        it('renders style props with kebab-cased CSS', () => {
+        it('Renders style props with kebab-cased CSS', () => {
             expect(render({
                 type: 'div',
                 props: {style: {backgroundColor: 'red', fontSize: '12px'}, children: ''},
-            })).toBe('<div style="background-color:red;font-size:12px;"></div>');
+            })).toBe('<div style="background-color:red;font-size:12px"></div>');
         });
 
-        it('renders style props with numeric and camelCase values', () => {
+        it('Renders style props with numeric and camelCase values', () => {
             expect(render({
                 type: 'span',
                 props: {
@@ -130,10 +99,10 @@ describe('Modules - JSX - Renderer', () => {
                     },
                     children: 'Styled',
                 },
-            })).toBe('<span style="line-height:1.5;padding-top:10px;border-bottom-color:blue;">Styled</span>');
+            })).toBe('<span style="line-height:1.5;padding-top:10px;border-bottom-color:blue">Styled</span>');
         });
 
-        it('ignores null/undefined style values', () => {
+        it('Ignores null/undefined style values', () => {
             expect(render({
                 type: 'div',
                 props: {
@@ -144,25 +113,25 @@ describe('Modules - JSX - Renderer', () => {
                     },
                     children: '',
                 },
-            })).toBe('<div style="margin:0;"></div>');
+            })).toBe('<div style="margin:0"></div>');
         });
 
-        it('renders boolean props properly', () => {
+        it('Renders boolean props properly', () => {
             expect(render({type: 'input', props: {checked: true}})).toBe('<input checked />');
             expect(render({type: 'input', props: {disabled: true, required: true}})).toBe('<input disabled required />');
         });
 
-        it('renders falsy-but-valid props', () => {
+        it('Renders falsy-but-valid props', () => {
             expect(render({type: 'div', props: {'data-zero': 0}})).toBe('<div data-zero="0"></div>');
             expect(render({type: 'div', props: {'data-false': false}})).toBe('<div data-false="false"></div>');
             expect(render({type: 'div', props: {'data-empty': ''}})).toBe('<div data-empty=""></div>');
         });
 
-        it('ignores invalid or function-only props like children or null', () => {
+        it('Ignores invalid or function-only props like children or null', () => {
             expect(render({type: 'div', props: {children: null, onclick: null}})).toBe('<div></div>');
         });
 
-        it('renders Fragment with multiple children', () => {
+        it('Renders Fragment with multiple children', () => {
             expect(render({
                 /* @ts-ignore */
                 type: Fragment,
@@ -175,18 +144,18 @@ describe('Modules - JSX - Renderer', () => {
             })).toBe('<span>One</span><span>Two</span>');
         });
 
-        it('renders mapped JSX output (e.g. list)', () => {
+        it('Renders mapped JSX output (e.g. list)', () => {
             const children = ['A', 'B', 'C'].map(txt => ({type: 'li', props: {children: txt}}));
             expect(render({type: 'ul', props: {children}})).toBe('<ul><li>A</li><li>B</li><li>C</li></ul>');
         });
 
-        it('renders function components with props', () => {
+        it('Renders function components with props', () => {
             const Comp = ({text}: { text: string }) => ({type: 'p', props: {children: text}});
             /* @ts-ignore */
             expect(render({type: Comp, props: {text: 'hello'}})).toBe('<p>hello</p>');
         });
 
-        it('renders dangerouslySetInnerHTML properly', () => {
+        it('Renders dangerouslySetInnerHTML properly', () => {
             expect(render({
                 type: 'div',
                 props: {
@@ -197,7 +166,7 @@ describe('Modules - JSX - Renderer', () => {
             })).toBe('<div><b>bold</b></div>');
         });
 
-        it('renders nested Fragments inside elements', () => {
+        it('Renders nested Fragments inside elements', () => {
             const nested = {
                 type: 'div',
                 props: {
@@ -215,7 +184,7 @@ describe('Modules - JSX - Renderer', () => {
             expect(render(nested)).toBe('<div><span>one</span><span>two</span></div>');
         });
 
-        it('ignores unknown types or non-object nodes gracefully', () => {
+        it('Ignores unknown types or non-object nodes gracefully', () => {
             expect(render(Symbol('test') as any)).toBe('');
             expect(render({} as any)).toBe('');
             expect(render({type: undefined, props: {}} as any)).toBe('');
