@@ -166,5 +166,5 @@ export function styleToString (obj:Record<string, unknown>|null):string|null {
             if (norm) style += toKebab(attr) + ':' + norm + ';';
         }
     }
-    return style || null;
+    return style ? style.slice(0, -1) : null;
 }

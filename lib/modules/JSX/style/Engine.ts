@@ -45,7 +45,7 @@ export class StyleEngine {
         name:string,
         opts:StyleEngineRegisterOptions
     ):void {
-        if (!isNotEmptyString(rule) || ('selector' in opts && !isNotEmptyString(opts.selector))) return;
+        if (!isNotEmptyString(rule) || (opts.selector !== undefined && !isNotEmptyString(opts.selector))) return;
 
         const {query, selector} = opts;
         const normalized = (selector ?? '.' + name) + '{' + rule.trim() + '}';
