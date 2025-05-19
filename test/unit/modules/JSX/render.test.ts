@@ -1,6 +1,8 @@
 import {describe, it, expect} from 'vitest';
-import {render, escape} from '../../../../lib/modules/JSX/render';
+import {render, escape, rootRender} from '../../../../lib/modules/JSX/render';
 import {Fragment} from '../../../../lib/modules/JSX/runtime';
+import {css} from '../../../../lib/modules/JSX/style/use';
+import {Style} from '../../../../lib/modules/JSX/style/Style';
 
 describe('Modules - JSX - Renderer', () => {
     describe('escape()', () => {
@@ -188,6 +190,152 @@ describe('Modules - JSX - Renderer', () => {
             expect(render(Symbol('test') as any)).toBe('');
             expect(render({} as any)).toBe('');
             expect(render({type: undefined, props: {}} as any)).toBe('');
+        });
+    });
+
+    describe('rootRender', () => {
+        it('Injects styles correctly from inside the render tree', () => {
+            const Component = () => {
+                const cls = css({padding: '1rem', backgroundColor: 'blue'});
+                return {type: 'div', props: {className: cls, children: 'Hello'}};
+            };
+        
+            const html = rootRender({type: Component, props: {}});
+            expect(html)
+                .toBe('<style>.tf-46gioo{padding:1rem;background-color:blue}</style><div class="tf-46gioo">Hello</div>');
+        });
+       
+        it('renders with expected class name and style from inside component', () => {
+            let cls = '';
+        
+            const Component = () => {
+                cls = css({margin: '2rem', color: 'black'});
+                return {type: 'div', props: {className: cls, children: 'Styled'}};
+            };
+        
+            const html = rootRender({type: Component, props: {}});
+            expect(html).toBe(`<style>.${cls}{margin:2rem;color:black}</style><div class="${cls}">Styled</div>`);
+        });
+
+        it('injects full page with marker placement respected', () => {
+            const Header = () => {
+                const cls = css({fontSize: '1.5rem', fontWeight: 'bold'});
+                return {type: 'header', props: {className: cls, children: 'Title'}};
+            };
+            const Body = () => {
+                const cls = css({lineHeight: 1.5, padding: '2rem'});
+                return {type: 'main', props: {className: cls, children: 'Content'}};
+            };
+            const Page = () => ({
+                type: Fragment,
+                props: {
+                    children: [
+                        {type: Header, props: {}},
+                        '__TRIFROST_STYLE_MARKER__',
+                        {type: Body, props: {}},
+                    ],
+                },
+            });
+    
+            /* @ts-ignore */
+            const html = rootRender({type: Page, props: {}});
+            expect(html).toBe([
+                '<header class="tf-iypj3">Title</header>',
+                '<style>',
+                '.tf-iypj3{font-size:1.5rem;font-weight:bold}',
+                '.tf-rnr4jx{line-height:1.5;padding:2rem}',
+                '</style>',
+                '<main class="tf-rnr4jx">Content</main>',
+            ].join(''));
+        });
+
+        it('returns class but does not inject style when css({…}, {inject: false}) is used', () => {
+            let cls = '';
+            const Component = () => {
+                cls = css({color: 'red'}, {inject: false});
+                return {type: 'div', props: {className: cls, children: 'Not styled'}};
+            };
+            const html = rootRender({type: Component, props: {}});
+            expect(html).toBe(`<div class="${cls}">Not styled</div>`);
+        });
+
+        it('injects styles into head and renders a complete page', () => {
+            const Button = () => {
+                const cls = css({
+                    padding: '0.75rem 1.25rem',
+                    border: 'none',
+                    backgroundColor: 'blue',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    borderRadius: '0.25rem',
+                    ':hover': {backgroundColor: 'darkblue'},
+                });
+                return {
+                    type: 'button',
+                    props: {className: cls, children: 'Click Me'},
+                };
+            };
+
+            const FullPage = () => ({
+                type: 'html',
+                props: {
+                    children: [
+                        {
+                            type: 'head',
+                            props: {
+                                children: [
+                                    {type: 'title', props: {children: 'TriFrost Demo'}},
+                                    {type: Style, props: {}}, // style marker
+                                ],
+                            },
+                        },
+                        {
+                            type: 'body',
+                            props: {
+                                children: [
+                                    {type: 'h1', props: {children: 'Welcome to TriFrost'}},
+                                    {type: Button, props: {}},
+                                ],
+                            },
+                        },
+                    ],
+                },
+            });
+
+            const output = rootRender({type: FullPage, props: {}});
+            expect(output).toBe([
+                '<html>',
+                '<head>',
+                '<title>TriFrost Demo</title>',
+                '<style>',
+                '.tf-gz38p9:hover{background-color:darkblue}',
+                '.tf-gz38p9{padding:0.75rem 1.25rem;border:none;background-color:blue;color:white;font-weight:bold;border-radius:0.25rem}',
+                '</style>',
+                '</head>',
+                '<body>',
+                '<h1>Welcome to TriFrost</h1>',
+                '<button class="tf-gz38p9">Click Me</button>',
+                '</body>',
+                '</html>',
+            ].join(''));
+        });
+
+        it('resets the StyleEngine after rendering', () => {
+            let cls = '';
+            const Component = () => {
+                cls = css({margin: '2rem', color: 'black'});
+                return {type: 'div', props: {className: cls, children: 'Styled'}};
+            };
+            const html = rootRender({type: Component, props: {}});
+            expect(html).toBe(`<style>.${cls}{margin:2rem;color:black}</style><div class="${cls}">Styled</div>`);
+
+            let cls2 = '';
+            const Component2 = () => {
+                cls2 = css({color: 'white', fontFamily: 'sans-serif'});
+                return {type: 'p', props: {className: cls2, children: 'Styled'}};
+            };
+            const html2 = rootRender({type: Component2, props: {}});
+            expect(html2).toBe(`<style>.${cls2}{color:white;font-family:sans-serif}</style><p class="${cls2}">Styled</p>`);
         });
     });
 });
