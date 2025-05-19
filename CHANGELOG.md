@@ -4,6 +4,104 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2025-05-19
+This release improves how you work with CSS in TriFrost.
+
+In `0.11.0`, we introduced a scoped, atomic CSS engine with support for nested selectors, media queries, and SSR-safe injection. That system is still here — but in `0.12.0`, it's now configurable.
+
+Instead of importing a global `css` helper, you now create your own instance. Here’s the same example we used in `0.11.0`, updated to use the new `createCss()` approach:
+```typescript
+// css.ts
+import {createCss} from '@trifrost/core';
+
+export const css = createCss({
+  /* Global variables */
+  var: {
+    radius_s: '4px',
+  },
+  /* Theme attributes */
+  theme: {
+    bg: {light: '#fff', dark: '#000'},
+    fg: {light: '#000', dark: '#fff'},
+    button_fg: {light: '#fff', dark: '#000'},
+    button_bg: {light: '#000', dark: '#fff'}
+  },
+  /* Automatically inject a safe CSS reset */
+  reset: true,
+});
+```
+
+```tsx
+// Button.tsx
+import {css} from './css'; /* Note how we're importing our own instance */
+
+export function Button () {
+  const cls = css({
+    color: css.theme.button_fg, // Now typed and autocompleted
+    padding: '1rem 2rem',
+    borderRadius: css.var.radius_s,
+    fontWeight: 'bold',
+    [css.hover]: {filter: 'brightness(1.2)'},
+    [css.media.mobile]: {width: '100%'}
+  });
+
+  return <button className={cls}>Click me</button>;
+}
+```
+
+```tsx
+// Layout.tsx
+import {Style} from '@trifrost/core';
+import {css} from './css';
+import {Button} from './Button.tsx';
+
+export function Layout () {
+  // Important: call .root() at least once per request to inject root styles
+  css.root();
+
+  /* Body styles */
+  const cls = css({
+    background: css.theme.bg,
+    color: css.theme.fg,
+  });
+
+  return (<html>
+    <head>
+      <title>Styled Example</title>
+      {/* Style component where our collected styles will be injected */}
+      <Style />
+    </head>
+    <body className={cls}>
+      <main>
+        <h1>Hello World</h1>
+        <Button />
+      </main>
+    </body>
+  </html>);
+}
+```
+### Added
+- **feat**: `createCss()` — defines your scoped CSS instance with support for vars, theme tokens, and options.
+- **feat**: `createCss` Option - `var: {...}` — Defines global variables 
+- **feat**: `createCss` Option - `theme: {...}` — Defines theme (each key needs to have a light and dark variant) 
+- **feat**: `createCss` Option - `themeAttribute: true` — injects theme styles for both media queries and attribute selectors (e.g. `<html data-theme="dark">`)
+- **feat**: `createCss` Option - `themeAttribute: 'data-mode'` to use a custom attribute name (`<html data-mode="dark">`)
+- **feat**: `createCss` Option `reset: true` — opt-in to a safe, accessible CSS reset
+- **feat**: `css.var.*` and `css.theme.*` — typed design token references (`var(--xyz)` and `var(--t-xyz)`)
+- **feat**: Aliases `css.$v`, `css.$t` for faster access to `css.var`, `css.theme` (for those that don't like to type, I know who you are).
+```typescript
+// Both of these are valid:
+borderRadius: css.var.radius_s,
+borderRadius: css.$v.radius_s,
+
+// So are both of these:
+background: css.theme.bg,
+background: css.$t.bg,
+```
+
+### Breaking
+- The global `css` export has been removed. Use `createCss()` to define a scoped CSS instance (with all of the type goodness) for your app or layout.
+
 ## [0.11.0] - 2025-05-19
 TriFrost now includes a powerful, zero-runtime CSS engine — fully integrated with the core JSX renderer.
 
