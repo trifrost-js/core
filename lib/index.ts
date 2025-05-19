@@ -50,11 +50,8 @@ export {
 
 /* Modules - JSX */
 export {
-    SELECTOR as CSS,
-    SELECTOR,
-    MEDIA as CSS_MEDIA,
-    MEDIA,
-    css
+    css,
+    Style
 } from './modules/JSX/style';
 
 /* Runtime-Specifics */

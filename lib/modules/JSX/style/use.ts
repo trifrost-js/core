@@ -75,20 +75,17 @@ function flatten (
  *  }
  * });
  * 
- * @param {Record<string, unknown>} raw - Raw style object
+ * @param {Record<string, unknown>} style - Raw style object
  * @param {CSSOptions} opts - Options for css, eg: {inject:false} will simply return the unique classname rather than adding to engine
  */
-export function css (
-    raw:Record<string, unknown>,
-    opts?:CSSOptions
-):string {
-    if (!isObject(raw)) return '';
+const cssImpl = (style:Record<string, unknown>, opts?:CSSOptions) => {
+    if (!isObject(style)) return '';
     const inject = opts?.inject !== false;
   
-    const flattened = flatten(raw);
+    const flattened = flatten(style);
     if (!flattened.length) return '';
   
-    const cname = active_engine!.hash(JSON.stringify(raw));
+    const cname = active_engine!.hash(JSON.stringify(style));
   
     for (let i = 0; i < flattened.length; i++) {
         const {declarations, selector = undefined, query = undefined} = flattened[i];
@@ -99,4 +96,91 @@ export function css (
     }
   
     return cname;
-}
+};
+
+/* Pseudo Classes */
+cssImpl.hover = ':hover';
+cssImpl.active = ':active';
+cssImpl.focus = ':focus';
+cssImpl.focusVibisle = ':focus-visible';
+cssImpl.focusWithin = ':focus-within';
+cssImpl.disabled = ':disabled';
+cssImpl.checked = ':checked';
+cssImpl.visited = ':visited';
+cssImpl.firstChild = ':first-child';
+cssImpl.lastChild = ':last-child';
+
+/* Pseudo Elements */
+cssImpl.before = '::before';
+cssImpl.after = '::after';
+cssImpl.placeholder = '::placeholder';
+cssImpl.selection = '::selection';
+
+/* Dynamic Selectors */
+cssImpl.nthChild = (i:number|string) => ':nth-child(' + i + ')';
+cssImpl.nthLastChild = (i:number|string) => ':nth-last-child(' + i + ')';
+cssImpl.nthOfType = (i:number|string) => ':nth-of-type(' + i + ')';
+cssImpl.nthLastOfType = (i:number|string) => ':nth-last-of-type(' + i + ')';
+cssImpl.not = (selector:string) => ':not(' + selector + ')';
+cssImpl.is = (selector:string) => ':is(' + selector + ')';
+cssImpl.where = (selector:string) => ':where(' + selector + ')';
+cssImpl.has = (selector:string) => ':has(' + selector + ')';
+cssImpl.dir = (dir:'ltr' | 'rtl') => ':dir(' + dir + ')';
+
+/* Media Queries */
+cssImpl.media = {
+    mobile: '@media (max-width: 600px)',
+    tablet: '@media (max-width: 1199px)',
+    tabletOnly: '@media (min-width: 601px) and (max-width: 1199px)',
+    desktop: '@media (min-width: 1200px)',
+    reducedMotion: '@media (prefers-reduced-motion: reduce)',
+    dark: '@media (prefers-color-scheme: dark)',
+    light: '@media (prefers-color-scheme: light)',
+    hover: '@media (hover: hover)',
+    touch: '@media (hover: none)',
+};
+
+export const css = cssImpl as {
+    (style: Record<string, unknown>, opts?: { inject?: boolean }): string;
+    /* Pseudo Classes */
+    hover:string;
+    active:string;
+    focus:string;
+    focusVibisle:string;
+    focusWithin:string;
+    disabled:string;
+    checked:string;
+    visited:string;
+    firstChild:string;
+    lastChild:string;
+
+    /* Pseudo Elements */
+    before:string;
+    after:string;
+    placeholder:string;
+    selection:string;
+
+    /* Dynamic Selectors */
+    nthChild:(i:number|string) => string;
+    nthLastChild:(i:number|string) => string;
+    nthOfType:(i:number|string) => string;
+    nthLastOfType:(i:number|string) => string;
+    not:(selector:string) => string;
+    is:(selector:string) => string;
+    where:(selector:string) => string;
+    has:(selector:string) => string;
+    dir:(dir:'ltr'|'rtl') => string;
+
+    /* Media Queries */
+    media:{
+        mobile:string;
+        tablet:string;
+        tabletOnly:string;
+        desktop:string;
+        reducedMotion:string;
+        dark:string;
+        light:string;
+        hover:string;
+        touch:string;
+    };
+};

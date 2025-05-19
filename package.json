@@ -76,6 +76,12 @@
             "require": "./modules/JSX/index.js",
             "default": "./modules/JSX/index.js"
         },
+        "./modules/JSX/style": {
+            "types": "./modules/JSX/style/index.d.ts",
+            "import": "./modules/JSX/style/index.js",
+            "require": "./modules/JSX/style/index.js",
+            "default": "./modules/JSX/style/index.js"
+        },
         "./modules/Logger": {
             "types": "./modules/Logger/index.d.ts",
             "import": "./modules/Logger/index.js",

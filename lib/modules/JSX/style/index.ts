@@ -1,6 +1,2 @@
-export {
-    SELECTOR as CSS,
-    SELECTOR,
-    MEDIA
-} from './selectors';
+export {Style} from './Style';
 export {css} from './use';
