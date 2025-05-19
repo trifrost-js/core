@@ -4,11 +4,202 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.11.0] - 2025-05-19
+TriFrost now includes a powerful, zero-runtime CSS engine — fully integrated with the core JSX renderer.
+
+Write scoped, atomic, high-performance styles using the new `css()` utility. It supports pseudo-selectors, media queries, and deeply nested rules — all SSR-safe and deterministic.
+
+### Added
+- **feat**: `css()` — Inline, scoped styles with full support for pseudo-selectors, elements, and nested media queries
+- **feat**: `<Style />` — Injects collected styles exactly where rendered (typically inside `<head>`)
+- **feat**: Rich selector API: `css.hover`, `css.nthChild(2)`, `css.media.dark`, `css.before`, etc.
+- **feat**: `css(obj, {inject: false})` — Returns class name without injecting (useful for SSR hydration reuse)
+- **feat**: `css.root()` — Register global styles or `:root` variables within component code
+
+**Example**
+```tsx
+// Theme.ts
+import {css} from '@trifrost/core';
+
+export function Theme () {
+  css.root({
+    '--radius': '4px',
+    [css.media.light]: {
+      '--color-bg': 'white',
+      '--color-fg': 'black',
+      '--color-button-bg': 'black',
+      '--color-button-fg': 'white',
+    },
+    [css.media.dark]: {
+      '--color-bg': 'black',
+      '--color-fg': 'white',
+      '--color-button-bg': 'white',
+      '--color-button-fg': 'black',
+    }
+  });
+}
+```
+
+```tsx
+// Button.tsx
+import {css} from '@trifrost/core/jsx';
+
+export function Button () {
+  const cls = css({
+    background: 'var(--color-button-bg)',
+    color: 'var(--color-button-fg)',
+    padding: '1rem 2rem',
+    borderRadius: 'var(--radius)',
+    fontWeight: 'bold',
+    [css.hover]: {filter: 'brightness(1.2)'},
+    [css.media.mobile]: {width: '100%'}
+  });
+
+  return <button className={cls}>Click me</button>;
+}
+```
+
+```tsx
+// Layout.tsx
+import {css, Style} from '@trifrost/core';
+import {Theme} from './Theme';
+import {Button} from './Button.tsx';
+
+export function Layout () {
+  Theme();
+
+  /* Body styles */
+  const cls = css({
+    background: 'var(--color-bg)',
+    color: 'var(--color-fg)',
+  });
+
+  return (<html>
+    <head>
+      <title>Styled Example</title>
+      {/* Style component where our collected styles will be injected */}
+      <Style />
+    </head>
+    <body className={cls}>
+      <main>
+        <h1>Hello World</h1>
+        <Button />
+      </main>
+    </body>
+  </html>);
+}
+```
+
+This renders:
+```html
+<html>
+  <head>
+    <title>Styled Example</title>
+    <style>
+      :root {
+        --radius: 4px;
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root {
+          --color-bg: white;
+          --color-fg: black;
+          --color-button-bg: black;
+          --color-button-fg: white;
+        }
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --color-bg: black;
+          --color-fg: white;
+          --color-button-bg: white;
+          --color-button-fg: black;
+        }
+      }
+
+      .tf-abc123 {
+        background: var(--color-button-bg);
+        color: var(--color-button-fg);
+        padding: 1rem 2rem;
+        border-radius: var(--radius);
+        font-weight: bold;
+      }
+
+      .tf-abc123:hover {
+        filter: brightness(1.2);
+      }
+
+      @media (max-width: 600px) {
+        .tf-abc123 {
+          width: 100%;
+        }
+      }
+
+      .tf-def456 {
+        background: var(--color-bg);
+        color: var(--color-fg);
+      }
+    </style>
+  </head>
+  <body class="tf-def456">
+    <main>
+      <h1>Hello World</h1>
+      <button class="tf-abc123">Click me</button>
+    </main>
+  </body>
+</html>
+```
+
+**You can also nest these**:
+```tsx
+import {css} from '@trifrost/core';
+
+export function Card () {
+  const cls = css({
+    backgroundColor: 'white',
+    padding: '2rem',
+    borderRadius: '8px',
+    [css.hover]: {
+      boxShadow: '0 0 0 2px rgba(0,0,0,0.1)',
+      [css.media.dark]: {
+        boxShadow: '0 0 0 2px rgba(255,255,255,0.1)'
+      }
+    },
+    ' h2': { fontSize: '1.25rem' },
+    ' p': { fontSize: '1rem', color: 'gray' }
+  });
+
+  ...
+}
+```
+
+### Best Practices
+- Always call `css()` and `css.root()` inside components or functions — styles are collected per request
+- Place `<Style />` in `<head>`
+- Use `{inject: false}` for reuse patterns (eg: infinite scroll when on the second page)
+
 ### Improved
+- **misc**: CICD tagged releases will now also automatically send a webhook message to discord announcing the release
 - **deps**: Upgrade eslint to 9.27.0
-- **deps**: Upgrade @cloudflare/workers-types to 4.20250517.0
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250510.0
+- **deps**: Upgrade @types/node to 22.15.19
 - **deps**: Upgrade @valkyriestudios/utils to 12.37.0
+
+**Bottom line**:
+- ✅ Fully deterministic and scoped
+- ✅ Handles pseudo/media variants and nesting
+- ✅ One class per style object
+- ✅ Server-rendered, zero runtime
+- ✅ No naming collisions — ever
+
+Use it. Nest it. Compose it.
+
+**Note**: The new `css()` engine is fully **additive**. It doesn’t replace native style usage — you can still use inline styles whenever it makes sense:
+```tsx
+<div style={{backgroundColor: 'var(--color-bg)', color: 'var(--color-fg)'}}>...</div>
+```
+Use `css()` for scoped, reusable, atomic styles — and reach for `style={{...}}` when you need one-off or dynamic values. Both work seamlessly together.
 
 ## [0.10.0] - 2025-05-16
 TriFrost always came with a body parser — it handled JSON, plain text, and buffers just fine. But real-world backends need more. Forms. File uploads. Multilingual characters. Legacy formats. Inconsistent charsets. It adds up fast.
