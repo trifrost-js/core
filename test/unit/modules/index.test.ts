@@ -10,6 +10,8 @@ import {DurableObjectRateLimit} from '../../../lib/modules/RateLimit/DurableObje
 import {KVRateLimit} from '../../../lib/modules/RateLimit/KV';
 import {MemoryRateLimit} from '../../../lib/modules/RateLimit/Memory';
 import {RedisRateLimit} from '../../../lib/modules/RateLimit/Redis';
+import {css} from '../../../lib/modules/JSX/style/use';
+import {Style} from '../../../lib/modules/JSX/style/Style';
 import * as Modules from '../../../lib/modules';
 
 describe('Modules - Index', () => {
@@ -48,6 +50,22 @@ describe('Modules - Index', () => {
     describe('Cookies', () => {
         it('Should link to the correct module', () => {
             expect(Modules.Cookies).toEqual(Cookies);
+        });
+    });
+
+    /**
+     * MARK: JSX
+     */
+
+    describe('css', () => {
+        it('Should link to the correct module', () => {
+            expect(Modules.css).toEqual(css);
+        });
+    });
+
+    describe('Style', () => {
+        it('Should link to the correct module', () => {
+            expect(Modules.Style).toEqual(Style);
         });
     });
 

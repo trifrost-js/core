@@ -6,3 +6,4 @@ export {
     JsonExporter,
     OtelHttpExporter
 } from './Logger';
+export * from './JSX/style';

@@ -140,6 +140,27 @@ cssImpl.media = {
     touch: '@media (hover: none)',
 };
 
+/* Root injector */
+cssImpl.root = (style: Record<string, unknown>) => {
+    if (!isObject(style) || !active_engine) return;
+  
+    const flattened = flatten(style);
+    if (!flattened.length) return;
+  
+    for (let i = 0; i < flattened.length; i++) {
+        const {declarations, query, selector} = flattened[i];
+        const rule = styleToString(declarations);
+        if (rule) {
+            const selector_path = selector
+                ? selector[0] === '[' && selector[selector.length - 1] === ']'
+                    ? ':root' + selector
+                    : selector
+                : ':root';
+            active_engine.register(rule, '', {selector: selector_path, query});
+        }
+    }
+};
+
 export const css = cssImpl as {
     (style: Record<string, unknown>, opts?: { inject?: boolean }): string;
     /* Pseudo Classes */
@@ -183,4 +204,7 @@ export const css = cssImpl as {
         hover:string;
         touch:string;
     };
+
+    /* Root Injector */
+    root(style: Record<string, unknown>): void;
 };

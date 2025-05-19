@@ -384,6 +384,120 @@ describe('Modules - JSX - style - use', () => {
                 `<div class="${cls}">Nested</div>`,
             ].join(''));
         });
+
+        describe('root', () => {
+            it('Injects nada if passed a non/empty object', () => {
+                for (const el of CONSTANTS.NOT_OBJECT_WITH_EMPTY) {
+                    css.root(el as Record<string, unknown>);
+            
+                    const html = engine.inject('<div>Root Vars</div>');
+                    expect(html).toBe('<div>Root Vars</div>');
+                }
+            });
+
+            it('Injects nada if no active engine', () => {
+                setActiveStyleEngine(null);
+                css.root({
+                    '--color-primary': 'blue',
+                    '--spacing': '1rem',
+                });
+                setActiveStyleEngine(engine);
+            
+                const html = engine.inject('<div>Root Vars</div>');
+                expect(html).toBe('<div>Root Vars</div>');
+            });
+
+            it('Injects simple CSS variables under :root', () => {
+                css.root({
+                    '--color-primary': 'blue',
+                    '--spacing': '1rem',
+                });
+        
+                const html = engine.inject('<div>Root Vars</div>');
+                expect(html).toBe([
+                    '<style>',
+                    ':root{--color-primary:blue;--spacing:1rem}',
+                    '</style>',
+                    '<div>Root Vars</div>',
+                ].join(''));
+            });
+        
+            it('Supports media queries with root-level variables', () => {
+                css.root({
+                    '--color': 'black',
+                    [css.media.dark]: {
+                        '--color': 'white',
+                    },
+                });
+        
+                const html = engine.inject('<div>Media Root</div>');
+                expect(html).toBe([
+                    '<style>',
+                    ':root{--color:black}',
+                    '@media (prefers-color-scheme: dark){:root{--color:white}}',
+                    '</style>',
+                    '<div>Media Root</div>',
+                ].join(''));
+            });
+
+            it('Supports media queries with root-level variables and attribute selectors', () => {
+                css.root({
+                    '--color': 'black',
+                    '[data-enabled]': {opacity: '1'},
+                    [css.media.dark]: {
+                        '--color': 'white',
+                        '[data-enabled]': {opacity: '.5'},
+                    },
+                });
+        
+                const html = engine.inject('<div>Media Root</div>');
+                expect(html).toBe([
+                    '<style>',
+                    ':root[data-enabled]{opacity:1}',
+                    ':root{--color:black}',
+                    '@media (prefers-color-scheme: dark){',
+                    ':root[data-enabled]{opacity:.5}',
+                    ':root{--color:white}',
+                    '}',
+                    '</style>',
+                    '<div>Media Root</div>',
+                ].join(''));
+            });
+        
+            it('can nest tag styles alongside root and media', () => {
+                css.root({
+                    '--font-size': '14px',
+                    html: {
+                        fontFamily: 'sans-serif',
+                        [css.media.tabletOnly]: {
+                            fontSize: '16px',
+                        },
+                    },
+                    [css.media.dark]: {
+                        '--font-size': '16px',
+                        body: {
+                            backgroundColor: 'black',
+                        },
+                    },
+                });
+        
+                const html = engine.inject('<div>Nested Root</div>');
+                expect(html).toBe([
+                    '<style>',
+                    'html{font-family:sans-serif}',
+                    ':root{--font-size:14px}',
+                    '@media (min-width: 601px) and (max-width: 1199px){',
+                    'html{font-size:16px}',
+                    '}',
+                    '@media (prefers-color-scheme: dark){',
+                    'body{background-color:black}',
+                    ':root{--font-size:16px}',
+                    '}',
+                    '</style>',
+                    '<div>Nested Root</div>',
+                ].join(''));
+            });
+        });        
     
         describe('combinations', () => {
             it(':not() and :nth-child()', () => {

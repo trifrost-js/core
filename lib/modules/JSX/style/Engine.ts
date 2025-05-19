@@ -58,8 +58,7 @@ export class StyleEngine {
             const entry = this.media[query];
             if (!entry) {
                 this.media[query] = {out: normalized, keys: new Set([normalized])};
-            } else {
-                if (entry.keys.has(normalized)) return;
+            } else if (!entry.keys.has(normalized)) {
                 entry.keys.add(normalized);
                 entry.out += normalized;
             }
