@@ -50,7 +50,7 @@ export {
 
 /* Modules - JSX */
 export {
-    css,
+    createCss,
     Style
 } from './modules/JSX/style';
 

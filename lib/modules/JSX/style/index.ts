@@ -1,2 +1,2 @@
 export {Style} from './Style';
-export {css} from './use';
+export {createCss} from './use';

@@ -10,7 +10,7 @@ import {DurableObjectRateLimit} from '../../../lib/modules/RateLimit/DurableObje
 import {KVRateLimit} from '../../../lib/modules/RateLimit/KV';
 import {MemoryRateLimit} from '../../../lib/modules/RateLimit/Memory';
 import {RedisRateLimit} from '../../../lib/modules/RateLimit/Redis';
-import {css} from '../../../lib/modules/JSX/style/use';
+import {createCss} from '../../../lib/modules/JSX/style/use';
 import {Style} from '../../../lib/modules/JSX/style/Style';
 import * as Modules from '../../../lib/modules';
 
@@ -57,9 +57,9 @@ describe('Modules - Index', () => {
      * MARK: JSX
      */
 
-    describe('css', () => {
+    describe('createCss', () => {
         it('Should link to the correct module', () => {
-            expect(Modules.css).toEqual(css);
+            expect(Modules.createCss).toEqual(createCss);
         });
     });
 

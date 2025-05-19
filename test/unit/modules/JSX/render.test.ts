@@ -1,7 +1,7 @@
-import {describe, it, expect} from 'vitest';
+import {describe, it, expect, beforeEach} from 'vitest';
 import {render, escape, rootRender} from '../../../../lib/modules/JSX/render';
 import {Fragment} from '../../../../lib/modules/JSX/runtime';
-import {css} from '../../../../lib/modules/JSX/style/use';
+import {createCss} from '../../../../lib/modules/JSX/style/use';
 import {Style} from '../../../../lib/modules/JSX/style/Style';
 
 describe('Modules - JSX - Renderer', () => {
@@ -194,6 +194,12 @@ describe('Modules - JSX - Renderer', () => {
     });
 
     describe('rootRender', () => {
+        let css:ReturnType<typeof createCss>;
+
+        beforeEach(() => {
+            css = createCss();
+        });
+
         it('Injects styles correctly from inside the render tree', () => {
             const Component = () => {
                 const cls = css({padding: '1rem', backgroundColor: 'blue'});

@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest';
 import {Style} from '../../../../../lib/modules/JSX/style/Style';
-import {css} from '../../../../../lib/modules/JSX/style/use';
+import {createCss} from '../../../../../lib/modules/JSX/style/use';
 import * as Module from '../../../../../lib/modules/JSX/style';
 
 describe('Modules - JSX - style', () => {
@@ -10,9 +10,9 @@ describe('Modules - JSX - style', () => {
         });
     });
 
-    describe('css', () => {
+    describe('createCss', () => {
         it('Should link to the correct module', () => {
-            expect(Module.css).toEqual(css);
+            expect(Module.createCss).toEqual(createCss);
         });
     });
 });
