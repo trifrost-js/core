@@ -1,7 +1,7 @@
 /* eslint-disable max-lines */
 /* eslint-disable max-len */
 import {describe, it, expect, beforeEach} from 'vitest';
-import {createCss, setActiveStyleEngine} from '../../../../../lib/modules/JSX/style/use';
+import {createCss, getActiveStyleEngine, setActiveStyleEngine} from '../../../../../lib/modules/JSX/style/use';
 import {StyleEngine} from '../../../../../lib/modules/JSX/style/Engine';
 import CONSTANTS from '../../../../constants';
 
@@ -404,16 +404,15 @@ describe('Modules - JSX - style - use', () => {
                     }
                 });
 
-                it('Injects nada if no active engine', () => {
+                it('Creates a new engine if no active engine', () => {
                     setActiveStyleEngine(null);
                     css.root({
                         '--color-primary': 'blue',
                         '--spacing': '1rem',
                     });
-                    setActiveStyleEngine(engine);
                 
-                    const html = engine.inject('<div>Root Vars</div>');
-                    expect(html).toBe('<div>Root Vars</div>');
+                    const html = getActiveStyleEngine()!.inject('<div>Root Vars</div>');
+                    expect(html).toBe('<style>:root{--color-primary:blue;--spacing:1rem}</style><div>Root Vars</div>');
                 });
 
                 it('Injects simple CSS variables under :root', () => {
@@ -1291,6 +1290,65 @@ describe('Modules - JSX - style - use', () => {
                 '}',
                 '</style>',
                 '<div class="tf-1wuvp3b">Mix</div>',
+            ].join(''));
+        });
+
+        it('Does not crash and instead proactively set an active style engine if none exists', () => {
+            setActiveStyleEngine(null);
+
+            const css = createCss({
+                var: {
+                    space_xl: '4rem',
+                    space_l: '2rem',
+                    space_m: '1rem',
+                    space_s: '.5rem',
+                },
+                theme: {
+                    bg: '#000',
+                    fg: '#fff',  
+                },
+                definitions: mod => ({
+                    f: {display: 'flex'},
+                    fh: {flexDirection: 'row'},
+                    fv: {flexDirection: 'column'},
+                    fa_c: {alignItems: 'center'},
+                    fj_c: {justifyContent: 'center'},
+                    fj_sa: {justifyContent: 'space-around'},
+                    oh: {overflow: 'hidden'},
+                    sp_xl: {padding: mod.$v.space_xl},
+                    sp_l: {padding: mod.$v.space_l},
+                    sp_h_l: {paddingLeft: mod.$v.space_l, paddingRight: mod.$v.space_l},
+                    hide: {display: 'none'},
+                    shouldNotBeIncluded: {
+                        color: 'red',
+                        fontSize: '20rem',
+                    },
+                }),
+            });
+
+            const cls = css.use('f', 'fh', 'fa_c', 'oh', {
+                width: '100%',
+                background: css.$t.bg,
+                color: css.$t.fg,
+                [css.media.desktop]: css.mix('sp_xl', 'fj_c', {
+                    ' > span': css.mix('sp_h_l', {fontSize: '1rem'}),
+                }),
+                [css.media.tablet]: css.mix('sp_l', 'fj_sa'),
+            });
+        
+            expect(cls).toMatch(/^tf-/);
+            expect(getActiveStyleEngine()!.inject(`<div class="${cls}">Mix</div>`)).toBe([
+                '<style>',
+                '.tf-kn00o5{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                '@media (min-width: 1200px){',
+                '.tf-kn00o5 > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                '.tf-kn00o5{padding:var(--v-space_xl);justify-content:center}',
+                '}',
+                '@media (max-width: 1199px){',
+                '.tf-kn00o5{padding:var(--v-space_l);justify-content:space-around}',
+                '}',
+                '</style>',
+                '<div class="tf-kn00o5">Mix</div>',
             ].join(''));
         });
     

@@ -5,7 +5,7 @@ import {isString} from '@valkyriestudios/utils/string';
 import {type JSXElement} from './types';
 import {Fragment} from './runtime';
 import {StyleEngine} from './style/Engine';
-import {setActiveStyleEngine} from './style/use';
+import {setActiveStyleEngine, getActiveStyleEngine} from './style/use';
 import {styleToString} from './style/util'; 
 
 const VOID_TAGS = new Set([
@@ -157,8 +157,7 @@ export function render (node: JSXElement | string | number | boolean | null): st
  */
 export function rootRender (tree:JSXElement):string {
     /* Instantiate globals */
-    const style_engine = new StyleEngine();
-    setActiveStyleEngine(style_engine);
+    const style_engine = getActiveStyleEngine() || setActiveStyleEngine(new StyleEngine());
 
     /* Render jsx to html */
     const html = style_engine.inject(render(tree));

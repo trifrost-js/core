@@ -3,7 +3,7 @@
 import {isFn} from '@valkyriestudios/utils/function';
 import {isNeObject, isObject} from '@valkyriestudios/utils/object';
 import {isNeString, isString} from '@valkyriestudios/utils/string';
-import {type StyleEngine} from './Engine';
+import {StyleEngine} from './Engine';
 import {styleToString} from './util';
 import {hexId} from '../../../utils/String';
 
@@ -76,8 +76,13 @@ type CssGeneric = {
 
 let active_engine: StyleEngine | null = null;
 
-export function setActiveStyleEngine (engine: StyleEngine | null) {
+export function setActiveStyleEngine <T extends StyleEngine|null> (engine:T):T {
     active_engine = engine;
+    return engine;
+}
+
+export function getActiveStyleEngine () {
+    return active_engine;
 }
 
 /**
@@ -152,7 +157,7 @@ function cssFactory ():CssGeneric {
         const flattened = flatten(style);
         if (!flattened.length) return '';
     
-        const cname = active_engine!.hash(JSON.stringify(style));
+        const cname = (active_engine || setActiveStyleEngine(new StyleEngine()))!.hash(JSON.stringify(style));
     
         for (let i = 0; i < flattened.length; i++) {
             const {declarations, selector = undefined, query = undefined} = flattened[i];
@@ -492,13 +497,13 @@ export function createCss <
 	/* Attach root generator */
     const ogRoot = mod.root;
     mod.root = (styles:Record<string, unknown> = {}) => {
-        if (!active_engine) return;
+        if (!active_engine) setActiveStyleEngine(new StyleEngine());
 
         /* If our root variables are already injected, simply run og root */
-        if (Reflect.get(active_engine, sym)) {
+        if (Reflect.get(active_engine!, sym)) {
             return ogRoot(styles);
         } else {
-            Reflect.set(active_engine, sym, true);
+            Reflect.set(active_engine!, sym, true);
 
             /**
              * Media-Query based theming
