@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+
+import {isFn} from '@valkyriestudios/utils/function';
 import {isNeObject, isObject} from '@valkyriestudios/utils/object';
 import {isNeString, isString} from '@valkyriestudios/utils/string';
 import {type StyleEngine} from './Engine';
@@ -233,19 +236,76 @@ function cssFactory ():CssGeneric {
  */
 
 type VarMap = Record<string, string>;
-type ThemeMap = Record<string, {light: string; dark: string}>;
+type ThemeMap = Record<string, string|{light: string; dark: string}>;
 
 type VarVal <T extends string> = `var(--${T})`;
 type ThemeVal <T extends string> = `var(--t-${T})`;
 
-type CssInstance <V extends VarMap, T extends ThemeMap> = CssGeneric & {
+type CssInstance <
+    V extends VarMap,
+    T extends ThemeMap,
+    R extends Record<string, Record<string, unknown>> = {}
+> = CssGeneric & {
     $uid: string;
-    /* Variables, $v is alias of var */
+    /**
+     * Token references for global design variables.
+     * Each value resolves to `var(--v-key)`.
+     * @note this is an alias of var
+     */
 	$v: {[K in keyof V]: VarVal<K & string>};
+    /**
+     * Token references for global design variables.
+     * Each value resolves to `var(--v-key)`.
+     */
     var: {[K in keyof V]: VarVal<K & string>};
-    /* Theme, $t is alias of theme */
+    /**
+     * Token references for theme-adaptive values.
+     * Each resolves to `var(--t-key)`, adapting to light/dark modes.
+     * @note this is an alias of theme
+     */
     $t: {[K in keyof T]: ThemeVal<K & string>};
+    /**
+     * Token references for theme-adaptive values.
+     * Each resolves to `var(--t-key)`, adapting to light/dark modes.
+     */
 	theme: {[K in keyof T]: ThemeVal<K & string>};
+    /**
+     * Merges one or more registered definitions and/or raw style objects into a single style object.
+     * 
+     * This does not inject styles or generate a class — it's useful for composing styles inside nested or media-query contexts.
+     *
+     * @example
+     * ```tsx
+     * const base = css.mix('row', { padding: '1rem' });
+     * const cls = css({
+     *   ...base,
+     *   [css.media.tablet]: css.mix('col', { padding: '0.5rem' })
+     * });
+     * ```
+     */
+	mix: (...args: (keyof R | Record<string, unknown>)[]) => Record<string, unknown>;
+    /**
+     * Applies one or more registered definitions (plus optional inline overrides) and returns a class name.
+     * 
+     * Internally merges the provided style objects and tokens using `.mix(...)`, then generates and registers an atomic class.
+     *
+     * @example
+     * ```tsx
+     * const cls = css.use('card', { padding: '1rem' });
+     * return <div className={cls}>Card</div>;
+     * ```
+     */
+	use: (...args: (keyof R | Record<string, unknown>)[]) => string;
+    /**
+     * Generates a unique, scoped class name with a `tf-` prefix. Useful for DOM targeting, etc
+     *
+     * @example
+     * ```ts
+     * const portalId = css.cid();
+     * <div id={portalId} />
+     * ```
+     */
+    cid: () => string;
 };
 
 const CSS_RESET = {
@@ -336,13 +396,46 @@ const CSS_RESET = {
 export function createCss <
 	V extends VarMap,
 	T extends ThemeMap,
+    R extends Record<string, Record<string, unknown>> = {},
 > (config:{
+    /**
+     * Global design tokens (CSS variables).
+     * Accessible via `css.var` or `css.$v`.
+     */
     var?:V;
+    /**
+     * Themed values that adapt to light/dark modes.
+     * Accessible via `css.theme` or `css.$t`.
+     */
     theme?:T,
+    /**
+     * If `true`, injects theme tokens as both media queries and HTML attributes (e.g. `data-theme="dark"`).
+     * You can also pass a string like `'data-mode'` to use a custom attribute.
+     */
     themeAttribute?: boolean|string,
-    reset?:boolean
-} = {}): CssInstance<V, T> {
-    const mod = cssFactory() as CssInstance<V, T>;
+    /**
+     * Opt-In to an SSR-safe CSS reset styles. Defaults to `false`.
+     */
+    reset?:boolean,
+    /**
+     * Defines named, composable style blocks for reuse across components.
+     * These can reference `var`, `theme`, media queries, pseudo selectors, etc.
+     *
+     * Use with `css.use(...)`.
+     *
+     * @example
+     * ```ts
+     * definitions: css => ({
+     *   button: {
+     *     fontSize: css.$v.font_s_body,
+     *     [css.hover]: { filter: 'brightness(1.2)' },
+     *   },
+     * })
+     * ```
+     */
+    definitions?: (mod:CssInstance<V, T>) => R;
+} = {}): CssInstance<V, T, R> {
+    const mod = cssFactory() as CssInstance<V, T, R>;
 
     /* Specific symbol for this css instance */
     mod.$uid = hexId(8);
@@ -353,34 +446,48 @@ export function createCss <
     const root_vars:Record<string, string> = {};
     const theme_light:Record<string, string> = {};
     const theme_dark:Record<string, string> = {};
+    const definitions:R = {} as R;
 
 	/* Attach var tokens */
     mod.var = {} as any;
     if (isObject(config.var)) {
         for (const key in config.var) {
-            const v_key = '--' + key;
+            const v_key = '--v-' + key;
             mod.var[key] = 'var(' + v_key + ')' as VarVal<typeof key>;
             root_vars[v_key] = config.var[key];
         }
     }
     mod.$v = mod.var;
 
-	/* Validate and attach theme tokens */
+	/* Attach theme tokens */
     mod.theme = {} as any;
     if (isObject(config.theme)) {
         for (const key in config.theme) {
             const entry = config.theme[key];
-            if (
-                !isNeString(entry.light) ||
-                !isNeString(entry.dark)
-            ) throw new Error(`Theme token '${key}' must define both 'light' and 'dark' values`);
-            const t_key = '--t-' + key; 
-            theme_light[t_key] = entry.light;
-            theme_dark[t_key] = entry.dark;
-            mod.theme[key] = 'var(' + t_key + ')' as ThemeVal<typeof key>;
+            if (isNeString(entry)) {
+                const t_key = '--t-' + key; 
+                root_vars[t_key] = entry;
+                mod.theme[key] = 'var(' + t_key + ')' as ThemeVal<typeof key>;
+            } else if (
+                isNeString(entry?.light) && 
+                isNeString(entry?.dark)
+            ) {
+                const t_key = '--t-' + key; 
+                theme_light[t_key] = entry.light;
+                theme_dark[t_key] = entry.dark;
+                mod.theme[key] = 'var(' + t_key + ')' as ThemeVal<typeof key>;
+            } else {
+                throw new Error(`Theme token '${key}' is invalid, must either be a string or define both 'light' and 'dark' values`);
+            }
         }
     }
     mod.$t = mod.theme;
+
+    /* Attach definitions */
+    if (isFn(config.definitions)) {
+        const def = config.definitions(mod);
+        for (const key in def) (definitions as any)[key] = def[key];
+    }
 
 	/* Attach root generator */
     const ogRoot = mod.root;
@@ -429,6 +536,26 @@ export function createCss <
             });
         }
     };
+
+    /* Use a definition or set of definitions and combine into single style object */
+    mod.mix = (...args: (keyof R | Record<string, unknown>)[]) => {
+        const acc: Record<string, unknown> = {};
+        for (let i = 0; i < args.length; i++) {
+            const val = args[i];
+            if (isString(val)) {
+                Object.assign(acc, definitions[val] || {});
+            } else if (isObject(val)) {
+                Object.assign(acc, val);
+            }
+        }
+        return acc;
+    };
+    
+    /* Use a definition or set of definitions and register them with a classname*/
+    mod.use = (...args: (keyof R | Record<string, unknown>)[]) => mod(mod.mix(...args));
+
+    /* Generates a unique classname */
+    mod.cid = () => 'tf-' + hexId(8);
 
     return mod;
 }

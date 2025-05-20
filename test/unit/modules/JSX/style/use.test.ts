@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /* eslint-disable max-len */
 import {describe, it, expect, beforeEach} from 'vitest';
 import {createCss, setActiveStyleEngine} from '../../../../../lib/modules/JSX/style/use';
@@ -701,10 +702,22 @@ describe('Modules - JSX - style - use', () => {
             const html = engine.inject('<div>Vars</div>');
             expect(html).toBe([
                 '<style>',
-                ':root{--spacing_m:1rem;--radius_l:8px}',
+                ':root{--v-spacing_m:1rem;--v-radius_l:8px}',
                 '</style>',
                 '<div>Vars</div>',
             ].join(''));
+        });
+
+        it('Throws when an invalid theme var is provided', () => {
+            expect(() => createCss({
+                var: {},
+                theme: {
+                    /* @ts-ignore */
+                    bg: null,
+                    text: {light: '#111', dark: '#eee'},
+                },
+                reset: false,
+            })).toThrowError(/Theme token 'bg' is invalid, must either be a string or define both 'light' and 'dark' values/);
         });
     
         it('Injects theme vars using media queries by default', () => {
@@ -842,7 +855,7 @@ describe('Modules - JSX - style - use', () => {
                 'q, blockquote::after{content:none}',
                 'q, blockquote{quotes:none}',
                 'table{border-collapse:collapse;border-spacing:0}',
-                ':root{--spacing:1rem}',
+                ':root{--v-spacing:1rem}',
                 '@media (prefers-color-scheme: light){',
                 ':root[data-theme="dark"]{--t-bg:#000}',
                 ':root{--t-bg:#fff}',
@@ -873,8 +886,8 @@ describe('Modules - JSX - style - use', () => {
     
             expect(engine.inject('<div>Multiple</div>')).toBe([
                 '<style>',
-                ':root{--radius:4px}',
-                ':root{--spacing:2rem}',
+                ':root{--v-radius:4px}',
+                ':root{--v-spacing:2rem}',
                 '@media (prefers-color-scheme: light){',
                 ':root{--t-bg:#fff}',
                 ':root{--t-fg:#000}',
@@ -958,7 +971,7 @@ describe('Modules - JSX - style - use', () => {
             expect(engine.inject('<div>Global</div>')).toBe([
                 '<style>',
                 'html{font-size:16px}',
-                ':root{--radius:8px}',
+                ':root{--v-radius:8px}',
                 '@media (prefers-color-scheme: light){',
                 ':root[data-theme="dark"]{',
                 '--t-bg:#000}:root{--t-bg:#fff}',
@@ -999,8 +1012,8 @@ describe('Modules - JSX - style - use', () => {
         
             expect(html).toBe([
                 '<style>',
-                '.tf-1x1fbc7{background-color:var(--t-bg);color:var(--t-fg);padding:var(--spacing_m);border-radius:var(--radius_s)}',
-                ':root{--spacing_m:1rem;--radius_s:4px}',
+                '.tf-xlk7jb{background-color:var(--t-bg);color:var(--t-fg);padding:var(--v-spacing_m);border-radius:var(--v-radius_s)}',
+                ':root{--v-spacing_m:1rem;--v-radius_s:4px}',
                 '@media (prefers-color-scheme: light){',
                 ':root[data-theme="dark"]{--t-bg:#000;--t-fg:#eee}',
                 ':root{--t-bg:#fff;--t-fg:#111}',
@@ -1010,7 +1023,7 @@ describe('Modules - JSX - style - use', () => {
                 ':root{--t-bg:#000;--t-fg:#eee}',
                 '}',
                 '</style>',
-                '<div class="tf-1x1fbc7">Vars in Use</div>',
+                '<div class="tf-xlk7jb">Vars in Use</div>',
             ].join(''));
         });
 
@@ -1041,8 +1054,8 @@ describe('Modules - JSX - style - use', () => {
         
             expect(html).toBe([
                 '<style>',
-                '.tf-1x1fbc7{background-color:var(--t-bg);color:var(--t-fg);padding:var(--spacing_m);border-radius:var(--radius_s)}',
-                ':root{--spacing_m:1rem;--radius_s:4px}',
+                '.tf-xlk7jb{background-color:var(--t-bg);color:var(--t-fg);padding:var(--v-spacing_m);border-radius:var(--v-radius_s)}',
+                ':root{--v-spacing_m:1rem;--v-radius_s:4px}',
                 '@media (prefers-color-scheme: light){',
                 ':root[data-theme="dark"]{--t-bg:#000;--t-fg:#eee}',
                 ':root{--t-bg:#fff;--t-fg:#111}',
@@ -1052,8 +1065,249 @@ describe('Modules - JSX - style - use', () => {
                 ':root{--t-bg:#000;--t-fg:#eee}',
                 '}',
                 '</style>',
-                '<div class="tf-1x1fbc7">Vars in Use</div>',
+                '<div class="tf-xlk7jb">Vars in Use</div>',
             ].join(''));
+        });
+
+        it('Allows the use of string-only theme tokens', () => {
+            const css = createCss({
+                theme: {
+                    bg: '#fff',
+                    fg: '#000',
+                },
+            });
+            css.root();
+            expect(engine.inject('<div>Theme</div>')).toBe('<style>:root{--t-bg:#fff;--t-fg:#000}</style><div>Theme</div>');
+        });
+
+        it('Allows the use of string-only theme tokens (some are string and some are full)', () => {
+            const css = createCss({
+                theme: {
+                    bg: '#fff',
+                    fg: '#000',
+                    alt: {dark: '#333', light: '#f9f9f9'},
+                },
+            });
+            css.root();
+            expect(engine.inject('<div>Theme</div>')).toBe([
+                '<style>',
+                ':root{--t-bg:#fff;--t-fg:#000}',
+                '@media (prefers-color-scheme: light){:root{--t-alt:#f9f9f9}}',
+                '@media (prefers-color-scheme: dark){:root{--t-alt:#333}}',
+                '</style>',
+                '<div>Theme</div>',
+            ].join(''));
+        });
+
+        it('Resolves definitions at setup time', () => {
+            const css = createCss({
+                var: {spacing: '2rem'},
+                theme: {
+                    bg: '#fff',
+                    fg: '#222',
+                },
+                definitions: mod => ({
+                    base: {
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: mod.$t.fg,
+                        background: mod.$t.bg,
+                    },
+                    padded: {
+                        padding: mod.$v.spacing,
+                    },
+                }),
+            });
+            css.root();
+    
+            const cls = css.use('base', 'padded');
+            expect(engine.inject(`<div class="${cls}">Defined</div>`)).toBe([
+                '<style>',
+                ':root{',
+                '--v-spacing:2rem;',
+                '--t-bg:#fff;',
+                '--t-fg:#222',
+                '}',
+                '.tf-cd4cfg{display:flex;align-items:center;color:var(--t-fg);background:var(--t-bg);padding:var(--v-spacing)}',
+                '</style>',
+                '<div class="tf-cd4cfg">Defined</div>',
+            ].join(''));
+        });
+
+        it('Supports mix() to return merged style object', () => {
+            const css = createCss({
+                var: {x: '1rem'},
+                definitions: () => ({
+                    row: {display: 'flex', flexDirection: 'row'},
+                    center: {justifyContent: 'center', alignItems: 'center'},
+                }),
+            });
+    
+            const mixed = css.mix('row', 'center', {gap: css.var.x});
+            expect(mixed).toEqual({
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: 'var(--v-x)',
+            });
+        });
+
+        it('mix() returns empty object if nothing passed', () => {
+            const css = createCss();
+            expect(css.mix()).toEqual({});
+        });
+    
+        it('use() returns class name for merged definitions', () => {
+            const css = createCss({
+                var: {x: '1rem'},
+                definitions: () => ({
+                    row: {display: 'flex', flexDirection: 'row'},
+                    center: {justifyContent: 'center', alignItems: 'center'},
+                }),
+            });
+    
+            const cls = css.use('row', 'center', {gap: css.var.x});
+            expect(cls).toMatch(/^tf-/);
+            expect(engine.inject(`<div class="${cls}">Mix</div>`)).toBe([
+                '<style>',
+                '.tf-1v7zb4h{display:flex;flex-direction:row;justify-content:center;align-items:center;gap:var(--v-x)}',
+                '</style>',
+                '<div class="tf-1v7zb4h">Mix</div>',
+            ].join(''));
+        });
+
+        it('Allows for a combination of mix and use', () => {
+            const css = createCss({
+                var: {
+                    space_xl: '4rem',
+                    space_l: '2rem',
+                    space_m: '1rem',
+                    space_s: '.5rem',
+                },
+                theme: {
+                    bg: '#000',
+                    fg: '#fff',  
+                },
+                definitions: mod => ({
+                    f: {display: 'flex'},
+                    fh: {flexDirection: 'row'},
+                    fv: {flexDirection: 'column'},
+                    fa_c: {alignItems: 'center'},
+                    fj_c: {justifyContent: 'center'},
+                    fj_sa: {justifyContent: 'space-around'},
+                    oh: {overflow: 'hidden'},
+                    sp_xl: {padding: mod.$v.space_xl},
+                    sp_l: {padding: mod.$v.space_l},
+                    sp_h_l: {paddingLeft: mod.$v.space_l, paddingRight: mod.$v.space_l},
+                    hide: {display: 'none'},
+                    shouldNotBeIncluded: {
+                        color: 'red',
+                        fontSize: '20rem',
+                    },
+                }),
+            });
+
+            const cls = css.use('f', 'fh', 'fa_c', 'oh', {
+                width: '100%',
+                background: css.$t.bg,
+                color: css.$t.fg,
+                [css.media.desktop]: css.mix('sp_xl', 'fj_c', {
+                    ' > span': css.mix('sp_h_l', {fontSize: '1rem'}),
+                }),
+                [css.media.tablet]: css.mix('sp_l', 'fj_sa', {' > span': css.mix('hide')}),
+            });
+        
+            expect(cls).toMatch(/^tf-/);
+            expect(engine.inject(`<div class="${cls}">Mix</div>`)).toBe([
+                '<style>',
+                '.tf-oupfrh{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                '@media (min-width: 1200px){',
+                '.tf-oupfrh > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                '.tf-oupfrh{padding:var(--v-space_xl);justify-content:center}',
+                '}',
+                '@media (max-width: 1199px){',
+                '.tf-oupfrh > span{display:none}',
+                '.tf-oupfrh{padding:var(--v-space_l);justify-content:space-around}',
+                '}',
+                '</style>',
+                '<div class="tf-oupfrh">Mix</div>',
+            ].join(''));
+        });
+
+        it('Does not crash when provided a definition that doesnt exist', () => {
+            const css = createCss({
+                var: {
+                    space_xl: '4rem',
+                    space_l: '2rem',
+                    space_m: '1rem',
+                    space_s: '.5rem',
+                },
+                theme: {
+                    bg: '#000',
+                    fg: '#fff',  
+                },
+                definitions: mod => ({
+                    f: {display: 'flex'},
+                    fh: {flexDirection: 'row'},
+                    fv: {flexDirection: 'column'},
+                    fa_c: {alignItems: 'center'},
+                    fj_c: {justifyContent: 'center'},
+                    fj_sa: {justifyContent: 'space-around'},
+                    oh: {overflow: 'hidden'},
+                    sp_xl: {padding: mod.$v.space_xl},
+                    sp_l: {padding: mod.$v.space_l},
+                    sp_h_l: {paddingLeft: mod.$v.space_l, paddingRight: mod.$v.space_l},
+                    hide: {display: 'none'},
+                    shouldNotBeIncluded: {
+                        color: 'red',
+                        fontSize: '20rem',
+                    },
+                }),
+            });
+
+            const cls = css.use('f', 'fh', 'fa_c', 'oh', {
+                width: '100%',
+                background: css.$t.bg,
+                color: css.$t.fg,
+                [css.media.desktop]: css.mix('sp_xl', 'fj_c', {
+                    ' > span': css.mix('sp_h_l', {fontSize: '1rem'}),
+                }),
+                /* @ts-ignore this is what we're testing */
+                [css.media.tablet]: css.mix('sp_l', 'fj_sa', {' > span': css.mix('hode')}),
+            });
+        
+            expect(cls).toMatch(/^tf-/);
+            expect(engine.inject(`<div class="${cls}">Mix</div>`)).toBe([
+                '<style>',
+                '.tf-1wuvp3b{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                '@media (min-width: 1200px){',
+                '.tf-1wuvp3b > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                '.tf-1wuvp3b{padding:var(--v-space_xl);justify-content:center}',
+                '}',
+                '@media (max-width: 1199px){',
+                // '.tf-1wuvp3b > span{display:none}',
+                '.tf-1wuvp3b{padding:var(--v-space_l);justify-content:space-around}',
+                '}',
+                '</style>',
+                '<div class="tf-1wuvp3b">Mix</div>',
+            ].join(''));
+        });
+    
+        it('cid() returns unique prefixed class', () => {
+            const css = createCss();
+            const id1 = css.cid();
+            const id2 = css.cid();
+            expect(id1).toMatch(/^tf-/);
+            expect(id1).not.toBe(id2);
+        });
+
+        it('cid() returns unique prefixed class (1,000 bench)', () => {
+            const css = createCss();
+            const set = new Set();
+            for (let i = 0; i < 1000; i++) set.add(css.cid());
+            expect(set.size).toBe(1000);
+            for (const el of set.values()) expect(el).toMatch(/^tf-/);
         });
     });
 });
