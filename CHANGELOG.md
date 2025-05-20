@@ -4,6 +4,70 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2025-05-20
+This release puts a bow on the new `createCss()` system — bringing ergonomics, utility, and a bit of sugar to an already powerful API.
+
+We've added the concept of named style definitions, typed and resolved at setup time. These act as small composable building blocks that you can `use()` (to generate a class) or `mix()` (to inline styles into larger declarations). Bonus: both are fully type-safe and autocompleted.
+
+We’ve also added a `cid()` helper to generate a unique, scoped class name — perfect for targeting things like modals, slots, and portals.
+
+Oh, and `theme` is now even simpler: if a token doesn’t need a dark/light variant, you can just provide a single value.
+
+These additions are optional — but when you need them, they’re the cherry on top.
+
+### Added
+- **feat**: `definitions: css => ({...})` — Define reusable, typed styles at setup time
+- **feat**: `css.use(...)` — Apply one or more registered definitions + optional overrides (returns class name)
+- **feat**: `css.mix(...)` — Merge one or more definitions into a plain object (used for composing styles)
+- **feat**: `css.cid()` — Generate a unique `tf-*` class name (for targeting DOM nodes)
+- **feat**: Support for single-value theme tokens (`theme: {bg: '#fff'}` now works too)
+
+### Example: Composing styles with definitions, mix, and use
+```typescript
+// css.ts
+import {createCss} from '@trifrost/core';
+
+export const css = createCss({
+  var: {
+    space_l: '2rem',
+  },
+  theme: {
+    bg: '#f8f8f8',
+    fg: '#222',
+  },
+  definitions: css => ({
+    row: {display: 'flex', flexDirection: 'row'},
+    center: {justifyContent: 'center', alignItems: 'center'},
+    padded: {padding: css.$v.space_l},
+  }),
+});
+```
+```tsx
+// App.tsx
+import {css} from './css';
+
+export function App () {
+  /* Note: TypeScript will error here because 'podded' isn't a valid definition */
+  const cls = css.use('row', 'center', 'podded', {
+    background: css.theme.bg,
+    color: css.theme.fg,
+  });
+
+  return <div className={cls}>Hello World</div>;
+}
+```
+You can also use css.mix() to inline styles into nested media queries or selectors:
+```typescript
+const complex = css({
+  [css.media.tablet]: css.mix('row', 'center', {gap: '1rem'}),
+  [css.hover]: {opacity: 0.8},
+});
+```
+
+**As always** — everything is SSR-safe, deterministic, and additive. Use it if you need it. Ignore it if you don’t.
+
+And if you want to build your entire design system on top of this… now's the time (like we're doing with the [TriFrost website](https://www.trifrost.dev)).
+
 ## [0.12.0] - 2025-05-19
 This release improves how you work with CSS in TriFrost.
 
