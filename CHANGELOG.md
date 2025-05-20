@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+You can now safely use `css.use()` and `css.root()` inside root-level JSX components — even before calling ctx.html(). For example, the following code now works as expected:
+```typescript
+import {css} from './css'; /* Your own instance */
+
+export function home (ctx:Context) {
+  return ctx.html(<Layout>
+    <div className={css.use('def1', 'def2', {fontSize: css.$v.font_size_s})}>
+      <h1>Hello World</h1>
+    </div>
+  </Layout>);
+}
+```
+Previously, this would break — because `ctx.html()` is what sets up the style engine (originally introduced in TriFrost 0.11.0). If you used `css.use()` before `ctx.html()`, the engine didn’t exist yet, and your styles wouldn’t register.
+
+This was a classic chicken-and-egg situation. In `0.14.0`, we've solved it.
+
+`css.use()` and `css.root()` now proactively ensure an active styling engine is available.
+
+### Improved
+- **feat**: You can now safely use `css.use()` and `css.root()` in root-level components
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250520.0
+- **deps**: Upgrade @vitest/coverage-v8 to 3.1.4
+- **deps**: Upgrade vitest to 3.1.4
+
 ## [0.13.0] - 2025-05-20
 This release puts a bow on the new `createCss()` system — bringing ergonomics, utility, and a bit of sugar to an already powerful API.
 
