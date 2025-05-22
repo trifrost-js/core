@@ -78,6 +78,35 @@ describe('Storage - KV', () => {
                 }
                 expect(kv.isEmpty);
             });
+
+            it('Returns null if adapter.get throws (non-spawned)', async () => {
+                const errStore = new KVStore({
+                    ...kv,
+                    get: async () => {
+                        throw new Error('kv failure'); 
+                    },
+                } as any);
+            
+                const result = await errStore.get('boom');
+                expect(result).toBeNull();
+            });
+            
+            it('Logs and returns null if adapter.get throws (spawned)', async () => {
+                const ctx = new MockContext();
+                const spy = vi.spyOn(ctx.logger, 'error');
+            
+                const base = new KVStore({
+                    ...kv,
+                    get: async () => {
+                        throw new Error('kv exploded'); 
+                    },
+                } as any);
+                const store = base.spawn(ctx);
+            
+                const result = await store.get('fail');
+                expect(result).toBeNull();
+                expect(spy).toHaveBeenCalledWith(expect.any(Error), {key: 'fail'});
+            });            
         });
     
         describe('set', () => {
@@ -144,6 +173,37 @@ describe('Storage - KV', () => {
                 }
                 expect(kv.isEmpty).toBe(true);
             });
+
+            it('Does not throw if adapter.set fails (non-spawned)', async () => {
+                const errStore = new KVStore({
+                    ...kv,
+                    put: async () => {
+                        throw new Error('KV put died'); 
+                    },
+                } as any);
+            
+                await expect(errStore.set('key', {x: 1})).resolves.toBeUndefined();
+            });
+
+            it('Logs error if adapter.set fails (spawned)', async () => {
+                const ctx = new MockContext();
+                const spy = vi.spyOn(ctx.logger, 'error');
+            
+                const base = new KVStore({
+                    ...kv,
+                    put: async () => {
+                        throw new Error('cannot set'); 
+                    },
+                } as any);
+                const store = base.spawn(ctx);
+            
+                await expect(store.set('trouble', {x: 5})).resolves.toBeUndefined();
+                expect(spy).toHaveBeenCalledWith(expect.any(Error), {
+                    key: 'trouble',
+                    value: {x: 5},
+                    opts: undefined,
+                });
+            });            
         });
     
         describe('del', () => {
@@ -216,6 +276,49 @@ describe('Storage - KV', () => {
                 }
                 expect(kv.isEmpty).toBe(true);
             });
+
+            it('Does not throw if adapter.del fails (non-spawned)', async () => {
+                const errStore = new KVStore({
+                    ...kv,
+                    delete: async () => {
+                        throw new Error('kv delete error'); 
+                    },
+                } as any);
+            
+                await expect(errStore.del('key')).resolves.toBeUndefined();
+            });
+            
+            it('Logs error if adapter.del fails for key (spawned)', async () => {
+                const ctx = new MockContext();
+                const spy = vi.spyOn(ctx.logger, 'error');
+            
+                const base = new KVStore({
+                    ...kv,
+                    delete: async () => {
+                        throw new Error('delete err'); 
+                    },
+                } as any);
+                const store = base.spawn(ctx);
+            
+                await expect(store.del('key')).resolves.toBeUndefined();
+                expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: 'key'});
+            });
+            
+            it('Logs error if adapter.delPrefixed fails (spawned)', async () => {
+                const ctx = new MockContext();
+                const spy = vi.spyOn(ctx.logger, 'error');
+            
+                const base = new KVStore({
+                    ...kv,
+                    list: async () => {
+                        throw new Error('list explode'); 
+                    },
+                } as any);
+                const store = base.spawn(ctx);
+            
+                await expect(store.del({prefix: 'x.'})).resolves.toBeUndefined();
+                expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: {prefix: 'x.'}});
+            });            
         });
     
         describe('stop', () => {

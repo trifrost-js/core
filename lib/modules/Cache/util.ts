@@ -102,8 +102,8 @@ export function cacheFn<T extends (...args: any[]) => any> (
             const ckey = isFn(key)
                 ? key(ctx!)
                 : isNeString(key)
-				    ? key
-				    : null;
+                    ? key
+                    : null;
             if (!ckey) return fn.apply(this, args);
 
             /* Retrieve from cache, if exists -> return */

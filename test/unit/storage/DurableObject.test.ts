@@ -85,6 +85,42 @@ describe('Storage - DurableObject', () => {
                 }
                 expect(stub.isEmpty).toBe(true);
             });
+
+            it('Returns null if adapter.get throws (non-spawned)', async () => {
+                const brokenNs = {
+                    idFromName: () => ({_tag: 'FakeId'}),
+                    get: () => ({
+                        fetch: async () => {
+                            throw new Error('explode-get'); 
+                        },
+                    }),
+                } as any;
+            
+                const store = new DurableObjectStore(brokenNs, 'test');
+                const result = await store.get('fail-key');
+                expect(result).toBeNull();
+            });
+            
+            it('Logs and returns null if adapter.get throws (spawned)', async () => {
+                const ctx = new MockContext();
+                const spy = vi.spyOn(ctx.logger, 'error');
+            
+                const brokenNs = {
+                    idFromName: () => ({_tag: 'FailId'}),
+                    get: () => ({
+                        fetch: async () => {
+                            throw new Error('GET_ERR'); 
+                        },
+                    }),
+                } as any;
+            
+                const base = new DurableObjectStore(brokenNs, 'fail');
+                const store = base.spawn(ctx);
+            
+                const result = await store.get('x');
+                expect(result).toBeNull();
+                expect(spy).toHaveBeenCalledWith(expect.any(Error), {key: 'x'});
+            });            
         });
     
         describe('set', () => {
@@ -152,6 +188,44 @@ describe('Storage - DurableObject', () => {
                 }
                 expect(stub.isEmpty).toBe(true);
             });
+
+            it('Does not throw if adapter.set fails (non-spawned)', async () => {
+                const brokenNs = {
+                    idFromName: () => ({_tag: 'BadId'}),
+                    get: () => ({
+                        fetch: async () => {
+                            throw new Error('PUT_ERR'); 
+                        },
+                    }),
+                } as any;
+            
+                const store = new DurableObjectStore(brokenNs, 'test');
+                await expect(store.set('key', {x: 1})).resolves.toBeUndefined();
+            });
+            
+            it('Logs error if adapter.set fails (spawned)', async () => {
+                const ctx = new MockContext();
+                const spy = vi.spyOn(ctx.logger, 'error');
+            
+                const brokenNs = {
+                    idFromName: () => ({_tag: 'SetFailId'}),
+                    get: () => ({
+                        fetch: async () => {
+                            throw new Error('set fail'); 
+                        },
+                    }),
+                } as any;
+            
+                const base = new DurableObjectStore(brokenNs, 'fail-store');
+                const store = base.spawn(ctx);
+            
+                await expect(store.set('trouble', {a: 2})).resolves.toBeUndefined();
+                expect(spy).toHaveBeenCalledWith(expect.any(Error), {
+                    key: 'trouble',
+                    value: {a: 2},
+                    opts: undefined,
+                });
+            });            
         });
     
         describe('del', () => {
@@ -204,6 +278,58 @@ describe('Storage - DurableObject', () => {
                 }
                 expect(stub.isEmpty).toBe(true);
             });
+
+            it('Does not throw if adapter.del fails (non-spawned)', async () => {
+                const brokenNs = {
+                    idFromName: () => ({_tag: 'DelFail'}),
+                    get: () => ({
+                        fetch: async () => {
+                            throw new Error('del exploded'); 
+                        },
+                    }),
+                } as any;
+            
+                const store = new DurableObjectStore(brokenNs, 'test');
+                await expect(store.del('key')).resolves.toBeUndefined();
+            });
+            
+            it('Logs error if adapter.del fails for key (spawned)', async () => {
+                const ctx = new MockContext();
+                const spy = vi.spyOn(ctx.logger, 'error');
+            
+                const brokenNs = {
+                    idFromName: () => ({_tag: 'DelErr'}),
+                    get: () => ({
+                        fetch: async () => {
+                            throw new Error('fail-del'); 
+                        },
+                    }),
+                } as any;
+            
+                const store = new DurableObjectStore(brokenNs, 'store').spawn(ctx);
+            
+                await expect(store.del('user:1')).resolves.toBeUndefined();
+                expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: 'user:1'});
+            });
+            
+            it('Logs error if adapter.delPrefixed fails (spawned)', async () => {
+                const ctx = new MockContext();
+                const spy = vi.spyOn(ctx.logger, 'error');
+            
+                const brokenNs = {
+                    idFromName: () => ({_tag: 'PrefixBoom'}),
+                    get: () => ({
+                        fetch: async () => {
+                            throw new Error('prefix-wipe error'); 
+                        },
+                    }),
+                } as any;
+            
+                const store = new DurableObjectStore(brokenNs, 'store').spawn(ctx);
+            
+                await expect(store.del({prefix: 'user.'})).resolves.toBeUndefined();
+                expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: {prefix: 'user.'}});
+            });            
         });
     
         describe('stop', () => {

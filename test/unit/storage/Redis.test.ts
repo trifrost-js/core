@@ -90,6 +90,36 @@ describe('Storage - Redis', () => {
                 const result = await errStore.get('foo');
                 expect(result).toBeNull();
             });
+
+            it('Returns null if adapter.get throws (non-spawned)', async () => {
+                const errStore = new RedisStore({
+                    ...redis,
+                    get: async () => {
+                        throw new Error('Redis failure'); 
+                    },
+                } as any);
+            
+                const result = await errStore.get('foo');
+                expect(result).toBeNull();
+            });
+            
+            it('Logs and returns null if adapter.get throws (spawned)', async () => {
+                const ctx = new MockContext();
+                const spy = vi.spyOn(ctx.logger, 'error');
+            
+                const base = new RedisStore({
+                    ...redis,
+                    get: async () => {
+                        throw new Error('Redis failure'); 
+                    },
+                } as any);
+            
+                const store = base.spawn(ctx);
+            
+                const result = await store.get('foo');
+                expect(result).toBeNull();
+                expect(spy).toHaveBeenCalledWith(expect.any(Error), {key: 'foo'});
+            });            
         });
     
         describe('set', () => {
@@ -155,6 +185,38 @@ describe('Storage - Redis', () => {
     
                 await expect(errStore.set('x', {ok: true})).resolves.toBeUndefined();
             });
+
+            it('Does not throw if adapter.set fails (non-spawned)', async () => {
+                const errStore = new RedisStore({
+                    ...redis,
+                    set: async () => {
+                        throw new Error('Set exploded'); 
+                    },
+                } as any);
+            
+                await expect(errStore.set('x', {val: 1})).resolves.toBeUndefined();
+            });
+
+            it('Logs error if adapter.set fails (spawned)', async () => {
+                const ctx = new MockContext();
+                const spy = vi.spyOn(ctx.logger, 'error');
+            
+                const base = new RedisStore({
+                    ...redis,
+                    set: async () => {
+                        throw new Error('fail-set'); 
+                    },
+                } as any);
+            
+                const store = base.spawn(ctx);
+            
+                await expect(store.set('foo', {x: 1})).resolves.toBeUndefined();
+                expect(spy).toHaveBeenCalledWith(expect.any(Error), {
+                    key: 'foo',
+                    value: {x: 1},
+                    opts: undefined,
+                });
+            });            
         });
     
         describe('del', () => {
@@ -250,6 +312,51 @@ describe('Storage - Redis', () => {
                 };
                 await expect(store.del({prefix: 'match.'})).resolves.toBeUndefined();
             });
+
+            it('Does not throw if adapter.del fails (non-spawned)', async () => {
+                const errStore = new RedisStore({
+                    ...redis,
+                    del: async () => {
+                        throw new Error('delete failed'); 
+                    },
+                } as any);
+            
+                await expect(errStore.del('bad-key')).resolves.toBeUndefined();
+            });
+
+            it('Logs error if adapter.del fails (spawned)', async () => {
+                const ctx = new MockContext();
+                const spy = vi.spyOn(ctx.logger, 'error');
+            
+                const base = new RedisStore({
+                    ...redis,
+                    del: async () => {
+                        throw new Error('bad delete'); 
+                    },
+                } as any);
+            
+                const store = base.spawn(ctx);
+            
+                await expect(store.del('key123')).resolves.toBeUndefined();
+                expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: 'key123'});
+            });
+
+            it('Logs error if adapter.delPrefixed fails (spawned)', async () => {
+                const ctx = new MockContext();
+                const spy = vi.spyOn(ctx.logger, 'error');
+            
+                const base = new RedisStore({
+                    ...redis,
+                    delPrefixed: async () => {
+                        throw new Error('delPrefixed boom'); 
+                    },
+                } as any);
+            
+                const store = base.spawn(ctx);
+            
+                await expect(store.del({prefix: 'x.'})).resolves.toBeUndefined();
+                expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: {prefix: 'x.'}});
+            });            
         });
     
         describe('stop', () => {

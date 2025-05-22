@@ -562,6 +562,34 @@ describe('Modules - Cache - Utils', () => {
             }
         });
 
+        it('Returns raw result and skips caching if key is neither string nor function', async () => {
+            const getFn = vi.fn();
+            const setFn = vi.fn();
+            const fn = vi.fn(() => 'bypass');
+        
+            /* @ts-expect-error intentionally passing invalid key type to trigger null branch */
+            const wrapped = cacheFn(12345)(fn);
+        
+            expect(await wrapped({cache: {get: getFn, set: setFn}})).toBe('bypass');
+            expect(fn).toHaveBeenCalledOnce();
+            expect(getFn).not.toHaveBeenCalled();
+            expect(setFn).not.toHaveBeenCalled();
+        });
+
+        it('Skips caching and runs original function when called with no arguments', async () => {
+            const getFn = vi.fn();
+            const setFn = vi.fn();
+            const fn = vi.fn(() => 'no-args');
+        
+            const wrapped = cacheFn('no-args-key')(fn);
+        
+            // Bind a context with cache, but call with no arguments
+            expect(await wrapped.call({cache: {get: getFn, set: setFn}})).toBe('no-args');
+            expect(fn).toHaveBeenCalledOnce();
+            expect(getFn).toHaveBeenCalledWith('no-args-key');
+            expect(setFn).toHaveBeenCalledWith('no-args-key', 'no-args', undefined);
+        });        
+
         it('Marks function as wrapped with Sym_TriFrostCached', () => {
             const fn = () => {};
             const wrapped = cacheFn('marker')(fn);
