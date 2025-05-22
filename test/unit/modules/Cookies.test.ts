@@ -408,6 +408,62 @@ describe('Modules - Cookies', () => {
                 `x=; Expires=${addUTC(now, 0, 'seconds').toUTCString()}; Max-Age=0; Path=/global; Domain=global.com; Secure`,
             ]);
         });
+
+        describe('prefix', () => {
+            it('Deletes all cookies matching a prefix pattern', () => {
+                const cookies = new Cookies(createCtx('user.1=val1; user.2=val2; auth=token'), {});
+                const now = new Date();
+                cookies.del({prefix: 'user.'});
+                expect(cookies.get('user.1')).toBe(null);
+                expect(cookies.get('user.2')).toBe(null);
+                expect(cookies.get('auth')).toBe('token');
+                expect(cookies.outgoing).toEqual([
+                    `user.1=; Expires=${addUTC(now, 0, 'seconds').toUTCString()}; Max-Age=0; Secure`,
+                    `user.2=; Expires=${addUTC(now, 0, 'seconds').toUTCString()}; Max-Age=0; Secure`,
+                ]);
+            });
+        
+            it('Ignores cookies that do not match prefix', () => {
+                const cookies = new Cookies(createCtx('foo=1; bar=2'), {});
+                cookies.del({prefix: 'baz'});
+                expect(cookies.get('foo')).toBe('1');
+                expect(cookies.get('bar')).toBe('2');
+                expect(cookies.outgoing).toEqual([]);
+            });
+        
+            it('Supports deletion with path/domain options', () => {
+                const cookies = new Cookies(createCtx('x.1=foo; x.2=bar'), {});
+                const now = new Date();
+                cookies.del({prefix: 'x.'}, {path: '/somewhere', domain: 'trifrost.land'});
+                expect(cookies.outgoing).toEqual([
+                    `x.1=; Expires=${addUTC(now, 0, 'seconds').toUTCString()}; Max-Age=0; Path=/somewhere; Domain=trifrost.land; Secure`,
+                    `x.2=; Expires=${addUTC(now, 0, 'seconds').toUTCString()}; Max-Age=0; Path=/somewhere; Domain=trifrost.land; Secure`,
+                ]);
+            });
+
+            it('Handles prefix that matches nothing without error', () => {
+                const cookies = new Cookies(createCtx('a=1; b=2'), {});
+                cookies.del({prefix: 'user.'});
+                expect(cookies.get('a')).toBe('1');
+                expect(cookies.get('b')).toBe('2');
+                expect(cookies.outgoing).toEqual([]);
+            });
+
+            it('Deletes both incoming and newly set cookies matching prefix', () => {
+                const cookies = new Cookies(createCtx('x.1=foo; y.1=bar'), {});
+                const now = new Date();
+                cookies.set('x.2', 'new');
+                cookies.set('z.1', 'keep');
+                cookies.del({prefix: 'x.'});
+                expect(cookies.get('x.1')).toBe(null);
+                expect(cookies.get('x.2')).toBe(null);
+                expect(cookies.get('z.1')).toBe('keep');
+                expect(cookies.outgoing).toEqual([
+                    'z.1=keep; Secure',
+                    `x.1=; Expires=${addUTC(now, 0, 'seconds').toUTCString()}; Max-Age=0; Secure`,
+                ]);
+            });              
+        });
     });
 
     describe('delAll', () => {
@@ -428,12 +484,11 @@ describe('Modules - Cookies', () => {
             expect(cookies.outgoing).toEqual([]);
         });
 
-        it('Does not delete cookies that were set after construction', () => {
+        it('Also deletes cookies that were set after construction', () => {
             const cookies = new Cookies(createCtx('foo=bar'), {});
             cookies.set('baz', '123');
             cookies.delAll();
             expect(cookies.outgoing).toEqual([
-                'baz=123; Secure',
                 `foo=; Expires=${addUTC(new Date(), 0, 'seconds').toUTCString()}; Max-Age=0; Secure`,
             ]);
         });
@@ -506,5 +561,11 @@ describe('Modules - Cookies', () => {
             cookies.set('dup', 'new');
             expect(cookies.all()).toEqual({dup: 'new'});
         });
+
+        it('Reflects prefix deletions accurately', () => {
+            const cookies = new Cookies(createCtx('a.1=val; a.2=val; b=keep'), {});
+            cookies.del({prefix: 'a.'});
+            expect(cookies.all()).toEqual({b: 'keep'});
+        });          
     });
 });

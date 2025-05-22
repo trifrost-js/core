@@ -3,7 +3,7 @@
 import {isInt} from '@valkyriestudios/utils/number';
 import {isDate, addUTC, diff} from '@valkyriestudios/utils/date';
 import {isObject} from '@valkyriestudios/utils/object';
-import {isString} from '@valkyriestudios/utils/string';
+import {isNeString, isString} from '@valkyriestudios/utils/string';
 import {type TriFrostContext} from '../types/context';
 
 export type TriFrostCookieOptions = {
@@ -168,23 +168,56 @@ export class Cookies {
     /**
      * Delete a cookie by name. Take note that the path/domain for a cookie need to be correct for it to be deleted
      *
-     * @param {string} name - Name of the cookie to delete
+     * @param {string|{prefix:string}} val - Name of the cookie to delete or the prefix of the cookies to delete
      * @param {Partial<TriFrostCookieDeleteOptions>} options - Cookie Delete options (path, domain)
      */
-    del (name: string, options:Partial<TriFrostCookieDeleteOptions> = {}) {
-        if (!isString(name)) return;
-        if (name in this.#outgoing) delete this.#outgoing[name];
-        if (name in this.#incoming) this.set(name, '', {...options, maxage: 0});
-        if (name in this.#combined) delete this.#combined[name];
+    del (val:string|{prefix:string}, options:Partial<TriFrostCookieDeleteOptions> = {}) {
+        if (isNeString(val)) {
+            return this.internalDel(val, {...options, maxage: 0});
+        } else if (isNeString(val?.prefix)) {
+            const normalized_options = {...options, maxage: 0};
+            /* 1. Remove any newly-set cookies */
+            for (const key in this.#outgoing) {
+                if (!(key in this.#incoming) && key.startsWith(val.prefix)) {
+                    delete this.#outgoing[key];
+                    delete this.#combined[key];
+                }
+            }
+            
+            /* 2. Expire any client-passed cookies */
+            for (const key in this.#incoming) {
+                if (key.startsWith(val.prefix)) this.internalDel(key, normalized_options);
+            }
+        }
     }
 
     /**
-     * Delete all cookies that were passed by the client
+     * Delete all cookies (both outgoing AND ones that were passed by the client)
      *
      * @param {Partial<TriFrostCookieDeleteOptions>} options - Cookie Delete options (path, domain)
      */
     delAll (options:Partial<TriFrostCookieDeleteOptions> = {}):void {
-        for (const name in this.#incoming) this.del(name, options);
+        const normalized_options = {...options, maxage: 0};
+        /* 1. Remove any newly-set cookies */
+        for (const key in this.#outgoing) {
+            delete this.#outgoing[key];
+            delete this.#combined[key];
+        }
+        
+        /* 2. Expire any client-passed cookies */
+        for (const key in this.#incoming) {
+            this.internalDel(key, normalized_options);
+        }
+    }
+
+/**
+ * MARK: Private
+ */
+
+    private internalDel (name:string, options:Partial<TriFrostCookieDeleteOptions & {maxage: number}> = {}) {
+        if (name in this.#outgoing) delete this.#outgoing[name];
+        if (name in this.#incoming) this.set(name, '', options);
+        if (name in this.#combined) delete this.#combined[name];
     }
 
 }
