@@ -20,20 +20,8 @@ export {
     Security
 } from './middleware';
 
-/* Modules - RateLimit */
-export {
-    DurableObjectRateLimit,
-    KVRateLimit,
-    MemoryRateLimit,
-    RedisRateLimit
-} from './modules/RateLimit';
-
 /* Modules - Cache */
 export {
-    DurableObjectCache,
-    KVCache,
-    MemoryCache,
-    RedisCache,
     cache,
     cacheFn,
     cacheSkip
@@ -53,6 +41,18 @@ export {
     createCss,
     Style
 } from './modules/JSX/style';
+
+/* Storage */
+export {
+    DurableObjectCache,
+    DurableObjectRateLimit,
+    KVCache,
+    KVRateLimit,
+    MemoryCache,
+    MemoryRateLimit,
+    RedisCache,
+    RedisRateLimit,
+} from './storage';
 
 /* Runtime-Specifics */
 export {TriFrostDurableObject} from './runtimes/Workerd/DurableObject';

@@ -1,12 +1,11 @@
+import {isFn} from '@valkyriestudios/utils/function';
 import {isObject} from '@valkyriestudios/utils/object';
 import {
     Lazy,
     type LazyInitFn,
 } from '../../utils/Lazy';
-import {
-    type TriFrostStore,
-    type TriFrostStoreValue,
-} from '../_storage/types';
+import {type Store} from '../../storage/_Storage';
+import {type TriFrostStoreValue} from '../../storage/types';
 import {cacheSkipped} from './util';
 
 export type CacheOptions = {
@@ -17,10 +16,11 @@ export type TriFrostCacheValue = number|string|boolean|null|TriFrostStoreValue;
 
 export class TriFrostCache <Env extends Record<string, any> = Record<string, any>> {
 
-    #store: Lazy<TriFrostStore, Env>;
+    #store: Lazy<Store, Env>;
 
-    constructor (opts:{store: LazyInitFn<TriFrostStore, Env>}) {
-        this.#store = new Lazy(opts.store);
+    constructor (opts:{store: LazyInitFn<Store, Env>}) {
+        if (!isFn(opts?.store)) throw new Error('TriFrostCache: Expected a store initializer');
+        this.#store = new Lazy(opts.store as LazyInitFn<Store, Env>);
     }
 
     init (env:Env) {
@@ -28,7 +28,7 @@ export class TriFrostCache <Env extends Record<string, any> = Record<string, any
         this.#store.resolve({env});
     }
 
-    protected get resolvedStore (): TriFrostStore|null {
+    protected get resolvedStore (): Store|null {
         return this.#store?.resolved;
     }
 
