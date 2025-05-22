@@ -64,6 +64,18 @@ describe('Modules - Storage - Redis', () => {
             }
             expect(redis.isEmpty).toBe(true);
         });
+
+        it('Returns null on Redis get failure', async () => {
+            const errStore = new RedisStore({
+                ...redis,
+                get: async () => {
+                    throw new Error('Redis down'); 
+                },
+            } as any);
+
+            const result = await errStore.get('foo');
+            expect(result).toBeNull();
+        });
     });
 
     describe('set', () => {
@@ -117,6 +129,17 @@ describe('Modules - Storage - Redis', () => {
             }
 
             expect(redis.isEmpty).toBe(true);
+        });
+
+        it('Ignores Redis errors during set', async () => {
+            const errStore = new RedisStore({
+                ...redis,
+                set: async () => {
+                    throw new Error('Set failed'); 
+                },
+            } as any);
+
+            await expect(errStore.set('x', {ok: true})).resolves.toBeUndefined();
         });
     });
 
@@ -192,6 +215,26 @@ describe('Modules - Storage - Redis', () => {
                 await expect(store.del({prefix: el as string})).rejects.toThrow(/TriFrostRedisStore@del: Invalid deletion value/);
             }
             expect(redis.isEmpty).toBe(true);
+        });
+
+        it('Gracefully handles scan errors during prefix deletion', async () => {
+            const errStore = new RedisStore({
+                ...redis,
+                scan: async () => {
+                    throw new Error('Scan failed'); 
+                },
+            } as any);
+
+            await expect(errStore.del({prefix: 'some:'})).resolves.toBeUndefined();
+        });
+
+        it('Gracefully handles del errors during prefix deletion', async () => {
+            await store.set('match.1', {x: 1});
+            await store.set('match.2', {x: 2});
+            redis.del = async () => {
+                throw new Error('Del failed'); 
+            };
+            await expect(store.del({prefix: 'match.'})).resolves.toBeUndefined();
         });
     });
 
