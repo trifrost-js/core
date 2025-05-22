@@ -137,9 +137,59 @@ describe('Modules - Storage - Redis', () => {
             ]);
         });
 
+        it('Deletes all keys matching prefix', async () => {
+            await store.set('a.1', {x: 1});
+            await store.set('a.2', {y: 2});
+            await store.set('b.1', {z: 3});
+            await store.del({prefix: 'a.'});
+            expect(redis.calls).toEqual([
+                ['set', ['a.1', '{"x":1}', ['EX', 60]]],
+                ['set', ['a.2', '{"y":2}', ['EX', 60]]],
+                ['set', ['b.1', '{"z":3}', ['EX', 60]]],
+                ['scan', ['0', 'MATCH', 'a.*', 'COUNT', 250]],
+                ['del', ['a.1', 'a.2']],
+            ]);
+        });
+
+        it('Handles no matches for prefix without error', async () => {
+            await store.set('x', {a: 1});
+            await store.del({prefix: 'not-found:'});
+            expect(redis.calls).toEqual([
+                ['set', ['x', '{"a":1}', ['EX', 60]]],
+                ['scan', ['0', 'MATCH', 'not-found:*', 'COUNT', 250]],
+            ]);
+        });
+
+        it('Performs multiple scan/del calls when prefix match exceeds count', async () => {
+            /* Insert 260 keys so that scan (COUNT = 250) will require 2 rounds */
+            for (let i = 0; i < 260; i++) {
+                await store.set(`p.${i}`, {x: i});
+            }
+        
+            await store.del({prefix: 'p.'});
+        
+            const scans = redis.calls.filter(([cmd]) => cmd === 'scan');
+            const dels = redis.calls.filter(([cmd]) => cmd === 'del');
+        
+            /* Expect at least two scan calls due to count limit */
+            expect(scans.length).toBeGreaterThanOrEqual(2);
+        
+            /* Expect del calls to be batched (100 per batch max) */
+            const del_keys = dels.flatMap(([_cmd, args]) => args);
+            expect(del_keys.length).toBe(260);
+            for (let i = 0; i < 260; i++) expect(del_keys).toContain(`p.${i}`);
+        });
+
         it('Throws on invalid key', async () => {
             for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
-                await expect(store.del(el as string)).rejects.toThrow(/TriFrostRedisStore@del: Invalid key/);
+                await expect(store.del(el as string)).rejects.toThrow(/TriFrostRedisStore@del: Invalid deletion value/);
+            }
+            expect(redis.isEmpty).toBe(true);
+        });
+
+        it('Throws on invalid prefix', async () => {
+            for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
+                await expect(store.del({prefix: el as string})).rejects.toThrow(/TriFrostRedisStore@del: Invalid deletion value/);
             }
             expect(redis.isEmpty).toBe(true);
         });
