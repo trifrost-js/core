@@ -27,7 +27,7 @@ const mockStore = () => {
     return mock as unknown as Store;
 };
 
-describe('TriFrostCache (generic)', () => {
+describe('Modules - Cache - TriFrostCache', () => {
     let store: ReturnType<typeof mockStore>;
     let cache: TriFrostCache<{env: boolean}>;
 
