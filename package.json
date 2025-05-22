@@ -1,6 +1,6 @@
 {
     "name": "@trifrost/core",
-    "version": "0.14.0",
+    "version": "0.15.0",
     "description": "Blazingly fast, runtime-agnostic server framework for modern edge and node environments",
     "main": "index.js",
     "scripts": {
@@ -99,10 +99,10 @@
         "@valkyriestudios/utils": "^12.37.0"
     },
     "devDependencies": {
-        "@cloudflare/workers-types": "^4.20250520.0",
-        "@types/node": "^22.15.19",
+        "@cloudflare/workers-types": "^4.20250522.0",
+        "@types/node": "^22.15.21",
         "@vitest/coverage-v8": "^3.1.4",
-        "bun-types": "^1.2.13",
+        "bun-types": "^1.2.14",
         "esbuild-register": "^3.6.0",
         "eslint": "^9.27.0",
         "typescript": "^5.8.3",

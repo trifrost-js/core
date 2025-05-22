@@ -4,24 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.15.0] - 2025-05-22
+This release brings further **resilience**, **structure**, and **flexibility** to TriFrost’s storage layer — turning what was already powerful into something even more durable (pun intended).
+
 ### Added
 - **feat**: Prefix deletion support in all TriFrost storage backends (DurableObject, Memory, Redis, KV). This enables scoped deletion of key groups across the unified `.del()` API. Since `ctx.cache` is backed by TriFrost storage, you can now do:
 ```typescript
-async function myMethod(ctx: Context) {
-  ...
-  await ctx.cache.del({prefix: 'somekey_'}); /* Deletes all keys with prefix 'somekey_' */
-  ...
-}
+await ctx.cache.del({prefix: 'somekey_'}); /* Deletes all keys with prefix 'somekey_' */
 ```
-- **feat**: Prefix deletion support in the TriFrost cookies module, you can now do:
+- **feat**: Prefix deletion support in the TriFrost cookies module:
 ```typescript
-async function myMethod(ctx: Context) {
-  ...
-  ctx.cookies.del({prefix: 'somekey_'}); /* Deletes all cookies with prefix 'somekey_' */
-  ...
-}
+ctx.cookies.del({prefix: 'somekey_'}); /* Deletes all cookies with prefix 'somekey_' */
 ```
+
+### Improved
+- **feat**: TriFrost now supports context-aware cache spawning via a new internal `.spawn()` mechanism on both `Store` and `Cache`. When a request comes in, TriFrost automatically creates a scoped cache instance bound to the request’s lifecycle. This lets system errors be logged per-request — and paves the way for future auto-instrumentation 🧙‍♂️
+- **qol**: All `StoreAdapter` classes (Memory, Redis, KV, DurableObject) now follow a clean, centralized interface — enabling future adapters with zero boilerplate
+- **qol**: TriFrost’s storage backends (Redis, KV, DurableObject) now **fail gracefully**. If Redis goes down, errors are swallowed (and logged via `ctx.logger.error`) — no more bubbling runtime crashes.
+- **misc**: Internal file restructure — all storage logic now lives in `lib/storage`, making adapters easier to extend, test, and discover
+- **misc**: CICD tagged releases will now also automatically purge the cache on the [TriFrost Website](https://www.trifrost.dev)
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250522.0
+- **deps**: Upgrade @types/node to 22.15.21
+- **deps**: Upgrade bun-types to 1.2.14
+
+---
+
+🧙 Note: While `.spawn()` might sound like an advanced or manual step, it’s entirely internal. As a developer, you don’t need to think about it — TriFrost handles everything behind the scenes. In most cases, you’ll never call `.spawn()` yourself. It’s there to make the system smarter, not more complex.
 
 ## [0.14.0] - 2025-05-20
 You can now safely use `css.use()` and `css.root()` inside root-level JSX components — even before calling ctx.html(). For example, the following code now works as expected:
