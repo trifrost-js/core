@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.1] - 2025-05-22
+### Fixed
+- Issue where typing for TriFrostCache `del` was not aligned with the new prefix deletion support
+
 ## [0.15.0] - 2025-05-22
 This release brings further **resilience**, **structure**, and **flexibility** to TriFrost’s storage layer — turning what was already powerful into something even more durable (pun intended).
 
@@ -198,8 +202,8 @@ export function Layout () {
 ```
 ### Added
 - **feat**: `createCss()` — defines your scoped CSS instance with support for vars, theme tokens, and options.
-- **feat**: `createCss` Option - `var: {...}` — Defines global variables 
-- **feat**: `createCss` Option - `theme: {...}` — Defines theme (each key needs to have a light and dark variant) 
+- **feat**: `createCss` Option - `var: {...}` — Defines global variables
+- **feat**: `createCss` Option - `theme: {...}` — Defines theme (each key needs to have a light and dark variant)
 - **feat**: `createCss` Option - `themeAttribute: true` — injects theme styles for both media queries and attribute selectors (e.g. `<html data-theme="dark">`)
 - **feat**: `createCss` Option - `themeAttribute: 'data-mode'` to use a custom attribute name (`<html data-mode="dark">`)
 - **feat**: `createCss` Option `reset: true` — opt-in to a safe, accessible CSS reset
