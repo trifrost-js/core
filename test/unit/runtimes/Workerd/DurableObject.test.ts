@@ -245,6 +245,34 @@ describe('Runtimes - Workerd - DurableObject', () => {
                 expect(await state.storage.get('cache:foo')).toBe(undefined);
             });
 
+            it('Deletes all keys matching prefix', async () => {
+                await state.storage.put('cache:user.1', {v: 1, exp: Date.now() + 60_000});
+                await state.storage.put('cache:user.2', {v: 2, exp: Date.now() + 60_000});
+                await state.storage.put('cache:other', {v: 3, exp: Date.now() + 60_000});
+            
+                const res = await durable.fetch(makeRequest('DELETE', 'user.*'));
+            
+                expect(res.status).toBe(204);
+                expect(await state.storage.get('cache:user.1')).toBe(undefined);
+                expect(await state.storage.get('cache:user.2')).toBe(undefined);
+                expect(await state.storage.get('cache:other')).toEqual({v: 3, exp: expect.any(Number)});
+            });
+            
+            it('Handles no matches for prefix without error', async () => {
+                await state.storage.put('cache:x', {v: 9, exp: Date.now() + 60_000});
+            
+                const res = await durable.fetch(makeRequest('DELETE', 'missing.*'));
+            
+                expect(res.status).toBe(204);
+                expect(await state.storage.get('cache:x')).toEqual({v: 9, exp: expect.any(Number)});
+            });
+            
+            it('Returns 400 if wildcard is not at end of key', async () => {
+                const res = await durable.fetch(makeRequest('DELETE', 'prefix.*.oops'));
+                expect(res.status).toBe(400);
+                expect(await res.text()).toContain('Wildcard deletion must end with "*"');
+            });
+
             it('Returns 500 if delete throws unexpectedly', async () => {
                 state.storage.delete = vi.fn(() => {
                     throw new Error('exploded');

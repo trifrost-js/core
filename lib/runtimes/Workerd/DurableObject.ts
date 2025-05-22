@@ -1,5 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 
+/* eslint-disable max-statements,complexity */
+
 import {split} from '@valkyriestudios/utils/array';
 import {isIntGt, isNum, isNumGt, isNumGte} from '@valkyriestudios/utils/number';
 import {isNeString} from '@valkyriestudios/utils/string';
@@ -131,7 +133,29 @@ export class TriFrostDurableObject {
             }
             case 'DELETE': {
                 try {
-                    await this.#state.storage.delete(N_KEY);
+                    const pat_idx = N_KEY.indexOf('*');
+
+                    if (pat_idx < 0) {
+                        /* Run single delete */
+                        await this.#state.storage.delete(N_KEY);
+                        return new Response(null, {status: 204});    
+                    } else if (
+                        key.length === 1 ||
+                        pat_idx !== (N_KEY.length - 1)
+                    ) {
+                        return new Response('Wildcard deletion must end with "*" (e.g. "prefix:*")', {status: 400});
+                    }
+
+                    /* Run Pattern deletion */
+                    const entries = await this.#state.storage.list({
+                        prefix: N_KEY.slice(0, -1),
+                    });
+                    if (entries.size) {
+                        for (const batch of split([...entries.keys()], 128)) {
+                            await this.#state.storage.delete(batch);
+                        }
+                    }
+
                     return new Response(null, {status: 204});
                 } catch {
                     return new Response('Internal Error', {status: 500});

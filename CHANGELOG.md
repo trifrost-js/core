@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 ### Added
+- **feat**: Prefix deletion support in all TriFrost storage backends (DurableObject, Memory, Redis, KV). This enables scoped deletion of key groups across the unified `.del()` API. Since `ctx.cache` is backed by TriFrost storage, you can now do:
+```typescript
+async function myMethod(ctx: Context) {
+  ...
+  await ctx.cache.del({prefix: 'somekey_'}); /* Deletes all keys with prefix 'somekey_' */
+  ...
+}
+```
 - **feat**: Prefix deletion support in the TriFrost cookies module, you can now do:
 ```typescript
 async function myMethod(ctx: Context) {
