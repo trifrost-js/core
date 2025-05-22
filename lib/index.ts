@@ -51,7 +51,7 @@ export {
     MemoryCache,
     MemoryRateLimit,
     RedisCache,
-    RedisRateLimit,
+    RedisRateLimit
 } from './storage';
 
 /* Runtime-Specifics */

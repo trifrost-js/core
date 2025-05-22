@@ -1,3 +1,5 @@
+/* eslint-disable max-classes-per-file */
+
 import {split} from '@valkyriestudios/utils/array';
 import {isFn} from '@valkyriestudios/utils/function';
 import {TriFrostCache} from '../modules/Cache/_Cache';

@@ -1,3 +1,5 @@
+/* eslint-disable max-classes-per-file */
+
 import {split} from '@valkyriestudios/utils/array';
 import {isFn} from '@valkyriestudios/utils/function';
 import {TriFrostCache} from '../modules/Cache/_Cache';
@@ -31,7 +33,7 @@ export class KVStoreAdapter <T extends TriFrostStoreValue = TriFrostStoreValue> 
         await this.#kv.delete(key);
     }
 
-    async delPrefixed(prefix:string):Promise<void> {
+    async delPrefixed (prefix:string):Promise<void> {
         let cursor:string|undefined;
         const acc:Set<string> = new Set();
         do {

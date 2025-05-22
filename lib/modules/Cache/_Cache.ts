@@ -7,6 +7,7 @@ import {
 import {type Store} from '../../storage/_Storage';
 import {type TriFrostStoreValue} from '../../storage/types';
 import {cacheSkipped} from './util';
+import {type TriFrostContext} from '../../types';
 
 export type CacheOptions = {
     ttl?: number;
@@ -18,9 +19,14 @@ export class TriFrostCache <Env extends Record<string, any> = Record<string, any
 
     #store: Lazy<Store, Env>;
 
-    constructor (opts:{store: LazyInitFn<Store, Env>}) {
-        if (!isFn(opts?.store)) throw new Error('TriFrostCache: Expected a store initializer');
-        this.#store = new Lazy(opts.store as LazyInitFn<Store, Env>);
+    constructor (opts:{store: LazyInitFn<Store, Env>|Store}) {
+        if (isObject(opts?.store)) {
+            this.#store = new Lazy(opts.store);
+        } else if (isFn(opts?.store)) {
+            this.#store = new Lazy(opts.store as LazyInitFn<Store, Env>);
+        } else {
+            throw new Error('TriFrostCache: Expected a store initializer');
+        }
     }
 
     init (env:Env) {
@@ -111,5 +117,19 @@ export class TriFrostCache <Env extends Record<string, any> = Record<string, any
         if (!this.#store.resolved) return;
         await this.#store.resolved.stop();
     }
+
+    /**
+     * Returns a context-scoped clone of this cache
+     * 
+     * @note This is an internal method
+     */
+    private spawn (ctx: TriFrostContext<Env>): TriFrostCache<Env> {
+        const resolved = this.#store.resolved ?? this.#store.resolve({env: ctx.env as Env});
+        const store_spawn = resolved.spawn(ctx);
+    
+        return new TriFrostCache<Env>({
+            store: store_spawn,
+        });
+    }    
 
 }

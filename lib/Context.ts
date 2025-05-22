@@ -95,6 +95,9 @@ export abstract class Context <
     /* Kind of Context */
     #kind:TriFrostContextKind = 'std';
 
+    /* Cache (see cache getter) */
+    #cache:TriFrostCache|null = null;
+
     /* TriFrost Route Query. We compute this on an as-needed basis */
     #query:URLSearchParams|null = null;
 
@@ -291,8 +294,11 @@ export abstract class Context <
      * Cache Instance
      */
     get cache ():TriFrostCache {
-        this.ctx_config.cache.init(this.ctx_config.env);
-        return this.ctx_config.cache as TriFrostCache;
+        if (!this.#cache) {
+            /* eslint-disable-next-line dot-notation */
+            this.#cache = this.ctx_config.cache?.['spawn'](this as TriFrostContext<Env>) as TriFrostCache;
+        }
+        return this.#cache;
     }
 
     /**

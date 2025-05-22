@@ -1,3 +1,5 @@
+/* eslint-disable max-classes-per-file */
+
 import {isFn} from '@valkyriestudios/utils/function';
 import {TriFrostCache} from '../modules/Cache/_Cache';
 import {
@@ -62,7 +64,7 @@ export class DurableObjectStoreAdapter <T extends TriFrostStoreValue = TriFrostS
         if (
             !res?.ok &&
             res?.status !== 404
-        ) throw new Error(`TriFrostDurableObjectStore@del: Failed with status ${res.status}`);
+        ) throw new Error(`TriFrostDurableObjectStore@delPrefixed: Failed with status ${res.status}`);
     }
 
     async stop () {

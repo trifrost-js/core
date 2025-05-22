@@ -5,10 +5,7 @@ import {memoize} from '@valkyriestudios/utils/caching';
 import {isIntBetween} from '@valkyriestudios/utils/number';
 import {isObject} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
-import {
-    MemoryCache,
-    type TriFrostCache,
-} from './modules/Cache';
+import {type TriFrostCache} from './modules/Cache';
 import {type TriFrostCookieOptions} from './modules/Cookies';
 import {
     type TriFrostRateLimit,
@@ -25,6 +22,7 @@ import {
     type TriFrostRuntime,
     type TriFrostRuntimeOnIncoming,
 } from './runtimes/types';
+import {MemoryCache} from './storage/Memory';
 import {
     type TriFrostRouter,
     type TriFrostMiddleware,

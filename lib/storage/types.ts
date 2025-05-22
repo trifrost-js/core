@@ -1,5 +1,3 @@
-import {type TriFrostContext} from "../types/context";
-
 export type TriFrostStoreValue = Record<string, unknown>|unknown[];
 
 export interface TriFrostStoreAdapter <T extends TriFrostStoreValue = TriFrostStoreValue> {

@@ -1,3 +1,5 @@
+/* eslint-disable max-lines */
+
 import {isArray} from '@valkyriestudios/utils/array';
 import {sleep} from '@valkyriestudios/utils/function';
 import {isObject} from '@valkyriestudios/utils/object';
@@ -96,8 +98,7 @@ describe('Storage - DurableObject', () => {
                     }),
                 } as any;
             
-                const store = new DurableObjectStore(brokenNs, 'test');
-                const result = await store.get('fail-key');
+                const result = await new DurableObjectStore(brokenNs, 'test').get('fail-key');
                 expect(result).toBeNull();
             });
             
@@ -114,10 +115,7 @@ describe('Storage - DurableObject', () => {
                     }),
                 } as any;
             
-                const base = new DurableObjectStore(brokenNs, 'fail');
-                const store = base.spawn(ctx);
-            
-                const result = await store.get('x');
+                const result = await new DurableObjectStore(brokenNs, 'fail').spawn(ctx).get('x');
                 expect(result).toBeNull();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {key: 'x'});
             });            
@@ -199,8 +197,7 @@ describe('Storage - DurableObject', () => {
                     }),
                 } as any;
             
-                const store = new DurableObjectStore(brokenNs, 'test');
-                await expect(store.set('key', {x: 1})).resolves.toBeUndefined();
+                await expect(new DurableObjectStore(brokenNs, 'test').set('key', {x: 1})).resolves.toBeUndefined();
             });
             
             it('Logs error if adapter.set fails (spawned)', async () => {
@@ -216,10 +213,7 @@ describe('Storage - DurableObject', () => {
                     }),
                 } as any;
             
-                const base = new DurableObjectStore(brokenNs, 'fail-store');
-                const store = base.spawn(ctx);
-            
-                await expect(store.set('trouble', {a: 2})).resolves.toBeUndefined();
+                await expect(new DurableObjectStore(brokenNs, 'test').spawn(ctx).set('trouble', {a: 2})).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {
                     key: 'trouble',
                     value: {a: 2},
@@ -279,6 +273,46 @@ describe('Storage - DurableObject', () => {
                 expect(stub.isEmpty).toBe(true);
             });
 
+            it('Logs and suppresses error if del() receives non-OK, non-404 (spawned)', async () => {
+                const ns2 = new MockDurableObjectNamespace();
+                const stub2 = ns2.get(ns2.idFromName('trifrost-test'));
+                stub2.fetch = async () => new Response(null, {status: 500});
+            
+                const ctx = new MockContext();
+                const spy = vi.spyOn(ctx.logger, 'error');
+            
+                await expect(new DurableObjectStore(ns2, 'test').spawn(ctx).del('bad-key')).resolves.toBeUndefined();
+                expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: 'bad-key'});
+            });            
+            
+            it('Logs and suppresses error if delPrefixed() receives non-OK, non-404 (spawned)', async () => {
+                const ns2 = new MockDurableObjectNamespace();
+                const stub2 = ns2.get(ns2.idFromName('trifrost-test'));
+                stub2.fetch = async () => new Response(null, {status: 403});
+            
+                const ctx = new MockContext();
+                const spy = vi.spyOn(ctx.logger, 'error');
+            
+                await expect(new DurableObjectStore(ns2, 'test').spawn(ctx).del({prefix: 'protected.'})).resolves.toBeUndefined();
+                expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: {prefix: 'protected.'}});
+            });            
+
+            it('del() does not throw on 404 status', async () => {
+                const ns2 = new MockDurableObjectNamespace();
+                const stub2 = ns2.get(ns2.idFromName('trifrost-test'));
+                stub2.fetch = async () => new Response(null, {status: 404});
+            
+                await expect(new DurableObjectStore(ns2, 'test').del('missing-key')).resolves.toBeUndefined();
+            });
+            
+            it('delPrefixed() does not throw on 404 status', async () => {
+                const ns2 = new MockDurableObjectNamespace();
+                const stub2 = ns2.get(ns2.idFromName('trifrost-test'));
+                stub2.fetch = async () => new Response(null, {status: 404});
+            
+                await expect(new DurableObjectStore(ns2, 'test').del({prefix: 'ghost.'})).resolves.toBeUndefined();
+            });            
+
             it('Does not throw if adapter.del fails (non-spawned)', async () => {
                 const brokenNs = {
                     idFromName: () => ({_tag: 'DelFail'}),
@@ -289,8 +323,7 @@ describe('Storage - DurableObject', () => {
                     }),
                 } as any;
             
-                const store = new DurableObjectStore(brokenNs, 'test');
-                await expect(store.del('key')).resolves.toBeUndefined();
+                await expect(new DurableObjectStore(brokenNs, 'test').del('key')).resolves.toBeUndefined();
             });
             
             it('Logs error if adapter.del fails for key (spawned)', async () => {
@@ -306,9 +339,7 @@ describe('Storage - DurableObject', () => {
                     }),
                 } as any;
             
-                const store = new DurableObjectStore(brokenNs, 'store').spawn(ctx);
-            
-                await expect(store.del('user:1')).resolves.toBeUndefined();
+                await expect(new DurableObjectStore(brokenNs, 'store').spawn(ctx).del('user:1')).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: 'user:1'});
             });
             
@@ -325,9 +356,7 @@ describe('Storage - DurableObject', () => {
                     }),
                 } as any;
             
-                const store = new DurableObjectStore(brokenNs, 'store').spawn(ctx);
-            
-                await expect(store.del({prefix: 'user.'})).resolves.toBeUndefined();
+                await expect(new DurableObjectStore(brokenNs, 'store').spawn(ctx).del({prefix: 'user.'})).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: {prefix: 'user.'}});
             });            
         });

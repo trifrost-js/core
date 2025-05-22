@@ -107,16 +107,12 @@ describe('Storage - Redis', () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
             
-                const base = new RedisStore({
+                const result = await new RedisStore({
                     ...redis,
                     get: async () => {
                         throw new Error('Redis failure'); 
                     },
-                } as any);
-            
-                const store = base.spawn(ctx);
-            
-                const result = await store.get('foo');
+                } as any).spawn(ctx).get('foo');
                 expect(result).toBeNull();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {key: 'foo'});
             });            
@@ -201,16 +197,12 @@ describe('Storage - Redis', () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
             
-                const base = new RedisStore({
+                await expect(new RedisStore({
                     ...redis,
                     set: async () => {
                         throw new Error('fail-set'); 
                     },
-                } as any);
-            
-                const store = base.spawn(ctx);
-            
-                await expect(store.set('foo', {x: 1})).resolves.toBeUndefined();
+                } as any).spawn(ctx).set('foo', {x: 1})).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {
                     key: 'foo',
                     value: {x: 1},
@@ -274,7 +266,7 @@ describe('Storage - Redis', () => {
                 expect(scans.length).toBeGreaterThanOrEqual(2);
             
                 /* Expect del calls to be batched (100 per batch max) */
-                const del_keys = dels.flatMap(([_cmd, args]) => args);
+                const del_keys = dels.flatMap(([, args]) => args);
                 expect(del_keys.length).toBe(260);
                 for (let i = 0; i < 260; i++) expect(del_keys).toContain(`p.${i}`);
             });
@@ -328,16 +320,12 @@ describe('Storage - Redis', () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
             
-                const base = new RedisStore({
+                await expect(new RedisStore({
                     ...redis,
                     del: async () => {
                         throw new Error('bad delete'); 
                     },
-                } as any);
-            
-                const store = base.spawn(ctx);
-            
-                await expect(store.del('key123')).resolves.toBeUndefined();
+                } as any).spawn(ctx).del('key123')).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: 'key123'});
             });
 
@@ -345,16 +333,12 @@ describe('Storage - Redis', () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
             
-                const base = new RedisStore({
+                await expect(new RedisStore({
                     ...redis,
                     delPrefixed: async () => {
                         throw new Error('delPrefixed boom'); 
                     },
-                } as any);
-            
-                const store = base.spawn(ctx);
-            
-                await expect(store.del({prefix: 'x.'})).resolves.toBeUndefined();
+                } as any).spawn(ctx).del({prefix: 'x.'})).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: {prefix: 'x.'}});
             });            
         });

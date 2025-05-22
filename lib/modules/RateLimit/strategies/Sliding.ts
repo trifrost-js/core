@@ -1,4 +1,4 @@
-import {type TriFrostStore} from '../../_storage';
+import {type Store} from '../../../storage/_Storage';
 import {
     type TriFrostRateLimitObject,
     type TriFrostRateLimitStrategizedStore,
@@ -8,14 +8,14 @@ export class Sliding implements TriFrostRateLimitStrategizedStore {
 
     #window:number;
 
-    #store:TriFrostStore<number[]>;
+    #store:Store<number[]>;
 
-    constructor (window: number = 60, store:TriFrostStore<number[]>) {
+    constructor (window: number = 60, store:Store<number[]>) {
         this.#window = window;
         this.#store = store;
     }
 
-    protected get store ():TriFrostStore|null {
+    protected get store ():Store|null {
         return this.#store;
     }
 

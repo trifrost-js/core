@@ -1,16 +1,16 @@
 export {
     DurableObjectCache,
-    DurableObjectRateLimit,
+    DurableObjectRateLimit
 } from './DurableObject';
 export {
     KVCache,
-    KVRateLimit,
+    KVRateLimit
 } from './KV';
 export {
     MemoryCache,
-    MemoryRateLimit,
+    MemoryRateLimit
 } from './Memory';
 export {
     RedisCache,
-    RedisRateLimit,
+    RedisRateLimit
 } from './Redis';

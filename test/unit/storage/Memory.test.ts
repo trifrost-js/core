@@ -148,6 +148,31 @@ describe('Storage - Memory', () => {
                 await expect(store.del({prefix: 'nonexistent:'})).resolves.toBeUndefined();
                 expect(await store.get('data.1')).toEqual({v: 1});
             });
+
+            it('Removes prefixed keys from both store and LRU', async () => {
+                const store2 = new MemoryStore({max_items: 10});
+                await store2.set('user.1', {name: 'Alice'});
+                await store2.set('user.2', {name: 'Bob'});
+                await store2.set('session.1', {token: 'xyz'});
+                await store2.get('user.1');
+                await store2.get('user.2');
+                await store2.get('session.1');
+                await store2.del({prefix: 'user.'});
+                expect(await store2.get('user.1')).toBeNull();
+                expect(await store2.get('user.2')).toBeNull();
+                expect(await store2.get('session.1')).toEqual({token: 'xyz'});
+                await store2.set('a', {v: 1});
+                await store2.set('b', {v: 2});
+                await store2.set('c', {v: 3});
+                await store2.set('d', {v: 4});
+                await store2.set('e', {v: 5});
+                await store2.set('f', {v: 6});
+                await store2.set('g', {v: 7});
+                await store2.set('h', {v: 8});
+                await store2.set('i', {v: 9});
+                await store2.set('j', {v: 10});
+                expect(await store2.get('session.1')).toEqual(null);
+            });            
     
             it('Throws on invalid key', async () => {
                 for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
