@@ -5,7 +5,7 @@ import {isFn} from '@valkyriestudios/utils/function';
 import {isNeString, isString} from '@valkyriestudios/utils/string';
 import {Lazy, type LazyInitFn} from '../../utils/Lazy';
 import {type TriFrostContext} from '../../types/context';
-import {type TriFrostStore} from '../_storage';
+import {type Store} from '../../storage/_Storage';
 import {type TriFrostMiddleware} from '../../types/routing';
 import {
     Sym_TriFrostDescription,
@@ -68,7 +68,7 @@ export const RateLimitKeyGeneratorRegistry:Record<TriFrostRateLimitKeyGeneratorV
  */
 export type TriFrostRateLimitOptions <Env extends Record<string, any> = {}> = {
     strategy? : TriFrostRateLimitStrategy;
-    store     : LazyInitFn<TriFrostStore, Env>;
+    store     : LazyInitFn<Store, Env>;
     window?   : number;
     keygen?   : TriFrostRateLimitKeyGenerator | TriFrostRateLimitKeyGeneratorFn;
     exceeded? : TriFrostRateLimitExceededFunction;
@@ -89,35 +89,37 @@ export class TriFrostRateLimit <Env extends Record<string, any> = Record<string,
 
     #window:number;
 
-    constructor (options:TriFrostRateLimitOptions<Env>) {
+    constructor (opts:TriFrostRateLimitOptions<Env>) {
+        if (!isFn(opts?.store)) throw new Error('TriFrostRateLimit: Expected a store initializer');
+
         /* Define keygen or fallback to ip_name_method */
-        this.#keygen = (isFn(options?.keygen)
-            ? options.keygen
-            : isString(options?.keygen)
-                ? RateLimitKeyGeneratorRegistry[options.keygen]
+        this.#keygen = (isFn(opts?.keygen)
+            ? opts.keygen
+            : isString(opts?.keygen)
+                ? RateLimitKeyGeneratorRegistry[opts.keygen]
                 : RateLimitKeyGeneratorRegistry.ip_name_method) as TriFrostRateLimitKeyGeneratorFn;
 
         /* Define exceeded behavior */
-        this.#exceeded = isFn(options?.exceeded)
-            ? options.exceeded
+        this.#exceeded = isFn(opts?.exceeded)
+            ? opts.exceeded
             : (ctx:TriFrostContext) => ctx.status(429);
 
         /* Whether or not rate limit headers should be set (Defaults to true) */
-        this.#headers = options?.headers !== false;
+        this.#headers = opts?.headers !== false;
 
         /* Set strategy */
-        this.#strategy = options?.strategy === 'sliding' ? 'sliding' : 'fixed';
+        this.#strategy = opts?.strategy === 'sliding' ? 'sliding' : 'fixed';
 
         /* Set window */
-        this.#window = isIntGt(options?.window, 0) ? options?.window : 60;
+        this.#window = isIntGt(opts?.window, 0) ? opts?.window : 60;
 
         /* Create lazy store */
-        this.#store = new Lazy<TriFrostRateLimitStrategizedStore, Env>((opts:{env:Env}) => {
+        this.#store = new Lazy<TriFrostRateLimitStrategizedStore, Env>((initopts:{env:Env}) => {
             switch (this.#strategy) {
                 case 'sliding':
-                    return new Sliding(this.#window, options.store(opts) as unknown as TriFrostStore<number[]>);
+                    return new Sliding(this.#window, opts.store(initopts) as unknown as Store<number[]>);
                 default:
-                    return new Fixed(this.#window, options.store(opts) as unknown as TriFrostStore<TriFrostRateLimitObject>);
+                    return new Fixed(this.#window, opts.store(initopts) as unknown as Store<TriFrostRateLimitObject>);
             }
         });
     }

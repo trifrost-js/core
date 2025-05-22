@@ -209,6 +209,13 @@ describe('Storage - KV', () => {
                 }
                 expect(kv.isEmpty);
             });
+
+            it('Throws on invalid prefix', async () => {
+                for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
+                    await expect(store.del({prefix: el as string})).rejects.toThrow(/KVStore@del: Invalid deletion value/);
+                }
+                expect(kv.isEmpty).toBe(true);
+            });
         });
     
         describe('stop', () => {

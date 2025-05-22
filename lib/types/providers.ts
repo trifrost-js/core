@@ -9,6 +9,12 @@ export interface TriFrostCFKVNamespace {
     get(key: string, type: 'arrayBuffer'): Promise<ArrayBuffer | null>;
     get(key: string, type: 'stream'): Promise<ReadableStream | null>;
 
+    list(options?:{
+        prefix?:string,
+        limit?:number,
+        cursor?:string
+    }):Promise<{keys:{name:string}[], list_complete:boolean, cursor?:string}>;
+
     put(key: string, value: string | ReadableStream | ArrayBuffer, options?: KVNamespacePutOptions): Promise<void>;
 
     delete(key: string): Promise<void>;

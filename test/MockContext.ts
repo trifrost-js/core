@@ -19,9 +19,10 @@ import {
 } from '../lib/types/context';
 
 import {Cookies} from '../lib/modules/Cookies';
-import {type TriFrostCache, MemoryCache } from '../lib/modules/Cache';
+import {type TriFrostCache} from '../lib/modules/Cache';
 import {Logger, type TriFrostLogger} from '../lib/modules/Logger';
 import {type JSXElement} from '../lib/modules/JSX';
+import {MemoryCache} from '../lib/storage/Memory';
 
 export class MockContext <
     State extends Record<string, unknown> = Record<string, unknown>,
