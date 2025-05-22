@@ -7,20 +7,24 @@ import type {TriFrostStoreAdapter, TriFrostStoreValue} from './types';
 
 export class Store<T extends TriFrostStoreValue = TriFrostStoreValue> {
 
-    protected name: string;
+    #name: string;
 
     protected adapter:TriFrostStoreAdapter<T>;
 
     readonly #ctx?:TriFrostContext|null = null;
   
     constructor (name:string, adapter:TriFrostStoreAdapter<T>, ctx?:TriFrostContext) {
-        this.name = name;
+        this.#name = name;
         this.adapter = adapter;
         if (ctx) this.#ctx = ctx;
     }
 
+    get name () {
+        return this.#name;
+    }
+
     async get (key: string): Promise<T|null> {
-        if (!isNeString(key)) throw new Error(this.name + '@get: Invalid key');
+        if (!isNeString(key)) throw new Error(this.#name + '@get: Invalid key');
 
         try {
             const val = await this.adapter.get(key);
@@ -32,8 +36,8 @@ export class Store<T extends TriFrostStoreValue = TriFrostStoreValue> {
     }
 
     async set (key:string, value:T, opts?:{ttl?:number}): Promise<void> {
-        if (!isNeString(key)) throw new Error(this.name + '@set: Invalid key');
-        if (!isObject(value) && !isArray(value)) throw new Error(this.name + '@set: Invalid value');
+        if (!isNeString(key)) throw new Error(this.#name + '@set: Invalid key');
+        if (!isObject(value) && !isArray(value)) throw new Error(this.#name + '@set: Invalid value');
 
         const TTL = isIntGt(opts?.ttl, 0) ? opts.ttl : 60;
 
@@ -58,7 +62,7 @@ export class Store<T extends TriFrostStoreValue = TriFrostStoreValue> {
                 this.#ctx?.logger?.error?.(err, {val});
             }
         } else {
-            throw new Error(this.name + '@del: Invalid deletion value');
+            throw new Error(this.#name + '@del: Invalid deletion value');
         }
     }
 
