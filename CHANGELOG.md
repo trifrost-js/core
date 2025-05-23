@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2025-05-23
+This release sharpens the edge of TriFrost's JSX engine and style system. Expect better render performance, faster style injection, and smarter cross-request reuse — with no increase in memory footprint.
+
+### Improved
+- **perf**: The JSX render() engine has been improved with tighter branching and more predictable control flow — eliminating unnecessary conditionals and improving hot path performance.
+- **perf**: perf: The styleEngine now internally caches css() and css.use() results per request — dramatically reducing style generation overhead in loops, conditionals, and dynamic blocks.
+- **perf**: Each css factory instance now also has a global LRU cache allowing cross-request replay of styles. If a given style object has already been processed on a previous request, it will replay its previously registered rules into the new style engine — without flattening or recomputing anything.
+
+These changes deliver an estimated 15–20% render performance boost (based on vitest bench snapshots of common JSX trees), without sacrificing determinism or memory safety.
+
 ## [0.15.1] - 2025-05-22
 ### Fixed
 - Issue where typing for TriFrostCache `del` was not aligned with the new prefix deletion support
