@@ -11,6 +11,7 @@
         "lint": "npm run lint:src && npm run lint:test",
         "lint:src": "./node_modules/.bin/eslint ./lib",
         "lint:test": "./node_modules/.bin/eslint ./test",
+        "benchmark": "vitest bench --config vitest.config.ts",
         "types": "tsc -p ./tsconfig.json --noEmit"
     },
     "author": {
