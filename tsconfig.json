@@ -1,13 +1,13 @@
 {
     "compilerOptions": {
         "lib": ["es2023"],
-        "module": "ESNext",
+        "module": "node16",
         "target": "es2022",
         "strict": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "moduleResolution": "bundler",
+        "moduleResolution": "node16",
         "outDir": "./dist",
         "jsx": "react-jsx",
         "jsxImportSource": "./lib/modules/JSX",
