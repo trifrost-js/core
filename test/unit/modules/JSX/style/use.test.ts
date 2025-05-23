@@ -1485,4 +1485,302 @@ describe('Modules - JSX - style - use', () => {
             for (const el of set.values()) expect(el).toMatch(/^tf-/);
         });
     });
+
+    describe('keyframes', () => {
+        let css: ReturnType<typeof createCss>;
+    
+        beforeEach(() => {
+            css = createCss();
+        });
+    
+        it('Registers a keyframe animation and injects it', () => {
+            const drop = css.keyframes({
+                '0%': {top: '-50%', opacity: 1},
+                '60%': {top: '110%', opacity: 0},
+                '100%': {top: '110%', opacity: 0},
+            });
+    
+            const cls = css({
+                animation: `${drop} 10s infinite`,
+            });
+    
+            expect(engine.inject(`<div class="${cls}">Drop</div>`)).toBe([
+                '<style>',
+                '@keyframes kf-tf-i13zsv {',
+                '0%{top:-50%;opacity:1}',
+                '60%{top:110%;opacity:0}',
+                '100%{top:110%;opacity:0}',
+                '}',
+                '.tf-mr7948{animation:kf-tf-i13zsv 10s infinite}',
+                '</style>',
+                '<div class="tf-mr7948">Drop</div>',
+            ].join(''));
+        });
+    
+        it('Reuses identical keyframe definitions', () => {
+            const def = {
+                '0%': {opacity: 1},
+                '100%': {opacity: 0},
+            };
+    
+            const fade1 = css.keyframes(def);
+            const fade2 = css.keyframes(def);
+    
+            expect(fade1).toBe(fade2);
+        });
+    
+        it('Supports complex transforms in keyframes', () => {
+            const slide = css.keyframes({
+                '0%': {transform: 'translateX(-100%)'},
+                '50%': {transform: 'translateX(0%)'},
+                '100%': {transform: 'translateX(100%)'},
+            });
+    
+            const cls = css({
+                animation: `${slide} 5s linear infinite`,
+            });
+    
+            expect(engine.inject(`<div class="${cls}">Slide</div>`)).toBe([
+                '<style>',
+                '@keyframes kf-tf-18k37kf {',
+                '0%{transform:translateX(-100%)}',
+                '50%{transform:translateX(0%)}',
+                '100%{transform:translateX(100%)}',
+                '}',
+                '.tf-1sstk66{animation:kf-tf-18k37kf 5s linear infinite}',
+                '</style>',
+                '<div class="tf-1sstk66">Slide</div>',
+            ].join(''));
+        });
+    
+        it('Supports multiple transform properties in keyframes', () => {
+            const bounce = css.keyframes({
+                '0%': {transform: 'translateY(0px) scale(1)'},
+                '50%': {transform: 'translateY(-10px) scale(1.1)'},
+                '100%': {transform: 'translateY(0px) scale(1)'},
+            });
+    
+            const cls = css({
+                animation: `${bounce} 2s ease-in-out infinite`,
+            });
+    
+            expect(engine.inject(`<div class="${cls}">Bounce</div>`)).toBe([
+                '<style>',
+                '@keyframes kf-tf-9boemd {',
+                '0%{transform:translateY(0px) scale(1)}',
+                '50%{transform:translateY(-10px) scale(1.1)}',
+                '100%{transform:translateY(0px) scale(1)}',
+                '}',
+                '.tf-1qa35qk{animation:kf-tf-9boemd 2s ease-in-out infinite}',
+                '</style>',
+                '<div class="tf-1qa35qk">Bounce</div>',
+            ].join(''));
+        });
+
+        it('Allows for nice curry blending', () => {    
+            const cls = css({
+                animation: `${css.keyframes({
+                    '0%': {transform: 'translateY(0px) scale(1)'},
+                    '50%': {transform: 'translateY(-10px) scale(1.1)'},
+                    '100%': {transform: 'translateY(0px) scale(1)'},
+                })} 2s ease-in-out infinite`,
+            });
+    
+            expect(engine.inject(`<div class="${cls}">Bounce</div>`)).toBe([
+                '<style>',
+                '@keyframes kf-tf-9boemd {',
+                '0%{transform:translateY(0px) scale(1)}',
+                '50%{transform:translateY(-10px) scale(1.1)}',
+                '100%{transform:translateY(0px) scale(1)}',
+                '}',
+                '.tf-1qa35qk{animation:kf-tf-9boemd 2s ease-in-out infinite}',
+                '</style>',
+                '<div class="tf-1qa35qk">Bounce</div>',
+            ].join(''));
+        });
+
+        it('Plays nice with media queries', () => {    
+            const cls = css({
+                [css.media.desktop]: {
+                    animation: `${css.keyframes({
+                        '0%': {transform: 'translateY(0px) scale(1)'},
+                        '50%': {transform: 'translateY(-10px) scale(1.1)'},
+                        '100%': {transform: 'translateY(0px) scale(1)'},
+                    })} 2s ease-in-out infinite`,
+                },
+                [css.media.tablet]: {
+                    animation: `${css.keyframes({
+                        '0%': {transform: 'translateY(0px) scale(1)'},
+                        '50%': {transform: 'translateY(-5px) scale(1.05)'},
+                        '100%': {transform: 'translateY(0px) scale(1)'},
+                    })} 1s ease-in-out infinite`,
+                },
+            });
+    
+            expect(engine.inject(`<div class="${cls}">Bounce</div>`)).toBe([
+                '<style>',
+                '@keyframes kf-tf-9boemd {',
+                '0%{transform:translateY(0px) scale(1)}',
+                '50%{transform:translateY(-10px) scale(1.1)}',
+                '100%{transform:translateY(0px) scale(1)}',
+                '}',
+                '@keyframes kf-tf-17n8939 {',
+                '0%{transform:translateY(0px) scale(1)}',
+                '50%{transform:translateY(-5px) scale(1.05)}',
+                '100%{transform:translateY(0px) scale(1)}',
+                '}',
+                '@media (min-width: 1200px){',
+                '.tf-8q2azu{animation:kf-tf-9boemd 2s ease-in-out infinite}',
+                '}',
+                '@media (max-width: 1199px){',
+                '.tf-8q2azu{animation:kf-tf-17n8939 1s ease-in-out infinite}',
+                '}',
+                '</style>',
+                '<div class="tf-8q2azu">Bounce</div>',
+            ].join(''));
+        });
+
+        it('Plays nice with media queries and does not inject the same keyframe twice', () => {    
+            const cls = css({
+                [css.media.desktop]: {
+                    animation: `${css.keyframes({
+                        '0%': {transform: 'translateY(0px) scale(1)'},
+                        '50%': {transform: 'translateY(-10px) scale(1.1)'},
+                        '100%': {transform: 'translateY(0px) scale(1)'},
+                    })} 2s ease-in-out infinite`,
+                },
+                [css.media.tablet]: {
+                    animation: `${css.keyframes({
+                        '0%': {transform: 'translateY(0px) scale(1)'},
+                        '50%': {transform: 'translateY(-10px) scale(1.1)'},
+                        '100%': {transform: 'translateY(0px) scale(1)'},
+                    })} 1s ease-in-out infinite`,
+                },
+            });
+    
+            expect(engine.inject(`<div class="${cls}">Bounce</div>`)).toBe([
+                '<style>',
+                '@keyframes kf-tf-9boemd {',
+                '0%{transform:translateY(0px) scale(1)}',
+                '50%{transform:translateY(-10px) scale(1.1)}',
+                '100%{transform:translateY(0px) scale(1)}',
+                '}',
+                '@media (min-width: 1200px){',
+                '.tf-728429{animation:kf-tf-9boemd 2s ease-in-out infinite}',
+                '}',
+                '@media (max-width: 1199px){',
+                '.tf-728429{animation:kf-tf-9boemd 1s ease-in-out infinite}',
+                '}',
+                '</style>',
+                '<div class="tf-728429">Bounce</div>',
+            ].join(''));
+        });
+    
+        it('Does not inject when inject: false', () => {
+            const pulse = css.keyframes({
+                '0%': {transform: 'scale(1)'},
+                '50%': {transform: 'scale(1.1)'},
+                '100%': {transform: 'scale(1)'},
+            }, {inject: false});
+    
+            const cls = css({
+                animation: `${pulse} 3s ease-in-out`,
+            }, {inject: false});
+    
+            expect(engine.inject(`<div class="${cls}">Pulse</div>`)).toBe(`<div class="${cls}">Pulse</div>`);
+        });
+
+        it('Runs the same input across multiple engines successfully and swiftly', () => {
+            const css2 = createCss({
+                var: {
+                    space_xl: '4rem',
+                    space_l: '2rem',
+                    space_m: '1rem',
+                    space_s: '.5rem',
+                },
+                theme: {
+                    bg: '#000',
+                    fg: '#fff',  
+                },
+                definitions: mod => ({
+                    f: {display: 'flex'},
+                    fh: {flexDirection: 'row'},
+                    fv: {flexDirection: 'column'},
+                    fa_c: {alignItems: 'center'},
+                    fj_c: {justifyContent: 'center'},
+                    fj_sa: {justifyContent: 'space-around'},
+                    oh: {overflow: 'hidden'},
+                    sp_xl: {padding: mod.$v.space_xl},
+                    sp_l: {padding: mod.$v.space_l},
+                    sp_h_l: {paddingLeft: mod.$v.space_l, paddingRight: mod.$v.space_l},
+                    hide: {display: 'none'},
+                    shouldNotBeIncluded: {
+                        color: 'red',
+                        fontSize: '20rem',
+                    },
+                }),
+            });
+
+            const output:string[] = [];
+            const start = Date.now();
+            for (let i = 0; i < 1_000; i++) {
+                setActiveStyleEngine(new StyleEngine());
+                output.push(getActiveStyleEngine()!.inject(`<div class="${css2.use('f', 'fh', 'fa_c', 'oh', {
+                    width: '100%',
+                    background: css2.$t.bg,
+                    color: css2.$t.fg,
+                    [css2.media.desktop]: css2.mix('sp_xl', 'fj_c', {
+                        ' > span': css2.mix('sp_h_l', {fontSize: '1rem'}),
+                        ' div': {
+                            animation: `${css2.keyframes({
+                                '0%': {transform: 'scale(1)', opacity: 0.5},
+                                '50%': {transform: 'scale(1.1)', opacity: 0.2},
+                                '100%': {transform: 'scale(1)', opacity: 0.1},
+                            })} 3s ease-in-out`,
+                        },
+                    }),
+                    [css2.media.tablet]: css2.mix('sp_l', 'fj_sa', {
+                        ' > span': css2.mix('hide'),
+                        ' div': {
+                            animation: `${css2.keyframes({
+                                '0%': {transform: 'scale(1)'},
+                                '50%': {transform: 'scale(1.1)'},
+                                '100%': {transform: 'scale(1)'},
+                            })} 3s ease-in-out`,
+                        },
+                    }),
+                })}">Mix</div>`));
+            }
+            const duration = Date.now() - start;
+            expect(duration).toBeLessThan(100);
+            for (const el of output) {
+                expect(el).toBe([
+                    '<style>',
+                    '@keyframes kf-tf-1w2hawo {',
+                    '0%{transform:scale(1);opacity:0.5}',
+                    '50%{transform:scale(1.1);opacity:0.2}',
+                    '100%{transform:scale(1);opacity:0.1}',
+                    '}',
+                    '@keyframes kf-tf-bo5hof {',
+                    '0%{transform:scale(1)}',
+                    '50%{transform:scale(1.1)}',
+                    '100%{transform:scale(1)}',
+                    '}',
+                    '.tf-1dfab8x{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                    '@media (min-width: 1200px){',
+                    '.tf-1dfab8x > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                    '.tf-1dfab8x div{animation:kf-tf-1w2hawo 3s ease-in-out}',
+                    '.tf-1dfab8x{padding:var(--v-space_xl);justify-content:center}',
+                    '}',
+                    '@media (max-width: 1199px){',
+                    '.tf-1dfab8x > span{display:none}',
+                    '.tf-1dfab8x div{animation:kf-tf-bo5hof 3s ease-in-out}',
+                    '.tf-1dfab8x{padding:var(--v-space_l);justify-content:space-around}',
+                    '}',
+                    '</style>',
+                    '<div class="tf-1dfab8x">Mix</div>',
+                ].join(''));
+            }
+        });
+    });
 });

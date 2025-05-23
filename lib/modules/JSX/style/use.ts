@@ -69,6 +69,9 @@ type CssGeneric = {
 
     /* Root Injector */
     root(style?: Record<string, unknown>): void;
+
+    /* Keyframe generator */
+    keyframes(frames:Record<string, Record<string, string|number>>, opts?:CSSOptions):string;
 };
 
 /**
@@ -135,6 +138,10 @@ function cssFactory ():CssGeneric {
         cname:string;
         rules:{rule: string; selector?: string; query?: string;}[]
     }>({max_size: 500});
+    const GLOBAL_KEYFRAMES_LRU = new LRU<string, {
+        cname: string;
+        rule:string;
+    }>({max_size: 200});
 
     /**
      * CSS Helper which works with the active style engine and registers as well as returns a unique class name
@@ -267,6 +274,41 @@ function cssFactory ():CssGeneric {
                 active_engine.register(rule, '', {selector: selector_path, query});
             }
         }
+    };
+
+    /* KeyFrames */
+    mod.keyframes = (frames: Record<string, Record<string, string | number>>, opts?:CSSOptions) => {
+        const raw = JSON.stringify(frames);
+        const engine = active_engine || setActiveStyleEngine(new StyleEngine());
+
+        /* Check engine */
+        const cached = engine.cache.get(raw);
+        if (cached) return cached;
+
+        /* Inject or not */
+        const inject = opts?.inject !== false;
+      
+        /* Check global LRU */
+        const replay = GLOBAL_KEYFRAMES_LRU.get(raw);
+        if (replay) {
+            if (!inject) return replay.cname;
+            engine.register(replay.rule, '', {selector: null});
+            return replay.cname;
+        }
+      
+        const cname = `kf-${engine.hash(raw)}`;
+        engine.cache.set(raw, cname);
+      
+        let rule = '@keyframes ' + cname + ' {';
+        for (const point in frames) {
+            const style = styleToString(frames[point]);
+            if (style) rule += point + '{' + style + '}';
+        }
+        rule += '}';
+      
+        if (inject) engine.register(rule, '', {selector: null});
+        GLOBAL_KEYFRAMES_LRU.set(raw, {cname, rule});
+        return cname;
     };
 
     return mod;

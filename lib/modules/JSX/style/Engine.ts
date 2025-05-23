@@ -9,7 +9,7 @@ type StyleEngineRegisterOptions = {
     /**
      * A potential sub-selector this rule belongs to
      */
-    selector?:string;
+    selector?:string|null;
 };
 
 export class StyleEngine {
@@ -47,10 +47,10 @@ export class StyleEngine {
         name:string,
         opts:StyleEngineRegisterOptions
     ):void {
-        if (!isNotEmptyString(rule) || (opts.selector !== undefined && !isNotEmptyString(opts.selector))) return;
+        if (!isNotEmptyString(rule) || (opts.selector !== undefined && !isNotEmptyString(opts.selector) && opts.selector !== null)) return;
 
         const {query, selector} = opts;
-        const normalized = (selector ?? '.' + name) + '{' + rule.trim() + '}';
+        const normalized = selector !== null ? (selector ?? '.' + name) + '{' + rule.trim() + '}' : rule;
 
         if (!query) {
             if (this.base.keys.has(normalized)) return;
