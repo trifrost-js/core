@@ -64,7 +64,7 @@ const ESCAPE_REGEX = /(?:&(?![a-z#0-9]+;))|[<>"']/gi;
  * @param {string} str - Input string to escape.
  */
 export function escape (str:string):string {
-    return str.replace(ESCAPE_REGEX, (ch:string) => ESCAPE_LOOKUP[ch as keyof typeof ESCAPE_LOOKUP] || ch);
+    return str.replace(ESCAPE_REGEX, (ch:string) => ESCAPE_LOOKUP[ch as keyof typeof ESCAPE_LOOKUP]);
 }
 
 /**
@@ -73,9 +73,6 @@ export function escape (str:string):string {
  * @param {Record<string, unknown>} props - Props to render
  */
 function renderProps (props:Record<string, unknown>|null) {
-    if (!isObject(props)) return '';
-
-    /* Not cached */
     let acc = '';
     for (const key in props) {
         const val = props[key];
@@ -95,7 +92,7 @@ function renderProps (props:Record<string, unknown>|null) {
             }
             default: {
                 if (val !== undefined && val !== null) {
-                    acc += ' ' + key + ((val !== true || !BOOL_PROPS[key as keyof typeof BOOL_PROPS]) ? '="' + escape(val + '') + '"' : '');
+                    acc += ' ' + key + (val !== true || !BOOL_PROPS[key as keyof typeof BOOL_PROPS] ? '="' + escape(val + '') + '"' : '');
                 }
                 break;
             }
@@ -129,20 +126,14 @@ export function render (node: JSXElement | string | number | boolean | null): st
             return escape(node);
         case 'number':
             return node + '';
-        default: {
-            if (Array.isArray(node)) {
-                let output = '';
-                for (let i = 0; i < node.length; i++) output += render(node[i]);
-                return output;
-            }
-            
+        default: {            
             switch (isObject(node) ? typeof node?.type : 'null') {
                 case 'string': {
                     const tag = (node as JSXElement).type;
                     let output = '<' + tag;
 
                     /* Props */
-                    output += renderProps((node as JSXElement).props);
+                    output += renderProps((node as JSXElement).props || {});
 
                     /* Void tags like br are self-closing <br /> */
                     if (VOID_TAGS[tag as keyof typeof VOID_TAGS]) return output + ' />';
@@ -154,12 +145,20 @@ export function render (node: JSXElement | string | number | boolean | null): st
                         output += renderChildren((node as JSXElement).props?.children as JSXElement | string | number | boolean | null);
                     }
 
-                    return output + '</' + tag + '>'
+                    return output + '</' + tag + '>';
                 }
                 case 'function':
                     return (node as JSXElement).type === Fragment
                         ? renderChildren((node as JSXElement).props?.children as JSXElement | string | number | boolean | null)
                         : render(((node as JSXElement).type as any)((node as JSXElement).props));
+                case 'null': {
+                    if (Array.isArray(node)) {
+                        let output = '';
+                        for (let i = 0; i < node.length; i++) output += render(node[i]);
+                        return output;
+                    }
+                    return '';
+                }
                 default:
                     return '';
             }
