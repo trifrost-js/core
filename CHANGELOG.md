@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2025-05-23
+This patch introduces first-class animation support into the TriFrost styling engine. You can now define, register, and reuse `@keyframes` using the same ergonomic API as `css()` — with full support for SSR, media queries, deduplication, and cross-engine reuse via LRU.
+
+### Added
+- **feat**: New `css.keyframes()` API to define named keyframe animations:
+```typescript
+const bounce = css.keyframes({
+  '0%': { transform: 'scale(1)' },
+  '50%': { transform: 'scale(1.1)' },
+  '100%': { transform: 'scale(1)' },
+});
+
+const cls = css({
+  animation: `${bounce} 2s infinite ease-in-out`,
+});
+```
+- **feat**: `css.keyframes(..., {inject: false})` returns a name without injecting — ideal for hydration reuse or SSR pipelines.
+- **feat**: Works within responsive blocks:
+```typescript
+css({
+  [css.media.desktop]: {
+    animation: `${css.keyframes({ ... })} 4s ease`,
+  }
+});
+```
+
+--- 
+
+With `css.keyframes()`, TriFrost brings motion into the mix — elegantly, efficiently, and on cue. No drama, just drama-free animations. 💃🕺
+
 ## [0.16.0] - 2025-05-23
 This release sharpens the edge of TriFrost's JSX engine and style system. Expect better render performance, faster style injection, and smarter cross-request reuse — with no increase in memory footprint.
 
