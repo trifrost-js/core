@@ -1351,6 +1351,123 @@ describe('Modules - JSX - style - use', () => {
                 '<div class="tf-kn00o5">Mix</div>',
             ].join(''));
         });
+
+        it('Runs the same input across multiple engines successfully and swiftly', () => {
+            const css = createCss({
+                var: {
+                    space_xl: '4rem',
+                    space_l: '2rem',
+                    space_m: '1rem',
+                    space_s: '.5rem',
+                },
+                theme: {
+                    bg: '#000',
+                    fg: '#fff',  
+                },
+                definitions: mod => ({
+                    f: {display: 'flex'},
+                    fh: {flexDirection: 'row'},
+                    fv: {flexDirection: 'column'},
+                    fa_c: {alignItems: 'center'},
+                    fj_c: {justifyContent: 'center'},
+                    fj_sa: {justifyContent: 'space-around'},
+                    oh: {overflow: 'hidden'},
+                    sp_xl: {padding: mod.$v.space_xl},
+                    sp_l: {padding: mod.$v.space_l},
+                    sp_h_l: {paddingLeft: mod.$v.space_l, paddingRight: mod.$v.space_l},
+                    hide: {display: 'none'},
+                    shouldNotBeIncluded: {
+                        color: 'red',
+                        fontSize: '20rem',
+                    },
+                }),
+            });
+
+            const output:string[] = [];
+            const start = Date.now();
+            for (let i = 0; i < 1_000; i++) {
+                setActiveStyleEngine(new StyleEngine());
+                output.push(getActiveStyleEngine()!.inject(`<div class="${css.use('f', 'fh', 'fa_c', 'oh', {
+                    width: '100%',
+                    background: css.$t.bg,
+                    color: css.$t.fg,
+                    [css.media.desktop]: css.mix('sp_xl', 'fj_c', {
+                        ' > span': css.mix('sp_h_l', {fontSize: '1rem'}),
+                    }),
+                    [css.media.tablet]: css.mix('sp_l', 'fj_sa', {' > span': css.mix('hide')}),
+                })}">Mix</div>`));
+            }
+            const duration = Date.now() - start;
+            expect(duration).toBeLessThan(100);
+            for (const el of output) {
+                expect(el).toBe([
+                    '<style>',
+                    '.tf-oupfrh{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                    '@media (min-width: 1200px){',
+                    '.tf-oupfrh > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                    '.tf-oupfrh{padding:var(--v-space_xl);justify-content:center}',
+                    '}',
+                    '@media (max-width: 1199px){',
+                    '.tf-oupfrh > span{display:none}',
+                    '.tf-oupfrh{padding:var(--v-space_l);justify-content:space-around}',
+                    '}',
+                    '</style>',
+                    '<div class="tf-oupfrh">Mix</div>',
+                ].join(''));
+            }
+        });
+
+        it('Runs the same input across multiple engines successfully and swiftly when not injecting', () => {
+            const css = createCss({
+                var: {
+                    space_xl: '4rem',
+                    space_l: '2rem',
+                    space_m: '1rem',
+                    space_s: '.5rem',
+                },
+                theme: {
+                    bg: '#000',
+                    fg: '#fff',  
+                },
+                definitions: mod => ({
+                    f: {display: 'flex'},
+                    fh: {flexDirection: 'row'},
+                    fv: {flexDirection: 'column'},
+                    fa_c: {alignItems: 'center'},
+                    fj_c: {justifyContent: 'center'},
+                    fj_sa: {justifyContent: 'space-around'},
+                    oh: {overflow: 'hidden'},
+                    sp_xl: {padding: mod.$v.space_xl},
+                    sp_l: {padding: mod.$v.space_l},
+                    sp_h_l: {paddingLeft: mod.$v.space_l, paddingRight: mod.$v.space_l},
+                    hide: {display: 'none'},
+                    shouldNotBeIncluded: {
+                        color: 'red',
+                        fontSize: '20rem',
+                    },
+                }),
+            });
+
+            const output:string[] = [];
+            const start = Date.now();
+            for (let i = 0; i < 1_000; i++) {
+                setActiveStyleEngine(new StyleEngine());
+                output.push(getActiveStyleEngine()!.inject(`<div class="${css(css.mix('f', 'fh', 'fa_c', 'oh', {
+                    width: '100%',
+                    background: css.$t.bg,
+                    color: css.$t.fg,
+                    [css.media.desktop]: css.mix('sp_xl', 'fj_c', {
+                        ' > span': css.mix('sp_h_l', {fontSize: '1rem'}),
+                    }),
+                    [css.media.tablet]: css.mix('sp_l', 'fj_sa', {' > span': css.mix('hide')}),
+                }), {inject: false})}">Mix</div>`));
+            }
+            const duration = Date.now() - start;
+            expect(duration).toBeLessThan(100);
+            for (const el of output) {
+                expect(el).toBe(['<div class="tf-oupfrh">Mix</div>'].join(''));
+            }
+        });
     
         it('cid() returns unique prefixed class', () => {
             const css = createCss();

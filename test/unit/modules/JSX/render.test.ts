@@ -104,6 +104,22 @@ describe('Modules - JSX - Renderer', () => {
             })).toBe('<span style="line-height:1.5;padding-top:10px;border-bottom-color:blue">Styled</span>');
         });
 
+        it('Renders an array of JSX elements', () => {
+            /* @ts-ignore this is what we're testing */
+            const out = render([
+                {type: 'span', props: {children: 'one'}},
+                {type: 'span', props: {children: 'two'}},
+            ]);
+        
+            expect(out).toBe('<span>one</span><span>two</span>');
+        });
+
+        it('should handle element with no props', () => {
+            /* @ts-ignore this is what we're testing */
+            const out = render({type: 'div'});
+            expect(out).toBe('<div></div>');
+        });
+
         it('Ignores null/undefined style values', () => {
             expect(render({
                 type: 'div',

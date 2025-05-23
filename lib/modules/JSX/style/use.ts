@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
+import {LRU} from '@valkyriestudios/utils/caching';
 import {isFn} from '@valkyriestudios/utils/function';
 import {isNeObject, isObject} from '@valkyriestudios/utils/object';
 import {isNeString, isString} from '@valkyriestudios/utils/string';
@@ -129,6 +130,12 @@ function flatten (
  * @returns {CssGeneric}
  */
 function cssFactory ():CssGeneric {
+    /* Global cache for cross-engine reuse */
+    const GLOBAL_LRU = new LRU<string, {
+        cname:string;
+        rules:{rule: string; selector?: string; query?: string;}[]
+    }>({max_size: 500});
+
     /**
      * CSS Helper which works with the active style engine and registers as well as returns a unique class name
      * for example:
@@ -151,30 +158,50 @@ function cssFactory ():CssGeneric {
         const engine = active_engine || setActiveStyleEngine(new StyleEngine());
 
         const raw = JSON.stringify(style);
-        if (raw in engine.cache) return engine.cache[raw];
+        const cached = engine.cache.get(raw);
+        if (cached) return cached;
 
         /* Inject or not */
         const inject = opts?.inject !== false;
-    
+
+        /* Check global LRU and replay off of it if exists */
+        const replay = GLOBAL_LRU.get(raw);
+        if (replay) {
+            if (!inject) return replay.cname;
+            engine.cache.set(raw, replay.cname);
+            for (let i = 0; i < replay.rules.length; i++) {
+                const r = replay.rules[i];
+                engine.register(r.rule, replay.cname, {query: r.query, selector: r.selector});
+            }
+            return replay.cname;
+        }
+            
         /* Flatten */
         const flattened = flatten(style);
         if (!flattened.length) {
-            engine.cache[raw] = '';
+            engine.cache.set(raw, '');
             return '';
         }
     
         /* Get class name and register on engine */
         const cname = engine.hash(raw);
+        engine.cache.set(raw, cname);
         if (!inject) return cname;
 
-        engine.cache[raw] = cname;
-
         /* Loop through flattened behavior and register each op */
+        const lru_entries:{rule: string; selector?: string; query?: string;}[] = [];
         for (let i = 0; i < flattened.length; i++) {
             const {declarations, selector = undefined, query = undefined} = flattened[i];
             const rule = styleToString(declarations);
-            if (rule) engine.register(rule, cname, {query, selector: selector ? `.${cname}${selector}` : undefined});
+            if (rule) {
+                const normalized_selector = selector ? '.' + cname + selector : undefined;
+                engine.register(rule, cname, {query, selector: normalized_selector});
+                lru_entries.push({rule, query, selector: normalized_selector});
+            }
         }
+        
+        /* Push to global lru */
+        GLOBAL_LRU.set(raw, {cname, rules: lru_entries});
     
         return cname;
     };
@@ -503,6 +530,34 @@ export function createCss <
         for (const key in def) (definitions as any)[key] = def[key];
     }
 
+    /* Determine default root injection */
+    const ROOT_INJECTION = {
+        ...config.reset === true && CSS_RESET,
+        ...root_vars,
+        [mod.media.light]: {
+            ...theme_light,
+            /**
+             * Theme Attribute support, defaults to false but if passed as true
+             * we will inject for 'data-theme' if passed as
+             * a string we will use that as attribute
+             */
+            ...config.themeAttribute && {
+                [`:root[${isString(config.themeAttribute) ? config.themeAttribute : 'data-theme'}="dark"]`]: theme_dark,
+            },
+        },
+        [mod.media.dark]: {
+            ...theme_dark,
+            /**
+             * Theme Attribute support, defaults to false but if passed as true
+             * we will inject for 'data-theme' if passed as
+             * a string we will use that as attribute
+             */
+            ...config.themeAttribute && {
+                [`:root[${isString(config.themeAttribute) ? config.themeAttribute : 'data-theme'}="light"]`]: theme_light,
+            },
+        },
+    };
+
 	/* Attach root generator */
     const ogRoot = mod.root;
     mod.root = (styles:Record<string, unknown> = {}) => {
@@ -510,44 +565,10 @@ export function createCss <
 
         /* If our root variables are already injected, simply run og root */
         if (Reflect.get(active_engine!, sym)) {
-            return ogRoot(styles);
+            ogRoot(styles);
         } else {
             Reflect.set(active_engine!, sym, true);
-
-            /**
-             * Media-Query based theming
-             */
-            const theme_media = {
-                [mod.media.light]: {
-                    ...theme_light,
-                    /**
-                     * Theme Attribute support, defaults to false but if passed as true
-                     * we will inject for 'data-theme' if passed as
-                     * a string we will use that as attribute
-                     */
-                    ...config.themeAttribute && {
-                        [`:root[${isString(config.themeAttribute) ? config.themeAttribute : 'data-theme'}="dark"]`]: theme_dark,
-                    },
-                },
-                [mod.media.dark]: {
-                    ...theme_dark,
-                    /**
-                     * Theme Attribute support, defaults to false but if passed as true
-                     * we will inject for 'data-theme' if passed as
-                     * a string we will use that as attribute
-                     */
-                    ...config.themeAttribute && {
-                        [`:root[${isString(config.themeAttribute) ? config.themeAttribute : 'data-theme'}="light"]`]: theme_light,
-                    },
-                },
-            };
-
-            ogRoot({
-                ...config.reset === true && CSS_RESET,
-                ...root_vars,
-                ...theme_media,
-                ...styles,
-            });
+            ogRoot({...ROOT_INJECTION, ...styles});
         }
     };
 
