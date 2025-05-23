@@ -100,20 +100,15 @@ function flatten (
   
     for (const key in obj) {
         const val = obj[key];
-        if (
-            val !== undefined && 
-            val !== null
-        ) {
-            if (isObject(val)) {
-                if (key[0] === '@') {
-                    result.push(...flatten(val as Record<string, unknown>, key, parent_selector));
-                } else {
-                    result.push(...flatten(val as Record<string, unknown>, parent_query, parent_selector + key));
-                }
+        if (isObject(val)) {
+            if (key[0] === '@') {
+                result.push(...flatten(val as Record<string, unknown>, key, parent_selector));
             } else {
-                base[key] = val;
-                base_has = true;
+                result.push(...flatten(val as Record<string, unknown>, parent_query, parent_selector + key));
             }
+        } else if (val !== undefined && val !== null) {
+            base[key] = val;
+            base_has = true;
         }
     }
   
@@ -152,19 +147,33 @@ function cssFactory ():CssGeneric {
      */
     const mod = (style:Record<string, unknown>, opts?:CSSOptions) => {
         if (!isObject(style)) return '';
+
+        const engine = active_engine || setActiveStyleEngine(new StyleEngine());
+
+        const raw = JSON.stringify(style);
+        if (raw in engine.cache) return engine.cache[raw];
+
+        /* Inject or not */
         const inject = opts?.inject !== false;
     
+        /* Flatten */
         const flattened = flatten(style);
-        if (!flattened.length) return '';
+        if (!flattened.length) {
+            engine.cache[raw] = '';
+            return '';
+        }
     
-        const cname = (active_engine || setActiveStyleEngine(new StyleEngine()))!.hash(JSON.stringify(style));
-    
+        /* Get class name and register on engine */
+        const cname = engine.hash(raw);
+        if (!inject) return cname;
+
+        engine.cache[raw] = cname;
+
+        /* Loop through flattened behavior and register each op */
         for (let i = 0; i < flattened.length; i++) {
             const {declarations, selector = undefined, query = undefined} = flattened[i];
             const rule = styleToString(declarations);
-            if (inject && rule) {
-                active_engine!.register(rule, cname, {query, selector: selector ? `.${cname}${selector}` : undefined});
-            }
+            if (rule) engine.register(rule, cname, {query, selector: selector ? `.${cname}${selector}` : undefined});
         }
     
         return cname;

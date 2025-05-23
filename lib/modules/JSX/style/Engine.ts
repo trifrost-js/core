@@ -20,6 +20,8 @@ export class StyleEngine {
     /* mediaQuery -> rule -> className */
     protected media: Record<string, {out: string; keys: Set<string>}> = {};
 
+    cache:Record<string, string> = {};
+
     /**
      * Generate a deterministic class name for a rule
      * 

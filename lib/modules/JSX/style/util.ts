@@ -148,22 +148,22 @@ export function toKebab (key:string):string {
 export function styleToString (obj:Record<string, unknown>|null):string|null {
     if (!isObject(obj)) return null;
 
-    let style = '';
+    let style:string|null = '';
     for (const attr in obj) {
         const attr_val = obj[attr];
         if (
             attr_val !== undefined &&
             attr_val !== null
         ) {
-            let norm = typeof attr_val === 'string' ? attr_val.trim() : String(attr_val);
+            let str = typeof attr_val === 'string' ? attr_val : String(attr_val);
 
             /* If wrapped in quotes and contains a CSS function, unwrap it */
             if (
-                (norm[0] === '\'' || norm[0] === '"') && 
-                norm.match(RGX_FUNCTION)
-            ) norm = norm.slice(1, -1);
+                (str[0] === '\'' || str[0] === '"') && 
+                RGX_FUNCTION.test(str)
+            ) str = str.slice(1, -1);
             
-            if (norm) style += toKebab(attr) + ':' + norm + ';';
+            if (str) style += toKebab(attr) + ':' + str + ';';
         }
     }
     return style ? style.slice(0, -1) : null;

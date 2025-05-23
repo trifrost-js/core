@@ -1,53 +1,60 @@
 /* eslint-disable no-underscore-dangle,no-use-before-define */
 
 import {isObject} from '@valkyriestudios/utils/object';
-import {isString} from '@valkyriestudios/utils/string';
 import {type JSXElement} from './types';
 import {Fragment} from './runtime';
 import {StyleEngine} from './style/Engine';
 import {setActiveStyleEngine, getActiveStyleEngine} from './style/use';
 import {styleToString} from './style/util'; 
 
-const VOID_TAGS = new Set([
-    'area',
-    'base',
-    'br',
-    'col',
-    'embed',
-    'hr',
-    'img',
-    'input',
-    'link',
-    'meta',
-    'source',
-    'track',
-    'wbr',
-]);
+const VOID_TAGS = {
+    area: true,
+    base: true,
+    br: true,
+    col: true,
+    embed: true,
+    hr: true,
+    img: true,
+    input: true,
+    link: true,
+    meta: true,
+    source: true,
+    track: true,
+    wbr: true,
+} as const;
 
-const BOOL_PROPS = new Set([
-    'allowfullscreen',
-    'async',
-    'autofocus',
-    'autoplay',
-    'checked',
-    'controls',
-    'default',
-    'defer',
-    'disabled',
-    'formnovalidate',
-    'hidden',
-    'ismap',
-    'loop',
-    'multiple',
-    'muted',
-    'nomodule',
-    'novalidate',
-    'open',
-    'readonly',
-    'required',
-    'reversed',
-    'selected',
-]);
+const BOOL_PROPS = {
+    allowfullscreen: true,
+    async: true,
+    autofocus: true,
+    autoplay: true,
+    checked: true,
+    controls: true,
+    default: true,
+    defer: true,
+    disabled: true,
+    formnovalidate: true,
+    hidden: true,
+    ismap: true,
+    loop: true,
+    multiple: true,
+    muted: true,
+    nomodule: true,
+    novalidate: true,
+    open: true,
+    readonly: true,
+    required: true,
+    reversed: true,
+    selected: true,
+} as const;
+
+const ESCAPE_LOOKUP = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    '\'': '&#39;',
+} as const;
   
 const ESCAPE_REGEX = /(?:&(?![a-z#0-9]+;))|[<>"']/gi;
   
@@ -57,41 +64,43 @@ const ESCAPE_REGEX = /(?:&(?![a-z#0-9]+;))|[<>"']/gi;
  * @param {string} str - Input string to escape.
  */
 export function escape (str:string):string {
-    return str.replace(ESCAPE_REGEX, (char:string) => {
-        switch (char) {
-            case '&': return '&amp;';
-            case '<': return '&lt;';
-            case '>': return '&gt;';
-            case '"': return '&quot;';
-            case '\'': return '&#39;';
-            default: return char;
-        }
-    });
+    return str.replace(ESCAPE_REGEX, (ch:string) => ESCAPE_LOOKUP[ch as keyof typeof ESCAPE_LOOKUP] || ch);
 }
 
 /**
  * Renders properties such as style/attributes
  * 
- * @param {string} acc - Accumulator to add to
  * @param {Record<string, unknown>} props - Props to render
  */
-function renderProps (acc:string, props:Record<string, unknown>|null) {
-    if (!isObject(props)) return acc;
+function renderProps (props:Record<string, unknown>|null) {
+    if (!isObject(props)) return '';
 
+    /* Not cached */
+    let acc = '';
     for (const key in props) {
         const val = props[key];
-        if (key !== 'children' && val !== undefined && val !== null) {
-            if (key === 'style' && isObject(val)) {
-                const style = styleToString(val);
-                if (style) acc += ' style="' + escape(style) + '"';
-            } else if (props[key] === true && BOOL_PROPS.has(key)) {
-                acc += ' ' + key;
-            } else if (key !== 'dangerouslySetInnerHTML') {
-                acc += ' ' + (key === 'className' ? 'class' : key) + '="' + escape(props[key] + '') + '"';
+        switch (key) {
+            case 'style':
+                if (isObject(val)) {
+                    const style = styleToString(val);
+                    if (style) acc += ' style="' + escape(style) + '"';
+                }
+                break;
+            case 'children':
+            case 'dangerouslySetInnerHTML':
+                break;
+            case 'className': {
+                if (val !== undefined && val !== null) acc += ' class="' + escape(val + '') + '"';
+                break;
+            }
+            default: {
+                if (val !== undefined && val !== null) {
+                    acc += ' ' + key + ((val !== true || !BOOL_PROPS[key as keyof typeof BOOL_PROPS]) ? '="' + escape(val + '') + '"' : '');
+                }
+                break;
             }
         }
     }
-
     return acc;
 }
 
@@ -122,31 +131,37 @@ export function render (node: JSXElement | string | number | boolean | null): st
             return node + '';
         default: {
             if (Array.isArray(node)) {
-                return renderChildren(node);
-            } else if (!isObject(node) || !node.type) {
-                return '';
-            } else if (node.type === Fragment) {
-                return renderChildren(node.props?.children  as JSXElement | string | number | boolean | null);
-            } else if (typeof node.type === 'function') {
-                return render(node.type(node.props || {}));
-            } else {
-                const tag = node.type;
-                let output = '<' + tag;
+                let output = '';
+                for (let i = 0; i < node.length; i++) output += render(node[i]);
+                return output;
+            }
+            
+            switch (isObject(node) ? typeof node?.type : 'null') {
+                case 'string': {
+                    const tag = (node as JSXElement).type;
+                    let output = '<' + tag;
 
-                /* Props */
-                output = renderProps(output, node.props);
+                    /* Props */
+                    output += renderProps((node as JSXElement).props);
 
-                /* Void tags like br are self-closing <br /> */
-                if (VOID_TAGS.has(tag)) return output + ' />';
+                    /* Void tags like br are self-closing <br /> */
+                    if (VOID_TAGS[tag as keyof typeof VOID_TAGS]) return output + ' />';
 
-                output += '>';
-                if (isString(node.props?.dangerouslySetInnerHTML?.__html)) {
-                    output += node.props.dangerouslySetInnerHTML.__html;
-                } else {
-                    output += renderChildren(node.props?.children  as JSXElement | string | number | boolean | null);
+                    output += '>';
+                    if (typeof (node as JSXElement).props?.dangerouslySetInnerHTML?.__html === 'string') {
+                        output += (node as JSXElement).props!.dangerouslySetInnerHTML!.__html;
+                    } else {
+                        output += renderChildren((node as JSXElement).props?.children as JSXElement | string | number | boolean | null);
+                    }
+
+                    return output + '</' + tag + '>'
                 }
-
-                return output + '</' + tag + '>';
+                case 'function':
+                    return (node as JSXElement).type === Fragment
+                        ? renderChildren((node as JSXElement).props?.children as JSXElement | string | number | boolean | null)
+                        : render(((node as JSXElement).type as any)((node as JSXElement).props));
+                default:
+                    return '';
             }
         }
     }
