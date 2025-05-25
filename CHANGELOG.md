@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.18.0] - 2025-05-25
+This update brings subtle but powerful improvements across TriFrost’s core — from smarter, cross-runtime environment handling to brand-new HMAC cookie signing, verification, and robust, production-ready authentication middleware.
+
 ### Added
 - **feat**: The `Cookies` module now supports built-in HMAC signing and verification using Web Crypto (supported across **Node**, **Bun** and **Workerd**). It provides `.sign()` to generate an HMAC-signed value and `.verify()` to check integrity. Supported algorithms: `SHA-256`, `SHA-384`, `SHA-512`.
 ```typescript
@@ -102,6 +104,18 @@ const app = new App<Env>({});
 ```
 - **qol**: You can still provide a user-defined `env` object in `AppOptions`, this will now be automatically merged with the runtime-provided environment (such as `process.env` in Node/Bun) at boot time.
 - **qol**: The `uWSRuntime` has improved version detection — it now properly reports `bun:<version>` when running under Bun, or `node:<version>` when under Node.js, falling back to `N/A` if unknown. Important to note that these runtime properties are also part of telemetry traces.
+
+**Notes on Auth Middleware**:
+- Each middleware exposes a type-safe, ergonomic API with built-in `$auth` state injection for downstream handlers.
+- When `validate()` returns an object, that object becomes the $auth state; if it returns true, a fallback object is injected (e.g., {user}, {token}, {key}, or {cookie}), and if it returns false, the request is rejected with a `401 Unauthorized`.
+
+---
+
+✨ **Bottom line**: With **FrostBite (0.18.0)**, TriFrost takes its first big leap into the world of built-in authentication — delivering fresh, modular, production-ready middleware to guard your routes, secure your sessions, and validate your keys.
+
+But this is just the start: more auth flavors, integrations, and sugar are coming in future releases (or **contribute your own?**).
+
+Stay frosty — the adventure has only begun. ❄️🔐🌟
 
 ## [0.17.0] - 2025-05-23
 This patch introduces first-class animation support into the TriFrost styling engine. You can now define, register, and reuse `@keyframes` using the same ergonomic API as `css()` — with full support for SSR, media queries, deduplication, and cross-engine reuse via LRU.
