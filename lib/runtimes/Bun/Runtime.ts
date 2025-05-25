@@ -37,6 +37,10 @@ export class BunRuntime implements TriFrostRuntime {
         return Bun.version || 'N/A';
     }
 
+    get env () {
+        return process.env || {};
+    }
+
     async boot (opts:TriFrostRuntimeBootOptions):Promise<void> {
         let serve: typeof import('bun')['serve'];
         let file: typeof import('bun')['file'];

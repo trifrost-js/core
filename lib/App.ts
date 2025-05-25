@@ -357,19 +357,30 @@ class App <
                 notfoundMatcher,
             } = this.#computeAndFinalizeRoutes();
 
+            let resolved_env:Env|null = null;
+
             /* Start the runtime */
             await this.#runtime!.boot({
                 logger: this.#logger as TriFrostRootLogger,
-                cfg: {
+                cfg: Object.defineProperties({
                     cookies: this.#cookies.config,
                     cache: this.#cache as TriFrostCache,
                     host: this.#host,
                     port: isIntBetween(options?.port, 1, 65535) ? options?.port : 3000,
-                    env: this.#env,
                     timeout: this.timeout ?? null,
                     requestId: this.#requestId,
+                    env: null as unknown as Env,
                     ...this.#trustProxy !== null && {trustProxy: this.#trustProxy},
-                },
+                }, {
+                    env: {
+                        get: () => {
+                            if (resolved_env) return resolved_env;
+                            resolved_env = Object.freeze({...this.#runtime!.env || {}, ...this.#env});
+                            return resolved_env;
+                        },
+                        enumerable: true,
+                    },
+                }),
                 onIncoming: (async (ctx:TriFrostContext<Env, State>) => {
                     const {path, method} = ctx;
                     this.#logger!.debug('onIncoming', {method, path});
@@ -437,7 +448,7 @@ class App <
                 }) as TriFrostRuntimeOnIncoming,
             });
 
-            /* Morph app class with runtime-specific exports */
+            /* Morph app class with runtime-specific exports, eg: workerd requires fetch globally defined */
             if (this.#runtime.exports) {
                 Object.defineProperties(this, Object.getOwnPropertyDescriptors(this.#runtime.exports));
             }

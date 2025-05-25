@@ -50,6 +50,12 @@ export interface TriFrostRuntime {
     get version ():string|null;
 
     /**
+     * Returns the default environment for this runtime 
+     * (return null if environment can't be determined at boot time, eg: WorkerD)
+     */
+    get env ():Record<string, unknown>|null;
+
+    /**
      * Start the runtime (eg: listen to port in NodeJS/Bun/uWS)
      */
     boot(opts:TriFrostRuntimeBootOptions):Promise<void>

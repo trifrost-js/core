@@ -19,6 +19,9 @@ export class WorkerdRuntime implements TriFrostRuntime {
     /* Runtime Start Options */
     #cfg: TriFrostRuntimeBootOptions['cfg'] | null = null;
 
+    /* Runtime Environment */
+    #env: Record<string, unknown> | null = null;
+
     /* Incoming handler which is to be called by the runtime when an incoming request happens */
     #onIncoming: TriFrostRuntimeOnIncoming|null = null;
 
@@ -30,14 +33,10 @@ export class WorkerdRuntime implements TriFrostRuntime {
         fetch: async (request:Request, env:any, cloudflareCtx:ExecutionContext) => {
             if (!this.#onIncoming) return;
 
+            if (!this.#env) this.#env = env;
+
             /* Instantiate context */
-            const ctx = new WorkerdContext(
-                this.#cfg!,
-                this.#logger!,
-                request,
-                env,
-                cloudflareCtx
-            );
+            const ctx = new WorkerdContext(this.#cfg!, this.#logger!, request, cloudflareCtx);
 
             try {
                 await this.#onIncoming!(ctx);
@@ -60,6 +59,10 @@ export class WorkerdRuntime implements TriFrostRuntime {
 
     get version () {
         return null;
+    }
+
+    get env () {
+        return this.#env;
     }
 
     async boot (opts: TriFrostRuntimeBootOptions): Promise<void> {

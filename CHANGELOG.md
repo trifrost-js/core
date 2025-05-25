@@ -89,6 +89,18 @@ router
     return ctx.json({message: `Hello, user ${auth.id} with role ${auth.role}`});
   });
 ```
+
+### Improved
+- **qol**: All runtimes now expose a consistent `.env` getter, so both runtime internals and app code can reliably access environment variables — even when no explicit `env` was passed. This also means you are **no longer required** to pass `process.env` when setting up an app on **Node** or **Bun**. For **Workerd**, the runtime’s `env` getter is hydrated automatically upon the first incoming request.
+```typescript
+import {App} from '@trifrost/core';
+import {type Env} from './types';
+
+/* This one and the one below would yield the same effective env */
+const app = new App<Env>({env: process.env});
+const app = new App<Env>({});
+```
+- **qol**: You can still provide a user-defined `env` object in `AppOptions`, this will now be automatically merged with the runtime-provided environment (such as `process.env` in Node/Bun) at boot time.
 ## [0.17.0] - 2025-05-23
 This patch introduces first-class animation support into the TriFrost styling engine. You can now define, register, and reuse `@keyframes` using the same ergonomic API as `css()` — with full support for SSR, media queries, deduplication, and cross-engine reuse via LRU.
 

@@ -39,6 +39,9 @@ export class UWSRuntime implements TriFrostRuntime {
 
     get version () {
         return null;
+
+    get env () {
+        return process.env || {};
     }
 
     async boot (opts:TriFrostRuntimeBootOptions):Promise<void> {

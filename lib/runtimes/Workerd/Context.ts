@@ -30,7 +30,6 @@ export class WorkerdContext extends Context {
         cfg:TriFrostContextConfig,
         logger:TriFrostRootLogger,
         req:Request,
-        env:TriFrostContextConfig['env'],
         ctx:ExecutionContext
     ) {
         /* Extract path and query */
@@ -42,7 +41,7 @@ export class WorkerdContext extends Context {
             headers[key] = value;
         }
 
-        super(logger, {...cfg, env}, {
+        super(logger, cfg, {
             path,
             method: HttpMethodToNormal[req.method],
             headers,

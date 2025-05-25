@@ -39,6 +39,10 @@ export class NodeRuntime implements TriFrostRuntime {
         return process.version || 'N/A';
     }
 
+    get env () {
+        return process.env || {};
+    }
+
     async boot (opts:TriFrostRuntimeBootOptions):Promise<void> {
         let createServer: typeof import('node:http')['createServer'];
         let statSync:typeof import('node:fs')['statSync'];
