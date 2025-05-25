@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- **feat**: The `Cookies` module now supports built-in HMAC signing and verification using Web Crypto (supported across **Node**, **Bun** and **Workerd**). It provides `.sign()` to generate an HMAC-signed value and `.verify()` to check integrity. Supported algorithms: `SHA-256`, `SHA-384`, `SHA-512`.
+```typescript
+/* Basic Usage */
+
+const signed = await ctx.cookies.sign('userId42', ctx.env.MY_COOKIE_SECRET);
+ctx.cookies.set('session', signed);
+
+...
+
+const rawCookie = ctx.cookies.get('session');
+const verified = await ctx.cookies.verify(rawCookie, ctx.env.MY_COOKIE_SECRET);
+
+if (verified) console.log('Untampered value:', verified);
+else console.log('Signature invalid or tampered!');
+```
+```typescript
+/* Using secret rotation (multi-key check) */
+const signed = await ctx.cookies.sign('orderToken', 'newSecret', {algorithm: 'SHA-512'});
+
+const verified = await ctx.cookies.verify(signed, [
+    {val: 'newSecret', algorithm: 'SHA-512'}, // current
+    {val: 'oldSecret', algorithm: 'SHA-256'}, // legacy fallback
+]);
+
+if (verified) console.log('Valid order token:', verified);
+else console.log('Invalid or outdated token');
+```
 ## [0.17.0] - 2025-05-23
 This patch introduces first-class animation support into the TriFrost styling engine. You can now define, register, and reuse `@keyframes` using the same ergonomic API as `css()` — with full support for SSR, media queries, deduplication, and cross-engine reuse via LRU.
 

@@ -1,4 +1,4 @@
-import {describe, it, expect} from 'vitest';
+import {describe, it, expect, vi, afterEach} from 'vitest';
 import {addUTC} from '@valkyriestudios/utils/date';
 import {type TriFrostCookieOptions, Cookies} from '../../../lib/modules/Cookies';
 import CONSTANTS from '../../constants';
@@ -567,5 +567,342 @@ describe('Modules - Cookies', () => {
             cookies.del({prefix: 'a.'});
             expect(cookies.all()).toEqual({b: 'keep'});
         });          
+    });
+
+    describe('sign', () => {
+        const SECRET = 'supersecretkey';
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+    
+        it('Signs a simple string value', async () => {
+            const cookies = new Cookies(createCtx(), {});
+
+            const spy = vi.spyOn(cookies as any, 'generateHMAC');
+            
+            const signed = await cookies.sign('myValue', SECRET);
+            expect(signed).toBe('myValue.ec170e2339b0499348dbf01a1da4986ef4006b9101ac6a3b562938dfa4bd3498');
+
+            expect(spy).toHaveBeenNthCalledWith(1, 'myValue', SECRET, {algorithm: 'SHA-256'});
+        });
+    
+        it('Signs a numeric value', async () => {
+            const cookies = new Cookies(createCtx(), {});
+            
+            const spy = vi.spyOn(cookies as any, 'generateHMAC');
+
+            const signed = await cookies.sign(12345, SECRET);
+            expect(signed).toBe('12345.3d853b4a00b52d20adcc177e400d8482200b200c8b80780e46f7eec61313b97e');
+
+            expect(spy).toHaveBeenNthCalledWith(1, '12345', SECRET, {algorithm: 'SHA-256'});
+        });
+    
+        it('Returns empty string when secret is invalid', async () => {
+            const cookies = new Cookies(createCtx(), {});
+            const spy = vi.spyOn(cookies as any, 'generateHMAC');
+
+            for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {    
+                const emptySecret = await cookies.sign('data', el as string);
+                expect(emptySecret).toBe('');
+            }
+
+            expect(spy).not.toHaveBeenCalled();
+        });
+
+        it('Returns empty string when value is not a string or number', async () => {
+            const cookies = new Cookies(createCtx(), {});
+            const spy = vi.spyOn(cookies as any, 'generateHMAC');
+
+            for (const el of [
+                ...CONSTANTS.NOT_STRING,
+                ...CONSTANTS.NOT_NUMERIC,
+            ]) {
+                if (Number.isFinite(el) || typeof el === 'string') continue;
+                const emptySecret = await cookies.sign(el as string, SECRET);
+                expect(emptySecret).toBe('');
+            }
+            expect(spy).not.toHaveBeenCalled();
+        });
+    
+        it('Supports different algorithms when signing', async () => {
+            const cookies = new Cookies(createCtx(), {});
+            
+            const spy = vi.spyOn(cookies as any, 'generateHMAC');
+
+            const signed512 = await cookies.sign('sha512data', SECRET, {algorithm: 'SHA-512'});
+            // eslint-disable-next-line max-len
+            expect(signed512).toBe('sha512data.059a7015a544ce9c6e040cfa49b0ef7d26638c60535fce5388546ba311c0d5a34708e966a5d9e243bc54312ca589afa9b97ca8d2130a0b32fbf11abb3598996d');
+    
+            const signed384 = await cookies.sign('sha384data', SECRET, {algorithm: 'SHA-384'});
+            // eslint-disable-next-line max-len
+            expect(signed384).toBe('sha384data.4b8b69328ac5ec9c681678fe772c1259329a532f9d6c0146f4871217176cd39feeb2e6c2b374f858eab2bd0cc39c55ca');
+
+            const signed256 = await cookies.sign('sha256data', SECRET, {algorithm: 'SHA-256'});
+            expect(signed256).toBe('sha256data.1542e2c5ed44813da6cd5176b885a5c5deb2baf925f8fbba35cce91121bc47e0');
+
+            expect(spy).toHaveBeenNthCalledWith(1, 'sha512data', SECRET, {algorithm: 'SHA-512'});
+            expect(spy).toHaveBeenNthCalledWith(2, 'sha384data', SECRET, {algorithm: 'SHA-384'});
+            expect(spy).toHaveBeenNthCalledWith(3, 'sha256data', SECRET, {algorithm: 'SHA-256'});
+        });
+    
+        it('Does not modify outgoing cookies when only signing', async () => {
+            const cookies = new Cookies(createCtx(), {});
+            await cookies.sign('notsaved', SECRET);
+            expect(cookies.outgoing).toEqual([]);
+        });
+
+        it('Reuses cached keys to avoid repeated import', async () => {
+            const cookies = new Cookies(createCtx(), {});
+            const spy = vi.spyOn(crypto.subtle, 'importKey');
+            await cookies.sign('value1', SECRET);
+            await cookies.sign('value2', SECRET);
+            expect(spy).toHaveBeenCalledTimes(1);
+        });
+
+        it('Falls back to SHA-256 if invalid algorithm is passed to generateHMAC', async () => {
+            const cookies = new Cookies(createCtx(), {});
+            const spy = vi.spyOn(cookies as any, 'generateHMAC');
+            const spyKey = vi.spyOn(crypto.subtle, 'importKey');
+        
+            // Pass invalid algo
+            const signed = await cookies.sign('fallbackTest', 'secret', {algorithm: 'INVALID' as any});
+        
+            expect(signed.startsWith('fallbackTest.')).toBe(true);
+            expect(spy).toHaveBeenCalledWith('fallbackTest', 'secret', {algorithm: 'INVALID'});
+            expect(spyKey).toHaveBeenCalledWith(
+                'raw',
+                new Uint8Array([115, 101, 99, 114, 101, 116]),
+                {
+                    hash: {name: 'SHA-256'},
+                    name: 'HMAC',
+                },
+                false,
+                ['sign']
+            );
+        });        
+    });
+
+    describe('verify', () => {
+        const SECRET = 'supersecretkey';
+        const WRONG_SECRET = 'wrongsecret';
+
+        it('Verifies a correctly signed value', async () => {
+            const cookies = new Cookies(createCtx(), {});
+            const signed = await cookies.sign('secureValue', SECRET);
+            const verified = await cookies.verify(signed, SECRET);
+            expect(verified).toBe('secureValue');
+        });
+
+        it('Fails verification with wrong secret', async () => {
+            const cookies = new Cookies(createCtx(), {});
+            const signed = await cookies.sign('importantData', SECRET);
+            const verified = await cookies.verify(signed, WRONG_SECRET);
+            expect(verified).toBe(null);
+        });
+
+        it('Fails verification if value is tampered', async () => {
+            const cookies = new Cookies(createCtx(), {});
+            const signed = await cookies.sign('original', SECRET);
+            const tampered = signed.replace('original', 'hacked');
+            const spy = vi.spyOn(cookies as any, 'generateHMAC');
+            const verified = await cookies.verify(tampered, SECRET);
+            expect(verified).toBe(null);
+            expect(spy).toHaveBeenNthCalledWith(1, 'hacked', SECRET, {algorithm: 'SHA-256'});
+        });
+
+        it('Fails verification if signature is tampered', async () => {
+            const cookies = new Cookies(createCtx(), {});
+            const signed = await cookies.sign('data', SECRET);
+            const tampered = signed.replace(/\.[0-9a-f]+$/, '.badbadbad');
+            const spy = vi.spyOn(cookies as any, 'generateHMAC');
+            const verified = await cookies.verify(tampered, SECRET);
+            expect(verified).toBe(null);
+            expect(spy).toHaveBeenNthCalledWith(1, 'data', SECRET, {algorithm: 'SHA-256'});
+        });
+
+        it('Supports multi-secret rotation', async () => {
+            const cookies = new Cookies(createCtx(), {});
+            const signed = await cookies.sign('rotatingValue', SECRET);
+            const spy = vi.spyOn(cookies as any, 'generateHMAC');
+            const verified = await cookies.verify(signed, [WRONG_SECRET, SECRET]);
+            expect(verified).toBe('rotatingValue');
+            expect(spy).toHaveBeenNthCalledWith(1, 'rotatingValue', WRONG_SECRET, {algorithm: 'SHA-256'});
+            expect(spy).toHaveBeenNthCalledWith(2, 'rotatingValue', SECRET, {algorithm: 'SHA-256'});
+        });
+
+        it('Handles invalid input gracefully', async () => {
+            const cookies = new Cookies(createCtx(), {});
+            const spy = vi.spyOn(cookies as any, 'generateHMAC');
+            for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
+                expect(await cookies.verify(el as string, SECRET)).toBe(null);
+            }
+            expect(spy).not.toHaveBeenCalled();
+        });
+
+        it('Handles malformed secret gracefully', async () => {
+            const cookies = new Cookies(createCtx(), {});
+            const signed = await cookies.sign('rotatingValue', SECRET);
+            const spy = vi.spyOn(cookies as any, 'generateHMAC');
+            for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
+                if (Array.isArray(el)) continue;
+                expect(await cookies.verify(signed, el as string)).toBe(null);
+            }
+
+            for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
+                expect(await cookies.verify(signed, [el as string])).toBe(null);
+            }
+            expect(spy).not.toHaveBeenCalled();
+        });
+
+        it('Does not modify outgoing cookies when only verifying', async () => {
+            const cookies = new Cookies(createCtx(), {});
+            const signed = await cookies.sign('check', SECRET);
+            await cookies.verify(signed, SECRET);
+            expect(cookies.outgoing).toEqual([]);
+        });
+
+        it('Handles very long secrets correctly', async () => {
+            const longSecret = 'x'.repeat(1000);
+            const cookies = new Cookies(createCtx(), {});
+            const signed = await cookies.sign('longtest', longSecret);
+            const verified = await cookies.verify(signed, longSecret);
+            expect(verified).toBe('longtest');
+        });
+        
+        it('Handles very long values correctly', async () => {
+            const longValue = 'data'.repeat(1000);
+            const cookies = new Cookies(createCtx(), {});
+            const signed = await cookies.sign(longValue, SECRET);
+            const verified = await cookies.verify(signed, SECRET);
+            expect(verified).toBe(longValue);
+        });
+
+        describe('Mixed secret/algorithm array', () => {
+            const SECRET_SHA256 = 'secret256';
+            const SECRET_SHA512 = 'secret512';
+        
+            afterEach(() => {
+                vi.restoreAllMocks();
+            });
+        
+            it('Verifies against correct secret + algorithm combo', async () => {
+                const cookies = new Cookies(createCtx(), {});
+                const signed512 = await cookies.sign('secure512', SECRET_SHA512, {algorithm: 'SHA-512'});
+                const spy = vi.spyOn(cookies as any, 'generateHMAC');        
+                const verified = await cookies.verify(signed512, [
+                    {val: WRONG_SECRET, algorithm: 'SHA-512'},
+                    {val: SECRET_SHA512, algorithm: 'SHA-512'},
+                ]);
+                expect(verified).toBe('secure512');
+                expect(spy).toHaveBeenNthCalledWith(1, 'secure512', WRONG_SECRET, {algorithm: 'SHA-512'});
+                expect(spy).toHaveBeenNthCalledWith(2, 'secure512', SECRET_SHA512, {algorithm: 'SHA-512'});
+            });
+        
+            it('Fails when algorithm is mismatched even if secret matches', async () => {
+                const cookies = new Cookies(createCtx(), {});        
+                const signed512 = await cookies.sign('secure512', SECRET_SHA512, {algorithm: 'SHA-512'});
+                const spy = vi.spyOn(cookies as any, 'generateHMAC');
+                const verified = await cookies.verify(signed512, [
+                    {val: SECRET_SHA512, algorithm: 'SHA-256'}, /* wrong algo */
+                    {val: WRONG_SECRET, algorithm: 'SHA-512'},
+                ]);
+                expect(verified).toBe(null);
+                expect(spy).toHaveBeenNthCalledWith(1, 'secure512', SECRET_SHA512, {algorithm: 'SHA-256'});
+                expect(spy).toHaveBeenNthCalledWith(2, 'secure512', WRONG_SECRET, {algorithm: 'SHA-512'});
+            });
+        
+            it('Falls back to plain string secrets with shared options', async () => {
+                const cookies = new Cookies(createCtx(), {});
+                const signed256 = await cookies.sign('secure256', SECRET_SHA256, {algorithm: 'SHA-256'});
+        
+                const spy = vi.spyOn(cookies as any, 'generateHMAC');
+                const verified = await cookies.verify(signed256, [WRONG_SECRET, SECRET_SHA256], {algorithm: 'SHA-256'});
+                expect(verified).toBe('secure256');
+                expect(spy).toHaveBeenNthCalledWith(1, 'secure256', WRONG_SECRET, {algorithm: 'SHA-256'});
+                expect(spy).toHaveBeenNthCalledWith(2, 'secure256', SECRET_SHA256, {algorithm: 'SHA-256'});
+            });
+        
+            it('Supports mixed array of strings and {val, algo} objects', async () => {
+                const cookies = new Cookies(createCtx(), {});        
+                const signed512 = await cookies.sign('mixedValue', SECRET_SHA512, {algorithm: 'SHA-512'});
+                const spy = vi.spyOn(cookies as any, 'generateHMAC');
+                const verified = await cookies.verify(signed512, [
+                    WRONG_SECRET,
+                    {val: SECRET_SHA512, algorithm: 'SHA-512'},
+                ], {algorithm: 'SHA-256'});
+        
+                expect(verified).toBe('mixedValue');
+                expect(spy).toHaveBeenNthCalledWith(1, 'mixedValue', WRONG_SECRET, {algorithm: 'SHA-256'});
+                expect(spy).toHaveBeenNthCalledWith(2, 'mixedValue', SECRET_SHA512, {algorithm: 'SHA-512'});
+            });
+        
+            it('Returns null if no matching secret+algo combo is found', async () => {
+                const cookies = new Cookies(createCtx(), {});        
+                const signed256 = await cookies.sign('noMatch', SECRET_SHA256, {algorithm: 'SHA-256'});
+        
+                const spy = vi.spyOn(cookies as any, 'generateHMAC');
+                const verified = await cookies.verify(signed256, [
+                    {val: SECRET_SHA512, algorithm: 'SHA-512'}, /* wrong algo */
+                    {val: WRONG_SECRET, algorithm: 'SHA-256'},
+                ]);
+        
+                expect(verified).toBe(null);
+                expect(spy).toHaveBeenNthCalledWith(1, 'noMatch', SECRET_SHA512, {algorithm: 'SHA-512'});
+                expect(spy).toHaveBeenNthCalledWith(2, 'noMatch', WRONG_SECRET, {algorithm: 'SHA-256'});
+            });
+
+            it('Falls back to global verify options if secret object has no algorithm', async () => {
+                const cookies = new Cookies(createCtx(), {});
+                const signed = await cookies.sign('verifyFallback', 'testsecret', {algorithm: 'SHA-512'});
+            
+                const spy = vi.spyOn(cookies as any, 'generateHMAC');
+                const verified = await cookies.verify(signed, [{val: 'testsecret'} as any], {algorithm: 'SHA-512'});
+                expect(verified).toBe('verifyFallback');
+                expect(spy).toHaveBeenNthCalledWith(1, 'verifyFallback', 'testsecret', {algorithm: 'SHA-512'});
+            });            
+        });
+    });
+
+    describe('sign + set + verify', () => {
+        const SECRET = 'supersecretkey';
+    
+        it('Signs and sets a cookie, then verifies from combined map', async () => {
+            const cookies = new Cookies(createCtx(), {});
+            const signed = await cookies.sign('userId42', SECRET);
+            cookies.set('session', signed);
+    
+            expect(cookies.outgoing).toEqual([
+                'session=userId42.a17e1fa187e5bef2af6e7c2c455364dfcd46ad8f09523100474125567d58d5b3; Secure',
+            ]);
+    
+            const savedCookie = cookies.get('session');
+            const decodedCookie = decodeURIComponent(savedCookie!);
+    
+            const verified = await cookies.verify(decodedCookie, SECRET);
+            expect(verified).toBe('userId42');
+        });
+    
+        it('Properly reflects signed cookie in all() state', async () => {
+            const cookies = new Cookies(createCtx(), {});
+            const signed = await cookies.sign('mydata', SECRET);
+            cookies.set('signedCookie', signed);
+            const allCookies = cookies.all();
+            expect(allCookies).toEqual({
+                signedCookie: 'mydata.eac56be63e1bed8b240035ec47620bcfba2972cf0920e17e6bf264db54b8e9b6',
+            });
+        });
+        
+        it('Fails verify if outgoing cookie is tampered before verify', async () => {
+            const cookies = new Cookies(createCtx(), {});
+            const signed = await cookies.sign('safeData', SECRET);
+            cookies.set('secureCookie', signed);
+        
+            const outgoing = cookies.outgoing[0];
+            const tampered = outgoing.replace('safeData', 'hackedData').split('=')[1].split(';')[0];
+        
+            const verified = await cookies.verify(decodeURIComponent(tampered), SECRET);
+            expect(verified).toBe(null);
+        });        
     });
 });

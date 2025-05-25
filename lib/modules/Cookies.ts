@@ -1,7 +1,8 @@
 /* eslint-disable complexity */
 
-import {isInt} from '@valkyriestudios/utils/number';
+import {LRU} from '@valkyriestudios/utils/caching';
 import {isDate, addUTC, diff} from '@valkyriestudios/utils/date';
+import {isInt, isNum} from '@valkyriestudios/utils/number';
 import {isObject} from '@valkyriestudios/utils/object';
 import {isNeString, isString} from '@valkyriestudios/utils/string';
 import {type TriFrostContext} from '../types/context';
@@ -28,6 +29,16 @@ export type TriFrostCookieDeleteOptions = {
 const RGX_NAME = /^[a-zA-Z0-9!#$%&'*+\-.^_`|~]+$/;
 const RGX_VALUE = /^[\x20-\x7E]*$/;
 
+const HMACAlgos = {
+    'SHA-256': true,
+    'SHA-384': true,
+    'SHA-512': true,
+} as const;
+
+export type SigningAlgorithm = `${keyof typeof HMACAlgos}`;
+
+type SigningOptions = {algorithm: SigningAlgorithm};
+
 export class Cookies {
 
     #ctx:TriFrostContext;
@@ -43,6 +54,12 @@ export class Cookies {
 
     /* Incoming/Outgoing values (for usage in eg .all or .get) */
     #combined:Record<string, string> = {};
+
+    /* Scoped TextEncoder instance */
+    #encoder:TextEncoder = new TextEncoder();
+
+    /* HMAC Key cache */
+    #keyCache:LRU<string, CryptoKey> = new LRU({max_size: 50});
 
     constructor (ctx:TriFrostContext, config:Partial<TriFrostCookieOptions> = {}) {
         this.#ctx = ctx;
@@ -166,6 +183,59 @@ export class Cookies {
     }
 
     /**
+     * Sign a value with an HMAC signature
+     * 
+     * @param {string|number} val - Value to sign
+     * @param {string} secret - Signing secret
+     * @param {SigningOptions} options - Options for signing (defaults to {algorithm: 'SHA-256'})
+     */
+    async sign (val:string|number, secret: string, options:SigningOptions = {algorithm: 'SHA-256'}): Promise<string> {
+        if (
+            !isNeString(secret) || 
+            (!isString(val) && !isNum(val))
+        ) return '';
+        
+        const sig = await this.generateHMAC(String(val), secret, options);
+        return val + '.' + sig;
+    }
+
+    /**
+     * Verifies a signed cookie has not been tampered with, returns the value if untampered
+     * 
+     * @param {string} signed - Signed cookie value
+     * @param {string|(string|(SigningOptions & {val:string}))[]} secrets - Secret or Secrets to check
+     * @param {SigningOptions} options - Options for verifying (defaults to {algorithm: 'SHA-256'})
+     */
+    async verify (
+        signed:string,
+        secrets:string|(string|(SigningOptions & {val:string}))[],
+        options:SigningOptions = {algorithm: 'SHA-256'}
+    ) {
+        const idx = isNeString(signed) ? signed.lastIndexOf('.') : -1;
+        if (idx === -1) return null;
+    
+        const val = signed.slice(0, idx);
+        const sig = signed.slice(idx + 1);
+    
+        for (const secret of Array.isArray(secrets) ? secrets : [secrets]) {
+            if (isNeString(secret)) {
+                const expected_sig = await this.generateHMAC(val, secret, options);
+                if (expected_sig === sig) return val;
+            } else if (isNeString(secret?.val)) {
+                const expected_sig = await this.generateHMAC(
+                    val,
+                    secret.val,
+                    isNeString(secret?.algorithm) ? {algorithm: secret.algorithm} : options
+                );
+                if (expected_sig === sig) return val;
+            }
+        }
+    
+        this.#ctx.logger.warn('TriFrostCookies@verify: Signature mismatch');
+        return null;
+    }
+
+    /**
      * Delete a cookie by name. Take note that the path/domain for a cookie need to be correct for it to be deleted
      *
      * @param {string|{prefix:string}} val - Name of the cookie to delete or the prefix of the cookies to delete
@@ -218,6 +288,37 @@ export class Cookies {
         if (name in this.#outgoing) delete this.#outgoing[name];
         if (name in this.#incoming) this.set(name, '', options);
         if (name in this.#combined) delete this.#combined[name];
+    }
+
+    /**
+     * Generates HMAC for a specific value and a secret
+     * @param {string|number} data - Value to generate HMAC for
+     * @param {string} secret - Signing secret
+     * @param {SigningOptions} options - HMAC Options
+     * @returns 
+     */
+    private async generateHMAC (data:string, secret:string, options:SigningOptions) {
+        const algo = options?.algorithm in HMACAlgos ? options.algorithm : 'SHA-256';
+        const cacheKey = algo + ':' + secret;
+
+        /* Because key imports are relatively expensive we place them in a private LRU */
+        let key = this.#keyCache.get(cacheKey);
+        if (!key) {
+            key = await crypto.subtle.importKey(
+                'raw',
+                this.#encoder.encode(secret),
+                {name: 'HMAC', hash: {name: algo}},
+                false,
+                ['sign']
+            );
+            this.#keyCache.set(cacheKey, key);
+        }
+    
+        const sig_buf = await crypto.subtle.sign('HMAC', key, this.#encoder.encode(String(data)));
+        const sig_arr = new Uint8Array(sig_buf);
+        let hex = '';
+        for (let i = 0; i < sig_arr.length; i++) hex += sig_arr[i].toString(16).padStart(2, '0');
+        return hex;
     }
 
 }
