@@ -56,6 +56,20 @@ router
     return ctx.json({message: 'Bearer token validated'});
   });
 ```
+- **feat**: New **ApiKeyAuth** middleware — API key validation using configurable headers or query params
+```typescript
+import {ApiKeyAuth} from '@trifrost/core';
+
+router
+  .use(ApiKeyAuth({
+    header: 'x-api-key',
+    validate: (ctx, key) => key === ctx.env.MY_API_KEY
+  }))
+  .get('/api-key-protected', ctx => {
+    const auth = ctx.state.$auth; // { key: 'actual-key' }
+    return ctx.json({message: 'API key validated'});
+  });
+```
 ## [0.17.0] - 2025-05-23
 This patch introduces first-class animation support into the TriFrost styling engine. You can now define, register, and reuse `@keyframes` using the same ergonomic API as `css()` — with full support for SSR, media queries, deduplication, and cross-engine reuse via LRU.
 
