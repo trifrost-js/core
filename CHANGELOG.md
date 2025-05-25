@@ -101,6 +101,8 @@ const app = new App<Env>({env: process.env});
 const app = new App<Env>({});
 ```
 - **qol**: You can still provide a user-defined `env` object in `AppOptions`, this will now be automatically merged with the runtime-provided environment (such as `process.env` in Node/Bun) at boot time.
+- **qol**: The `uWSRuntime` has improved version detection — it now properly reports `bun:<version>` when running under Bun, or `node:<version>` when under Node.js, falling back to `N/A` if unknown. Important to note that these runtime properties are also part of telemetry traces.
+
 ## [0.17.0] - 2025-05-23
 This patch introduces first-class animation support into the TriFrost styling engine. You can now define, register, and reuse `@keyframes` using the same ergonomic API as `css()` — with full support for SSR, media queries, deduplication, and cross-engine reuse via LRU.
 

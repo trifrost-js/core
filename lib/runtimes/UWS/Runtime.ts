@@ -18,6 +18,9 @@ export class UWSRuntime implements TriFrostRuntime {
     /* UWS App instance */
     #app: ReturnType<(typeof import('uWebSockets.js'))['App']> | null = null;
 
+    /* Runtime version */
+    #version:string|null = null;
+
     /* UWS Socket when runtime has started */
     #socket: Socket | null = null;
 
@@ -38,7 +41,29 @@ export class UWSRuntime implements TriFrostRuntime {
     }
 
     get version () {
-        return null;
+        if (this.#version) return this.#version;
+
+        try {
+            if (Bun.version) {
+                this.#version = 'bun:' + Bun.version;
+                return this.#version;
+            }
+        } catch {
+            /* Nothing to do here */
+        }
+
+        try {
+            if (process.version) {
+                this.#version = 'node:' + process.version;
+                return this.#version;
+            }
+        } catch {
+            /* Nothing to do here */     
+        }
+
+        this.#version = 'N/A';
+        return this.#version;
+    }
 
     get env () {
         return process.env || {};
