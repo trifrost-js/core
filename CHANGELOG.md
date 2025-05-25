@@ -33,6 +33,18 @@ const verified = await ctx.cookies.verify(signed, [
 if (verified) console.log('Valid order token:', verified);
 else console.log('Invalid or outdated token');
 ```
+- **feat**: New **BasicAuth** middleware — HTTP Basic Authentication via the `Authorization` header
+```typescript
+import {BasicAuth} from '@trifrost/core';
+
+router
+  .use(BasicAuth({
+    validate: (ctx, {user, pass}) => user === 'admin' && pass === ctx.env.ADMIN_SECRET
+  }))
+  .get('/basic-protected', ctx => {
+    return ctx.json({message: `Welcome, ${ctx.state.$auth.user}`});
+  });
+```
 ## [0.17.0] - 2025-05-23
 This patch introduces first-class animation support into the TriFrost styling engine. You can now define, register, and reuse `@keyframes` using the same ergonomic API as `css()` — with full support for SSR, media queries, deduplication, and cross-engine reuse via LRU.
 
