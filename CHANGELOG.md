@@ -11,7 +11,6 @@ This update brings subtle but powerful improvements across TriFrost’s core —
 - **feat**: The `Cookies` module now supports built-in HMAC signing and verification using Web Crypto (supported across **Node**, **Bun** and **Workerd**). It provides `.sign()` to generate an HMAC-signed value and `.verify()` to check integrity. Supported algorithms: `SHA-256`, `SHA-384`, `SHA-512`.
 ```typescript
 /* Basic Usage */
-
 const signed = await ctx.cookies.sign('userId42', ctx.env.MY_COOKIE_SECRET);
 ctx.cookies.set('session', signed);
 
@@ -28,8 +27,8 @@ else console.log('Signature invalid or tampered!');
 const signed = await ctx.cookies.sign('orderToken', 'newSecret', {algorithm: 'SHA-512'});
 
 const verified = await ctx.cookies.verify(signed, [
-    {val: 'newSecret', algorithm: 'SHA-512'}, // current
-    {val: 'oldSecret', algorithm: 'SHA-256'}, // legacy fallback
+    {val: 'newSecret', algorithm: 'SHA-512'}, /* current */
+    {val: 'oldSecret', algorithm: 'SHA-256'}, /* legacy fallback */
 ]);
 
 if (verified) console.log('Valid order token:', verified);
@@ -54,7 +53,7 @@ import {BearerAuth} from '@trifrost/core';
 router
   .use(BearerAuth({validate: (ctx, token) => token === ctx.env.API_TOKEN}))
   .get('/bearer-protected', ctx => {
-    const auth = ctx.state.$auth; // { token: 'actual-token' }
+    const auth = ctx.state.$auth; /* { token: 'actual-token' } */
     return ctx.json({message: 'Bearer token validated'});
   });
 ```
@@ -68,7 +67,7 @@ router
     validate: (ctx, key) => key === ctx.env.MY_API_KEY
   }))
   .get('/api-key-protected', ctx => {
-    const auth = ctx.state.$auth; // { key: 'actual-key' }
+    const auth = ctx.state.$auth; /* { key: 'actual-key' } */
     return ctx.json({message: 'API key validated'});
   });
 ```
@@ -81,13 +80,13 @@ router
     cookie: 'session_id',
     secret: {val: ctx => ctx.env.SESSION_SECRET, algorithm: 'SHA-256'},
     validate: (ctx, session) => {
-      // Optionally enrich $auth with custom object
+      /* Optionally enrich $auth with custom object */
       const user = lookupSession(session);
       return user ? {id: user.id, role: user.role} : false;
     }
   }))
   .get('/session-protected', ctx => {
-    const auth = ctx.state.$auth; // {id: '123', role: 'admin'}
+    const auth = ctx.state.$auth; /* {id: '123', role: 'admin'} */
     return ctx.json({message: `Hello, user ${auth.id} with role ${auth.role}`});
   });
 ```
@@ -98,14 +97,14 @@ router
 import {App} from '@trifrost/core';
 import {type Env} from './types';
 
-/* This one and the one below would yield the same effective env */
+/* This one and the one below will now yield the same effective env */
 const app = new App<Env>({env: process.env});
 const app = new App<Env>({});
 ```
 - **qol**: You can still provide a user-defined `env` object in `AppOptions`, this will now be automatically merged with the runtime-provided environment (such as `process.env` in Node/Bun) at boot time.
 - **qol**: The `uWSRuntime` has improved version detection — it now properly reports `bun:<version>` when running under Bun, or `node:<version>` when under Node.js, falling back to `N/A` if unknown. Important to note that these runtime properties are also part of telemetry traces.
 
-**Notes on Auth Middleware**:
+### Notes on Auth Middleware
 - Each middleware exposes a type-safe, ergonomic API with built-in `$auth` state injection for downstream handlers.
 - When `validate()` returns an object, that object becomes the $auth state; if it returns true, a fallback object is injected (e.g., {user}, {token}, {key}, or {cookie}), and if it returns false, the request is rejected with a `401 Unauthorized`.
 
