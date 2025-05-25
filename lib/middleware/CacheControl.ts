@@ -78,7 +78,6 @@ export function ParseAndApplyCacheControl (ctx:TriFrostContext, opts:TriFrostCac
 export function CacheControl (opts:TriFrostCacheControlOptions = {}) {
     const val = parse(opts);
 
-    /* Add symbols for introspection/use further down the line */
     const mware = function TriFrostCacheControlMiddleware <T extends TriFrostContext> (ctx:T):void {
         if (val) ctx.setHeader('Cache-Control', val);
     };

@@ -70,6 +70,25 @@ router
     return ctx.json({message: 'API key validated'});
   });
 ```
+- **feat**: New **SessionCookieAuth** middleware - HMAC-signed cookie validation (integrated with the new cookie signing)
+```typescript
+import {SessionCookieAuth} from '@trifrost/core';
+
+router
+  .use(SessionCookieAuth({
+    cookie: 'session_id',
+    secret: {val: ctx => ctx.env.SESSION_SECRET, algorithm: 'SHA-256'},
+    validate: (ctx, session) => {
+      // Optionally enrich $auth with custom object
+      const user = lookupSession(session);
+      return user ? {id: user.id, role: user.role} : false;
+    }
+  }))
+  .get('/session-protected', ctx => {
+    const auth = ctx.state.$auth; // {id: '123', role: 'admin'}
+    return ctx.json({message: `Hello, user ${auth.id} with role ${auth.role}`});
+  });
+```
 ## [0.17.0] - 2025-05-23
 This patch introduces first-class animation support into the TriFrost styling engine. You can now define, register, and reuse `@keyframes` using the same ergonomic API as `css()` — with full support for SSR, media queries, deduplication, and cross-engine reuse via LRU.
 

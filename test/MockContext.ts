@@ -24,9 +24,9 @@ import {Logger, type TriFrostLogger} from '../lib/modules/Logger';
 import {type JSXElement} from '../lib/modules/JSX';
 import {MemoryCache} from '../lib/storage/Memory';
 
-export class MockContext <
-    State extends Record<string, unknown> = Record<string, unknown>,
-> implements TriFrostContext {
+export class MockContext<
+    State extends Record<string | number, unknown> = Record<string | number, unknown>,
+> implements TriFrostContext<any, State> {
     #headers:Record<string, string>;
     #method: HttpMethod;
     #status: HttpStatus | HttpStatusCode = 200;
@@ -104,14 +104,14 @@ export class MockContext <
     get $status() { return this.#status}
     get $body() { return this.#body}
 
-    setState = <S extends Record<string, unknown>>(patch: S): TriFrostContext<any, any> => {
+    setState = <S extends Record<string | number, unknown>>(patch: S): TriFrostContext<any, State & S> => {
         this.#state = {...this.#state, ...patch};
-        return this as TriFrostContext<any, any>;
+        return this as unknown as TriFrostContext<any, State & S>;
     };
 
-    delState = <K extends keyof State>(keys: K[]): TriFrostContext<any, any> => {
+    delState = <K extends keyof State>(keys: K[]): TriFrostContext<any, Omit<State, K>> => {
         for (const key of keys) delete this.#state[key];
-        return this as TriFrostContext<any, any>;
+        return this as unknown as TriFrostContext<any, Omit<State, K>>;
     };
 
     setHeader = (key: string, value: string|number): void => {

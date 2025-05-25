@@ -15,9 +15,13 @@ export {type TriFrostRouter} from './types/routing';
 
 /* Middleware */
 export {
+    ApiKeyAuth,
+    BasicAuth,
+    BearerAuth,
     CacheControl,
     Cors,
-    Security
+    Security,
+    SessionCookieAuth
 } from './middleware';
 
 /* Modules - Cache */
