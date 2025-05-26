@@ -676,8 +676,17 @@ export abstract class Context <
             /* Cache Control */
             if (opts?.cache) ParseAndApplyCacheControl(this, opts.cache);
 
-            this.res_headers['Content-Type'] = MimeTypes.HTML;
-            this.res_body = typeof body === 'string' ? body : rootRender(body);
+            /* Set mime type if no mime type was set already */
+            if (!this.res_headers['Content-Type']) this.res_headers['Content-Type'] = MimeTypes.HTML;
+
+            /* Render html */
+            let html = typeof body === 'string' ? body : rootRender(body);
+
+            /* Auto-prepend <!DOCTYPE html> if starts with <html */
+            html = html.trimStart();
+            if (html.startsWith('<html')) html = '<!DOCTYPE html>' + html;
+
+            this.res_body = html;
             this.setStatus(opts?.status ?? HttpStatuses.OK);
             this.end();
         } catch (err) {

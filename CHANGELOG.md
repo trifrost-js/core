@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Improved
+- **feat**: `ctx.html` will now automatically prefix a `<!DOCTYPE html>` when it detects a full-page html body starting with `<html`
+
 ## [0.19.1] - 2025-05-26
 ### Fixed
 - Fix an issue introduced in TriFrost 0.18.0 where race conditions sometimes prevented Workerd env from being resolved on time
