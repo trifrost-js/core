@@ -1606,6 +1606,97 @@ describe('Modules - JSX - style - use', () => {
             });
         });
 
+        describe('css.attr', () => {
+            let css: ReturnType<typeof createCss>;
+        
+            beforeEach(() => {
+                css = createCss();
+            });
+        
+            it('generates attribute equals selector with attr()', () => {
+                const cls = css({
+                    [css.attr('data-active', true)]: {color: 'red'},
+                });
+        
+                expect(engine.inject(`${MARKER}<div class="${cls}">Attr Equals</div>`)).toBe([
+                    '<style>',
+                    '.tf-1prf8nr[data-active="true"]{color:red}',
+                    '</style>',
+                    '<div class="tf-1prf8nr">Attr Equals</div>',
+                ].join(''));
+            });
+        
+            it('generates attribute presence selector with attr()', () => {
+                const cls = css({
+                    [css.attr('disabled')]: {opacity: 0.5},
+                });
+        
+                expect(engine.inject(`${MARKER}<div class="${cls}">Attr Presence</div>`)).toBe([
+                    '<style>',
+                    '.tf-10d7b0h[disabled]{opacity:0.5}',
+                    '</style>',
+                    '<div class="tf-10d7b0h">Attr Presence</div>',
+                ].join(''));
+            });
+        
+            it('generates starts-with attribute selector with attrStartsWith()', () => {
+                const cls = css({
+                    [css.attrStartsWith('data-role', 'adm')]: {fontWeight: 'bold'},
+                });
+        
+                expect(engine.inject(`${MARKER}<div class="${cls}">Attr Starts With</div>`)).toBe([
+                    '<style>',
+                    '.tf-1i3yt6f[data-role^="adm"]{font-weight:bold}',
+                    '</style>',
+                    '<div class="tf-1i3yt6f">Attr Starts With</div>',
+                ].join(''));
+            });
+        
+            it('generates ends-with attribute selector with attrEndsWith()', () => {
+                const cls = css({
+                    [css.attrEndsWith('data-id', '42')]: {opacity: 0.5},
+                });
+        
+                expect(engine.inject(`${MARKER}<div class="${cls}">Attr Ends With</div>`)).toBe([
+                    '<style>',
+                    '.tf-qboq1q[data-id$="42"]{opacity:0.5}',
+                    '</style>',
+                    '<div class="tf-qboq1q">Attr Ends With</div>',
+                ].join(''));
+            });
+        
+            it('generates contains attribute selector with attrContains()', () => {
+                const cls = css({
+                    [css.attrContains('data-label', 'part')]: {textDecoration: 'underline'},
+                });
+        
+                expect(engine.inject(`${MARKER}<div class="${cls}">Attr Contains</div>`)).toBe([
+                    '<style>',
+                    '.tf-9ofipt[data-label*="part"]{text-decoration:underline}',
+                    '</style>',
+                    '<div class="tf-9ofipt">Attr Contains</div>',
+                ].join(''));
+            });
+        
+            it('allows combining multiple attr selectors', () => {
+                const cls = css({
+                    [css.attr('data-active', true)]: {color: 'green'},
+                    [css.attrStartsWith('data-role', 'adm')]: {fontWeight: 'bold'},
+                    [css.attrEndsWith('data-id', '42')]: {opacity: 0.5},
+                    [css.attrContains('data-label', 'part')]: {textDecoration: 'underline'},
+                });
+        
+                expect(engine.inject(`${MARKER}<div class="${cls}">Attr Combo</div>`)).toBe([
+                    '<style>',
+                    '.tf-ijybug[data-active="true"]{color:green}',
+                    '.tf-ijybug[data-role^="adm"]{font-weight:bold}',
+                    '.tf-ijybug[data-id$="42"]{opacity:0.5}',
+                    '.tf-ijybug[data-label*="part"]{text-decoration:underline}',
+                    '</style>',
+                    '<div class="tf-ijybug">Attr Combo</div>',
+                ].join(''));
+            });
+        });
     });
 
     describe('keyframes', () => {

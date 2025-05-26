@@ -59,12 +59,16 @@ type CssGeneric <Breakpoints extends Record<string, string> = typeof DEFAULT_BRE
     selection:string;
 
     /* Dynamic Selectors */
+    attr:(name:string, value?:string|number|boolean) => string;
+    attrStartsWith:(name:string, value:string|number|boolean) => string;
+    attrEndsWith:(name:string, value:string|number|boolean) => string;
+    attrContains:(name:string, value:string|number|boolean) => string;
     nthChild:(i:number|string) => string;
     nthLastChild:(i:number|string) => string;
     nthOfType:(i:number|string) => string;
     nthLastOfType:(i:number|string) => string;
     not:(selector:string) => string;
-    is:(selector:string) => string;
+    is:(...selectors:string[]) => string;
     where:(selector:string) => string;
     has:(selector:string) => string;
     dir:(dir:'ltr'|'rtl') => string;
@@ -248,6 +252,13 @@ function cssFactory <
     mod.where = (selector:string) => ':where(' + selector + ')';
     mod.has = (selector:string) => ':has(' + selector + ')';
     mod.dir = (dir:'ltr' | 'rtl') => ':dir(' + dir + ')';
+    mod.attr = (name:string, value?:string|number|boolean) => {
+        if (value === undefined) return '[' + name + ']';
+        return '[' + name + '="' + String(value) + '"]';
+    };
+    mod.attrStartsWith = (name:string, value:string|number|boolean) => '[' + name + '^="' + String(value) + '"]';
+    mod.attrEndsWith = (name:string, value:string|number|boolean) => '[' + name + '$="' + String(value) + '"]';
+    mod.attrContains = (name:string, value:string|number|boolean) => '[' + name + '*="' + String(value) + '"]';
 
     /* Media Queries */
     mod.media = {...FIXED_FEATURE_QUERIES, ...breakpoints};

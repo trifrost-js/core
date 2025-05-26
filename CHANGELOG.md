@@ -26,6 +26,16 @@ const cls = css({
   [css.media.md]: {fontSize: '1rem'},
 });
 ```
+- **feat**: New attribute selector helpers `css.attr`, `css.attrStartsWith`, `css.attrEndsWith`, `css.attrContains`. These are there to improve readability and avoid manually writing raw string selectors (and potentially forgetting that closing `]`, I know I have).
+```typescript
+const cls = css({
+  [css.attr('data-enabled')]: {color: 'blue'}, /* [data-enabled] */
+  [css.attr('data-active', true)]: {color: 'green'}, /* [data-active="true"] */
+  [css.attrStartsWith('data-role', 'adm')]: {fontWeight: 'bold'}, /* [data-role^="adm"] */
+  [css.attrEndsWith('data-id', '42')]: {opacity: 0.5}, /* [data-id$="42"] */
+  [css.attrContains('data-label', 'part')]: {textDecoration: 'underline'}, /* [data-label*="part"] */
+});
+```
 ### Improved
 - **feat**: `.is()` selector can now be passed a set of tags like: `css.is('h1', 'h2', 'h3')`
 ```typescript
