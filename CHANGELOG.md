@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ## [Unreleased]
 ### Improved
 - **feat**: `ctx.html` will now automatically prefix a `<!DOCTYPE html>` when it detects a full-page html body starting with `<html`
+- **feat**: `ctx.html`, `ctx.json`, `ctx.text` and `ctx.file` will no longer set the `Content-Type` if a `Content-Type` already exists on the response headers, the default behavior remains the same if no `Content-Type` exists on the response headers
 
 ## [0.19.1] - 2025-05-26
 ### Fixed

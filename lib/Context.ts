@@ -643,9 +643,11 @@ export abstract class Context <
             const streamer = await this.getStream(path);
             if (!streamer) return this.status(HttpStatuses.NotFound);
 
-            /* Try determining the mime type from the path */
-            const mime = ExtensionToMimeType.get(path.split('.').pop() as string);
-            if (mime) this.res_headers['Content-Type'] = mime;
+            /* Try determining the mime type from the path if no mime type was set already */
+            if (!this.res_headers['Content-Type']) {
+                const mime = ExtensionToMimeType.get(path.split('.').pop() as string);
+                if (mime) this.res_headers['Content-Type'] = mime;
+            }
 
             /* Set Content-Disposition header depending on download option */
             if (opts?.download === true) {
@@ -707,7 +709,9 @@ export abstract class Context <
             /* Cache Control */
             if (opts?.cache) ParseAndApplyCacheControl(this, opts.cache);
 
-            this.res_headers['Content-Type'] = MimeTypes.JSON;
+            /* Set mime type if no mime type was set already */
+            if (!this.res_headers['Content-Type']) this.res_headers['Content-Type'] = MimeTypes.JSON;
+
             this.res_body = JSON.stringify(body);
             this.setStatus(opts?.status ?? HttpStatuses.OK);
             this.end();
@@ -744,7 +748,9 @@ export abstract class Context <
             /* Cache Control */
             if (opts?.cache) ParseAndApplyCacheControl(this, opts.cache);
 
-            this.res_headers['Content-Type'] = MimeTypes.TEXT;
+            /* Set mime type if no mime type was set already */
+            if (!this.res_headers['Content-Type']) this.res_headers['Content-Type'] = MimeTypes.TEXT;
+
             this.res_body = body;
             this.setStatus(opts?.status ?? HttpStatuses.OK);
             this.end();
