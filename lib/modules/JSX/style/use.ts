@@ -244,7 +244,7 @@ function cssFactory <
     mod.nthOfType = (i:number|string) => ':nth-of-type(' + i + ')';
     mod.nthLastOfType = (i:number|string) => ':nth-last-of-type(' + i + ')';
     mod.not = (selector:string) => ':not(' + selector + ')';
-    mod.is = (selector:string) => ':is(' + selector + ')';
+    mod.is = (...selectors: string[]) => ':is(' + selectors.join(', ') + ')';
     mod.where = (selector:string) => ':where(' + selector + ')';
     mod.has = (selector:string) => ':has(' + selector + ')';
     mod.dir = (dir:'ltr' | 'rtl') => ':dir(' + dir + ')';

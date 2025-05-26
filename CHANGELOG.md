@@ -27,7 +27,17 @@ const cls = css({
 });
 ```
 ### Improved
-- **feat**: The style engine will no longer automatically prepend styles if no Style marker is found, this prevents issues where html responses purely containing a component render get the entire root style block injected into them. Previously the only way to **prevent style injection** would have been to pass `{inject: false}` to each css call, but when working with components comprised of multiple layers (or have other components embedded in them) this is a no-go when it comes to DX.
+- **feat**: `.is()` selector can now be passed a set of tags like: `css.is('h1', 'h2', 'h3')`
+```typescript
+const cls = css({
+  [`> ${css.is('h1', 'h2', 'h3')}`]: {
+    fontSize: '2rem',
+    marginBottom: '1rem',
+  },
+});
+/* Generates: .<class> > :is(h1, h2, h3) { ... } */
+```
+- **feat**: The style engine will no longer automatically prepend styles if no Style marker is found, this prevents issues where html responses purely containing a component render get the entire root style block injected into them. Previously the only way to **prevent style injection** would have been to pass `{inject: false}` to each css call — but with multi-layer components, this was a DX blocker.
 
 ## [0.18.0] - 2025-05-25
 This update brings subtle but powerful improvements across TriFrost’s core — from smarter, cross-runtime environment handling to brand-new HMAC cookie signing, verification, and robust, production-ready authentication middleware.

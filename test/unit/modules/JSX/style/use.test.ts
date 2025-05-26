@@ -1,4 +1,4 @@
-/* eslint-disable max-len,max-lines */
+/* eslint-disable max-statements,max-len,max-lines */
 
 import {describe, it, expect, beforeEach} from 'vitest';
 import {createCss, getActiveStyleEngine, setActiveStyleEngine} from '../../../../../lib/modules/JSX/style/use';
@@ -1555,6 +1555,57 @@ describe('Modules - JSX - style - use', () => {
                 expect(css.media.dark).toBe('@media (prefers-color-scheme: dark)');
             });
         });
+        describe('css.is', () => {
+            let css: ReturnType<typeof createCss>;
+        
+            beforeEach(() => {
+                css = createCss();
+            });
+        
+            it('handles multiple arguments cleanly', () => {
+                const selector = css.is('h1', 'h2', 'h3');
+                expect(selector).toBe(':is(h1, h2, h3)');
+            });
+        
+            it('trims and splits comma-joined strings', () => {
+                const selector = css.is('h1, h2', 'h3');
+                expect(selector).toBe(':is(h1, h2, h3)');
+            });
+        
+            it('allows single selector', () => {
+                const selector = css.is('h1');
+                expect(selector).toBe(':is(h1)');
+            });
+        
+            it('works in actual style declaration', () => {
+                const cls = css({
+                    [` *${css.is('h1', 'h2', 'h3')}`]: {
+                        fontWeight: 'bold',
+                    },
+                });
+                expect(engine.inject(`${MARKER}<div class="${cls}">Headers</div>`)).toBe([
+                    '<style>',
+                    '.tf-1b6zzds *:is(h1, h2, h3){font-weight:bold}',
+                    '</style>',
+                    '<div class="tf-1b6zzds">Headers</div>',
+                ].join(''));
+            });
+        
+            it('works combined with combinators', () => {
+                const cls = css({
+                    [`> ${css.is('h1', 'h2')}`]: {
+                        fontSize: '2rem',
+                    },
+                });
+                expect(engine.inject(`${MARKER}<div class="${cls}">Direct Headers</div>`)).toBe([
+                    '<style>',
+                    '.tf-4jrbvv > :is(h1, h2){font-size:2rem}',
+                    '</style>',
+                    '<div class="tf-4jrbvv">Direct Headers</div>',
+                ].join(''));
+            });
+        });
+
     });
 
     describe('keyframes', () => {
