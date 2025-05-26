@@ -39,10 +39,6 @@ export class NodeRuntime implements TriFrostRuntime {
         return process.version || 'N/A';
     }
 
-    get env () {
-        return process.env || {};
-    }
-
     async boot (opts:TriFrostRuntimeBootOptions):Promise<void> {
         let createServer: typeof import('node:http')['createServer'];
         let statSync:typeof import('node:fs')['statSync'];
@@ -82,7 +78,11 @@ export class NodeRuntime implements TriFrostRuntime {
              * Take Note: Given that we don't know whether or not node will run standalone or
              * behind a proxy we default trustProxy to false here.
              */
-            const cfg = {trustProxy: false, ...opts.cfg};
+            const cfg = {
+                trustProxy: false,
+                ...opts.cfg,
+                env: {...process.env || {}, ...opts.cfg.env},
+            };
 
             /* Create new server instance */
             this.#server = createServer(async (req, res) => this.#onIncoming!(new NodeContext(

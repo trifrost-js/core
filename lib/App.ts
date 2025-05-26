@@ -357,30 +357,19 @@ class App <
                 notfoundMatcher,
             } = this.#computeAndFinalizeRoutes();
 
-            let resolved_env:Env|null = null;
-
             /* Start the runtime */
             await this.#runtime!.boot({
                 logger: this.#logger as TriFrostRootLogger,
-                cfg: Object.defineProperties({
+                cfg: {
                     cookies: this.#cookies.config,
                     cache: this.#cache as TriFrostCache,
                     host: this.#host,
                     port: isIntBetween(options?.port, 1, 65535) ? options?.port : 3000,
                     timeout: this.timeout ?? null,
                     requestId: this.#requestId,
-                    env: null as unknown as Env,
+                    env: this.#env as unknown as Env,
                     ...this.#trustProxy !== null && {trustProxy: this.#trustProxy},
-                }, {
-                    env: {
-                        get: () => {
-                            if (resolved_env) return resolved_env;
-                            resolved_env = Object.freeze({...this.#runtime!.env || {}, ...this.#env});
-                            return resolved_env;
-                        },
-                        enumerable: true,
-                    },
-                }),
+                },
                 onIncoming: (async (ctx:TriFrostContext<Env, State>) => {
                     const {path, method} = ctx;
                     this.#logger!.debug('onIncoming', {method, path});

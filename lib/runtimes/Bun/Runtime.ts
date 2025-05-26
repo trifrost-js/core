@@ -37,10 +37,6 @@ export class BunRuntime implements TriFrostRuntime {
         return Bun.version || 'N/A';
     }
 
-    get env () {
-        return process.env || {};
-    }
-
     async boot (opts:TriFrostRuntimeBootOptions):Promise<void> {
         let serve: typeof import('bun')['serve'];
         let file: typeof import('bun')['file'];
@@ -75,7 +71,11 @@ export class BunRuntime implements TriFrostRuntime {
          * Take Note: Given that we don't know whether or not bun will run standalone or
          * behind a proxy we default trustProxy to false here.
          */
-        const cfg = {trustProxy: false, ...opts.cfg};
+        const cfg = {
+            trustProxy: false,
+            ...opts.cfg,
+            env: {...process.env || {}, ...opts.cfg.env},
+        };
 
         /* Construct options for serve */
         const serveOpts = {

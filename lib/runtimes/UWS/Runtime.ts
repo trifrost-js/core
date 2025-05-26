@@ -65,10 +65,6 @@ export class UWSRuntime implements TriFrostRuntime {
         return this.#version;
     }
 
-    get env () {
-        return process.env || {};
-    }
-
     async boot (opts:TriFrostRuntimeBootOptions):Promise<void> {
         let UWS:typeof import('uWebSockets.js');
         let statSync:typeof import('node:fs')['statSync'];
@@ -96,7 +92,11 @@ export class UWSRuntime implements TriFrostRuntime {
          * Take Note: Given that we don't know whether or not uws will run standalone or
          * behind a proxy we default trustProxy to false here.
          */
-        const cfg = {trustProxy: false, ...opts.cfg};
+        const cfg = {
+            trustProxy: false,
+            ...opts.cfg,
+            env: {...process.env || {}, ...opts.cfg.env},
+        };
 
         /* Set onIncoming handler */
         this.#onIncoming = opts.onIncoming;
