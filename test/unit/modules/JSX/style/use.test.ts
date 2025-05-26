@@ -537,6 +537,21 @@ describe('Modules - JSX - style - use', () => {
                         `<div class="${cls}">Scoped</div>`,
                     ].join(''));
                 });
+
+                it('Has support for lastOfType, firstOfType', () => {
+                    const cls = css({
+                        [` div${css.firstOfType}`]: {paddingTop: '0.5rem'},
+                        [` div${css.lastOfType}`]: {paddingBottom: '0.5rem'},
+                    });
+                    const html = engine.inject(`${MARKER}<div class="${cls}">Scoped</div>`);
+                    expect(html).toBe([
+                        '<style>',
+                        `.${cls} div:first-of-type{padding-top:0.5rem}`,
+                        `.${cls} div:last-of-type{padding-bottom:0.5rem}`,
+                        '</style>',
+                        `<div class="${cls}">Scoped</div>`,
+                    ].join(''));
+                });
                 
                 it('Uses :dir() with media query', () => {
                     const cls = css({

@@ -51,6 +51,9 @@ type CssGeneric <Breakpoints extends Record<string, string> = typeof DEFAULT_BRE
     visited:string;
     firstChild:string;
     lastChild:string;
+    firstOfType:string;
+    lastOfType:string;
+    empty:string;
 
     /* Pseudo Elements */
     before:string;
@@ -235,6 +238,9 @@ function cssFactory <
     mod.visited = ':visited';
     mod.firstChild = ':first-child';
     mod.lastChild = ':last-child';
+    mod.firstOfType = ':first-of-type';
+    mod.lastOfType = ':last-of-type';
+    mod.empty = ':empty';
 
     /* Pseudo Elements */
     mod.before = '::before';

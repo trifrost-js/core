@@ -36,6 +36,14 @@ const cls = css({
   [css.attrContains('data-label', 'part')]: {textDecoration: 'underline'}, /* [data-label*="part"] */
 });
 ```
+- **feat**: New ergonomic selectors `css.firstOfType`, `css.lastOfType`, `css.empty`. These join the already rich selector toolkit (like `nthChild`, `nthOfType`, `not`, `is`, etc.) to make even advanced CSS states easy to target.
+```typescript
+const cls = css({
+  [css.firstOfType]: {marginTop: 0}, /* :first-of-type */
+  [css.lastOfType]: {marginBottom: 0},
+});
+```
+
 ### Improved
 - **feat**: `.is()` selector can now be passed a set of tags like: `css.is('h1', 'h2', 'h3')`
 ```typescript
