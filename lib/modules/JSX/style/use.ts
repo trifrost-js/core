@@ -8,6 +8,21 @@ import {StyleEngine} from './Engine';
 import {styleToString} from './util';
 import {hexId} from '../../../utils/String';
 
+const FIXED_FEATURE_QUERIES = {
+    reducedMotion: '@media (prefers-reduced-motion: reduce)',
+    dark: '@media (prefers-color-scheme: dark)',
+    light: '@media (prefers-color-scheme: light)',
+    hover: '@media (hover: hover)',
+    touch: '@media (hover: none)',
+} as const;
+
+const DEFAULT_BREAKPOINTS = {
+    mobile: '@media (max-width: 600px)',
+    tablet: '@media (max-width: 1199px)',
+    tabletOnly: '@media (min-width: 601px) and (max-width: 1199px)',
+    desktop: '@media (min-width: 1200px)',
+} as const;
+
 type FlattenedRule = {
     query?: string;
     selector?: string;
@@ -23,7 +38,7 @@ type CSSOptions = {
     inject?: boolean;
 };
 
-type CssGeneric = {
+type CssGeneric <Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS> = {
     (style: Record<string, unknown>, opts?: { inject?: boolean }): string;
     /* Pseudo Classes */
     hover:string;
@@ -55,17 +70,7 @@ type CssGeneric = {
     dir:(dir:'ltr'|'rtl') => string;
 
     /* Media Queries */
-    media:{
-        mobile:string;
-        tablet:string;
-        tabletOnly:string;
-        desktop:string;
-        reducedMotion:string;
-        dark:string;
-        light:string;
-        hover:string;
-        touch:string;
-    };
+    media: Breakpoints & typeof FIXED_FEATURE_QUERIES;
 
     /* Root Injector */
     root(style?: Record<string, unknown>): void;
@@ -132,7 +137,9 @@ function flatten (
  * 
  * @returns {CssGeneric}
  */
-function cssFactory ():CssGeneric {
+function cssFactory <
+    Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS
+> (breakpoints:Breakpoints):CssGeneric<Breakpoints> {
     /* Global cache for cross-engine reuse */
     const GLOBAL_LRU = new LRU<string, {
         cname:string;
@@ -243,17 +250,7 @@ function cssFactory ():CssGeneric {
     mod.dir = (dir:'ltr' | 'rtl') => ':dir(' + dir + ')';
 
     /* Media Queries */
-    mod.media = {
-        mobile: '@media (max-width: 600px)',
-        tablet: '@media (max-width: 1199px)',
-        tabletOnly: '@media (min-width: 601px) and (max-width: 1199px)',
-        desktop: '@media (min-width: 1200px)',
-        reducedMotion: '@media (prefers-reduced-motion: reduce)',
-        dark: '@media (prefers-color-scheme: dark)',
-        light: '@media (prefers-color-scheme: light)',
-        hover: '@media (hover: hover)',
-        touch: '@media (hover: none)',
-    };
+    mod.media = {...FIXED_FEATURE_QUERIES, ...breakpoints};
 
     /* Root injector */
     mod.root = (style: Record<string, unknown> = {}) => {
@@ -327,8 +324,9 @@ type ThemeVal <T extends string> = `var(--t-${T})`;
 type CssInstance <
     V extends VarMap,
     T extends ThemeMap,
-    R extends Record<string, Record<string, unknown>> = {}
-> = CssGeneric & {
+    R extends Record<string, Record<string, unknown>> = {},
+    Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS
+> = CssGeneric<Breakpoints> & {
     $uid: string;
     /**
      * Token references for global design variables.
@@ -477,10 +475,12 @@ const CSS_RESET = {
 };
 
 export function createCss <
-	V extends VarMap,
-	T extends ThemeMap,
-    R extends Record<string, Record<string, unknown>> = {},
+	const V extends VarMap,
+	const T extends ThemeMap,
+    const R extends Record<string, Record<string, unknown>> = {},
+    const Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS
 > (config:{
+    breakpoints?: Breakpoints;
     /**
      * Global design tokens (CSS variables).
      * Accessible via `css.var` or `css.$v`.
@@ -516,9 +516,11 @@ export function createCss <
      * })
      * ```
      */
-    definitions?: (mod:CssInstance<V, T>) => R;
-} = {}): CssInstance<V, T, R> {
-    const mod = cssFactory() as CssInstance<V, T, R>;
+    definitions?: (mod:CssInstance<V, T, {}, Breakpoints>) => R;
+} = {}): CssInstance<V, T, R, Breakpoints> {
+    const mod = cssFactory(
+        isObject(config.breakpoints) ? config.breakpoints : DEFAULT_BREAKPOINTS
+    ) as CssInstance<V, T, R, Breakpoints>;
 
     /* Specific symbol for this css instance */
     mod.$uid = hexId(8);

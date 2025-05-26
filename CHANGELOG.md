@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **feat**: The CSS system now supports custom breakpoints — you can fully replace the default media query set (`mobile`, `tablet`, `tabletOnly`, `desktop`) by passing your own named breakpoints to `createCss()`. This lets you tailor the responsive design system to your app’s exact needs, while still retaining core features like `dark`, `light`, `hover`, `reducedMotion`. When you define custom breakpoints, the `css.media` object will have them fully typed and ready for usage.
+```typescript
+const css = createCss({
+  ...,
+  breakpoints: {
+    sm: '@media (max-width: 640px)',
+    md: '@media (max-width: 768px)',
+    lg: '@media (max-width: 1024px)',
+    xl: '@media (max-width: 1280px)',
+  },
+});
+
+...
+
+const cls = css({
+  fontSize: '1rem',
+  [css.media.sm]: {fontSize: '0.875rem'},
+  [css.media.md]: {fontSize: '1rem'},
+});
+```
 ### Improved
 - **feat**: The style engine will no longer automatically prepend styles if no Style marker is found, this prevents issues where html responses purely containing a component render get the entire root style block injected into them. Previously the only way to **prevent style injection** would have been to pass `{inject: false}` to each css call, but when working with components comprised of multiple layers (or have other components embedded in them) this is a no-go when it comes to DX.
 

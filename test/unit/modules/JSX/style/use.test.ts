@@ -1485,6 +1485,76 @@ describe('Modules - JSX - style - use', () => {
             expect(set.size).toBe(1000);
             for (const el of set.values()) expect(el).toMatch(/^tf-/);
         });
+
+        describe('breakpoints', () => {
+            it('Allows replacing default breakpoints with custom ones while keeping fixed media queries', () => {
+                const css = createCss({
+                    breakpoints: {
+                        sm: '@media (max-width: 640px)',
+                        md: '@media (max-width: 768px)',
+                        lg: '@media (max-width: 1024px)',
+                        xl: '@media (max-width: 1280px)',
+                    },
+                });
+            
+                expect(css.media.sm).toBe('@media (max-width: 640px)');
+                expect(css.media.md).toBe('@media (max-width: 768px)');
+                expect(css.media.lg).toBe('@media (max-width: 1024px)');
+                expect(css.media.xl).toBe('@media (max-width: 1280px)');
+            
+                /* Ensure fixed queries are still present */
+                expect(css.media.dark).toBe('@media (prefers-color-scheme: dark)');
+                expect(css.media.light).toBe('@media (prefers-color-scheme: light)');
+                expect(css.media.reducedMotion).toBe('@media (prefers-reduced-motion: reduce)');
+                expect(css.media.hover).toBe('@media (hover: hover)');
+                expect(css.media.touch).toBe('@media (hover: none)');
+            });
+
+            it('Supports using custom breakpoints in style declarations', () => {
+                const css = createCss({
+                    breakpoints: {
+                        sm: '@media (max-width: 640px)',
+                        md: '@media (max-width: 768px)',
+                    },
+                });
+            
+                const cls = css({
+                    color: 'black',
+                    [css.media.sm]: {
+                        color: 'red',
+                    },
+                    [css.media.md]: {
+                        color: 'blue',
+                    },
+                });
+            
+                const html = engine.inject(`${MARKER}<div class="${cls}">Custom Breakpoints</div>`);
+                expect(html).toBe([
+                    '<style>',
+                    `.${cls}{color:black}`,
+                    '@media (max-width: 640px){',
+                    `.${cls}{color:red}`,
+                    '}',
+                    '@media (max-width: 768px){',
+                    `.${cls}{color:blue}`,
+                    '}',
+                    '</style>',
+                    `<div class="${cls}">Custom Breakpoints</div>`,
+                ].join(''));
+            });
+            
+            it('Keeps default breakpoints when no custom breakpoints are provided', () => {
+                const css = createCss();
+            
+                expect(css.media.mobile).toBe('@media (max-width: 600px)');
+                expect(css.media.tablet).toBe('@media (max-width: 1199px)');
+                expect(css.media.tabletOnly).toBe('@media (min-width: 601px) and (max-width: 1199px)');
+                expect(css.media.desktop).toBe('@media (min-width: 1200px)');
+            
+                /* Fixed ones still present */
+                expect(css.media.dark).toBe('@media (prefers-color-scheme: dark)');
+            });
+        });
     });
 
     describe('keyframes', () => {
