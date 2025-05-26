@@ -195,10 +195,10 @@ describe('Modules – JSX – style – Engine', () => {
             expect(engine.inject(`<div>${MARKER}Hello there</div>`)).toBe('<div><style>.tf-1tlgz3l{color:red}</style>Hello there</div>');
         });
 
-        it('Prepends styles if marker is not present', () => {
+        it('Does not prepend styles if marker is not present', () => {
             const cls = engine.hash('color:red');
             engine.register('color:red', cls, {});
-            expect(engine.inject('<main>hello</main>')).toBe('<style>.tf-1tlgz3l{color:red}</style><main>hello</main>');
+            expect(engine.inject('<main>hello</main>')).toBe('<main>hello</main>');
         });
 
         it('Only replaces the first occurrence of the style marker and strips the rest', () => {

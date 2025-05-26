@@ -86,7 +86,7 @@ export class StyleEngine {
         if (!isNotEmptyString(html)) return styles;
 
         const idx = html.indexOf(MARKER);
-        if (idx < 0) return styles + html;
+        if (idx < 0) return html;
 
         const before = html.slice(0, idx);
         const after = html.slice(idx + MARKER.length).replaceAll(MARKER, '');

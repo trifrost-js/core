@@ -1,9 +1,10 @@
-/* eslint-disable max-lines */
-/* eslint-disable max-len */
+/* eslint-disable max-len,max-lines */
+
 import {describe, it, expect, beforeEach} from 'vitest';
 import {createCss, getActiveStyleEngine, setActiveStyleEngine} from '../../../../../lib/modules/JSX/style/use';
 import {StyleEngine} from '../../../../../lib/modules/JSX/style/Engine';
 import CONSTANTS from '../../../../constants';
+import {MARKER} from '../../../../../lib/modules/JSX/style/Style';
 
 describe('Modules - JSX - style - use', () => {
     let engine: StyleEngine;
@@ -22,7 +23,7 @@ describe('Modules - JSX - style - use', () => {
 
         it('Handles empty object gracefully', () => {
             const cls = css({});
-            const html = engine.inject(`<div class="${cls}">Empty</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">Empty</div>`);
             expect(html).toBe(`<div class="${cls}">Empty</div>`);
         });
 
@@ -30,7 +31,7 @@ describe('Modules - JSX - style - use', () => {
             for (const el of CONSTANTS.NOT_OBJECT) {
                 const cls = css(el as Record<string, unknown>);
                 expect(cls).toBe('');
-                const html = engine.inject(`<div class="${cls}">Blank</div>`);
+                const html = engine.inject(`${MARKER}<div class="${cls}">Blank</div>`);
                 expect(html).toBe(`<div class="${cls}">Blank</div>`);
             }
         });
@@ -38,7 +39,7 @@ describe('Modules - JSX - style - use', () => {
         it('Generates deterministic class for flat styles', () => {
             const cls = css({color: 'red', fontSize: '1rem'});
             expect(cls).toMatch(/^tf-/);
-            const html = engine.inject(`<div class="${cls}">Hello</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">Hello</div>`);
             expect(html).toBe(`<style>.${cls}{color:red;font-size:1rem}</style><div class="${cls}">Hello</div>`);
         });
 
@@ -50,7 +51,7 @@ describe('Modules - JSX - style - use', () => {
                 padding: '1rem',
             });
         
-            const html = engine.inject(`<div class="${cls}">Sanitized</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">Sanitized</div>`);
             expect(html).toBe(`<style>.${cls}{color:black;padding:1rem}</style><div class="${cls}">Sanitized</div>`);
         });
 
@@ -62,7 +63,7 @@ describe('Modules - JSX - style - use', () => {
                 ':hover span': {color: 'blue'},
             });
 
-            const html = engine.inject(`<div class="${cls}">Hover</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">Hover</div>`);
             expect(html).toBe([
                 '<style>',
                 `.${cls}:hover{color:red}`,
@@ -83,7 +84,7 @@ describe('Modules - JSX - style - use', () => {
                 ':hover span': {color: 'blue'},
             });
 
-            const html = engine.inject(`<div class="${cls}">Hover</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">Hover</div>`);
             expect(html).toBe([
                 '<style>',
                 `.${cls}[data-active="true"]{color:red;background-color:white}`,
@@ -105,7 +106,7 @@ describe('Modules - JSX - style - use', () => {
                 },
             });
 
-            const html = engine.inject(`<div class="${cls}">Responsive</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">Responsive</div>`);
             expect(html).toBe([
                 '<style>',
                 `.${cls}{font-size:1rem}`,
@@ -128,7 +129,7 @@ describe('Modules - JSX - style - use', () => {
                 },
             });
         
-            const html = engine.inject(`<div class="${cls}">Test</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
             expect(html).toBe([
                 '<style>',
                 `.${cls}{font-size:1rem}`,
@@ -159,7 +160,7 @@ describe('Modules - JSX - style - use', () => {
                 },
             });
 
-            const html = engine.inject(`<div class="${cls}">Hover</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">Hover</div>`);
             expect(html).toBe([
                 '<style>',
                 `.${cls}[data-active="true"]{color:red;background-color:white}`,
@@ -187,7 +188,7 @@ describe('Modules - JSX - style - use', () => {
             const cls1 = css(base);
             const cls2 = css(base);
             expect(cls1).toBe(cls2);
-            const html = engine.inject(`<div class="${cls1} ${cls2}">Hello</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls1} ${cls2}">Hello</div>`);
             expect(html).toBe(`<style>.${cls1}{color:red}</style><div class="${cls1} ${cls2}">Hello</div>`);
         });
 
@@ -196,49 +197,49 @@ describe('Modules - JSX - style - use', () => {
                 backgroundImage: 'url(\'./foo.jpg\')',
             });
 
-            const html = engine.inject(`<div class="${cls}">Images</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">Images</div>`);
             expect(html).toBe(`<style>.${cls}{background-image:url('./foo.jpg')}</style><div class="${cls}">Images</div>`);
         });
 
         it('Normalizes CSS functions wrapped in quotes', () => {
             const cls = css({backgroundImage: '\'url(/foo.png)\''});
-            const html = engine.inject(`<div class="${cls}">BG</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">BG</div>`);
             expect(html).toBe(`<style>.${cls}{background-image:url(/foo.png)}</style><div class="${cls}">BG</div>`);
         });
         
         it('Preserves quotes for valid string literals like content', () => {
             const cls = css({content: '"TriFrost"'});
-            const html = engine.inject(`<div class="${cls}">Quoted</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">Quoted</div>`);
             expect(html).toBe(`<style>.${cls}{content:"TriFrost"}</style><div class="${cls}">Quoted</div>`);
         });
         
         it('Strips quotes around url() if present', () => {
             const cls = css({backgroundImage: '\'url(/bg.png)\''});
-            const html = engine.inject(`<div class="${cls}">BG</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">BG</div>`);
             expect(html).toBe(`<style>.${cls}{background-image:url(/bg.png)}</style><div class="${cls}">BG</div>`);
         });
         
         it('Strips quotes around calc(...) expressions', () => {
             const cls = css({width: '"calc(100% - 2rem)"'});
-            const html = engine.inject(`<div class="${cls}">Layout</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">Layout</div>`);
             expect(html).toBe(`<style>.${cls}{width:calc(100% - 2rem)}</style><div class="${cls}">Layout</div>`);
         });
         
         it('Strips quotes around var(...) tokens', () => {
             const cls = css({margin: '\'var(--space-md)\''});
-            const html = engine.inject(`<div class="${cls}">Token</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">Token</div>`);
             expect(html).toBe(`<style>.${cls}{margin:var(--space-md)}</style><div class="${cls}">Token</div>`);
         });
         
         it('Strips quotes around nested functions like filter()', () => {
             const cls = css({filter: '\'blur(5px)\''});
-            const html = engine.inject(`<div class="${cls}">Filter</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">Filter</div>`);
             expect(html).toBe(`<style>.${cls}{filter:blur(5px)}</style><div class="${cls}">Filter</div>`);
         });
         
         it('Leaves other string literals untouched', () => {
             const cls = css({fontFamily: '"Helvetica, sans-serif"'});
-            const html = engine.inject(`<div class="${cls}">Font</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">Font</div>`);
             expect(html).toBe(`<style>.${cls}{font-family:"Helvetica, sans-serif"}</style><div class="${cls}">Font</div>`);
         });
         
@@ -251,14 +252,14 @@ describe('Modules - JSX - style - use', () => {
         it('Returns class but does not inject when inject: false', () => {
             const cls = css({color: 'green'}, {inject: false});
             expect(cls).toMatch(/^tf-/);
-            const html = engine.inject(`<div class="${cls}">Nothing</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">Nothing</div>`);
             expect(html).toBe(`<div class="${cls}">Nothing</div>`);
         });
 
         describe('Modules - JSX - style - selectors', () => {
             it('Supports :nth-child(n)', () => {
                 const cls = css({[css.nthChild(2)]: {fontWeight: 'bold'}});
-                const html = engine.inject(`<div class="${cls}">Test</div>`);
+                const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
                 expect(html).toBe(`<style>.${cls}:nth-child(2){font-weight:bold}</style><div class="${cls}">Test</div>`);
             });
         
@@ -268,7 +269,7 @@ describe('Modules - JSX - style - use', () => {
                         color: 'blue',
                     },
                 });
-                const html = engine.inject(`<div class="${cls}">Test</div>`);
+                const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
                 expect(html).toBe(`<style>.${cls}:nth-last-child(1){color:blue}</style><div class="${cls}">Test</div>`);
             });
         
@@ -278,7 +279,7 @@ describe('Modules - JSX - style - use', () => {
                         fontStyle: 'italic',
                     },
                 });
-                const html = engine.inject(`<div class="${cls}">Test</div>`);
+                const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
                 expect(html).toBe(`<style>.${cls}:nth-of-type(3n+1){font-style:italic}</style><div class="${cls}">Test</div>`);
             });
         
@@ -289,7 +290,7 @@ describe('Modules - JSX - style - use', () => {
                     },
                 });
             
-                const html = engine.inject(`<div class="${cls}">Test</div>`);
+                const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
                 expect(html).toBe(`<style>.${cls}:nth-last-of-type(2){border-bottom:1px solid gray}</style><div class="${cls}">Test</div>`);
             });
         
@@ -299,7 +300,7 @@ describe('Modules - JSX - style - use', () => {
                         marginBottom: '1rem',
                     },
                 });
-                const html = engine.inject(`<div class="${cls}">Test</div>`);
+                const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
                 expect(html).toBe(`<style>.${cls}:not(:last-child){margin-bottom:1rem}</style><div class="${cls}">Test</div>`);
             });
         
@@ -309,7 +310,7 @@ describe('Modules - JSX - style - use', () => {
                         cursor: 'pointer',
                     },
                 });
-                const html = engine.inject(`<div class="${cls}">Test</div>`);
+                const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
                 expect(html).toBe(`<style>.${cls}:is(a, button){cursor:pointer}</style><div class="${cls}">Test</div>`);
             });
         
@@ -320,7 +321,7 @@ describe('Modules - JSX - style - use', () => {
                     },
                 });
             
-                const html = engine.inject(`<div class="${cls}">Test</div>`);
+                const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
                 expect(html).toBe(`<style>.${cls}:where(section, article){line-height:1.5}</style><div class="${cls}">Test</div>`);
             });
         
@@ -330,7 +331,7 @@ describe('Modules - JSX - style - use', () => {
                         display: 'flex',
                     },
                 });
-                const html = engine.inject(`<div class="${cls}">Test</div>`);
+                const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
                 expect(html).toBe(`<style>.${cls}:has(img){display:flex}</style><div class="${cls}">Test</div>`);
             });
         
@@ -340,7 +341,7 @@ describe('Modules - JSX - style - use', () => {
                         paddingLeft: '1rem',
                     },
                 });
-                const html = engine.inject(`<div class="${cls}">Test</div>`);
+                const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
                 expect(html).toBe(`<style>.${cls}:dir(ltr){padding-left:1rem}</style><div class="${cls}">Test</div>`);
             });
         
@@ -357,7 +358,7 @@ describe('Modules - JSX - style - use', () => {
                     },
                 });
         
-                const html = engine.inject(`<div class="${cls}">Media</div>`);
+                const html = engine.inject(`${MARKER}<div class="${cls}">Media</div>`);
                 expect(html).toBe([
                     '<style>',
                     `.${cls}{font-size:1rem}`,
@@ -382,7 +383,7 @@ describe('Modules - JSX - style - use', () => {
                     },
                 });
             
-                const html = engine.inject(`<div class="${cls}">Nested</div>`);
+                const html = engine.inject(`${MARKER}<div class="${cls}">Nested</div>`);
                 expect(html).toBe([
                     '<style>',
                     `.${cls}{font-size:1rem}`,
@@ -399,7 +400,7 @@ describe('Modules - JSX - style - use', () => {
                     for (const el of CONSTANTS.NOT_OBJECT_WITH_EMPTY) {
                         css.root(el as Record<string, unknown>);
                 
-                        const html = engine.inject('<div>Root Vars</div>');
+                        const html = engine.inject(`${MARKER}<div>Root Vars</div>`);
                         expect(html).toBe('<div>Root Vars</div>');
                     }
                 });
@@ -411,7 +412,7 @@ describe('Modules - JSX - style - use', () => {
                         '--spacing': '1rem',
                     });
                 
-                    const html = getActiveStyleEngine()!.inject('<div>Root Vars</div>');
+                    const html = getActiveStyleEngine()!.inject(`${MARKER}<div>Root Vars</div>`);
                     expect(html).toBe('<style>:root{--color-primary:blue;--spacing:1rem}</style><div>Root Vars</div>');
                 });
 
@@ -421,7 +422,7 @@ describe('Modules - JSX - style - use', () => {
                         '--spacing': '1rem',
                     });
             
-                    const html = engine.inject('<div>Root Vars</div>');
+                    const html = engine.inject(`${MARKER}<div>Root Vars</div>`);
                     expect(html).toBe([
                         '<style>',
                         ':root{--color-primary:blue;--spacing:1rem}',
@@ -438,7 +439,7 @@ describe('Modules - JSX - style - use', () => {
                         },
                     });
             
-                    const html = engine.inject('<div>Media Root</div>');
+                    const html = engine.inject(`${MARKER}<div>Media Root</div>`);
                     expect(html).toBe([
                         '<style>',
                         ':root{--color:black}',
@@ -458,7 +459,7 @@ describe('Modules - JSX - style - use', () => {
                         },
                     });
             
-                    const html = engine.inject('<div>Media Root</div>');
+                    const html = engine.inject(`${MARKER}<div>Media Root</div>`);
                     expect(html).toBe([
                         '<style>',
                         ':root[data-enabled]{opacity:1}',
@@ -489,7 +490,7 @@ describe('Modules - JSX - style - use', () => {
                         },
                     });
             
-                    const html = engine.inject('<div>Nested Root</div>');
+                    const html = engine.inject(`${MARKER}<div>Nested Root</div>`);
                     expect(html).toBe([
                         '<style>',
                         'html{font-family:sans-serif}',
@@ -512,7 +513,7 @@ describe('Modules - JSX - style - use', () => {
                     const cls = css({
                         [css.not(css.nthChild(1))]: {opacity: 0.75},
                     });
-                    const html = engine.inject(`<div class="${cls}">List</div>`);
+                    const html = engine.inject(`${MARKER}<div class="${cls}">List</div>`);
                     expect(html).toBe(`<style>.${cls}:not(:nth-child(1)){opacity:0.75}</style><div class="${cls}">List</div>`);
                 });
                 
@@ -520,7 +521,7 @@ describe('Modules - JSX - style - use', () => {
                     const cls = css({
                         [css.not(css.is('a, button'))]: {color: 'gray'},
                     });
-                    const html = engine.inject(`<div class="${cls}">Filtered</div>`);
+                    const html = engine.inject(`${MARKER}<div class="${cls}">Filtered</div>`);
                     expect(html).toBe(`<style>.${cls}:not(:is(a, button)){color:gray}</style><div class="${cls}">Filtered</div>`);
                 });
                 
@@ -528,7 +529,7 @@ describe('Modules - JSX - style - use', () => {
                     const cls = css({
                         [css.where(css.nthLastChild(2))]: {paddingBottom: '0.5rem'},
                     });
-                    const html = engine.inject(`<div class="${cls}">Scoped</div>`);
+                    const html = engine.inject(`${MARKER}<div class="${cls}">Scoped</div>`);
                     expect(html).toBe([
                         '<style>',
                         `.${cls}:where(:nth-last-child(2)){padding-bottom:0.5rem}`,
@@ -543,7 +544,7 @@ describe('Modules - JSX - style - use', () => {
                             [css.dir('rtl')]: {textAlign: 'right'},
                         },
                     });
-                    const html = engine.inject(`<div class="${cls}">RTL</div>`);
+                    const html = engine.inject(`${MARKER}<div class="${cls}">RTL</div>`);
                     expect(html).toBe([
                         '<style>',
                         '@media (min-width: 601px) and (max-width: 1199px){',
@@ -560,7 +561,7 @@ describe('Modules - JSX - style - use', () => {
                             [css.dir('ltr')]: {marginLeft: '1rem'},
                         },
                     });
-                    const html = engine.inject(`<div class="${cls}">Nested</div>`);
+                    const html = engine.inject(`${MARKER}<div class="${cls}">Nested</div>`);
                     expect(html).toBe(`<style>.${cls}:nth-child(3):dir(ltr){margin-left:1rem}</style><div class="${cls}">Nested</div>`);
                 });
                 
@@ -572,7 +573,7 @@ describe('Modules - JSX - style - use', () => {
                             },
                         },
                     });
-                    const html = engine.inject(`<div class="${cls}">Combo</div>`);
+                    const html = engine.inject(`${MARKER}<div class="${cls}">Combo</div>`);
                     expect(html).toBe([
                         '<style>',
                         '@media (max-width: 600px){',
@@ -592,7 +593,7 @@ describe('Modules - JSX - style - use', () => {
                         [css.after]: {content: '"<<"'},
                     });
         
-                    const html = engine.inject(`<div class="${cls}">Fancy</div>`);
+                    const html = engine.inject(`${MARKER}<div class="${cls}">Fancy</div>`);
                     expect(html).toBe([
                         '<style>',
                         `.${cls}:hover{color:red}`,
@@ -614,7 +615,7 @@ describe('Modules - JSX - style - use', () => {
                         },
                     });
         
-                    const html = engine.inject(`<div class="${cls}">Responsive</div>`);
+                    const html = engine.inject(`${MARKER}<div class="${cls}">Responsive</div>`);
                     expect(html).toBe([
                         '<style>',
                         `.${cls}{color:black}`,
@@ -637,7 +638,7 @@ describe('Modules - JSX - style - use', () => {
                         },
                     });
         
-                    const html = engine.inject(`<div class="${cls}">Theme</div>`);
+                    const html = engine.inject(`${MARKER}<div class="${cls}">Theme</div>`);
                     expect(html).toBe([
                         '<style>',
                         `.${cls}[data-theme="light"]{color:black}`,
@@ -672,7 +673,7 @@ describe('Modules - JSX - style - use', () => {
                         },
                     });
             
-                    const html = engine.inject(`<div class="${cls}">Multimedia</div>`);
+                    const html = engine.inject(`${MARKER}<div class="${cls}">Multimedia</div>`);
                     expect(html).toBe([
                         '<style>',
                         `.${cls}{font-size:1rem;padding:1rem;background-color:white}`,
@@ -698,7 +699,7 @@ describe('Modules - JSX - style - use', () => {
     
             css.root();
     
-            const html = engine.inject('<div>Vars</div>');
+            const html = engine.inject(`${MARKER}<div>Vars</div>`);
             expect(html).toBe([
                 '<style>',
                 ':root{--v-spacing_m:1rem;--v-radius_l:8px}',
@@ -731,7 +732,7 @@ describe('Modules - JSX - style - use', () => {
     
             css.root();
     
-            const html = engine.inject('<div>Theme</div>');
+            const html = engine.inject(`${MARKER}<div>Theme</div>`);
             expect(html).toBe([
                 '<style>',
                 '@media (prefers-color-scheme: light){:root{--t-bg:#fff;--t-text:#111}}',
@@ -753,7 +754,7 @@ describe('Modules - JSX - style - use', () => {
     
             css.root();
     
-            const html = engine.inject('<div>Attr Theme</div>');
+            const html = engine.inject(`${MARKER}<div>Attr Theme</div>`);
             expect(html).toBe([
                 '<style>',
                 '@media (prefers-color-scheme: light){',
@@ -779,7 +780,7 @@ describe('Modules - JSX - style - use', () => {
     
             css.root();
     
-            const html = engine.inject('<div>Mode Theme</div>');
+            const html = engine.inject(`${MARKER}<div>Mode Theme</div>`);
             expect(html).toBe([
                 '<style>',                
                 '@media (prefers-color-scheme: light){',
@@ -804,7 +805,7 @@ describe('Modules - JSX - style - use', () => {
     
             css.root();
     
-            expect(engine.inject('<div>Reset</div>')).toBe([
+            expect(engine.inject(`${MARKER}<div>Reset</div>`)).toBe([
                 '<style>',
                 '*, *::before, *::after{box-sizing:border-box}',
                 'html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}',
@@ -828,7 +829,7 @@ describe('Modules - JSX - style - use', () => {
     
             css.root();
     
-            expect(engine.inject('<div>No Reset</div>')).toBe('<div>No Reset</div>');
+            expect(engine.inject(`${MARKER}<div>No Reset</div>`)).toBe('<div>No Reset</div>');
         });
     
         it('Deduplicates root injection per engine', () => {
@@ -844,7 +845,7 @@ describe('Modules - JSX - style - use', () => {
             css.root();
             css.root();
     
-            expect(engine.inject('<div>Once</div>')).toBe([
+            expect(engine.inject(`${MARKER}<div>Once</div>`)).toBe([
                 '<style>',
                 '*, *::before, *::after{box-sizing:border-box}',
                 'html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}',
@@ -883,7 +884,7 @@ describe('Modules - JSX - style - use', () => {
             cssA.root();
             cssB.root();
     
-            expect(engine.inject('<div>Multiple</div>')).toBe([
+            expect(engine.inject(`${MARKER}<div>Multiple</div>`)).toBe([
                 '<style>',
                 ':root{--v-radius:4px}',
                 ':root{--v-spacing:2rem}',
@@ -911,7 +912,7 @@ describe('Modules - JSX - style - use', () => {
     
             expect(cls1).toBe(cls2);
     
-            const html = engine.inject(`<div class="${cls1}">Test</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls1}">Test</div>`);
             expect(html).toBe(`<style>.${cls1}{color:red;padding:1rem}</style><div class="${cls1}">Test</div>`);
         });
 
@@ -928,7 +929,7 @@ describe('Modules - JSX - style - use', () => {
                 },
             });
         
-            expect(engine.inject(`<div class="${cls}">Deep</div>`)).toBe([
+            expect(engine.inject(`${MARKER}<div class="${cls}">Deep</div>`)).toBe([
                 '<style>',
                 `.${cls} [data-role="admin"]{background-color:gray}`,
                 `.${cls}{color:black}`,
@@ -947,7 +948,7 @@ describe('Modules - JSX - style - use', () => {
                 '[data-active="true"]': {backgroundColor: 'red'},
             });
         
-            expect(engine.inject(`<div class="${cls}">OnlyAttr</div>`)).toBe([
+            expect(engine.inject(`${MARKER}<div class="${cls}">OnlyAttr</div>`)).toBe([
                 '<style>',
                 `.${cls}[data-active="true"]{background-color:red}`,
                 '</style>',
@@ -967,7 +968,7 @@ describe('Modules - JSX - style - use', () => {
                 html: {fontSize: '16px'},
             });
         
-            expect(engine.inject('<div>Global</div>')).toBe([
+            expect(engine.inject(`${MARKER}<div>Global</div>`)).toBe([
                 '<style>',
                 'html{font-size:16px}',
                 ':root{--v-radius:8px}',
@@ -1007,7 +1008,7 @@ describe('Modules - JSX - style - use', () => {
         
             css.root();
         
-            const html = engine.inject(`<div class="${cls}">Vars in Use</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">Vars in Use</div>`);
         
             expect(html).toBe([
                 '<style>',
@@ -1049,7 +1050,7 @@ describe('Modules - JSX - style - use', () => {
         
             css.root();
         
-            const html = engine.inject(`<div class="${cls}">Vars in Use</div>`);
+            const html = engine.inject(`${MARKER}<div class="${cls}">Vars in Use</div>`);
         
             expect(html).toBe([
                 '<style>',
@@ -1076,7 +1077,7 @@ describe('Modules - JSX - style - use', () => {
                 },
             });
             css.root();
-            expect(engine.inject('<div>Theme</div>')).toBe('<style>:root{--t-bg:#fff;--t-fg:#000}</style><div>Theme</div>');
+            expect(engine.inject(`${MARKER}<div>Theme</div>`)).toBe('<style>:root{--t-bg:#fff;--t-fg:#000}</style><div>Theme</div>');
         });
 
         it('Allows the use of string-only theme tokens (some are string and some are full)', () => {
@@ -1088,7 +1089,7 @@ describe('Modules - JSX - style - use', () => {
                 },
             });
             css.root();
-            expect(engine.inject('<div>Theme</div>')).toBe([
+            expect(engine.inject(`${MARKER}<div>Theme</div>`)).toBe([
                 '<style>',
                 ':root{--t-bg:#fff;--t-fg:#000}',
                 '@media (prefers-color-scheme: light){:root{--t-alt:#f9f9f9}}',
@@ -1120,7 +1121,7 @@ describe('Modules - JSX - style - use', () => {
             css.root();
     
             const cls = css.use('base', 'padded');
-            expect(engine.inject(`<div class="${cls}">Defined</div>`)).toBe([
+            expect(engine.inject(`${MARKER}<div class="${cls}">Defined</div>`)).toBe([
                 '<style>',
                 ':root{',
                 '--v-spacing:2rem;',
@@ -1168,7 +1169,7 @@ describe('Modules - JSX - style - use', () => {
     
             const cls = css.use('row', 'center', {gap: css.var.x});
             expect(cls).toMatch(/^tf-/);
-            expect(engine.inject(`<div class="${cls}">Mix</div>`)).toBe([
+            expect(engine.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe([
                 '<style>',
                 '.tf-1v7zb4h{display:flex;flex-direction:row;justify-content:center;align-items:center;gap:var(--v-x)}',
                 '</style>',
@@ -1218,7 +1219,7 @@ describe('Modules - JSX - style - use', () => {
             });
         
             expect(cls).toMatch(/^tf-/);
-            expect(engine.inject(`<div class="${cls}">Mix</div>`)).toBe([
+            expect(engine.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe([
                 '<style>',
                 '.tf-oupfrh{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
                 '@media (min-width: 1200px){',
@@ -1277,7 +1278,7 @@ describe('Modules - JSX - style - use', () => {
             });
         
             expect(cls).toMatch(/^tf-/);
-            expect(engine.inject(`<div class="${cls}">Mix</div>`)).toBe([
+            expect(engine.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe([
                 '<style>',
                 '.tf-1wuvp3b{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
                 '@media (min-width: 1200px){',
@@ -1337,7 +1338,7 @@ describe('Modules - JSX - style - use', () => {
             });
         
             expect(cls).toMatch(/^tf-/);
-            expect(getActiveStyleEngine()!.inject(`<div class="${cls}">Mix</div>`)).toBe([
+            expect(getActiveStyleEngine()!.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe([
                 '<style>',
                 '.tf-kn00o5{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
                 '@media (min-width: 1200px){',
@@ -1387,7 +1388,7 @@ describe('Modules - JSX - style - use', () => {
             const start = Date.now();
             for (let i = 0; i < 1_000; i++) {
                 setActiveStyleEngine(new StyleEngine());
-                output.push(getActiveStyleEngine()!.inject(`<div class="${css.use('f', 'fh', 'fa_c', 'oh', {
+                output.push(getActiveStyleEngine()!.inject(`${MARKER}<div class="${css.use('f', 'fh', 'fa_c', 'oh', {
                     width: '100%',
                     background: css.$t.bg,
                     color: css.$t.fg,
@@ -1452,7 +1453,7 @@ describe('Modules - JSX - style - use', () => {
             const start = Date.now();
             for (let i = 0; i < 1_000; i++) {
                 setActiveStyleEngine(new StyleEngine());
-                output.push(getActiveStyleEngine()!.inject(`<div class="${css(css.mix('f', 'fh', 'fa_c', 'oh', {
+                output.push(getActiveStyleEngine()!.inject(`${MARKER}<div class="${css(css.mix('f', 'fh', 'fa_c', 'oh', {
                     width: '100%',
                     background: css.$t.bg,
                     color: css.$t.fg,
@@ -1504,7 +1505,7 @@ describe('Modules - JSX - style - use', () => {
                 animation: `${drop} 10s infinite`,
             });
     
-            expect(engine.inject(`<div class="${cls}">Drop</div>`)).toBe([
+            expect(engine.inject(`${MARKER}<div class="${cls}">Drop</div>`)).toBe([
                 '<style>',
                 '@keyframes kf-tf-i13zsv {',
                 '0%{top:-50%;opacity:1}',
@@ -1540,7 +1541,7 @@ describe('Modules - JSX - style - use', () => {
                 animation: `${slide} 5s linear infinite`,
             });
     
-            expect(engine.inject(`<div class="${cls}">Slide</div>`)).toBe([
+            expect(engine.inject(`${MARKER}<div class="${cls}">Slide</div>`)).toBe([
                 '<style>',
                 '@keyframes kf-tf-18k37kf {',
                 '0%{transform:translateX(-100%)}',
@@ -1564,7 +1565,7 @@ describe('Modules - JSX - style - use', () => {
                 animation: `${bounce} 2s ease-in-out infinite`,
             });
     
-            expect(engine.inject(`<div class="${cls}">Bounce</div>`)).toBe([
+            expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe([
                 '<style>',
                 '@keyframes kf-tf-9boemd {',
                 '0%{transform:translateY(0px) scale(1)}',
@@ -1586,7 +1587,7 @@ describe('Modules - JSX - style - use', () => {
                 })} 2s ease-in-out infinite`,
             });
     
-            expect(engine.inject(`<div class="${cls}">Bounce</div>`)).toBe([
+            expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe([
                 '<style>',
                 '@keyframes kf-tf-9boemd {',
                 '0%{transform:translateY(0px) scale(1)}',
@@ -1617,7 +1618,7 @@ describe('Modules - JSX - style - use', () => {
                 },
             });
     
-            expect(engine.inject(`<div class="${cls}">Bounce</div>`)).toBe([
+            expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe([
                 '<style>',
                 '@keyframes kf-tf-9boemd {',
                 '0%{transform:translateY(0px) scale(1)}',
@@ -1658,7 +1659,7 @@ describe('Modules - JSX - style - use', () => {
                 },
             });
     
-            expect(engine.inject(`<div class="${cls}">Bounce</div>`)).toBe([
+            expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe([
                 '<style>',
                 '@keyframes kf-tf-9boemd {',
                 '0%{transform:translateY(0px) scale(1)}',
@@ -1687,7 +1688,7 @@ describe('Modules - JSX - style - use', () => {
                 animation: `${pulse} 3s ease-in-out`,
             }, {inject: false});
     
-            expect(engine.inject(`<div class="${cls}">Pulse</div>`)).toBe(`<div class="${cls}">Pulse</div>`);
+            expect(engine.inject(`${MARKER}<div class="${cls}">Pulse</div>`)).toBe(`<div class="${cls}">Pulse</div>`);
         });
 
         it('Runs the same input across multiple engines successfully and swiftly', () => {
@@ -1725,7 +1726,7 @@ describe('Modules - JSX - style - use', () => {
             const start = Date.now();
             for (let i = 0; i < 1_000; i++) {
                 setActiveStyleEngine(new StyleEngine());
-                output.push(getActiveStyleEngine()!.inject(`<div class="${css2.use('f', 'fh', 'fa_c', 'oh', {
+                output.push(getActiveStyleEngine()!.inject(`${MARKER}<div class="${css2.use('f', 'fh', 'fa_c', 'oh', {
                     width: '100%',
                     background: css2.$t.bg,
                     color: css2.$t.fg,
