@@ -55,6 +55,51 @@ const cls = css({
 });
 /* Generates: .<class> > :is(h1, h2, h3) { ... } */
 ```
+- **feat**: Known HTML tags as well as combinators (`>`, `+`, `~`) will now be **auto-spaced** so nested selectors and combinators work cleanly. Previously you'd have to manually space prefix them `{[' section']: {[' p']: ...}}`, but now:
+```typescript
+/* Nested tag selectors */
+const cls1 = css({
+  section: {
+    h2: { fontWeight: 'bold' },
+    p: { lineHeight: 1.4 },
+  },
+});
+/**
+ * Generates:
+ * .<class> section h2 { font-weight: bold }
+ * .<class> section p { line-height: 1.4 }
+ */
+
+/* Combining known tags with pseudo classes */
+const cls2 = css({
+  a: {
+    textDecoration: 'none',
+    [css.hover]: {
+      textDecoration: 'underline',
+    },
+  },
+});
+/**
+ * Generates:
+ * .<class> a:hover { text-decoration: underline }
+ * .<class> a { text-decoration: none }
+ */
+
+/* Handling combinators with nested tag selectors */
+const cls3 = css({
+  '>': {
+    section: {
+      h2: { fontWeight: 'bold' },
+      p: { lineHeight: 1.4 },
+    },
+  },
+});
+/**
+ *  Generates:
+ * .<class> > section h2 { font-weight: bold }
+ * .<class> > section p { line-height: 1.4 }
+ */
+```
 - **feat**: The style engine will no longer automatically prepend styles if no Style marker is found, this prevents issues where html responses purely containing a component render get the entire root style block injected into them. Previously the only way to **prevent style injection** would have been to pass `{inject: false}` to each css call — but with multi-layer components, this was a DX blocker.
 
 ## [0.18.0] - 2025-05-25

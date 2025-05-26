@@ -1570,6 +1570,109 @@ describe('Modules - JSX - style - use', () => {
                 expect(css.media.dark).toBe('@media (prefers-color-scheme: dark)');
             });
         });
+
+        describe('known HTML tags', () => {
+            let css: ReturnType<typeof createCss>;
+        
+            beforeEach(() => {
+                css = createCss();
+            });
+            
+            it('handles simple tag selectors', () => {
+                const cls = css({
+                    h1: {fontSize: '2rem'},
+                    section: {padding: '1rem'},
+                    footer: {marginTop: '2rem'},
+                });
+        
+                const html = engine.inject(`${MARKER}<div class="${cls}">Tags</div>`);
+                expect(html).toBe([
+                    '<style>',
+                    `.${cls} h1{font-size:2rem}`,
+                    `.${cls} section{padding:1rem}`,
+                    `.${cls} footer{margin-top:2rem}`,
+                    '</style>',
+                    `<div class="${cls}">Tags</div>`,
+                ].join(''));
+            });
+        
+            it('handles nested tag selectors', () => {
+                const cls = css({
+                    section: {
+                        h2: {fontWeight: 'bold'},
+                        p: {lineHeight: 1.4},
+                    },
+                });
+        
+                const html = engine.inject(`${MARKER}<div class="${cls}">Nested Tags</div>`);
+                expect(html).toBe([
+                    '<style>',
+                    `.${cls} section h2{font-weight:bold}`,
+                    `.${cls} section p{line-height:1.4}`,
+                    '</style>',
+                    `<div class="${cls}">Nested Tags</div>`,
+                ].join(''));
+            });
+        
+            it('handles combinators with tag selectors', () => {
+                const cls = css({
+                    '> h1': {fontSize: '3rem'},
+                    '+ p': {marginTop: '1rem'},
+                    '~ ul': {listStyle: 'circle'},
+                });
+        
+                const html = engine.inject(`${MARKER}<div class="${cls}">Combinators</div>`);
+                expect(html).toBe([
+                    '<style>',
+                    `.${cls} > h1{font-size:3rem}`,
+                    `.${cls} + p{margin-top:1rem}`,
+                    `.${cls} ~ ul{list-style:circle}`,
+                    '</style>',
+                    `<div class="${cls}">Combinators</div>`,
+                ].join(''));
+            });
+
+            it('handles combinators with nested tag selectors', () => {
+                const cls = css({
+                    '>': {
+                        section: {
+                            h2: {fontWeight: 'bold'},
+                            p: {lineHeight: 1.4},
+                        },
+                    },
+                });
+        
+                const html = engine.inject(`${MARKER}<div class="${cls}">Nested Tags</div>`);
+                expect(html).toBe([
+                    '<style>',
+                    `.${cls} > section h2{font-weight:bold}`,
+                    `.${cls} > section p{line-height:1.4}`,
+                    '</style>',
+                    `<div class="${cls}">Nested Tags</div>`,
+                ].join(''));
+            });
+        
+            it('combines known tags with pseudo classes', () => {
+                const cls = css({
+                    a: {
+                        textDecoration: 'none',
+                        [css.hover]: {
+                            textDecoration: 'underline',
+                        },
+                    },
+                });
+        
+                const html = engine.inject(`${MARKER}<div class="${cls}">Pseudo Tags</div>`);
+                expect(html).toBe([
+                    '<style>',
+                    `.${cls} a:hover{text-decoration:underline}`,
+                    `.${cls} a{text-decoration:none}`,
+                    '</style>',
+                    `<div class="${cls}">Pseudo Tags</div>`,
+                ].join(''));
+            });
+        });        
+
         describe('css.is', () => {
             let css: ReturnType<typeof createCss>;
         

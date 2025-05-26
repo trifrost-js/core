@@ -5,7 +5,7 @@ import {isFn} from '@valkyriestudios/utils/function';
 import {isNeObject, isObject} from '@valkyriestudios/utils/object';
 import {isNeString, isString} from '@valkyriestudios/utils/string';
 import {StyleEngine} from './Engine';
-import {styleToString} from './util';
+import {HTML_TAGS, styleToString} from './util';
 import {hexId} from '../../../utils/String';
 
 const FIXED_FEATURE_QUERIES = {
@@ -105,6 +105,11 @@ export function getActiveStyleEngine () {
  * MARK: Css Factory
  */
 
+function normalizeSelector (val:string) {
+    const first = val[0];
+    return first === '>' || first === '+' || first === '~' || HTML_TAGS[val as keyof typeof HTML_TAGS] ? ' ' + val : val;
+}
+
 function flatten (
     obj:Record<string, unknown>,
     parent_query:string = '',
@@ -118,12 +123,20 @@ function flatten (
         const val = obj[key];
         if (isObject(val)) {
             if (key[0] === '@') {
-                result.push(...flatten(val as Record<string, unknown>, key, parent_selector));
+                result.push(...flatten(
+                    val as Record<string, unknown>,
+                    key,
+                    parent_selector
+                ));
             } else {
-                result.push(...flatten(val as Record<string, unknown>, parent_query, parent_selector + key));
+                result.push(...flatten(
+                    val as Record<string, unknown>,
+                    parent_query,
+                    parent_selector + normalizeSelector(key)
+                ));
             }
         } else if (val !== undefined && val !== null) {
-            base[key] = val;
+            base[normalizeSelector(key)] = val;
             base_has = true;
         }
     }
@@ -215,7 +228,7 @@ function cssFactory <
             const {declarations, selector = undefined, query = undefined} = flattened[i];
             const rule = styleToString(declarations);
             if (rule) {
-                const normalized_selector = selector ? '.' + cname + selector : undefined;
+                const normalized_selector = selector ? '.' + cname + normalizeSelector(selector) : undefined;
                 engine.register(rule, cname, {query, selector: normalized_selector});
                 lru_entries.push({rule, query, selector: normalized_selector});
             }
@@ -283,7 +296,7 @@ function cssFactory <
                 const selector_path = selector
                     ? selector[0] === '[' && selector[selector.length - 1] === ']'
                         ? ':root' + selector
-                        : selector
+                        : selector.trimStart()
                     : ':root';
                 active_engine.register(rule, '', {selector: selector_path, query});
             }
