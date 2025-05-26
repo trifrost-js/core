@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.19.0] - 2025-05-26
+This release further sharpens TriFrost’s styling system with custom breakpoints, ergonomic attribute helpers, and expanded selector coverage — giving you more precision and control without added complexity. Most of these improvements/additions came directly from working on the TriFrost website and as such solve some **real-world ergonomic issues**.
+
 ### Added
 - **feat**: The CSS system now supports custom breakpoints — you can fully replace the default media query set (`mobile`, `tablet`, `tabletOnly`, `desktop`) by passing your own named breakpoints to `createCss()`. This lets you tailor the responsive design system to your app’s exact needs, while still retaining core features like `dark`, `light`, `hover`, `reducedMotion`. When you define custom breakpoints, the `css.media` object will have them fully typed and ready for usage.
 ```typescript

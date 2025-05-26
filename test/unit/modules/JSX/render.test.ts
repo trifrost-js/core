@@ -222,7 +222,8 @@ describe('Modules - JSX - Renderer', () => {
                 return {type: 'div', props: {className: cls, children: 'Hello'}};
             };
         
-            const html = rootRender({type: Component, props: {}});
+            /* @ts-ignore */
+            const html = rootRender(['__TRIFROST_STYLE_MARKER__', {type: Component, props: {}}]);
             expect(html)
                 .toBe('<style>.tf-46gioo{padding:1rem;background-color:blue}</style><div class="tf-46gioo">Hello</div>');
         });
@@ -235,7 +236,8 @@ describe('Modules - JSX - Renderer', () => {
                 return {type: 'div', props: {className: cls, children: 'Styled'}};
             };
         
-            const html = rootRender({type: Component, props: {}});
+            /* @ts-ignore */
+            const html = rootRender(['__TRIFROST_STYLE_MARKER__', {type: Component, props: {}}]);
             expect(html).toBe(`<style>.${cls}{margin:2rem;color:black}</style><div class="${cls}">Styled</div>`);
         });
 
@@ -348,7 +350,8 @@ describe('Modules - JSX - Renderer', () => {
                 cls = css({margin: '2rem', color: 'black'});
                 return {type: 'div', props: {className: cls, children: 'Styled'}};
             };
-            const html = rootRender({type: Component, props: {}});
+            /* @ts-ignore */
+            const html = rootRender(['__TRIFROST_STYLE_MARKER__', {type: Component, props: {}}]);
             expect(html).toBe(`<style>.${cls}{margin:2rem;color:black}</style><div class="${cls}">Styled</div>`);
 
             let cls2 = '';
@@ -356,7 +359,8 @@ describe('Modules - JSX - Renderer', () => {
                 cls2 = css({color: 'white', fontFamily: 'sans-serif'});
                 return {type: 'p', props: {className: cls2, children: 'Styled'}};
             };
-            const html2 = rootRender({type: Component2, props: {}});
+            /* @ts-ignore */
+            const html2 = rootRender(['__TRIFROST_STYLE_MARKER__', {type: Component2, props: {}}]);
             expect(html2).toBe(`<style>.${cls2}{color:white;font-family:sans-serif}</style><p class="${cls2}">Styled</p>`);
         });
     });
