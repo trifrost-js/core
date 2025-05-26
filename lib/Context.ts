@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
-import {join} from '@valkyriestudios/utils/array';
 import {noopresolve} from '@valkyriestudios/utils/function';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {isObject} from '@valkyriestudios/utils/object';
@@ -52,7 +51,6 @@ type RequestConfig = {
     query: string;
 };
 
-const RGX_PROTO = /^((http:\/\/)|(https:\/\/))/;
 const RGX_IP = /^(?:\d{1,3}\.){3}\d{1,3}$|^(?:[A-Fa-f0-9]{1,4}:){2,7}[A-Fa-f0-9]{1,4}$/;
 const RGX_URL = /^(https?:\/\/)[^\s/$.?#].[^\s]*$/i;
 
@@ -591,6 +589,8 @@ export abstract class Context <
      * @param {HttpStatus|HttpStatusCode?} status - Status to abort with (defaults to 503)
      */
     abort (status?:HttpStatus|HttpStatusCode):void {
+        if (this.is_aborted) return;
+
         this.#logger.debug('Context@abort: Aborting request');
 
         /* Set aborted to ensure nobody else writes data */
@@ -784,11 +784,8 @@ export abstract class Context <
                 const host = this.host;
                 if (!isNeString(host)) throw new Error('Context@redirect: Not able to determine host for redirect');
 
-                normalized_to = join([
-                    !RGX_PROTO.test(host) ? 'https://' : false,
-                    host,
-                    normalized_to,
-                ], {delim: ''});
+                const normalized_host = host.startsWith('http://') && !host.startsWith('https://') ? 'https://' + host : host;
+                normalized_to = normalized_host.trim() + normalized_to.trim();
             }
 
             /* If keep_query is passed as true and a query exists add it to normalized to */
