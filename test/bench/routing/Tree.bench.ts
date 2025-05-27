@@ -1,7 +1,13 @@
 import {bench, describe} from 'vitest';
 import {memoize} from '@valkyriestudios/utils/caching';
 import {RouteTree} from '../../../lib/routing/Tree';
-import {HttpMethods} from '../../../lib/types/constants';
+import {
+    HttpMethods,
+    Sym_TriFrostDescription,
+    Sym_TriFrostMeta,
+    Sym_TriFrostName,
+    Sym_TriFrostType
+} from '../../../lib/types/constants';
 
 /* Setup constants */
 const NUM_ROUTES = 10_000;
@@ -36,10 +42,16 @@ const staticTarget = '/static/9999';
 const tree = new RouteTree();
 for (let i = 0; i < NUM_ROUTES; i++) {
     tree.add({
-        method: HttpMethods.GET,
         path: `/bulk/:id${i}`,
-        handler: () => {},
+        fn: () => {},
         middleware: [],
+        timeout: null,
+        kind: 'std',
+        method: HttpMethods.GET,
+        [Sym_TriFrostType]: 'handler',
+        [Sym_TriFrostName]: `bulk_${i}`,
+        [Sym_TriFrostDescription]: null,
+        [Sym_TriFrostMeta]: {},
     });
 }
 

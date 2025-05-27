@@ -1,22 +1,17 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
-import {isArray} from '@valkyriestudios/utils/array';
 import {LRU} from '@valkyriestudios/utils/caching';
 import {isFn} from '@valkyriestudios/utils/function';
 import {isNeString} from '@valkyriestudios/utils/string';
 import {HttpMethodsSet, type HttpMethod} from '../types/constants';
-import {
-    type TriFrostMiddleware,
-    type TriFrostRouteHandler,
-} from '../types/routing';
+import {type TriFrostRoute} from '../types/routing';
 
 /**
  * Represents single route definition (method + path + handler + middleware)
  */
 type RouteDefinition<Env extends Record<string, any> = {}> = {
     path: string;
-    handler: TriFrostRouteHandler<Env>;
-    middleware: TriFrostMiddleware<Env>[];
+    route: TriFrostRoute<Env>;
 }
 
 type MethodRouteDefinition<Env extends Record<string, any> = {}> = RouteDefinition<Env> & {method:HttpMethod};
@@ -25,8 +20,8 @@ type MethodRouteDefinition<Env extends Record<string, any> = {}> = RouteDefiniti
  * Represents a match result when a route is found
  */
 interface RouteMatch<Env extends Record<string, any> = {}> {
-    handler: TriFrostRouteHandler<Env>;
-    middleware: TriFrostMiddleware<Env>[];
+    path: string;
+    route: TriFrostRoute<Env>;
     params: Record<string, string>;
 }
 
@@ -105,7 +100,7 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
     match (method: HttpMethod, path: string): RouteMatch<Env>|null {
         const params = {};
         const matched = this.search(this.root, path.split('/'), 0, params, method);
-        return matched ? {handler: matched.handler, middleware: matched.middleware, params} : null;
+        return matched ? {route: matched.route, path: matched.path, params} : null;
     }
 
     /**
@@ -159,7 +154,7 @@ export class RouteTree<Env extends Record<string, any> = {}> {
 
     protected static:Record<
         string,
-        Record<HttpMethod, MethodRouteDefinition<Env>>
+        Record<HttpMethod, TriFrostRoute<Env>>
     > = Object.create(null);
 
     protected dynamic:{
@@ -196,17 +191,16 @@ export class RouteTree<Env extends Record<string, any> = {}> {
      * 
      * @param {MethodRouteDefinition<Env>} route - Route to add
      */
-    add (route: MethodRouteDefinition<Env>) {
+    add (route:TriFrostRoute<Env>) {
         if (!isNeString(route?.path) || route.path[0] !== '/') throw new Error('RouteTree@add: invalid path');
-        if (!isFn(route.handler)) throw new Error('RouteTree@add: handler must be a function');
-        if (!isArray(route.middleware)) throw new Error('RouteTree@add: middleware must be an array');
+        if (!isFn(route.fn)) throw new Error('RouteTree@add: route.fn must be a function');
         if (!HttpMethodsSet.has(route.method)) throw new Error('RouteTree@add: method is not valid');
 
         if (route.path.indexOf(':') < 0 && route.path.indexOf('*') < 0) {
             if (!this.static[route.path]) this.static[route.path] = Object.create(null);
             this.static[route.path][route.method] = route;
         } else {
-            this.dynamic.tree.add(route);
+            this.dynamic.tree.add({route, path: route.path, method: route.method});
         }
     }
 
@@ -216,12 +210,12 @@ export class RouteTree<Env extends Record<string, any> = {}> {
      * @param {HttpMethod} method - HTTP Verb (GET, DELETE, POST, ...)
      * @param {string} path - Path to look for
      */
-    match (method: HttpMethod, path: string): RouteMatch<Env>|null {
+    match (method:HttpMethod, path:string):RouteMatch<Env>|null {
         const normalized = path === '' ? '/' : path;
 
         /* Check static routes */
         const hit_static = this.static[normalized]?.[method];
-        if (hit_static) return {handler: hit_static.handler, middleware: hit_static.middleware, params: {}};
+        if (hit_static) return {route: hit_static, path: hit_static.path, params: {}};
 
         const cached = this.dynamic.lru.get(normalized);
         if (cached) return cached.v;
@@ -235,12 +229,9 @@ export class RouteTree<Env extends Record<string, any> = {}> {
      * MARK: Not Found
      */
 
-    addNotFound (route: RouteDefinition<Env>) {
+    addNotFound (route:Omit<TriFrostRoute<Env>, 'method'>) {
         if (!isNeString(route?.path) || route.path[0] !== '/') throw new Error('RouteTree@addNotFound: invalid path');
-        if (!isFn(route.handler)) throw new Error('RouteTree@addNotFound: handler must be a function');
-        if (!isArray(route.middleware)) throw new Error('RouteTree@addNotFound: middleware must be an array');
-
-        this.notfound.tree.add({...route, method: 'GET'});
+        this.notfound.tree.add({route: route as TriFrostRoute<Env>, path: route.path, method: 'GET'});
     }
 
     matchNotFound (path: string): RouteMatch<Env>|null {
@@ -256,15 +247,12 @@ export class RouteTree<Env extends Record<string, any> = {}> {
      * MARK: Error
      */
 
-    addError (route: RouteDefinition<Env>) {
+    addError (route:Omit<TriFrostRoute<Env>, 'method'>) {
         if (!isNeString(route?.path) || route.path[0] !== '/') throw new Error('RouteTree@addError: invalid path');
-        if (!isFn(route.handler)) throw new Error('RouteTree@addError: handler must be a function');
-        if (!isArray(route.middleware)) throw new Error('RouteTree@addError: middleware must be an array');
-
-        this.error.tree.add({...route, method: 'GET'});
+        this.error.tree.add({route: route as TriFrostRoute<Env>, path: route.path, method: 'GET'});
     }
 
-    matchError (path: string): RouteMatch<Env>|null {
+    matchError (path:string):RouteMatch<Env>|null {
         const cached = this.error.lru.get(path);
         if (cached) return cached.v;
 
