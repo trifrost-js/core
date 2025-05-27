@@ -9,7 +9,7 @@ import {isString, isNeString} from '@valkyriestudios/utils/string';
 import {
     type TriFrostRateLimit,
     type TriFrostRateLimitLimitFunction,
-} from './modules/RateLimit/_RateLimit';
+} from '../modules/RateLimit/_RateLimit';
 import {
     type TriFrostRouter,
     type TriFrostRouterOptions,
@@ -22,7 +22,7 @@ import {
     type TriFrostRoute,
     type TriFrostRouteHandler,
     type TriFrostRouteBuilderHandler,
-} from './types/routing';
+} from '../types/routing';
 import {
     type HttpMethod,
     HttpMethods,
@@ -33,7 +33,7 @@ import {
     Sym_TriFrostMethod,
     Sym_TriFrostName,
     Sym_TriFrostType,
-} from './types/constants';
+} from '../types/constants';
 import {Route} from './Route';
 
 class Router <

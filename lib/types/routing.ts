@@ -4,7 +4,7 @@ import {
     type TriFrostRateLimitLimitFunction,
     type TriFrostRateLimit,
 } from '../modules/RateLimit/_RateLimit';
-import {type Route} from '../Route';
+import {type Route} from '../routing/Route';
 import {
     type HttpMethod,
     Sym_TriFrostDescription,

@@ -16,7 +16,7 @@ import {
     type TriFrostLoggerExporter,
 } from './modules/Logger';
 import {Sym_TriFrostSpan} from './modules/Logger/util';
-import {Router} from './Router';
+import {Router} from './routing/Router';
 import {getRuntime} from './runtimes/Runtime';
 import {
     type TriFrostRuntime,

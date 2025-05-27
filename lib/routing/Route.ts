@@ -3,12 +3,12 @@
 import {
     type TriFrostMiddleware,
     type TriFrostRouteHandler,
-} from './types/routing';
-import {HttpMethods, type HttpMethod} from './types/constants';
+} from '../types/routing';
+import {HttpMethods, type HttpMethod} from '../types/constants';
 import {
     type TriFrostRateLimit,
     type TriFrostRateLimitLimitFunction,
-} from './modules/RateLimit/_RateLimit';
+} from '../modules/RateLimit/_RateLimit';
 
 export class Route <
     Env extends Record<string, any> = {},
