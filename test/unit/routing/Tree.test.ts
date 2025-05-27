@@ -274,34 +274,6 @@ describe('routing - Tree', () => {
         });
     });
 
-    describe('has()', () => {
-        it('Detects static route existence', () => {
-            tree.add({
-                method: HttpMethods.GET,
-                path: '/static/exists',
-                handler: () => {},
-                middleware: [],
-            });
-
-            expect(tree.has(HttpMethods.GET, '/static/exists')).toBe(true);
-            expect(tree.has(HttpMethods.POST, '/static/exists')).toBe(false);
-            expect(tree.has(HttpMethods.GET, '/static/missing')).toBe(false);
-        });
-
-        it('Detects dynamic route existence', () => {
-            tree.add({
-                method: HttpMethods.GET,
-                path: '/dyn/:id',
-                handler: () => {},
-                middleware: [],
-            });
-
-            expect(tree.has(HttpMethods.GET, '/dyn/:id')).toBe(true);
-            expect(tree.has(HttpMethods.POST, '/dyn/:id')).toBe(false);
-            expect(tree.has(HttpMethods.GET, '/don/:id')).toBe(false);
-        });
-    });
-
     describe('reset()', () => {
         it('Resets all registered routes', () => {
             tree.add({
@@ -323,13 +295,13 @@ describe('routing - Tree', () => {
                 middleware: [],
             });
 
-            expect(tree.has(HttpMethods.GET, '/wipe')).toBe(true);
+            expect(tree.match(HttpMethods.GET, '/wipe')).not.toBe(null);
             expect(tree.matchNotFound('/wipe/abc')).not.toBe(null);
             expect(tree.matchError('/wipe/abc')).not.toBe(null);
 
             tree.reset();
 
-            expect(tree.has(HttpMethods.GET, '/wipe')).toBe(false);
+            expect(tree.match(HttpMethods.GET, '/wipe')).toBe(null);
             expect(tree.matchNotFound('/wipe/abc')).toBe(null);
             expect(tree.matchError('/wipe/abc')).toBe(null);
         });

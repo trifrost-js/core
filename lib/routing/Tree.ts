@@ -38,11 +38,11 @@ interface RouteMatch<Env extends Record<string, any> = {}> {
  * - wildcard matches (*)
  */
 type TrieNode <Env extends Record<string, any> = {}> = {
-    route: RouteDefinition<Env>|null;
     param_name: string|null;
     children:Record<string, TrieNode<Env>>;
     param_child: TrieNode<Env>|null;
     wildcard_child: TrieNode<Env>|null;
+    methods: Record<HttpMethod, RouteDefinition<Env>>;
 }
 
 /**
@@ -54,7 +54,7 @@ function blankTrieNode <Env extends Record<string, any> = {}> () {
         param_child: null,
         wildcard_child: null,
         param_name: null,
-        route: null,
+        methods: Object.create(null),
     } as TrieNode<Env>;
 }
 
@@ -68,9 +68,9 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
     /**
      * Adds a route into the trie, segment by segment.
      * 
-     * @param {RouteDefinition} route - Route to add
+     * @param {MethodRouteDefinition} route - Route to add
      */
-    add (route:RouteDefinition<Env>) {
+    add (route:MethodRouteDefinition<Env>) {
         let node = this.root;
         const segments = route.path.split('/');
         for (let i = 0; i < segments.length; i++) {
@@ -93,70 +93,62 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
                 }
             }
         }
-        node.route = route;
+        node.methods[route.method] = route;
     }
 
     /**
-     * Matches a path against the trie, collecting parameters.
+     * Matches a path and method against the trie, collecting parameters.
      * 
+     * @param {HttpMethod} method - HTTP method to match
      * @param {string} path - Path to find the match for
      */
-    match (path:string):RouteMatch<Env>|null {
+    match (method: HttpMethod, path: string): RouteMatch<Env>|null {
         const params = {};
-        const matched = this.search(this.root, path.split('/'), 0, params);
+        const matched = this.search(this.root, path.split('/'), 0, params, method);
         return matched ? {handler: matched.handler, middleware: matched.middleware, params} : null;
     }
 
     /**
-     * Recursively searches the trie for a matching route
+     * Recursively searches the trie for a matching route and method
      * 
      * @param {TrieNode<Env>} node - Node of the tree we're currently on
      * @param {string[]} segments - Segments of the path we're searching
      * @param {number} segment_idx - Index of the current segment we're on
      * @param {Record<string, string>} params_acc - Parameter accumulator (built up as we go)
+     * @param {HttpMethod} method - HTTP method being matched
      */
     private search (
         node: TrieNode<Env>,
         segments: string[],
         segment_idx: number,
-        params_acc: Record<string, string>
+        params_acc: Record<string, string>,
+        method: HttpMethod
     ): RouteDefinition<Env> | null {
-        if (segment_idx === segments.length) return node.route;
-                
-        const segment = segments[segment_idx];
-        if (!segment) return this.search(node, segments, segment_idx + 1, params_acc);
-
-        if (node.children[segment]) {
-            /* Exact match */
-            const found = this.search(node.children[segment], segments, segment_idx + 1, params_acc);
-            if (found) return found;
-        } else if (node.param_child) {
-            /* Param match */
-            params_acc[node.param_child.param_name!] = segment;
-            const found = this.search(node.param_child, segments, segment_idx + 1, params_acc);
-            if (found) return found;
-            delete params_acc[node.param_child.param_name!];
-        } else if (node.wildcard_child) {
-            /* Wildcard match */
-            return node.wildcard_child.route;
+        if (segment_idx === segments.length) {
+            return node.methods[method] || null;
         }
+
+        const segment = segments[segment_idx];
+        if (!segment) return this.search(node, segments, segment_idx + 1, params_acc, method);
 
         /* Exact match */
         if (node.children[segment]) {
-            const found = this.search(node.children[segment], segments, segment_idx + 1, params_acc);
+            const found = this.search(node.children[segment], segments, segment_idx + 1, params_acc, method);
             if (found) return found;
         }
-        
+
         /* Param match */
         if (node.param_child) {
             params_acc[node.param_child.param_name!] = segment;
-            const found = this.search(node.param_child, segments, segment_idx + 1, params_acc);
+            const found = this.search(node.param_child, segments, segment_idx + 1, params_acc, method);
             if (found) return found;
             delete params_acc[node.param_child.param_name!];
         }
-        
-        /* Wildcard match, wildcard eats rest of path, no need to recurse */
-        if (node.wildcard_child) return node.wildcard_child.route;
+
+        /* Wildcard match (wildcard eats the rest) */
+        if (node.wildcard_child) {
+            return node.wildcard_child.methods[method] || null;
+        }
 
         return null;
     }
@@ -165,49 +157,34 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
 
 export class RouteTree<Env extends Record<string, any> = {}> {
 
-    protected static: Record<HttpMethod, Record<string, RouteDefinition<Env>>> = Object.create(null);
+    protected static:Record<
+        string,
+        Record<HttpMethod, MethodRouteDefinition<Env>>
+    > = Object.create(null);
 
-    protected dynamic: Record<HttpMethod, {
-        lru:LRU<string, {v:RouteMatch<Env>|null}>;
-        tree:TrieRouteTree<Env>;
-    }> = Object.create(null);
+    protected dynamic:{
+        lru: LRU<string, {v: RouteMatch<Env>|null}>;
+        tree: TrieRouteTree<Env>;
+    } = {lru: new LRU({max_size: 250}), tree: new TrieRouteTree()};
 
     protected notfound:{
-        lru:LRU<string, {v:RouteMatch<Env>|null}>;
-        tree:TrieRouteTree<Env>
+        lru: LRU<string, {v: RouteMatch<Env>|null}>;
+        tree: TrieRouteTree<Env>;
     } = {lru: new LRU({max_size: 250}), tree: new TrieRouteTree()};
 
     protected error:{
-        lru:LRU<string, {v:RouteMatch<Env>|null}>;
-        tree:TrieRouteTree<Env>
+        lru: LRU<string, {v: RouteMatch<Env>|null}>;
+        tree: TrieRouteTree<Env>;
     } = {lru: new LRU({max_size: 250}), tree: new TrieRouteTree()};
-
-    /**
-     * Checks if a route exists
-     * 
-     * @param {HttpMethod} method - HTTP Verb (GET, DELETE, POST, ...)
-     * @param {string} path - Path to look for
-     */
-    has (method:HttpMethod, path:string):boolean {
-        if (this.static[method]?.[path]) return true;
-        if (this.dynamic[method]) return this.dynamic[method].tree.match(path) !== null;
-        return false;
-    }
 
     /**
      * Clears all stored routes
      */
     reset () {
         this.static = Object.create(null);
-        this.dynamic = Object.create(null);
+        this.dynamic = {lru: new LRU({max_size: 250}), tree: new TrieRouteTree()};
         this.notfound = {lru: new LRU({max_size: 250}), tree: new TrieRouteTree()};
         this.error = {lru: new LRU({max_size: 250}), tree: new TrieRouteTree()};
-    }
-
-    validRoute (route:RouteDefinition) {
-        if (!route.path || typeof route.path !== 'string') throw new Error('RouteTree.add: invalid path');
-        if (typeof route.handler !== 'function') throw new Error('RouteTree.add: handler must be a function');
-        if (route.middleware && !Array.isArray(route.middleware)) throw new Error('RouteTree.add: middleware must be an array');
     }
 
     /**
@@ -219,24 +196,17 @@ export class RouteTree<Env extends Record<string, any> = {}> {
      * 
      * @param {MethodRouteDefinition<Env>} route - Route to add
      */
-    add (route:MethodRouteDefinition<Env>) {
+    add (route: MethodRouteDefinition<Env>) {
         if (!isNeString(route?.path) || route.path[0] !== '/') throw new Error('RouteTree@add: invalid path');
         if (!isFn(route.handler)) throw new Error('RouteTree@add: handler must be a function');
         if (!isArray(route.middleware)) throw new Error('RouteTree@add: middleware must be an array');
         if (!HttpMethodsSet.has(route.method)) throw new Error('RouteTree@add: method is not valid');
 
         if (route.path.indexOf(':') < 0 && route.path.indexOf('*') < 0) {
-            if (!this.static[route.method]) this.static[route.method] = Object.create(null);
-            this.static[route.method][route.path] = route;
+            if (!this.static[route.path]) this.static[route.path] = Object.create(null);
+            this.static[route.path][route.method] = route;
         } else {
-            if (!this.dynamic[route.method]) {
-                this.dynamic[route.method] = {
-                    lru: new LRU<string, {v:RouteMatch<Env>|null}>({max_size: 250}),
-                    tree: new TrieRouteTree(),
-                };
-            }
-
-            this.dynamic[route.method].tree.add(route);
+            this.dynamic.tree.add(route);
         }
     }
 
@@ -246,54 +216,18 @@ export class RouteTree<Env extends Record<string, any> = {}> {
      * @param {HttpMethod} method - HTTP Verb (GET, DELETE, POST, ...)
      * @param {string} path - Path to look for
      */
-    match (method:HttpMethod, path:string):RouteMatch<Env>|null {
+    match (method: HttpMethod, path: string): RouteMatch<Env>|null {
         const normalized = path === '' ? '/' : path;
 
         /* Check static routes */
-        const hit_static = this.static[method]?.[normalized];
+        const hit_static = this.static[normalized]?.[method];
         if (hit_static) return {handler: hit_static.handler, middleware: hit_static.middleware, params: {}};
 
-        /* Check dynamic routes */
-        if (this.dynamic[method]) {
-            const cached = this.dynamic[method].lru.get(normalized);
-            if (cached) return cached.v;
-
-            const matched = this.dynamic[method].tree.match(normalized);
-            this.dynamic[method].lru.set(normalized, {v: matched});
-            return matched;
-        }
-
-        return null;
-    }
-
-    /**
-     * MARK: Not Found
-     */
-
-    /**
-     * Adds a notfound handler into the notfound trie
-     * 
-     * @param {RouteDefinition<Env>} route - Route to add
-     */
-    addNotFound (route:RouteDefinition<Env>) {
-        if (!isNeString(route?.path) || route.path[0] !== '/') throw new Error('RouteTree@addNotFound: invalid path');
-        if (!isFn(route.handler)) throw new Error('RouteTree@addNotFound: handler must be a function');
-        if (!isArray(route.middleware)) throw new Error('RouteTree@addNotFound: middleware must be an array');
-
-        this.notfound.tree.add(route);
-    }
-
-    /**
-     * Attempts to match a notfound handler to a provided path
-     * 
-     * @param {string} path - Path to match the notfound for
-     */
-    matchNotFound (path:string):RouteMatch<Env>|null {
-        const cached = this.notfound.lru.get(path);
+        const cached = this.dynamic.lru.get(normalized);
         if (cached) return cached.v;
 
-        const matched = this.notfound.tree.match(path);
-        this.notfound.lru.set(path, {v: matched});
+        const matched = this.dynamic.tree.match(method, normalized);
+        this.dynamic.lru.set(normalized, {v: matched});
         return matched;
     }
 
@@ -301,29 +235,40 @@ export class RouteTree<Env extends Record<string, any> = {}> {
      * MARK: Not Found
      */
 
+    addNotFound (route: RouteDefinition<Env>) {
+        if (!isNeString(route?.path) || route.path[0] !== '/') throw new Error('RouteTree@addNotFound: invalid path');
+        if (!isFn(route.handler)) throw new Error('RouteTree@addNotFound: handler must be a function');
+        if (!isArray(route.middleware)) throw new Error('RouteTree@addNotFound: middleware must be an array');
+
+        this.notfound.tree.add({...route, method: 'GET'});
+    }
+
+    matchNotFound (path: string): RouteMatch<Env>|null {
+        const cached = this.notfound.lru.get(path);
+        if (cached) return cached.v;
+
+        const matched = this.notfound.tree.match('GET', path);
+        this.notfound.lru.set(path, {v: matched});
+        return matched;
+    }
+
     /**
-     * Adds an error handler into the error trie
-     * 
-     * @param {RouteDefinition<Env>} route - Route to add
+     * MARK: Error
      */
-    addError (route:RouteDefinition<Env>) {
+
+    addError (route: RouteDefinition<Env>) {
         if (!isNeString(route?.path) || route.path[0] !== '/') throw new Error('RouteTree@addError: invalid path');
         if (!isFn(route.handler)) throw new Error('RouteTree@addError: handler must be a function');
         if (!isArray(route.middleware)) throw new Error('RouteTree@addError: middleware must be an array');
 
-        this.error.tree.add(route);
+        this.error.tree.add({...route, method: 'GET'});
     }
 
-    /**
-     * Attempts to match an error handler to a provided path
-     * 
-     * @param {string} path - Path to match the error for
-     */
-    matchError (path:string):RouteMatch<Env>|null {
+    matchError (path: string): RouteMatch<Env>|null {
         const cached = this.error.lru.get(path);
         if (cached) return cached.v;
 
-        const matched = this.error.tree.match(path);
+        const matched = this.error.tree.match('GET', path);
         this.error.lru.set(path, {v: matched});
         return matched;
     }
