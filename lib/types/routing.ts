@@ -5,12 +5,11 @@ import {
     type TriFrostRateLimit,
 } from '../modules/RateLimit/_RateLimit';
 import {type Route} from '../routing/Route';
+import {type RouteTree} from '../routing/Tree';
 import {
     type HttpMethod,
     Sym_TriFrostDescription,
-    Sym_TriFrostLoggerMeta,
     Sym_TriFrostMeta,
-    Sym_TriFrostMethod,
     Sym_TriFrostName,
     Sym_TriFrostType,
 } from './constants';
@@ -76,18 +75,16 @@ export type TriFrostRoute <
     Env extends Record<string, any>,
     State extends Record<string, unknown> = {}
 > = {
-    path                    : string;
-    middleware              : TriFrostMiddleware<Env, State>[];
-    limit                   : TriFrostMiddleware<Env, State>|null;
-    fn                      : TriFrostHandler<Env, State>;
-    timeout?                : number | null;
-    kind                    : TriFrostContextKind;
-    [Sym_TriFrostMethod]      : HttpMethod;
-    [Sym_TriFrostType]        : TriFrostType;
-    [Sym_TriFrostName]        : string;
-    [Sym_TriFrostDescription] : string | null;
-    [Sym_TriFrostMeta]        : Record<string, unknown>;
-    [Sym_TriFrostLoggerMeta]  : Record<string, unknown>;
+    path                        : string;
+    middleware                  : TriFrostMiddleware<Env, State>[];
+    fn                          : TriFrostHandler<Env, State>;
+    timeout                     : number | null;
+    kind                        : TriFrostContextKind;
+    method                      : HttpMethod;
+    [Sym_TriFrostType]          : TriFrostType;
+    [Sym_TriFrostName]          : string;
+    [Sym_TriFrostDescription]   : string | null;
+    [Sym_TriFrostMeta]          : Record<string, unknown>;
 };
 
 export type TriFrostGrouper<
@@ -98,7 +95,7 @@ export type TriFrostGrouper<
 export type TriFrostGrouperConfig<
   Env extends Record<string, any> = {},
   State extends Record<string, unknown> = {}
-> = TriFrostRouterOptions<Env> & {fn: TriFrostGrouper<Env, State>;};
+> = Pick<TriFrostRouterOptions<Env, State>, 'timeout'> & {fn: TriFrostGrouper<Env, State>;};
 
 export type TriFrostGrouperHandler<
   Env extends Record<string, any>,
@@ -112,12 +109,31 @@ export type TriFrostRouteBuilderHandler <
   State extends Record<string, unknown> = {},
 > = (route: Route<Env, State>) => void;
 
-export type TriFrostRouterOptions <Env extends Record<string, any>> = {
+export type TriFrostRouterOptions <
+    Env extends Record<string, any> = {},
+    State extends Record<string, unknown> = {},
+> = {
+    /**
+     * Tree passed by root router to register routes onto
+     */
+    tree:RouteTree<Env>;
+    /**
+     * Path for the router
+     */
+    path:string;
+    /**
+     * Limit middleware for this router and sub routers
+     */
+    limit:TriFrostMiddleware<Env, State>|null;
     /**
      * Maximum timeout in milliseconds for this router and sub routers
      * (defaults to 30 000)
      */
-    timeout?: number|null;
+    timeout: number|null;
+    /**
+     * Middleware chain for this router and sub routers
+     */
+    middleware:TriFrostMiddleware<Env, State>[];
     /**
      * Global Rate Limit instance or null
      */
@@ -129,15 +145,11 @@ export type TriFrostRouter <
     State extends Record<string, unknown> = {},
 > = {
     get path ():string;
-    get middleware ():Readonly<TriFrostMiddleware<Env, State>[]>;
-    get limitware (): Readonly<TriFrostMiddleware<Env, State>|null>;
-    get $notfound ():TriFrostHandler<Env, State>|null;
-    get routers ():Readonly<TriFrostRouter<Env, State>[]>;
-    get routes ():Readonly<TriFrostRoute<Env, State>[]>;
+
     get timeout ():number|null|undefined;
 
     use: <Patch extends Record<string, unknown> = {}> (
-        val: TriFrostRouter<Env, State> | TriFrostMiddleware<Env, State, Patch>
+        val: TriFrostMiddleware<Env, State, Patch>
     ) => TriFrostRouter<Env, State & Patch>;
 
     /**

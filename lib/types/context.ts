@@ -19,7 +19,7 @@ import {
     type HttpMethod,
 } from './constants';
 
-export type TriFrostContextKind = 'std' | 'notfound' | 'options' | 'health';
+export type TriFrostContextKind = 'std' | 'notfound' | 'error' | 'options' | 'health';
 
 export type TriFrostContextIdOptions = {
     /**

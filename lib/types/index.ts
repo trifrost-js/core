@@ -23,12 +23,9 @@ export {
     HttpMethods,
     HttpStatuses,
     HttpRedirectStatuses,
-    Sym_TriFrostMethod,
     Sym_TriFrostType,
     Sym_TriFrostName,
     Sym_TriFrostDescription,
-    Sym_TriFrostPath,
-    Sym_TriFrostParams,
     Sym_TriFrostMeta
 } from './constants';
 export {

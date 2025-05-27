@@ -3,11 +3,6 @@
  */
 
 /**
- * Context Method
- */
-export const Sym_TriFrostMethod = Symbol('TriFrost.Method');
-
-/**
  * Enum-like tag: "middleware", "handler", "router", etc.
  * Useful for debugging or route inspection tooling.
  */
@@ -26,28 +21,10 @@ export const Sym_TriFrostName = Symbol('TriFrost.Name');
 export const Sym_TriFrostDescription = Symbol('TriFrost.Description');
 
 /**
- * Path for a handler
- * Useful for debugging, route inspection tooling and generation.
- */
-export const Sym_TriFrostPath = Symbol('TriFrost.Path');
-
-/**
- * Unhydrated Params for a handler
- * Useful for debugging, route inspection tooling and generation.
- */
-export const Sym_TriFrostParams = Symbol('TriFrost.Params');
-
-/**
  * Tag used for meta information
  * Useful for debugging or route inspection tooling.
  */
 export const Sym_TriFrostMeta = Symbol('TriFrost.Meta');
-
-/**
- * Logger meta information (created during route registration)
- * Injected in traces during route logging
- */
-export const Sym_TriFrostLoggerMeta = Symbol('TriFrost.LoggerMeta');
 
 /**
  * MARK: Method
