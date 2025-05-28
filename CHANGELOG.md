@@ -4,16 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.20.1] - 2025-05-28
 ### Improved
-- **qol**: Otel http.status_code and otel.status_code will now be set earlier in the routing chain before middleware starts to run and ctx.setStatus will only patch logger if it notices statusCode is different than the one currently set (preventing unnecessary writes to the logger attributes)
-- **qol**: `ctx.html` will no longer fallback to `200` if a previous call to `setStatus` was done and no status is passed to `ctx.html`
-- **qol**: `ctx.json` will no longer fallback to `200` if a previous call to `setStatus` was done and no status is passed to `ctx.json`
-- **qol**: `ctx.text` will no longer fallback to `200` if a previous call to `setStatus` was done and no status is passed to `ctx.text`
-- **misc**: Added codecov.yml file configured to prevent coverage to drop below 60%
+- **qol**: Otel `http.status_code` and `otel.status_code` attributes are now set early in the routing chain before middleware runs, giving better observability out of the box. Also, `ctx.setStatus` now only updates logger attributes **if the status code actually changes**, avoiding unnecessary writes.
+- **qol**: `ctx.html` no longer defaults to `200` if a previous `ctx.setStatus` was called — it **respects the existing status** unless explicitly overridden.
+- **qol**: `ctx.json` no longer defaults to `200` if a previous `ctx.setStatus` was called — it **respects the existing status** unless explicitly overridden.
+- **qol**: `ctx.text` no longer defaults to `200` if a previous `ctx.setStatus` was called — it **respects the existing status** unless explicitly overridden.
+- **qol**: Triaging (internal check to ensure the context is properly locked on error or status) now also runs **after each middleware** if the context has a status ≥ 400 but is not aborted — improving graceful handling when middleware signals an error without explicitly calling `abort()`.
+- **cicd**: Added `codecov.yml` to enforce that coverage must not drop below 60%.
 
 ### Fixed
-- Correct off-by-one error in middleware iteration loop causing `Reflect.get` to throw when accessing beyond array bounds. This could surface as `TypeError: Reflect.get called on non-object` during routing under certain configurations.
+- **bug**: Fixed an off-by-one error in the middleware iteration loop that could cause `Reflect.get` to throw (`TypeError: Reflect.get called on non-object`) when accessing beyond array bounds. This surfaced in certain routing configurations.
 
 ## [0.20.0] - 2025-05-28
 This isn’t just another release — it’s a **massive routing overhaul**. We’re introducing the new TrieRouter under the hood, delivering blistering-fast match speeds, smarter fallback handling, and precise middleware chains.
