@@ -584,13 +584,15 @@ describe('routing - Tree', () => {
                 [Sym_TriFrostMeta]: {},
             });
         
-            const allRoutes = tree.stack;
-        
-            expect(allRoutes).toEqual(expect.arrayContaining([
+            expect(tree.stack).toEqual(expect.arrayContaining([
                 expect.objectContaining({path: '/static', method: 'GET'}),
+                expect.objectContaining({path: '/static', method: 'OPTIONS'}),
                 expect.objectContaining({path: '/dynamic/:id', method: 'POST'}),
+                expect.objectContaining({path: '/dynamic/:id', method: 'OPTIONS'}),
                 expect.objectContaining({path: '/nf/*', kind: 'notfound'}),
+                expect.not.objectContaining({path: '/nf/*', method: 'OPTIONS'}),
                 expect.objectContaining({path: '/err/*', kind: 'error'}),
+                expect.not.objectContaining({path: '/err/*', method: 'OPTIONS'}),
             ]));
         });
 

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
-import {isArray, isNeArray} from '@valkyriestudios/utils/array';
+import {isArray} from '@valkyriestudios/utils/array';
 import {isFn} from '@valkyriestudios/utils/function';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {isObject, isNeObject} from '@valkyriestudios/utils/object';
@@ -25,7 +25,6 @@ import {
 import {
     type HttpMethod,
     HttpMethods,
-    HttpMethodsSet,
     Sym_TriFrostDescription,
     Sym_TriFrostMeta,
     Sym_TriFrostName,
@@ -33,6 +32,14 @@ import {
 } from '../types/constants';
 import {Route} from './Route';
 import {RouteTree} from './Tree';
+import {
+    isValidGrouper,
+    isValidHandler,
+    isValidLimit,
+    isValidMiddleware,
+} from './util';
+
+const RGX_SLASH = /\/{2,}/g;
 
 class Router <
     Env extends Record<string, any> = {},
@@ -124,7 +131,7 @@ class Router <
     use <Patch extends Record<string, unknown> = {}> (
         val: TriFrostMiddleware<Env, State, Patch>
     ):TriFrostRouter<Env, State & Patch> {
-        if (!isFn(val)) throw new Error('TriFrostRouter@use: Handler is expected');
+        if (!isValidMiddleware<Env, State>(val)) throw new Error('TriFrostRouter@use: Handler is expected');
 
         const fn = val as TriFrostMiddleware<Env, State>;
 
@@ -145,8 +152,8 @@ class Router <
      * Attach a rate limit to the middleware chain for this router
      */
     limit (limit: number | TriFrostRateLimitLimitFunction<Env, State>) {
-        if (!this.#rateLimit) throw new Error('TriFrostRoute@limit: RateLimit is not configured on App');
-
+        if (!this.#rateLimit) throw new Error('TriFrostRouter@limit: RateLimit is not configured on App');
+        if (!isValidLimit<Env, State>(limit)) throw new Error('TriFrostRouter@limit: Invalid limit');
         this.use(this.#rateLimit.limit<Env, State>(limit));
         return this;
     }
@@ -158,11 +165,11 @@ class Router <
         path: Path,
         handler: TriFrostGrouperHandler<Env, State & PathParam<Path>>
     ) {
-        if (!handler) throw new Error('TriFrostRoute@group: No handler provided for "' + path + '"');
+        if (!isString(path)) throw new Error('TriFrostRouter@group: Invalid path');
+        if (!isValidGrouper<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@group: Invalid handler');
 
         /* Create config */
         const {fn, timeout = undefined} = (isFn(handler) ? {fn: handler} : handler) as TriFrostGrouperConfig<Env, State & PathParam<Path>>;
-        if (!isFn(fn)) throw new Error('TriFrostRoute@group: Last argument must be a function or config object');
         
         /* Run router */
         fn(new Router<Env, State & PathParam<Path>>({
@@ -180,7 +187,7 @@ class Router <
      * Add a subroute with a builder approach
      */
     route <Path extends string = string> (path: Path, handler: TriFrostRouteBuilderHandler<Env, State & PathParam<Path>>) {
-        if (!isFn(handler)) throw new Error('TriFrostRoute@route: No handler provided for "' + path + '"');
+        if (!isFn(handler)) throw new Error('TriFrostRouter@route: No handler provided for "' + path + '"');
 
         /* Instantiate route builder */
         const route = new Route<Env, State & PathParam<Path>>({rateLimit: this.#rateLimit});
@@ -198,12 +205,12 @@ class Router <
     }
 
     /**
-     * configure a catch-all not found handler for subroutes of this router
+     * Configure a catch-all not found handler for subroutes of this router
      *
-     * @param {Handler} handler - Configuration for the route
+     * @param {Handler} handler - Handler to run
      */
-    notfound (handler:TriFrostHandler<Env, State>) {
-        if (!isFn(handler)) throw new Error('TriFrostRoute@notfound: Invalid handler provided for router on "' + this.#path + '"');
+    onNotFound (handler:TriFrostHandler<Env, State>) {
+        if (!isFn(handler)) throw new Error('TriFrostRoute@onNotFound: Invalid handler provided for router on "' + this.#path + '"');
 
         this.#tree.addNotFound({
             path: this.#path + '/*',
@@ -211,10 +218,32 @@ class Router <
             middleware: [...this.#middleware] as TriFrostMiddleware<Env>[],
             kind: 'notfound',
             timeout: this.#timeout,
-            [Sym_TriFrostName]: '404notfound',
+            [Sym_TriFrostName]: 'notfound',
             [Sym_TriFrostDescription]: '404 Not Found Handler',
             [Sym_TriFrostType]: 'handler',
-            [Sym_TriFrostMeta]: {},
+            [Sym_TriFrostMeta]: {name: 'notfound', kind: 'notfound'},
+        });
+        return this;
+    }
+
+    /**
+     * Configure a catch-all error handler for subroutes of this router
+     *
+     * @param {Handler} handler - Handler to run
+     */
+    onError (handler:TriFrostHandler<Env, State>) {
+        if (!isFn(handler)) throw new Error('TriFrostRoute@onError: Invalid handler provided for router on "' + this.#path + '"');
+
+        this.#tree.addError({
+            path: this.#path + '/*',
+            fn: handler as unknown as TriFrostHandler<Env, {}>,
+            middleware: [...this.#middleware] as TriFrostMiddleware<Env>[],
+            kind: 'error',
+            timeout: this.#timeout,
+            [Sym_TriFrostName]: 'error',
+            [Sym_TriFrostDescription]: 'Error Handler',
+            [Sym_TriFrostType]: 'handler',
+            [Sym_TriFrostMeta]: {name: 'error', kind: 'error'},
         });
         return this;
     }
@@ -223,6 +252,8 @@ class Router <
      * Configure a HTTP Get route
      */
     get <Path extends string = string> (path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+        if (!isString(path)) throw new Error('TriFrostRouter@get: Invalid path');
+        if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@get: Invalid handler');
         return this.#register(path, [handler], [HttpMethods.GET, HttpMethods.HEAD]);
     }
 
@@ -230,6 +261,8 @@ class Router <
      * Configure a HTTP Post route
      */
     post <Path extends string = string> (path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+        if (!isString(path)) throw new Error('TriFrostRouter@post: Invalid path');
+        if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@post: Invalid handler');
         return this.#register(path, [handler], [HttpMethods.POST]);
     }
 
@@ -237,6 +270,8 @@ class Router <
      * Configure a HTTP Put route
      */
     put <Path extends string = string> (path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+        if (!isString(path)) throw new Error('TriFrostRouter@put: Invalid path');
+        if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@put: Invalid handler');
         return this.#register(path, [handler], [HttpMethods.PUT]);
     }
 
@@ -244,6 +279,8 @@ class Router <
      * Configure a HTTP Patch route
      */
     patch <Path extends string = string> (path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+        if (!isString(path)) throw new Error('TriFrostRouter@patch: Invalid path');
+        if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@patch: Invalid handler');
         return this.#register(path, [handler], [HttpMethods.PATCH]);
     }
 
@@ -251,6 +288,8 @@ class Router <
      * Configure a HTTP Delete route
      */
     del <Path extends string = string> (path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+        if (!isString(path)) throw new Error('TriFrostRouter@del: Invalid path');
+        if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@del: Invalid handler');
         return this.#register(path, [handler], [HttpMethods.DELETE]);
     }
 
@@ -267,34 +306,25 @@ class Router <
         methods:HttpMethod[]
     ) {
         const fn = handlers[handlers.length - 1];
-        const middleware = handlers.slice(0, -1) as TriFrostMiddleware<Env, State>[];
-        const config = (isObject(fn) ? fn : {fn}) as TriFrostHandlerConfig<Env, State> & {limit?:TriFrostMiddleware<Env, State>|null};
-
-        if (
-            !isString(path) ||
-            !isFn(config.fn) ||
-            !isNeArray(methods) ||
-            !methods.every(val => HttpMethodsSet.has(val)) ||
-            ('timeout' in config && !isIntGt(config.timeout, 0) && config.timeout !== null)
-        ) throw new Error('Router@register: Invalid route');
-
-        const n_path = this.#path + path.trim();
+        const config = (isObject(fn) ? fn : {fn}) as TriFrostHandlerConfig<Env, State>;
+        const n_path = (this.#path + path.trim()).replace(RGX_SLASH, '/');
         const n_kind = isNeString(config.kind) ? config.kind : 'std';
         const n_name = isNeString(config.name) ? config.name : Reflect.get(config.fn, Sym_TriFrostName) || null;
         const n_desc = isNeString(config.description) ? config.description : null;
         const n_timeout = 'timeout' in config ? (config.timeout as number|null) : this.#timeout;
-
-        config.middleware = [
+        const n_middleware = [
             /* Inherit router mware */
             ...this.#middleware,
             /* Route-specific mware */
-            ...middleware,
+            ...handlers.slice(0, -1) as TriFrostMiddleware<Env, State>[],
             /* Potential config mware */
             ...config.middleware || [],
-        ];
+        ] as TriFrostMiddleware<Env>[];
 
         for (const method of methods) {
-            const n_route_name = n_name || (method + '_' + n_path);
+            const n_route_name = n_name
+                ? (method === 'HEAD' ? 'HEAD_' : '') + n_name
+                : method + '_' + n_path;
 
             const routeObj:TriFrostRoute<Env> = {
                 [Sym_TriFrostType]: 'handler',
@@ -305,7 +335,7 @@ class Router <
                 kind: n_kind,
                 path: n_path,
                 fn: config.fn as TriFrostHandler<Env>,
-                middleware: config.middleware as TriFrostMiddleware<Env>[],
+                middleware: n_middleware,
                 timeout: n_timeout,
             };
 

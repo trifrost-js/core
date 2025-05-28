@@ -94,7 +94,7 @@ function createOptionsRoute <Env extends Record<string, any>> (
         },
         middleware: cors_mware ? [cors_mware] : [],
         timeout: null,
-        [Sym_TriFrostName]: `OPTIONS_${path}`,
+        [Sym_TriFrostName]: `OPTIONS_${Reflect.get(routes, Sym_TriFrostName)}`,
         [Sym_TriFrostDescription]: 'Auto-generated OPTIONS handler',
         [Sym_TriFrostType]: 'handler',
         [Sym_TriFrostMeta]: {},

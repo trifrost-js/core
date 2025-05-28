@@ -163,7 +163,9 @@ export type TriFrostRouter <
         handler: TriFrostRouteBuilderHandler<Env, State & PathParam<Path>>
     ) => TriFrostRouter<Env, State>;
 
-    notfound: (fn:TriFrostHandler<Env, State>) => TriFrostRouter<Env, State>;
+    onNotFound: (fn:TriFrostHandler<Env, State>) => TriFrostRouter<Env, State>;
+
+    onError: (fn:TriFrostHandler<Env, State>) => TriFrostRouter<Env, State>;
 
     get: <Path extends string = string> (
         path: Path,
