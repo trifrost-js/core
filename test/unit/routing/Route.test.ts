@@ -52,13 +52,33 @@ describe('routing - Route', () => {
             for (const el of CONSTANTS.NOT_FUNCTION) {
                 expect(() => route.use(el as any)).toThrowError(/TriFrostRoute@use: Handler is expected/);
             }
+            expect(route.stack).toEqual([]);
         });
     });
 
     describe('.limit()', () => {
         it('Throws if rateLimit not configured', () => {
             const route = new Route({});
-            expect(() => route.limit(5)).toThrow(/TriFrostRoute: RateLimit is not configured on App/);
+            expect(() => route.limit(5)).toThrow(/TriFrostRoute@limit: RateLimit is not configured on App/);
+            expect(route.stack).toEqual([]);
+        });
+
+        it('Throws if invalid limit is passed', () => {
+            const limitMock = vi.fn().mockReturnValue(dummyMiddleware);
+            const rateLimitMock = {limit: limitMock};
+
+            const route = new Route({rateLimit: rateLimitMock as unknown as TriFrostRateLimit});
+            for (const el of [
+                ...CONSTANTS.NOT_FUNCTION,
+                ...CONSTANTS.NOT_INTEGER,
+                0,
+                -10,
+                10.5,
+            ]) {
+                if ((Number.isInteger(el) && (el as number) > 0) || typeof el === 'function') continue;
+                expect(() => route.limit(el as any)).toThrow(/TriFrostRoute@limit: Invalid limit/);
+            }
+            expect(route.stack).toEqual([]);
         });
 
         it('Adds rate-limit middleware when configured', () => {
