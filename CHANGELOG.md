@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.20.3] - 2023-05-28
 This release brings an approximate 2x throughput improvement in performance for the new TrieRouter when dealing with Hot paths thanks to an improved LRU design in the [Valkyrie Utils](https://github.com/ValkyrieStudios/utils/releases/tag/12.38.0) (sidenote: Valkyrie Utils is another package maintained by the creator of TriFrost and is heavily used within TriFrost).
 
 ### Improved
