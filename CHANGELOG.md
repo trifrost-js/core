@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+This isn’t just another release — it’s a **massive routing overhaul**. We’re introducing the new TrieRouter under the hood, delivering blistering-fast match speeds, smarter fallback handling, and precise middleware chains.
+
+From the moment a request hits your app, every part of the routing pipeline is now more **predictable**, **transparent**, and **customizable**.
+
+We didn’t stop at performance — we improved on error handling, brought further consistency across the entire chain, and added some additional tools to shape fallback and error behavior exactly how you want. No surprises, no magic — just clean, controlled power.
+
+### Added
+- **feat**: New **TrieRouter** implementation under the hood for all routing operations — offering **faster, more precise matching** with support for static, param, wildcard, and deep-nested patterns. This powers the entire TriFrost routing tree and improves performance across large route sets.
+- **feat**: Introduced `.onError()` handler registration. This allows end-users to **override** the default `500` error fallback. By default, if no error handler is registered TriFrost still calls `ctx.abort(500)`, but now you can fully customize how error fallback routes behave:
+```typescript
+/* Generic responder */
+app.onError(ctx => ctx.json({error: 'something went wrong'}, {status: 500}));
+
+/* Less generic */
+app.onError(ctx => {
+  switch (ctx.statusCode) {
+    case 401:
+      return ctx.json({error: 'no access you have'});
+    case 500:
+      return ctx.json({error: 'oopsie'});
+  }
+});
+
+/* Somewhere in your code */
+... return ctx.setStatus(401);
+```
+
 ### Improved
 - **feat**: `ctx.html` will now automatically prefix a `<!DOCTYPE html>` when it detects a full-page html body starting with `<html`
 - **feat**: `ctx.html`, `ctx.json`, `ctx.text` and `ctx.file` will no longer set the `Content-Type` if a `Content-Type` already exists on the response headers, the default behavior remains the same if no `Content-Type` exists on the response headers
@@ -28,6 +55,44 @@ switch (Reflect.get(fn, Sym_TriFrostFingerPrint)) {
   ...
 }
 ```
+- **qol**: TriFrost now **automatically catches** handlers or middleware that only set a status but don’t end the response. For example: `return ctx.setStatus(404);` will now trigger the nearest `.onNotFound()` handler if registered, or `.onError()` if the status is >= 400 — ensuring **graceful fallback handling** even when the context isn’t explicitly locked.
+- **qol**: Options routes will no longer get the entire middleware chain for the path they're running on, but instead will only look at cherry picking a registered `Cors` middleware from the chain.
+- **feat**: You can now chain .use() in between verb methods, allowing branch-specific middleware stacking. This makes the middleware chain **incrementally extendable**, letting you scope middleware precisely where needed without affecting earlier verbs.
+```typescript
+/* Works on a router level */
+router
+  .use(globalMw)
+  .get('/users', usersHandler) // gets globalMw
+  .use(adminMw)
+  .post('/admin', adminHandler); // gets globalMw + adminMw
+
+/* Works inside .route blocks */
+router
+  .use(globalMw)
+  .route('/users', route => {
+    route
+      .use(aclChecker).get(usersHandler) /* globalMw + aclChecker */
+      .use(writeAclChecker).post(usersPostHandler) /* globalMw + aclChecker + writeAclChecker */
+  )
+  .use(adminMw)
+  .post('/admin', adminHandler); /* globalMw + adminMw */
+```
+
+### Breaking
+- The `.limit()` method now **applies rate limiting immediately in-place** when chained, instead of magically attaching at the end of the middleware chain. This aligns with TriFrost’s **no-magic-ever** philosophy, making middleware chains predictable and readable. Previously, `.limit()` was automatically pushed to the end, regardless of where you called it. Now, its position matters — allowing clear and intuitive control.
+```typescript
+router
+  .limit(5)                             // ⏰ applies here
+  .use(someMw)                          // ✅ runs AFTER limit
+  .get('/path', h);
+
+router
+  .use(myFancyAuth)                     // ✅ runs AFTER limit
+  .limit(ctx => ctx.state.$auth.limit)  // ⏰ applies here
+  .get('/path', h);
+```
+- The `.notfound()` method has been renamed to `.onNotFound()` for better semantic clarity, matching `.onError()` and making route fallback behavior easier to reason about.
+
 ## [0.19.1] - 2025-05-26
 ### Fixed
 - Fix an issue introduced in TriFrost 0.18.0 where race conditions sometimes prevented Workerd env from being resolved on time
