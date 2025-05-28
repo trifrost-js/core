@@ -445,6 +445,9 @@ class App <
                         if (!ctx.isLocked) await runTriage(path, ctx);
                     } catch (err) {
                         ctx.logger.error(err);
+                        
+                        /* Ensure status code is set as 500 if not >= 400, this ensures proper triaging */
+                        if (!ctx.isAborted && ctx.statusCode < 400) ctx.setStatus(500);
 
                         if (!ctx.isLocked) await runTriage(path, ctx);
                     } finally {

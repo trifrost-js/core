@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Fixed
+- **bug**: Ensure ctx ends up in a 500 status when global catch is triggered AND status of ctx is below 400, this ensures proper triaging behavior
+
 ## [0.20.1] - 2025-05-28
 ### Improved
 - **qol**: Otel `http.status_code` and `otel.status_code` attributes are now set early in the routing chain before middleware runs, giving better observability out of the box. Also, `ctx.setStatus` now only updates logger attributes **if the status code actually changes**, avoiding unnecessary writes.
