@@ -19,7 +19,7 @@ import {
 export function isValidHandler <
     Env extends Record<string, any>,
     State extends Record<string, unknown> = {}
-> (val:TriFrostRouteHandler<Env, State>) {
+> (val:TriFrostRouteHandler<Env, State>):boolean {
     if (isFn(val)) return true;
     if (!isFn((val as TriFrostHandlerConfig<Env, State>)?.fn)) return false;
     if (
@@ -37,7 +37,7 @@ export function isValidHandler <
 export function isValidGrouper <
     Env extends Record<string, any>,
     State extends Record<string, unknown> = {}
-> (val:TriFrostGrouperHandler<Env, State>) {
+> (val:TriFrostGrouperHandler<Env, State>):boolean {
     if (isFn(val)) return true;
     if (!isFn((val as TriFrostGrouperConfig<Env, State>)?.fn)) return false;
     if (
@@ -55,7 +55,7 @@ export function isValidGrouper <
 export function isValidMiddleware <
     Env extends Record<string, any>,
     State extends Record<string, unknown> = {}
-> (val:TriFrostMiddleware<Env, State>) {
+> (val:TriFrostMiddleware<Env, State>):boolean {
     return isFn(val);
 }
 
@@ -66,6 +66,6 @@ export function isValidMiddleware <
 export function isValidLimit <
     Env extends Record<string, any>,
     State extends Record<string, unknown> = {}
-> (val:number|TriFrostRateLimitLimitFunction<Env, State>) {
+> (val:number|TriFrostRateLimitLimitFunction<Env, State>):boolean {
     return isIntGt(val, 0) || isFn(val);
 }
