@@ -9,7 +9,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **feat**: `ctx.html` will now automatically prefix a `<!DOCTYPE html>` when it detects a full-page html body starting with `<html`
 - **feat**: `ctx.html`, `ctx.json`, `ctx.text` and `ctx.file` will no longer set the `Content-Type` if a `Content-Type` already exists on the response headers, the default behavior remains the same if no `Content-Type` exists on the response headers
 - **feat**: `ctx.abort()` will now early-return if the context was already aborted, ensuring no side-effects when a request was already aborted
+- **qol**: All TriFrost middleware now have a FingerPrint symbol marker attached to it to identify it clearly inside of the middleware chain for a route, this is both helpful for internal behaviors (see options routes in Trie router), but can also be helpful for future plugins 🧙‍♂️.
+```typescript
+import {
+  Sym_TriFrostFingerPrint,
+  Sym_TriFrostMiddlewareCors,
+  Sym_TriFrostMiddlewareSecurity,
+} from '@trifrost/core';
 
+const fn = ...; /* Some random method from a middleware chain */
+switch (Reflect.get(fn, Sym_TriFrostFingerPrint)) {
+  case Sym_TriFrostMiddlewareCors:
+    console.log('Fn is trifrost cors');
+    break;
+  case Sym_TriFrostMiddlewareSecurity:
+    console.log('Fn is trifrost security');
+    break;
+  ...
+}
+```
 ## [0.19.1] - 2025-05-26
 ### Fixed
 - Fix an issue introduced in TriFrost 0.18.0 where race conditions sometimes prevented Workerd env from being resolved on time

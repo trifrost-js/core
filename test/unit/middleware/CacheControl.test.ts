@@ -3,6 +3,7 @@ import {describe, it, expect} from 'vitest';
 import {
     CacheControl,
     ParseAndApplyCacheControl,
+    Sym_TriFrostMiddlewareCacheControl,
     type TriFrostCacheControlOptions,
 } from '../../../lib/middleware/CacheControl';
 import {MockContext} from '../../MockContext';
@@ -11,6 +12,7 @@ import {
     Sym_TriFrostDescription,
     Sym_TriFrostName,
     Sym_TriFrostType,
+    Sym_TriFrostFingerPrint,
 } from '../../../lib/types/constants';
 
 describe('Middleware - CacheControl', () => {
@@ -25,6 +27,11 @@ describe('Middleware - CacheControl', () => {
         expect(Reflect.get(fn, Sym_TriFrostName)).toBe('TriFrostCacheControl');
         expect(Reflect.get(fn, Sym_TriFrostType)).toBe('middleware');
         expect(Reflect.get(fn, Sym_TriFrostDescription)).toBe('Middleware adding Cache-Control headers to contexts passing through it');
+    });
+
+    it('Sets a specific symbol marker to identify TriFrost CacheControl', () => {
+        const fn = CacheControl();
+        expect(Reflect.get(fn, Sym_TriFrostFingerPrint)).toBe(Sym_TriFrostMiddlewareCacheControl);
     });
 
     it('Sets a valid Cache-Control header with type only', () => {

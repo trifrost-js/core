@@ -3,10 +3,14 @@ import {isNeObject} from '@valkyriestudios/utils/object';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {
     Sym_TriFrostDescription,
+    Sym_TriFrostFingerPrint,
     Sym_TriFrostName,
     Sym_TriFrostType,
 } from '../types/constants';
 import {type TriFrostContext} from '../types/context';
+
+/* Specific symbol attached to cache control mware to identify them by */
+export const Sym_TriFrostMiddlewareCacheControl = Symbol('TriFrost.Middleware.CacheControl');
 
 enum CacheControlValues {
     /**
@@ -86,6 +90,7 @@ export function CacheControl (opts:TriFrostCacheControlOptions = {}) {
     Reflect.set(mware, Sym_TriFrostName, 'TriFrostCacheControl');
     Reflect.set(mware, Sym_TriFrostType, 'middleware');
     Reflect.set(mware, Sym_TriFrostDescription, 'Middleware adding Cache-Control headers to contexts passing through it');
+    Reflect.set(mware, Sym_TriFrostFingerPrint, Sym_TriFrostMiddlewareCacheControl);
 
     return mware;
 }

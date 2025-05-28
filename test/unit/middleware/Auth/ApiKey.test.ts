@@ -1,7 +1,8 @@
 import {describe, it, expect, vi} from 'vitest';
-import {ApiKeyAuth} from '../../../../lib/middleware/Auth/ApiKey';
+import {ApiKeyAuth, Sym_TriFrostMiddlewareApiKeyAuth} from '../../../../lib/middleware/Auth/ApiKey';
+import {Sym_TriFrostMiddlewareAuth} from '../../../../lib/middleware/Auth/types';
 import {MockContext} from '../../../MockContext';
-import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostType} from '../../../../lib/types';
+import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostType, Sym_TriFrostFingerPrint} from '../../../../lib/types/constants';
 import CONSTANTS from '../../../constants';
 
 const makeCtx = (headerKey = 'x-api-key', headerVal?: string, queryKey = 'api_key', queryVal?: string) => new MockContext({
@@ -81,5 +82,11 @@ describe('Middleware - Auth - ApiKey', () => {
         expect(Reflect.get(mw, Sym_TriFrostName)).toBe('TriFrostApiKeyAuth');
         expect(Reflect.get(mw, Sym_TriFrostType)).toBe('middleware');
         expect(Reflect.get(mw, Sym_TriFrostDescription)).toBe('API Key Authentication middleware');
+    });
+
+    it('Sets a specific symbol marker to identify TriFrost ApiKeyAuth', () => {
+        const mw = ApiKeyAuth({validate: vi.fn()});
+        expect(Reflect.get(mw, Sym_TriFrostMiddlewareAuth)).toBe(true);
+        expect(Reflect.get(mw, Sym_TriFrostFingerPrint)).toBe(Sym_TriFrostMiddlewareApiKeyAuth);
     });
 });

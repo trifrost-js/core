@@ -9,6 +9,7 @@ import {type Store} from '../../storage/_Storage';
 import {type TriFrostMiddleware} from '../../types/routing';
 import {
     Sym_TriFrostDescription,
+    Sym_TriFrostFingerPrint,
     Sym_TriFrostName,
     Sym_TriFrostType,
 } from '../../types/constants';
@@ -18,6 +19,9 @@ import {
 } from './strategies/_Strategy';
 import {Sliding} from './strategies/Sliding';
 import {Fixed} from './strategies/Fixed';
+
+/* Specific symbol attached to limit mware to identify them by */
+export const Sym_TriFrostMiddlewareRateLimit = Symbol('TriFrost.Middleware.RateLimit');
 
 /**
  * RateLimit strategies
@@ -197,6 +201,7 @@ export class TriFrostRateLimit <Env extends Record<string, any> = Record<string,
         Reflect.set(bound, Sym_TriFrostName, 'TriFrostRateLimit');
         Reflect.set(bound, Sym_TriFrostType, 'middleware');
         Reflect.set(bound, Sym_TriFrostDescription, 'Middleware for rate limitting contexts passing through it');
+        Reflect.set(bound, Sym_TriFrostFingerPrint, Sym_TriFrostMiddlewareRateLimit);
 
         return bound as TriFrostMiddleware<E, S>;
     }

@@ -5,6 +5,7 @@ export {
     Sym_TriFrostName,
     Sym_TriFrostDescription,
     Sym_TriFrostMeta,
+    Sym_TriFrostFingerPrint,
     HttpStatuses,
     HttpRedirectStatuses,
     MimeTypes
@@ -14,15 +15,7 @@ export {type TriFrostContext} from './types/context';
 export {type TriFrostRouter} from './types/routing';
 
 /* Middleware */
-export {
-    ApiKeyAuth,
-    BasicAuth,
-    BearerAuth,
-    CacheControl,
-    Cors,
-    Security,
-    SessionCookieAuth
-} from './middleware';
+export * from './middleware';
 
 /* Modules - Cache */
 export {
@@ -45,6 +38,9 @@ export {
     createCss,
     Style
 } from './modules/JSX/style';
+
+/* Modules - Rate Limit */
+export {Sym_TriFrostMiddlewareRateLimit} from './modules/RateLimit';
 
 /* Storage */
 export {

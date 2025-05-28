@@ -1,10 +1,10 @@
 import {describe, it, expect, beforeEach, vi} from 'vitest';
-import {TriFrostRateLimit} from '../../../../lib/modules/RateLimit/_RateLimit';
+import {Sym_TriFrostMiddlewareRateLimit, TriFrostRateLimit} from '../../../../lib/modules/RateLimit/_RateLimit';
 import CONSTANTS from '../../../constants';
 import {Store} from '../../../../lib/storage/_Storage';
 import {MockContext} from '../../../MockContext';
 import {sleep} from '@valkyriestudios/utils/function';
-import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostType} from '../../../../lib/types/constants';
+import {Sym_TriFrostDescription, Sym_TriFrostFingerPrint, Sym_TriFrostName, Sym_TriFrostType} from '../../../../lib/types/constants';
 import {TriFrostContextKind} from '../../../../lib/types/context';
 
 const mockStore = () => {
@@ -113,6 +113,16 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
             expect(Reflect.get(mw, Sym_TriFrostName)).toBe('TriFrostRateLimit');
             expect(Reflect.get(mw, Sym_TriFrostType)).toBe('middleware');
             expect(Reflect.get(mw, Sym_TriFrostDescription)).toBe('Middleware for rate limitting contexts passing through it');
+            expect(store.calls.length).toBe(0);
+        });
+
+        it('Registers specific symbol to identify rate limiter to middleware', async () => {
+            const rl = new TriFrostRateLimit({store: () => store});
+            const mw = rl.limit(5);
+        
+            expect(rl.strategy).toBe('fixed');
+            expect(rl.window).toBe(60);
+            expect(Reflect.get(mw, Sym_TriFrostFingerPrint)).toBe(Sym_TriFrostMiddlewareRateLimit);
             expect(store.calls.length).toBe(0);
         });
 

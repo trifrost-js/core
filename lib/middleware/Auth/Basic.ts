@@ -4,10 +4,15 @@ import {isFn} from '@valkyriestudios/utils/function';
 import {isNeString, isString} from '@valkyriestudios/utils/string';
 import {
     Sym_TriFrostDescription,
+    Sym_TriFrostFingerPrint,
     Sym_TriFrostName,
     Sym_TriFrostType,
 } from '../../types/constants';
 import {type TriFrostContext} from '../../types/context';
+import {Sym_TriFrostMiddlewareAuth} from './types';
+
+/* Specific symbol attached to auth mware to identify them by */
+export const Sym_TriFrostMiddlewareBasicAuth = Symbol('TriFrost.Middleware.BasicAuth');
 
 export type BasicAuthResult = {user:string};
 
@@ -84,6 +89,8 @@ export function BasicAuth <
     Reflect.set(mware, Sym_TriFrostName, 'TriFrostBasicAuth');
     Reflect.set(mware, Sym_TriFrostType, 'middleware');
     Reflect.set(mware, Sym_TriFrostDescription, 'HTTP Basic Authentication middleware');
+    Reflect.set(mware, Sym_TriFrostMiddlewareAuth, true);
+    Reflect.set(mware, Sym_TriFrostFingerPrint, Sym_TriFrostMiddlewareBasicAuth);
 
     return mware;
 }

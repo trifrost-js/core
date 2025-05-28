@@ -4,10 +4,14 @@ import {isNeString} from '@valkyriestudios/utils/string';
 import {
     HttpMethods,
     Sym_TriFrostDescription,
+    Sym_TriFrostFingerPrint,
     Sym_TriFrostName,
     Sym_TriFrostType,
 } from '../types/constants';
 import {type TriFrostContext} from '../types/context';
+
+/* Specific symbol attached to cors mware to identify them by */
+export const Sym_TriFrostMiddlewareCors = Symbol('TriFrost.Middleware.Cors');
 
 const METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'CONNECT', 'TRACE'] as const;
 const METHODSSet = new Set(METHODS);
@@ -109,6 +113,7 @@ export function Cors (opts: TriFrostCorsOptions = {}) {
     Reflect.set(mware, Sym_TriFrostName, 'TriFrostCors');
     Reflect.set(mware, Sym_TriFrostType, 'middleware');
     Reflect.set(mware, Sym_TriFrostDescription, 'Middleware for Cross Origin Resource Sharing');
+    Reflect.set(mware, Sym_TriFrostFingerPrint, Sym_TriFrostMiddlewareCors);
 
     return mware;
 }

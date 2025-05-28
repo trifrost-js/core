@@ -1,7 +1,8 @@
 import {describe, it, expect, vi} from 'vitest';
-import {BasicAuth} from '../../../../lib/middleware/Auth/Basic';
+import {BasicAuth, Sym_TriFrostMiddlewareBasicAuth} from '../../../../lib/middleware/Auth/Basic';
+import {Sym_TriFrostMiddlewareAuth} from '../../../../lib/middleware/Auth/types';
 import {MockContext} from '../../../MockContext';
-import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostType} from '../../../../lib/types';
+import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostType, Sym_TriFrostFingerPrint} from '../../../../lib/types/constants';
 import CONSTANTS from '../../../constants';
 
 const makeCtx = (authHeader?: string) => new MockContext({
@@ -108,5 +109,11 @@ describe('Middleware - Auth - Basic', () => {
         expect(Reflect.get(mw, Sym_TriFrostName)).toBe('TriFrostBasicAuth');
         expect(Reflect.get(mw, Sym_TriFrostType)).toBe('middleware');
         expect(Reflect.get(mw, Sym_TriFrostDescription)).toBe('HTTP Basic Authentication middleware');
+    });
+
+    it('Sets a specific symbol marker to identify TriFrost BasicAuth', () => {
+        const mw = BasicAuth({validate: vi.fn()});
+        expect(Reflect.get(mw, Sym_TriFrostMiddlewareAuth)).toBe(true);
+        expect(Reflect.get(mw, Sym_TriFrostFingerPrint)).toBe(Sym_TriFrostMiddlewareBasicAuth);
     });
 });

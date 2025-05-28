@@ -1,7 +1,8 @@
 import {describe, it, expect, vi} from 'vitest';
-import {SessionCookieAuth} from '../../../../lib/middleware/Auth/SessionCookie';
+import {SessionCookieAuth, Sym_TriFrostMiddlewareSessionCookieAuth} from '../../../../lib/middleware/Auth/SessionCookie';
+import {Sym_TriFrostMiddlewareAuth} from '../../../../lib/middleware/Auth/types';
 import {MockContext} from '../../../MockContext';
-import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostType} from '../../../../lib/types';
+import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostType, Sym_TriFrostFingerPrint} from '../../../../lib/types/constants';
 import CONSTANTS from '../../../constants';
 
 const makeCtx = (cookieVal?: string|null) => {
@@ -141,16 +142,6 @@ describe('Middleware - Auth - SessionCookie', () => {
         expect(ctx.cookies.verify).toHaveBeenCalledWith('verifiedValue', 'secret', {algorithm: 'SHA-512'});
     });
 
-    it('Correctly attaches metadata symbols', () => {
-        const mw = SessionCookieAuth({
-            cookie: 'session',
-            secret: {val: 'secret'},
-        });
-        expect(Reflect.get(mw, Sym_TriFrostName)).toBe('TriFrostSessionCookieAuth');
-        expect(Reflect.get(mw, Sym_TriFrostType)).toBe('middleware');
-        expect(Reflect.get(mw, Sym_TriFrostDescription)).toBe('Session Cookie Authentication middleware');
-    });
-
     it('Passes ctx correctly to secret value function', async () => {
         const ctx = makeCtx('verifiedValue');
     
@@ -165,5 +156,24 @@ describe('Middleware - Auth - SessionCookie', () => {
         expect(secretFn).toHaveBeenCalledTimes(1);
         expect(secretFn).toHaveBeenCalledWith(ctx);
         expect(ctx.cookies.verify).toHaveBeenCalledWith('verifiedValue', 'resolvedSecret', {algorithm: 'SHA-256'});
-    });    
+    });
+
+    it('Correctly attaches metadata symbols', () => {
+        const mw = SessionCookieAuth({
+            cookie: 'session',
+            secret: {val: 'secret'},
+        });
+        expect(Reflect.get(mw, Sym_TriFrostName)).toBe('TriFrostSessionCookieAuth');
+        expect(Reflect.get(mw, Sym_TriFrostType)).toBe('middleware');
+        expect(Reflect.get(mw, Sym_TriFrostDescription)).toBe('Session Cookie Authentication middleware');
+    });
+
+    it('Sets a specific symbol marker to identify TriFrost BearerAuth', () => {
+        const mw = SessionCookieAuth({
+            cookie: 'session',
+            secret: {val: 'secret'},
+        });
+        expect(Reflect.get(mw, Sym_TriFrostMiddlewareAuth)).toBe(true);
+        expect(Reflect.get(mw, Sym_TriFrostFingerPrint)).toBe(Sym_TriFrostMiddlewareSessionCookieAuth);
+    });
 });

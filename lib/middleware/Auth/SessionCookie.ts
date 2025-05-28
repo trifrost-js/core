@@ -3,11 +3,16 @@ import {isFn} from '@valkyriestudios/utils/function';
 import {isNeString} from '@valkyriestudios/utils/string';
 import {
     Sym_TriFrostDescription,
+    Sym_TriFrostFingerPrint,
     Sym_TriFrostName,
     Sym_TriFrostType,
 } from '../../types/constants';
 import {type TriFrostContext} from '../../types/context';
 import {type SigningAlgorithm} from '../../modules/Cookies';
+import {Sym_TriFrostMiddlewareAuth} from './types';
+
+/* Specific symbol attached to auth mware to identify them by */
+export const Sym_TriFrostMiddlewareSessionCookieAuth = Symbol('TriFrost.Middleware.SessionCookieAuth');
 
 export type SessionCookieAuthResult = {cookie:string};
 
@@ -104,6 +109,8 @@ export function SessionCookieAuth <
     Reflect.set(mware, Sym_TriFrostName, 'TriFrostSessionCookieAuth');
     Reflect.set(mware, Sym_TriFrostType, 'middleware');
     Reflect.set(mware, Sym_TriFrostDescription, 'Session Cookie Authentication middleware');
+    Reflect.set(mware, Sym_TriFrostMiddlewareAuth, true);
+    Reflect.set(mware, Sym_TriFrostFingerPrint, Sym_TriFrostMiddlewareSessionCookieAuth);
 
     return mware;
 }

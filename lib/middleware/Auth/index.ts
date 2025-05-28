@@ -1,19 +1,27 @@
 export {
     BasicAuth,
-    type BasicAuthOptions
+    Sym_TriFrostMiddlewareBasicAuth,
+    type BasicAuthOptions,
+    type BasicAuthResult
 } from './Basic';
 
 export {
     BearerAuth,
-    type BearerAuthOptions
+    Sym_TriFrostMiddlewareBearerAuth,
+    type BearerAuthOptions,
+    type BearerAuthResult
 } from './Bearer';
 
 export {
     ApiKeyAuth,
-    type ApiKeyAuthOptions  
+    Sym_TriFrostMiddlewareApiKeyAuth,
+    type ApiKeyAuthOptions,
+    type ApiKeyAuthResult
 } from './ApiKey';
 
 export {
     SessionCookieAuth,
-    type SessionCookieAuthOptions
+    Sym_TriFrostMiddlewareSessionCookieAuth,
+    type SessionCookieAuthOptions,
+    type SessionCookieAuthResult
 } from './SessionCookie';

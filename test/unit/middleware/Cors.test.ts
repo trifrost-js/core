@@ -1,6 +1,6 @@
 import {isAsyncFn} from '@valkyriestudios/utils/function';
 import {describe, it, expect} from 'vitest';
-import {Cors} from '../../../lib/middleware/Cors';
+import {Cors, Sym_TriFrostMiddlewareCors} from '../../../lib/middleware/Cors';
 import CONSTANTS from '../../constants';
 import {MockContext} from '../../MockContext';
 import {
@@ -8,6 +8,7 @@ import {
     Sym_TriFrostDescription,
     Sym_TriFrostName,
     Sym_TriFrostType,
+    Sym_TriFrostFingerPrint,
 } from '../../../lib/types/constants';
 
 describe('Middleware - Cors', () => {
@@ -22,6 +23,11 @@ describe('Middleware - Cors', () => {
         expect(Reflect.get(fn, Sym_TriFrostName)).toBe('TriFrostCors');
         expect(Reflect.get(fn, Sym_TriFrostType)).toBe('middleware');
         expect(Reflect.get(fn, Sym_TriFrostDescription)).toBe('Middleware for Cross Origin Resource Sharing');
+    });
+
+    it('Sets a specific symbol marker to identify TriFrost cors', () => {
+        const fn = Cors();
+        expect(Reflect.get(fn, Sym_TriFrostFingerPrint)).toBe(Sym_TriFrostMiddlewareCors);
     });
 
     it('Sets default headers when no options provided', () => {

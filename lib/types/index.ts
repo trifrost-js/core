@@ -26,7 +26,8 @@ export {
     Sym_TriFrostType,
     Sym_TriFrostName,
     Sym_TriFrostDescription,
-    Sym_TriFrostMeta
+    Sym_TriFrostMeta,
+    Sym_TriFrostFingerPrint
 } from './constants';
 export {
     type TriFrostCFKVNamespace,

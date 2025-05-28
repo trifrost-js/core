@@ -27,6 +27,11 @@ export const Sym_TriFrostDescription = Symbol('TriFrost.Description');
 export const Sym_TriFrostMeta = Symbol('TriFrost.Meta');
 
 /**
+ * Tag used to identify specific internals, this will be filled in by all trifrost middlewares
+ */
+export const Sym_TriFrostFingerPrint = Symbol('TriFrost.FingerPrint');
+
+/**
  * MARK: Method
  */
 

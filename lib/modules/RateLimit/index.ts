@@ -5,5 +5,6 @@ export {
     type TriFrostRateLimitLimitFunction,
     type TriFrostRateLimitExceededFunction,
     type TriFrostRateLimitOptions,
-    RateLimitKeyGeneratorRegistry
+    RateLimitKeyGeneratorRegistry,
+    Sym_TriFrostMiddlewareRateLimit
 } from './_RateLimit';

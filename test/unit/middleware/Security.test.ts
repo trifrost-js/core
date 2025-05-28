@@ -7,6 +7,7 @@ import {
     CrossOriginResourcePolicy,
     ReferrerPolicy,
     Security,
+    Sym_TriFrostMiddlewareSecurity,
     XContentTypes,
     XDnsPrefetchControl,
     XDownloadOptions,
@@ -14,6 +15,7 @@ import {
 } from '../../../lib/middleware/Security';
 import {
     Sym_TriFrostDescription,
+    Sym_TriFrostFingerPrint,
     Sym_TriFrostName,
     Sym_TriFrostType,
 } from '../../../lib/types/constants';
@@ -34,6 +36,11 @@ describe('Middleware - Security', () => {
         expect(
             Reflect.get(fn, Sym_TriFrostDescription)
         ).toBe('Middleware for configuring Security headers and CSP on contexts passing through it');
+    });
+
+    it('Sets a specific symbol marker to identify TriFrost security', () => {
+        const fn = Security();
+        expect(Reflect.get(fn, Sym_TriFrostFingerPrint)).toBe(Sym_TriFrostMiddlewareSecurity);
     });
 
     it('Sets default headers when no options provided', () => {
