@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Improved
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250528.0
+- **deps**: Upgrade @types/node to 22.15.23
+- **deps**: Upgrade typescript-eslint to 8.33.0
+
 ### Fixed
 - **bug**: Ensure ctx ends up in a 500 status when global catch is triggered AND status of ctx is below 400, this ensures proper triaging behavior
 
