@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
+import {isFn} from '@valkyriestudios/utils/function';
 import {
+    TriFrostHandlerConfig,
     type TriFrostMiddleware,
     type TriFrostRouteHandler,
 } from '../types/routing';
@@ -19,7 +21,10 @@ export class Route <
     #middleware: TriFrostMiddleware<Env, State>[] = [];
 
     /* Route Methods */
-    #routes:[HttpMethod[], TriFrostRouteHandler<Env, State>][] = [];
+    #routes:Record<HttpMethod, {
+        handler: TriFrostRouteHandler<Env, State>,
+        middleware: TriFrostMiddleware<Env, State>[],
+    }> = Object.create(null);
 
     /* Configured Rate limit instance from the app */
     #rateLimit:TriFrostRateLimit<Env>|null = null;
@@ -37,9 +42,9 @@ export class Route <
             handler:TriFrostRouteHandler<Env, State>;
             methods: HttpMethod[];
         }[] = [];
-        for (let i = 0; i < this.#routes.length; i++) {
-            const el = this.#routes[i];
-            acc.push({methods: el[0], handler: el[1], middleware: this.#middleware});
+        for (const method in this.#routes) {
+            const el = this.#routes[method as HttpMethod];
+            acc.push({methods: [method as HttpMethod], handler: el.handler, middleware: el.middleware});
         }
         return acc;
     }
@@ -50,12 +55,14 @@ export class Route <
     use <Patch extends Record<string, unknown> = {}> (
         val:TriFrostMiddleware<Env, State, Patch>
     ):Route<Env, State & Patch> {
+        if (!isFn(val)) throw new Error('TriFrostRoute@use: Handler is expected');
+
         this.#middleware.push(val);
         return this as Route<Env, State & Patch>;
     }
 
     /**
-     * Attach a rate limit to this route
+     * Attach a limit middleware to this route
      */
     limit (
         limit: number | TriFrostRateLimitLimitFunction<Env, State>
@@ -67,38 +74,69 @@ export class Route <
     }
 
     /**
-     * Finalize with a GET method
+     * Register a GET method
      */
     get (handler: TriFrostRouteHandler<Env, State>) {
-        this.#routes.push([[HttpMethods.GET, HttpMethods.HEAD], handler]);
+        if (
+            !isFn(handler) && 
+            !isFn((handler as TriFrostHandlerConfig)?.fn)
+        ) throw new Error('TriFrostRoute@get: Invalid handler');
+
+        this.#routes[HttpMethods.GET] = {handler, middleware: [...this.#middleware]};
+        this.#routes[HttpMethods.HEAD] = {handler, middleware: [...this.#middleware]};
+        return this;
     }
 
     /**
-     * Finalize with a POST method
+     * Register a POST method
      */
     post (handler: TriFrostRouteHandler<Env, State>) {
-        this.#routes.push([[HttpMethods.POST], handler]);
+        if (
+            !isFn(handler) && 
+            !isFn((handler as TriFrostHandlerConfig)?.fn)
+        ) throw new Error('TriFrostRoute@post: Invalid handler');
+
+        this.#routes[HttpMethods.POST] = {handler, middleware: [...this.#middleware]};
+        return this;
     }
 
     /**
-     * Finalize with a PUT method
+     * Register a PUT method
      */
     put (handler: TriFrostRouteHandler<Env, State>) {
-        this.#routes.push([[HttpMethods.PUT], handler]);
+        if (
+            !isFn(handler) && 
+            !isFn((handler as TriFrostHandlerConfig)?.fn)
+        ) throw new Error('TriFrostRoute@put: Invalid handler');
+
+        this.#routes[HttpMethods.PUT] = {handler, middleware: [...this.#middleware]};
+        return this;
     }
 
     /**
-     * Finalize with a PATCH method
+     * Register a PATCH method
      */
     patch (handler: TriFrostRouteHandler<Env, State>) {
-        this.#routes.push([[HttpMethods.PATCH], handler]);
+        if (
+            !isFn(handler) && 
+            !isFn((handler as TriFrostHandlerConfig)?.fn)
+        ) throw new Error('TriFrostRoute@patch: Invalid handler');
+
+        this.#routes[HttpMethods.PATCH] = {handler, middleware: [...this.#middleware]};
+        return this;
     }
 
     /**
-     * Finalize with a DELETE method
+     * Register a DELETE method
      */
     del (handler: TriFrostRouteHandler<Env, State>) {
-        this.#routes.push([[HttpMethods.DELETE], handler]);
+        if (
+            !isFn(handler) && 
+            !isFn((handler as TriFrostHandlerConfig)?.fn)
+        ) throw new Error('TriFrostRoute@del: Invalid handler');
+
+        this.#routes[HttpMethods.DELETE] = {handler, middleware: [...this.#middleware]};
+        return this;
     }
 
 }

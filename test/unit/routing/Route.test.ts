@@ -1,0 +1,341 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+
+import {describe, it, expect, vi} from 'vitest';
+import {Route} from '../../../lib/routing/Route';
+import {HttpMethods} from '../../../lib/types/constants';
+import {TriFrostRateLimit} from '../../../lib/modules/RateLimit/_RateLimit';
+import {type TriFrostRouteHandler} from '../../../lib/types/routing';
+import CONSTANTS from '../../constants';
+
+describe('routing - Route', () => {
+    const dummyHandler = vi.fn();
+    const dummyMiddleware = vi.fn();
+
+    describe('.use()', () => {
+        it('Attaches middleware', () => {
+            const route = new Route({});
+            route.use(dummyMiddleware);
+            route.get(dummyHandler);
+            expect(route.stack).toEqual([
+                {
+                    handler: dummyHandler,
+                    methods: [HttpMethods.GET],
+                    middleware: [dummyMiddleware],
+                }, {
+                    handler: dummyHandler,
+                    methods: [HttpMethods.HEAD],
+                    middleware: [dummyMiddleware],
+                },
+            ]);
+        });
+
+        it('Chains multiple middleware correctly', () => {
+            const m1 = vi.fn();
+            const m2 = vi.fn();
+            const route = new Route({});
+            route.use(m1).use(m2).get(dummyHandler);
+            expect(route.stack).toEqual([
+                {
+                    handler: dummyHandler,
+                    methods: [HttpMethods.GET],
+                    middleware: [m1, m2],
+                }, {
+                    handler: dummyHandler,
+                    methods: [HttpMethods.HEAD],
+                    middleware: [m1, m2],
+                },
+            ]);
+        });
+
+        it('Throws if use() called with non-function', () => {
+            const route = new Route({});
+            for (const el of CONSTANTS.NOT_FUNCTION) {
+                expect(() => route.use(el as any)).toThrowError(/TriFrostRoute@use: Handler is expected/);
+            }
+        });
+    });
+
+    describe('.limit()', () => {
+        it('Throws if rateLimit not configured', () => {
+            const route = new Route({});
+            expect(() => route.limit(5)).toThrow(/TriFrostRoute: RateLimit is not configured on App/);
+        });
+
+        it('Adds rate-limit middleware when configured', () => {
+            const limitMock = vi.fn().mockReturnValue(dummyMiddleware);
+            const rateLimitMock = {limit: limitMock};
+
+            const route = new Route({rateLimit: rateLimitMock as unknown as TriFrostRateLimit});
+            route.limit(10);
+            route.get(dummyHandler);
+            expect(limitMock).toHaveBeenCalledWith(10);
+            expect(route.stack).toEqual([
+                {
+                    handler: dummyHandler,
+                    methods: [HttpMethods.GET],
+                    middleware: [dummyMiddleware],
+                }, {
+                    handler: dummyHandler,
+                    methods: [HttpMethods.HEAD],
+                    middleware: [dummyMiddleware],
+                },
+            ]);
+        });
+    });
+
+    describe('.get()', () => {
+        it('Throws and does not register if passed an invalid handler', () => {
+            const route = new Route({});
+            for (const el of [
+                ...CONSTANTS.NOT_FUNCTION,
+                ...[...CONSTANTS.NOT_FUNCTION.map(val => ({fn: val}))],
+            ]) {
+                expect(() => route.get(el as TriFrostRouteHandler<any>)).toThrowError(/TriFrostRoute@get: Invalid handler/);
+            }
+
+            expect(route.stack).toEqual([]);
+        });
+
+        it('Registers GET and HEAD', () => {
+            const route = new Route({});
+            route.get(dummyHandler);
+            expect(route.stack).toEqual([
+                {
+                    handler: dummyHandler,
+                    methods: [HttpMethods.GET],
+                    middleware: [],
+                }, {
+                    handler: dummyHandler,
+                    methods: [HttpMethods.HEAD],
+                    middleware: [],
+                },
+            ]);
+        });
+    });
+
+    describe('.post()', () => {
+        it('Throws and does not register if passed an invalid handler', () => {
+            const route = new Route({});
+            for (const el of [
+                ...CONSTANTS.NOT_FUNCTION,
+                ...[...CONSTANTS.NOT_FUNCTION.map(val => ({fn: val}))],
+            ]) {
+                expect(() => route.post(el as TriFrostRouteHandler<any>)).toThrowError(/TriFrostRoute@post: Invalid handler/);
+            }
+
+            expect(route.stack).toEqual([]);
+        });
+
+        it('Registers POST', () => {
+            const route = new Route({});
+            route.post(dummyHandler);
+            expect(route.stack).toEqual([
+                {
+                    handler: dummyHandler,
+                    methods: [HttpMethods.POST],
+                    middleware: [],
+                },
+            ]);
+        });
+    });
+
+    describe('.put()', () => {
+        it('Throws and does not register if passed an invalid handler', () => {
+            const route = new Route({});
+            for (const el of [
+                ...CONSTANTS.NOT_FUNCTION,
+                ...[...CONSTANTS.NOT_FUNCTION.map(val => ({fn: val}))],
+            ]) {
+                expect(() => route.put(el as TriFrostRouteHandler<any>)).toThrowError(/TriFrostRoute@put: Invalid handler/);
+            }
+
+            expect(route.stack).toEqual([]);
+        });
+
+        it('Registers PUT', () => {
+            const route = new Route({});
+            route.put(dummyHandler);
+            expect(route.stack).toEqual([
+                {
+                    handler: dummyHandler,
+                    methods: [HttpMethods.PUT],
+                    middleware: [],
+                },
+            ]);
+        });
+    });
+
+    describe('.patch()', () => {
+        it('Throws and does not register if passed an invalid handler', () => {
+            const route = new Route({});
+            for (const el of [
+                ...CONSTANTS.NOT_FUNCTION,
+                ...[...CONSTANTS.NOT_FUNCTION.map(val => ({fn: val}))],
+            ]) {
+                expect(() => route.patch(el as TriFrostRouteHandler<any>)).toThrowError(/TriFrostRoute@patch: Invalid handler/);
+            }
+
+            expect(route.stack).toEqual([]);
+        });
+
+        it('Registers PATCH', () => {
+            const route = new Route({});
+            route.patch(dummyHandler);
+            expect(route.stack).toEqual([
+                {
+                    handler: dummyHandler,
+                    methods: [HttpMethods.PATCH],
+                    middleware: [],
+                },
+            ]);
+        });
+    });
+
+    describe('.del()', () => {
+        it('Throws and does not register if passed an invalid handler', () => {
+            const route = new Route({});
+            for (const el of [
+                ...CONSTANTS.NOT_FUNCTION,
+                ...[...CONSTANTS.NOT_FUNCTION.map(val => ({fn: val}))],
+            ]) {
+                expect(() => route.del(el as TriFrostRouteHandler<any>)).toThrowError(/TriFrostRoute@del: Invalid handler/);
+            }
+
+            expect(route.stack).toEqual([]);
+        });
+
+        it('Registers DELETE', () => {
+            const route = new Route({});
+            route.del(dummyHandler);
+            expect(route.stack).toEqual([
+                {
+                    handler: dummyHandler,
+                    methods: [HttpMethods.DELETE],
+                    middleware: [],
+                },
+            ]);
+        });
+    });
+
+    describe('behavioral', () => {
+        it('Handles no handlers at all', () => {
+            const route = new Route({});
+            expect(route.stack).toEqual([]);
+        });
+
+        it('Handles no handlers at all with middleware', () => {
+            const route = new Route({});
+            route.use(dummyMiddleware);
+            expect(route.stack).toEqual([]);
+        });
+
+        it('Handles multiple verbs and layered middleware', () => {
+            const m1 = vi.fn();
+            const m2 = vi.fn();
+            const handler1 = vi.fn();
+            const handler2 = vi.fn();
+
+            const route = new Route({});
+            route.use(m1).use(m2);
+            route.get(handler1);
+            route.post(handler2);
+
+            expect(route.stack).toEqual([
+                {
+                    handler: handler1,
+                    methods: [HttpMethods.GET],
+                    middleware: [m1, m2],
+                }, {
+                    handler: handler1,
+                    methods: [HttpMethods.HEAD],
+                    middleware: [m1, m2],
+                }, {
+                    handler: handler2,
+                    methods: [HttpMethods.POST],
+                    middleware: [m1, m2],
+                },
+            ]);
+        });
+
+        it('Handles duplicate verbs correctly', () => {
+            const handler1 = vi.fn();
+            const handler2 = vi.fn();
+
+            const route = new Route({});
+            route.get(handler1);
+            route.get(handler2);
+
+            expect(route.stack).toEqual([
+                {
+                    handler: handler2,
+                    methods: [HttpMethods.GET],
+                    middleware: [],
+                }, {
+                    handler: handler2,
+                    methods: [HttpMethods.HEAD],
+                    middleware: [],
+                },
+            ]);
+        });
+
+        it('Handles middleware type widening with use<>()', () => {
+            const m1 = vi.fn();
+            const route = new Route<{}, {test?: boolean}>({});
+            const widened = route.use<{extra: string}>(m1);
+            widened.get(dummyHandler);
+            expect(widened.stack[0]?.middleware).toContain(m1);
+        });
+
+        it('Handles chaining .use() + .limit()', () => {
+            const m1 = vi.fn();
+            const limitMock = vi.fn().mockReturnValue(dummyMiddleware);
+            const rateLimitMock = {limit: limitMock};
+
+            const route = new Route({rateLimit: rateLimitMock as unknown as TriFrostRateLimit});
+            route.use(m1).limit(5).get(dummyHandler);
+            expect(route.stack).toEqual([
+                {
+                    handler: dummyHandler,
+                    methods: [HttpMethods.GET],
+                    middleware: [m1, dummyMiddleware],
+                }, {
+                    handler: dummyHandler,
+                    methods: [HttpMethods.HEAD],
+                    middleware: [m1, dummyMiddleware],
+                },
+            ]);
+        });
+
+        it('Handles chaining .use() + .limit() across multiple methods', () => {
+            const limitMock = vi.fn().mockReturnValue(dummyMiddleware);
+            const rateLimitMock = {limit: limitMock};
+            const m1 = vi.fn();
+            const m2 = vi.fn();
+            const handler1 = vi.fn();
+            const handler2 = vi.fn();
+
+            const route = new Route({rateLimit: rateLimitMock as unknown as TriFrostRateLimit});
+            route
+                .use(m1)
+                .limit(5)
+                .get(handler1)
+                .use(m2)
+                .post(handler2);
+            expect(route.stack).toEqual([
+                {
+                    handler: handler1,
+                    methods: [HttpMethods.GET],
+                    middleware: [m1, dummyMiddleware],
+                }, {
+                    handler: handler1,
+                    methods: [HttpMethods.HEAD],
+                    middleware: [m1, dummyMiddleware],
+                }, {
+                    handler: handler2,
+                    methods: [HttpMethods.POST],
+                    middleware: [m1, dummyMiddleware, m2],
+                },
+            ]);
+        });
+    });
+});
