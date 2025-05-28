@@ -693,7 +693,10 @@ export abstract class Context <
             if (html.startsWith('<html')) html = '<!DOCTYPE html>' + html;
 
             this.res_body = html;
-            this.setStatus(opts?.status ?? HttpStatuses.OK);
+
+            /* Set status if provided */
+            this.setStatus(opts?.status || this.res_code);
+            
             this.end();
         } catch (err) {
             this.#logger.error(err, {body, opts});
@@ -717,7 +720,10 @@ export abstract class Context <
             if (!this.res_headers['Content-Type']) this.res_headers['Content-Type'] = MimeTypes.JSON;
 
             this.res_body = JSON.stringify(body);
-            this.setStatus(opts?.status ?? HttpStatuses.OK);
+
+            /* Set status if provided */
+            this.setStatus(opts?.status || this.res_code);
+
             this.end();
         } catch (err) {
             this.#logger.error(err, {body, opts});
@@ -756,7 +762,10 @@ export abstract class Context <
             if (!this.res_headers['Content-Type']) this.res_headers['Content-Type'] = MimeTypes.TEXT;
 
             this.res_body = body;
-            this.setStatus(opts?.status ?? HttpStatuses.OK);
+
+            /* Set status if provided */
+            this.setStatus(opts?.status || this.res_code);
+
             this.end();
         } catch (err) {
             this.#logger.error(err, {body, opts});
