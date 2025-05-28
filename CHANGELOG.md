@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Improved
+- **qol**: Otel http.status_code and otel.status_code will now be set earlier in the routing chain before middleware starts to run and ctx.setStatus will only patch logger if it notices statusCode is different than the one currently set (preventing unnecessary writes to the logger attributes)
+- **qol**: `ctx.html` will no longer fallback to `200` if a previous call to `setStatus` was done and no status is passed to `ctx.html`
+- **qol**: `ctx.json` will no longer fallback to `200` if a previous call to `setStatus` was done and no status is passed to `ctx.json`
+- **qol**: `ctx.text` will no longer fallback to `200` if a previous call to `setStatus` was done and no status is passed to `ctx.text`
+- **misc**: Added codecov.yml file configured to prevent coverage to drop below 60%
+
+### Fixed
+- Correct off-by-one error in middleware iteration loop causing `Reflect.get` to throw when accessing beyond array bounds. This could surface as `TypeError: Reflect.get called on non-object` during routing under certain configurations.
+
 ## [0.20.0] - 2025-05-28
 This isn’t just another release — it’s a **massive routing overhaul**. We’re introducing the new TrieRouter under the hood, delivering blistering-fast match speeds, smarter fallback handling, and precise middleware chains.
 
