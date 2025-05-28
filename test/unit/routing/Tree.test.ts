@@ -4,12 +4,16 @@ import {RouteTree} from '../../../lib/routing/Tree';
 import {
     HttpMethods,
     Sym_TriFrostDescription,
+    Sym_TriFrostFingerPrint,
     Sym_TriFrostMeta,
     Sym_TriFrostName,
     Sym_TriFrostType,
 } from '../../../lib/types/constants';
 import CONSTANTS from '../../constants';
 import {type TriFrostRoute} from '../../../lib/types/routing';
+import {MockContext} from '../../MockContext';
+import {TriFrostContext} from '../../../lib/types';
+import {Sym_TriFrostMiddlewareCors} from '../../../lib/middleware/Cors';
 
 describe('routing - Tree', () => {
     let tree: RouteTree;
@@ -380,6 +384,28 @@ describe('routing - Tree', () => {
             const match = tree.matchNotFound('/random/path');
             expect(match).toBe(null);
         });
+
+        it('Returns cached result in matchNotFound after initial lookup', () => {
+            const handler = () => {};
+            tree.addNotFound({
+                path: '/cached/*',
+                fn: handler,
+                middleware: [],
+                timeout: null,
+                kind: 'notfound',
+                [Sym_TriFrostType]: 'handler',
+                [Sym_TriFrostName]: 'cached_nf',
+                [Sym_TriFrostDescription]: 'Cached notfound',
+                [Sym_TriFrostMeta]: {},
+            });
+        
+            const first = tree.matchNotFound('/cached/something');
+            expect(first).not.toBe(null);
+        
+            const second = tree.matchNotFound('/cached/something');
+            expect(second).not.toBe(null);
+            expect(second).toBe(first);
+        });
     });
     
     describe('error', () => {
@@ -424,6 +450,28 @@ describe('routing - Tree', () => {
         it('Returns null when no error handler matches', () => {
             const match = tree.matchError('/ok/path');
             expect(match).toBe(null);
+        });
+
+        it('Returns cached result in matchError after initial lookup', () => {
+            const handler = () => {};
+            tree.addError({
+                path: '/error/*',
+                fn: handler,
+                middleware: [],
+                timeout: null,
+                kind: 'error',
+                [Sym_TriFrostType]: 'handler',
+                [Sym_TriFrostName]: 'cached_err',
+                [Sym_TriFrostDescription]: 'Cached error',
+                [Sym_TriFrostMeta]: {},
+            });
+        
+            const first = tree.matchError('/error/boom');
+            expect(first).not.toBe(null);
+        
+            const second = tree.matchError('/error/boom');
+            expect(second).not.toBe(null);
+            expect(second).toBe(first);
         });
     });    
 
@@ -838,6 +886,48 @@ describe('routing - Tree', () => {
             expect(nfMatch).toBe(null);
             expect(errMatch).toBe(null);
         });
+
+        it('Returns null when segment length matches but no method exists', () => {
+            const handler = () => {};
+            const path = '/nomethod';
+        
+            tree.add({
+                path,
+                fn: handler,
+                middleware: [],
+                timeout: null,
+                kind: 'std',
+                method: HttpMethods.POST,
+                [Sym_TriFrostType]: 'handler',
+                [Sym_TriFrostName]: 'post_only',
+                [Sym_TriFrostDescription]: null,
+                [Sym_TriFrostMeta]: {},
+            });
+        
+            const result = tree.match(HttpMethods.GET, path);
+            expect(result).toBe(null);
+        });
+
+        it('Returns null on dynamic paths when segment length matches but no method exists', () => {
+            const handler = () => {};
+            const path = '/nomethod/:id';
+        
+            tree.add({
+                path,
+                fn: handler,
+                middleware: [],
+                timeout: null,
+                kind: 'std',
+                method: HttpMethods.POST,
+                [Sym_TriFrostType]: 'handler',
+                [Sym_TriFrostName]: 'post_only',
+                [Sym_TriFrostDescription]: null,
+                [Sym_TriFrostMeta]: {},
+            });
+        
+            const result = tree.match(HttpMethods.GET, path);
+            expect(result).toBe(null);
+        });
     });
 
     describe('defensive checks', () => {
@@ -1051,6 +1141,277 @@ describe('routing - Tree', () => {
 
             /* eslint-disable-next-line no-console */
             console.log(`Matched among 10,000 routes in ${(end - start).toFixed(2)}ms`);
+        });
+    });
+
+    describe('options + cors auto-generation', () => {
+        it('Auto-generates OPTIONS route with correct Allow header', async () => {
+            const handler = () => {};
+            const corsMiddleware = (ctx:TriFrostContext) => {
+                ctx.setHeader('x-cors-hit', 'true');
+            };
+            Reflect.set(corsMiddleware, Sym_TriFrostFingerPrint, Sym_TriFrostMiddlewareCors);
+    
+            tree.add({
+                path: '/options-test',
+                fn: handler,
+                middleware: [corsMiddleware],
+                timeout: null,
+                kind: 'std',
+                method: HttpMethods.GET,
+                [Sym_TriFrostType]: 'handler',
+                [Sym_TriFrostName]: 'options_test_get',
+                [Sym_TriFrostDescription]: null,
+                [Sym_TriFrostMeta]: {},
+            });
+    
+            tree.add({
+                path: '/options-test',
+                fn: handler,
+                middleware: [],
+                timeout: null,
+                kind: 'std',
+                method: HttpMethods.POST,
+                [Sym_TriFrostType]: 'handler',
+                [Sym_TriFrostName]: 'options_test_post',
+                [Sym_TriFrostDescription]: null,
+                [Sym_TriFrostMeta]: {},
+            });
+    
+            const match = tree.match(HttpMethods.OPTIONS, '/options-test');
+            expect(match).not.toBe(null);
+            expect(match?.route.kind).toBe('options');
+    
+            const ctx = new MockContext({method: HttpMethods.OPTIONS, path: '/options-test'});
+            await match!.route.middleware[0](ctx);
+            await match!.route.fn(ctx);
+    
+            expect(ctx.statusCode).toBe(204);
+            expect(ctx.headers.Allow).toBe('OPTIONS, GET, POST');
+            expect(ctx.headers.Vary).toBe('Origin');
+            expect(ctx.headers['x-cors-hit']).toBe('true');
+        });
+    
+        it('Does not attach CORS if no underlying route has it', async () => {
+            const handler = () => {};
+            tree.add({
+                path: '/no-cors',
+                fn: handler,
+                middleware: [],
+                timeout: null,
+                kind: 'std',
+                method: HttpMethods.GET,
+                [Sym_TriFrostType]: 'handler',
+                [Sym_TriFrostName]: 'no_cors_get',
+                [Sym_TriFrostDescription]: null,
+                [Sym_TriFrostMeta]: {},
+            });
+    
+            const match = tree.match(HttpMethods.OPTIONS, '/no-cors');
+            expect(match).not.toBe(null);
+            expect(match?.route.kind).toBe('options');
+    
+            const ctx = new MockContext({method: HttpMethods.OPTIONS, path: '/no-cors'});
+            await match!.route.fn(ctx);
+    
+            expect(ctx.statusCode).toBe(204);
+            expect(ctx.headers.Allow).toBe('OPTIONS, GET');
+            expect(ctx.headers['x-cors-hit']).toBeUndefined();
+        });
+
+        it('Auto-generates OPTIONS on param routes with correct methods', async () => {
+            const handler = () => {};
+            tree.add({
+                path: '/param/:id',
+                fn: handler,
+                middleware: [],
+                timeout: null,
+                kind: 'std',
+                method: HttpMethods.GET,
+                [Sym_TriFrostType]: 'handler',
+                [Sym_TriFrostName]: 'param_get',
+                [Sym_TriFrostDescription]: null,
+                [Sym_TriFrostMeta]: {},
+            });
+            tree.add({
+                path: '/param/:id',
+                fn: handler,
+                middleware: [],
+                timeout: null,
+                kind: 'std',
+                method: HttpMethods.PUT,
+                [Sym_TriFrostType]: 'handler',
+                [Sym_TriFrostName]: 'param_put',
+                [Sym_TriFrostDescription]: null,
+                [Sym_TriFrostMeta]: {},
+            });
+        
+            const match = tree.match(HttpMethods.OPTIONS, '/param/123');
+            expect(match).not.toBe(null);
+            expect(match?.route.kind).toBe('options');
+        
+            const ctx = new MockContext({method: HttpMethods.OPTIONS, path: '/param/123'});
+            await match!.route.fn(ctx);
+        
+            expect(ctx.statusCode).toBe(204);
+            expect(ctx.headers.Allow).toContain('OPTIONS');
+            expect(ctx.headers.Allow).toContain('GET');
+            expect(ctx.headers.Allow).toContain('PUT');
+        });
+
+        it('Auto-generates OPTIONS on wildcard routes', async () => {
+            const handler = () => {};
+            tree.add({
+                path: '/wild/*',
+                fn: handler,
+                middleware: [],
+                timeout: null,
+                kind: 'std',
+                method: HttpMethods.POST,
+                [Sym_TriFrostType]: 'handler',
+                [Sym_TriFrostName]: 'wild_post',
+                [Sym_TriFrostDescription]: null,
+                [Sym_TriFrostMeta]: {},
+            });
+        
+            const match = tree.match(HttpMethods.OPTIONS, '/wild/anything/here');
+            expect(match).not.toBe(null);
+            expect(match?.route.kind).toBe('options');
+        
+            const ctx = new MockContext({method: HttpMethods.OPTIONS, path: '/wild/anything/here'});
+            await match!.route.fn(ctx);
+        
+            expect(ctx.statusCode).toBe(204);
+            expect(ctx.headers.Allow).toContain('OPTIONS');
+            expect(ctx.headers.Allow).toContain('POST');
+        });
+
+        it('Does not generate OPTIONS routes in notfound trees', () => {
+            tree.addNotFound({
+                path: '/api/*',
+                fn: () => {},
+                middleware: [],
+                timeout: null,
+                kind: 'notfound',
+                [Sym_TriFrostType]: 'handler',
+                [Sym_TriFrostName]: 'nf_api',
+                [Sym_TriFrostDescription]: null,
+                [Sym_TriFrostMeta]: {},
+            });
+        
+            const match = tree.matchNotFound('/api/missing');
+            expect(match?.route.method).toBe('GET');
+        
+            const no_opt = tree.match(HttpMethods.OPTIONS, '/api/missing');
+            expect(no_opt).toBe(null);
+        });
+        
+        it('Does not generate OPTIONS routes in error trees', () => {
+            tree.addError({
+                path: '/error/*',
+                fn: () => {},
+                middleware: [],
+                timeout: null,
+                kind: 'error',
+                [Sym_TriFrostType]: 'handler',
+                [Sym_TriFrostName]: 'err_path',
+                [Sym_TriFrostDescription]: null,
+                [Sym_TriFrostMeta]: {},
+            });
+        
+            const match = tree.matchError('/error/boom');
+            expect(match?.route.method).toBe('GET');
+        
+            const no_opt = tree.match(HttpMethods.OPTIONS, '/error/boom');
+            expect(no_opt).toBe(null);
+        });
+
+        it('Handles many methods on the same path in OPTIONS', async () => {
+            const handler = () => {};
+            const path = '/stress';
+        
+            const methods = [
+                HttpMethods.GET,
+                HttpMethods.POST,
+                HttpMethods.PUT,
+                HttpMethods.PATCH,
+                HttpMethods.DELETE,
+                HttpMethods.HEAD,
+            ];
+        
+            for (const method of methods) {
+                tree.add({
+                    path,
+                    fn: handler,
+                    middleware: [],
+                    timeout: null,
+                    kind: 'std',
+                    method,
+                    [Sym_TriFrostType]: 'handler',
+                    [Sym_TriFrostName]: `stress_${method}`,
+                    [Sym_TriFrostDescription]: null,
+                    [Sym_TriFrostMeta]: {},
+                });
+            }
+        
+            const match = tree.match(HttpMethods.OPTIONS, path);
+            expect(match).not.toBe(null);
+            expect(match?.route.kind).toBe('options');
+        
+            const ctx = new MockContext({method: HttpMethods.OPTIONS, path});
+            await match!.route.fn(ctx);
+        
+            expect(ctx.statusCode).toBe(204);
+            for (const method of methods) {
+                expect(ctx.headers.Allow).toContain(method);
+            }
+            expect(ctx.headers.Allow).toContain('OPTIONS');
+        });
+
+        it('Handles duplicate methods on same path without duplicating Allow header', async () => {
+            const handler = () => {};
+            const path = '/dup';
+        
+            // Add GET twice (should only appear once in OPTIONS)
+            tree.add({
+                path,
+                fn: handler,
+                middleware: [],
+                timeout: null,
+                kind: 'std',
+                method: HttpMethods.GET,
+                [Sym_TriFrostType]: 'handler',
+                [Sym_TriFrostName]: 'dup_get1',
+                [Sym_TriFrostDescription]: null,
+                [Sym_TriFrostMeta]: {},
+            });
+        
+            tree.add({
+                path,
+                fn: handler,
+                middleware: [],
+                timeout: null,
+                kind: 'std',
+                method: HttpMethods.GET,
+                [Sym_TriFrostType]: 'handler',
+                [Sym_TriFrostName]: 'dup_get2',
+                [Sym_TriFrostDescription]: null,
+                [Sym_TriFrostMeta]: {},
+            });
+        
+            const match = tree.match(HttpMethods.OPTIONS, path);
+            expect(match).not.toBe(null);
+            expect(match?.route.kind).toBe('options');
+        
+            const ctx = new MockContext({method: HttpMethods.OPTIONS, path});
+            await match!.route.fn(ctx);
+        
+            expect(ctx.statusCode).toBe(204);
+            const allow = ctx.headers.Allow.split(',').map(s => s.trim());
+            const seen = new Set(allow);
+            expect(seen.has(HttpMethods.GET)).toBe(true);
+            expect(seen.has(HttpMethods.OPTIONS)).toBe(true);
+            expect(allow.filter(m => m === HttpMethods.GET).length).toBe(1);
         });
     });
 });

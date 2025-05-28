@@ -3,18 +3,19 @@
 import {LRU} from '@valkyriestudios/utils/caching';
 import {isFn} from '@valkyriestudios/utils/function';
 import {isNeString} from '@valkyriestudios/utils/string';
-import {HttpMethodsSet, type HttpMethod} from '../types/constants';
-import {type TriFrostRoute} from '../types/routing';
-
-/**
- * Represents single route definition (method + path + handler + middleware)
- */
-type RouteDefinition<Env extends Record<string, any> = {}> = {
-    path: string;
-    route: TriFrostRoute<Env>;
-}
-
-type MethodRouteDefinition<Env extends Record<string, any> = {}> = RouteDefinition<Env> & {method:HttpMethod};
+import {Sym_TriFrostMiddlewareCors} from '../middleware/Cors';
+import {TriFrostMiddleware, type TriFrostRoute} from '../types/routing';
+import {type TriFrostContext} from '../types/context';
+import {
+    type HttpMethod,
+    HttpMethods,
+    HttpMethodsSet,
+    Sym_TriFrostDescription,
+    Sym_TriFrostFingerPrint,
+    Sym_TriFrostMeta,
+    Sym_TriFrostName,
+    Sym_TriFrostType,
+} from '../types/constants';
 
 /**
  * Represents a match result when a route is found
@@ -37,7 +38,7 @@ type TrieNode <Env extends Record<string, any> = {}> = {
     children:Record<string, TrieNode<Env>>;
     param_child: TrieNode<Env>|null;
     wildcard_child: TrieNode<Env>|null;
-    methods: Record<HttpMethod, RouteDefinition<Env>>;
+    methods: Record<HttpMethod, TriFrostRoute<Env>>;
 }
 
 /**
@@ -54,6 +55,53 @@ function blankTrieNode <Env extends Record<string, any> = {}> () {
 }
 
 /**
+ * Factory for an options route
+ * 
+ * @param {string} path - Path the options route is for
+ * @param {HttpMethod[]} methods - Available methods array 
+ */
+function createOptionsRoute <Env extends Record<string, any>> (
+    path: string,
+    routes:TriFrostRoute<Env>[]
+): TriFrostRoute<Env> {
+    let methods:HttpMethod[]|string = [HttpMethods.OPTIONS];
+    let cors_mware:TriFrostMiddleware<Env>|null = null;
+    for (let i = 0; i < routes.length; i++) {
+        const route = routes[i];
+
+        /* Push into allowed methods array */
+        if (route.method !== HttpMethods.OPTIONS) methods.push(route.method);
+        
+        /* We extract the cors middleware from the chains of the routes on the same path */
+        if (cors_mware) continue;
+        
+        for (let y = 0; y < route.middleware.length; y++) {
+            const mware = route.middleware[y];
+            const is_cors = Reflect.get(mware, Sym_TriFrostFingerPrint) === Sym_TriFrostMiddlewareCors;
+            if (is_cors) cors_mware = mware;
+        }
+    }
+
+    methods = methods.join(', ');
+
+    return {
+        method: HttpMethods.OPTIONS,
+        kind: 'options',
+        path,
+        fn: (ctx:TriFrostContext<Env>) => {
+            ctx.setHeaders({Allow: methods, Vary: 'Origin'});
+            ctx.status(204);
+        },
+        middleware: cors_mware ? [cors_mware] : [],
+        timeout: null,
+        [Sym_TriFrostName]: `OPTIONS_${path}`,
+        [Sym_TriFrostDescription]: 'Auto-generated OPTIONS handler',
+        [Sym_TriFrostType]: 'handler',
+        [Sym_TriFrostMeta]: {},
+    };
+}
+
+/**
  * Trie-based route tree: Builds a prefix tree of path segments.
  */
 class TrieRouteTree<Env extends Record<string, any> = {}> {
@@ -63,9 +111,10 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
     /**
      * Adds a route into the trie, segment by segment.
      * 
-     * @param {MethodRouteDefinition} route - Route to add
+     * @param {TriFrostRoute<Env>} route - Route to add
+     * @param {boolean} no_options - Set to true to not add options route
      */
-    add (route:MethodRouteDefinition<Env>) {
+    add (route:TriFrostRoute<Env>, no_options:boolean = false) {
         let node = this.root;
         const segments = route.path.split('/');
         for (let i = 0; i < segments.length; i++) {
@@ -89,6 +138,11 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
             }
         }
         node.methods[route.method] = route;
+
+        /* Only add options method if no_options is false */
+        if (!no_options) {
+            node.methods.OPTIONS = createOptionsRoute(route.path, Object.values(node.methods));
+        }
     }
 
     /**
@@ -97,10 +151,10 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
      * @param {HttpMethod} method - HTTP method to match
      * @param {string} path - Path to find the match for
      */
-    match (method: HttpMethod, path: string): RouteMatch<Env>|null {
+    match (method:HttpMethod, path:string):RouteMatch<Env>|null {
         const params = {};
         const matched = this.search(this.root, path.split('/'), 0, params, method);
-        return matched ? {route: matched.route, path: matched.path, params} : null;
+        return matched ? {route: matched, path: matched.path, params} : null;
     }
 
     /**
@@ -118,7 +172,7 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
         segment_idx: number,
         params_acc: Record<string, string>,
         method: HttpMethod
-    ): RouteDefinition<Env> | null {
+    ): TriFrostRoute<Env>|null {
         if (segment_idx === segments.length) {
             return node.methods[method] || null;
         }
@@ -199,8 +253,9 @@ export class RouteTree<Env extends Record<string, any> = {}> {
         if (route.path.indexOf(':') < 0 && route.path.indexOf('*') < 0) {
             if (!this.static[route.path]) this.static[route.path] = Object.create(null);
             this.static[route.path][route.method] = route;
+            this.static[route.path].OPTIONS = createOptionsRoute(route.path, Object.values(this.static[route.path]));
         } else {
-            this.dynamic.tree.add({route, path: route.path, method: route.method});
+            this.dynamic.tree.add(route);
         }
     }
 
@@ -231,7 +286,7 @@ export class RouteTree<Env extends Record<string, any> = {}> {
 
     addNotFound (route:Omit<TriFrostRoute<Env>, 'method'>) {
         if (!isNeString(route?.path) || route.path[0] !== '/') throw new Error('RouteTree@addNotFound: invalid path');
-        this.notfound.tree.add({route: route as TriFrostRoute<Env>, path: route.path, method: 'GET'});
+        this.notfound.tree.add({...route, method: 'GET'}, true);
     }
 
     matchNotFound (path: string): RouteMatch<Env>|null {
@@ -249,7 +304,7 @@ export class RouteTree<Env extends Record<string, any> = {}> {
 
     addError (route:Omit<TriFrostRoute<Env>, 'method'>) {
         if (!isNeString(route?.path) || route.path[0] !== '/') throw new Error('RouteTree@addError: invalid path');
-        this.error.tree.add({route: route as TriFrostRoute<Env>, path: route.path, method: 'GET'});
+        this.error.tree.add({...route, method: 'GET'}, true);
     }
 
     matchError (path:string):RouteMatch<Env>|null {
