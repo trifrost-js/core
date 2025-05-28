@@ -158,6 +158,38 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
     }
 
     /**
+     * Recursively collects all registered routes
+     * @note This is used for debugging/tests and as such does not need to be highly optimized
+     */
+    get stack (): TriFrostRoute<Env>[] {
+        const collected: TriFrostRoute<Env>[] = [];
+
+        const recurse = (
+            node: TrieNode<Env>,
+            pathSegments: string[]
+        ) => {
+            for (const method in node.methods) {
+                collected.push(node.methods[method as HttpMethod]);
+            }
+
+            for (const seg in node.children) {
+                recurse(node.children[seg], [...pathSegments, seg]);
+            }
+
+            if (node.param_child) {
+                recurse(node.param_child, [...pathSegments, `:${node.param_child.param_name}`]);
+            }
+
+            if (node.wildcard_child) {
+                recurse(node.wildcard_child, [...pathSegments, '*']);
+            }
+        };
+
+        recurse(this.root, []);
+        return collected;
+    }
+
+    /**
      * Recursively searches the trie for a matching route and method
      * 
      * @param {TrieNode<Env>} node - Node of the tree we're currently on
@@ -225,6 +257,18 @@ export class RouteTree<Env extends Record<string, any> = {}> {
         lru: LRU<string, {v: RouteMatch<Env>|null}>;
         tree: TrieRouteTree<Env>;
     } = {lru: new LRU({max_size: 250}), tree: new TrieRouteTree()};
+
+    /**
+     * Stack getter used for testing/debugging
+     */
+    get stack (): TriFrostRoute<Env>[] {
+        return [
+            ...Object.values(this.static).flatMap(obj => Object.values(obj)),
+            ...this.dynamic.tree.stack,
+            ...this.notfound.tree.stack,
+            ...this.error.tree.stack,
+        ];
+    }
 
     /**
      * Clears all stored routes
