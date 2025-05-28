@@ -39,10 +39,6 @@ class Router <
     State extends Record<string, unknown> = {},
 > implements TriFrostRouter<Env, State> {
 
-/**
- * MARK: Private Vars
- */
-
     /* Base path for this router */
     #path:string;
 
@@ -56,11 +52,7 @@ class Router <
     #timeout:number|null = null;
 
     /* Middleware */
-    #middleware:TriFrostMiddleware<Env, State>[];    
-
-/**
- * MARK: Constructor
- */
+    #middleware:TriFrostMiddleware<Env, State>[];
 
     constructor (options:TriFrostRouterOptions<Env, State>) {
         /* Check path */
@@ -137,11 +129,11 @@ class Router <
         const fn = val as TriFrostMiddleware<Env, State>;
 
         /* Get name */
-        let fn_name = Reflect.get(fn, Sym_TriFrostName) ?? fn.name;
-        fn_name = isNeString(fn_name) ? fn_name : 'anonymous';
+        let name = Reflect.get(fn, Sym_TriFrostName) ?? fn.name;
+        name = isNeString(name) ? name : 'anonymous';
 
         /* Add symbols for introspection/use further down the line */
-        Reflect.set(fn, Sym_TriFrostName, fn_name);
+        Reflect.set(fn, Sym_TriFrostName, name);
         Reflect.set(fn, Sym_TriFrostType, Reflect.get(fn, Sym_TriFrostType) ?? 'middleware');
 
         this.#middleware.push(fn as TriFrostMiddleware<Env, State>);
