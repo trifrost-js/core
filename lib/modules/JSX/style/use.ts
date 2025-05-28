@@ -161,11 +161,11 @@ function cssFactory <
     Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS
 > (breakpoints:Breakpoints):CssGeneric<Breakpoints> {
     /* Global cache for cross-engine reuse */
-    const GLOBAL_LRU = new LRU<string, {
+    const GLOBAL_LRU = new LRU<{
         cname:string;
         rules:{rule: string; selector?: string; query?: string;}[]
     }>({max_size: 500});
-    const GLOBAL_KEYFRAMES_LRU = new LRU<string, {
+    const GLOBAL_KEYFRAMES_LRU = new LRU<{
         cname: string;
         rule:string;
     }>({max_size: 200});

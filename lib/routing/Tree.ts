@@ -244,17 +244,17 @@ export class RouteTree<Env extends Record<string, any> = {}> {
     > = Object.create(null);
 
     protected dynamic:{
-        lru: LRU<string, {v: RouteMatch<Env>|null}>;
+        lru: LRU<{v: RouteMatch<Env>|null}>;
         tree: TrieRouteTree<Env>;
     } = {lru: new LRU({max_size: 250}), tree: new TrieRouteTree()};
 
     protected notfound:{
-        lru: LRU<string, {v: RouteMatch<Env>|null}>;
+        lru: LRU<{v: RouteMatch<Env>|null}>;
         tree: TrieRouteTree<Env>;
     } = {lru: new LRU({max_size: 250}), tree: new TrieRouteTree()};
 
     protected error:{
-        lru: LRU<string, {v: RouteMatch<Env>|null}>;
+        lru: LRU<{v: RouteMatch<Env>|null}>;
         tree: TrieRouteTree<Env>;
     } = {lru: new LRU({max_size: 250}), tree: new TrieRouteTree()};
 

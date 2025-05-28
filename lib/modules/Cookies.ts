@@ -59,7 +59,7 @@ export class Cookies {
     #encoder:TextEncoder = new TextEncoder();
 
     /* HMAC Key cache */
-    #keyCache:LRU<string, CryptoKey> = new LRU({max_size: 50});
+    #keyCache:LRU<CryptoKey> = new LRU({max_size: 50});
 
     constructor (ctx:TriFrostContext, config:Partial<TriFrostCookieOptions> = {}) {
         this.#ctx = ctx;

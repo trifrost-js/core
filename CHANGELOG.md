@@ -5,9 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.20.3] - 2023-05-28
-This release brings an approximate 2x throughput improvement in performance for the new TrieRouter when dealing with Hot paths thanks to an improved LRU design in the [Valkyrie Utils](https://github.com/ValkyrieStudios/utils/releases/tag/12.38.0) (sidenote: Valkyrie Utils is another package maintained by the creator of TriFrost and is heavily used within TriFrost).
+This release brings an approximate 2x throughput improvement in performance for the new TrieRouter when dealing with Hot paths as well as a performance improvement for the CSS style engine thanks to an improved LRU design in the [Valkyrie Utils](https://github.com/ValkyrieStudios/utils/releases/tag/12.38.0) (sidenote: Valkyrie Utils is another package maintained by the creator of TriFrost and is heavily used within TriFrost).
 
 ### Improved
+- **perf**: Improved performance for style engine thanks to new LRU design
+- **perf**: Improved performance for trie router thanks to new LRU design
 - **deps**: Upgrade @valkyriestudios/utils to 12.38.0
 - **deps**: Upgrade @types/node to 22.15.24
 - **deps**: Upgrade bun-types to 1.2.15
