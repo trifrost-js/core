@@ -327,10 +327,7 @@ class App <
             this.#running = true;
 
             /* Triage handler */
-            const onTriage = async (path:string, ctx:TriFrostContext<Env>) => {
-                /* We're good, context is locked */
-                if (ctx.isLocked) return;
-
+            const runTriage = async (path:string, ctx:TriFrostContext<Env>) => {
                 /* User might have forgotten to end ... */
                 if (ctx.statusCode >= 200 && ctx.statusCode < 400) {
                     return ctx.end();
@@ -348,21 +345,24 @@ class App <
                         }
                     }
                     
-                    /* Let's just end it if still not locked */
+                    /* End it if still not locked */
                     if (!ctx.isLocked) return ctx.end();
                 } else if (ctx.statusCode >= 400) {
                     /* Ok something's off ... let's see if we have a triage registered */
                     const error = this.#tree.matchError(path);
-                    if (!error) return;
-                    
-                    if (Reflect.get(error.route.fn, Sym_TriFrostSpan)) {
-                        await error.route.fn(ctx);
-                    } else {
-                        await ctx.logger.span(
-                            Reflect.get(error.route, Sym_TriFrostName) ?? 'anonymous_error_handler',
-                            async () => error.route.fn(ctx)
-                        );
+                    if (error) {
+                        if (Reflect.get(error.route.fn, Sym_TriFrostSpan)) {
+                            await error.route.fn(ctx);
+                        } else {
+                            await ctx.logger.span(
+                                Reflect.get(error.route, Sym_TriFrostName) ?? 'anonymous_error_handler',
+                                async () => error.route.fn(ctx)
+                            );
+                        }
                     }
+
+                    /* End it if still not locked */
+                    if (!ctx.isLocked) return ctx.end();
                 }
             };
 
@@ -429,6 +429,9 @@ class App <
 
                             /* If context is locked at this point, return as the route has been handled */
                             if (ctx.isLocked) return;
+
+                            /* Check if triage is necessary */
+                            if (!ctx.isAborted && ctx.statusCode >= 400) return await runTriage(path, ctx);
                         }
 
                         /* Run handler */
@@ -439,15 +442,11 @@ class App <
                         }
 
                         /* Let's run triage if context is not locked */
-                        if (!ctx.isLocked) await onTriage(path, ctx);
-                
-                        /* After error handler, check if finalized */
-                        if (!ctx.isLocked) throw new Error('Error handler did not respond');
+                        if (!ctx.isLocked) await runTriage(path, ctx);
                     } catch (err) {
                         ctx.logger.error(err);
 
-                        await onTriage(path, ctx);
-                        if (!ctx.isLocked) ctx.abort(500);
+                        if (!ctx.isLocked) await runTriage(path, ctx);
                     } finally {
                         /* Flush logger last */
                         ctx.addAfter(() => ctx.logger.flush());
