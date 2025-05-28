@@ -416,7 +416,7 @@ class App <
                         });
 
                         /* Run chain */
-                        for (let i = 0; i <= match.route.middleware.length; i++) {
+                        for (let i = 0; i < match.route.middleware.length; i++) {
                             const fn = match.route.middleware[i];
                             if (Reflect.get(fn, Sym_TriFrostSpan)) {
                                 await fn(ctx);
