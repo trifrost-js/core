@@ -197,7 +197,6 @@ class App <
             timeout: options.timeout === null || isIntGt(options.timeout, 0) ? options.timeout : 30_000,
             rateLimit: 'rateLimit' in options && options.rateLimit ? options.rateLimit : null,
             tree: tree,
-            limit: null,
             middleware: [],
         });
 

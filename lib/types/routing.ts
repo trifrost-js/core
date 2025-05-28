@@ -122,10 +122,6 @@ export type TriFrostRouterOptions <
      */
     path:string;
     /**
-     * Limit middleware for this router and sub routers
-     */
-    limit:TriFrostMiddleware<Env, State>|null;
-    /**
      * Maximum timeout in milliseconds for this router and sub routers
      * (defaults to 30 000)
      */

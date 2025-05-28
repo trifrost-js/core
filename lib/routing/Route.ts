@@ -18,9 +18,6 @@ export class Route <
     /* Array of middleware for this route */
     #middleware: TriFrostMiddleware<Env, State>[] = [];
 
-    /* Limit middleware for this route */
-    #limit: TriFrostMiddleware<Env, State>|null = null;
-
     /* Route Methods */
     #routes:[HttpMethod[], TriFrostRouteHandler<Env, State>][] = [];
 
@@ -37,18 +34,12 @@ export class Route <
     get stack () {
         const acc:{
             middleware:TriFrostMiddleware<Env, State>[];
-            limit:TriFrostMiddleware<Env, State>|null;
             handler:TriFrostRouteHandler<Env, State>;
             methods: HttpMethod[];
         }[] = [];
         for (let i = 0; i < this.#routes.length; i++) {
             const el = this.#routes[i];
-            acc.push({
-                methods: el[0],
-                handler: el[1],
-                limit: this.#limit,
-                middleware: this.#middleware,
-            });
+            acc.push({methods: el[0], handler: el[1], middleware: this.#middleware});
         }
         return acc;
     }
@@ -71,7 +62,7 @@ export class Route <
     ):Route<Env, State> {
         if (!this.#rateLimit) throw new Error('TriFrostRoute: RateLimit is not configured on App');
 
-        this.#limit = this.#rateLimit.limit<Env, State>(limit);
+        this.use(this.#rateLimit.limit<Env, State>(limit));
         return this;
     }
 

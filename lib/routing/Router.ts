@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
 import {isArray, isNeArray} from '@valkyriestudios/utils/array';
@@ -53,9 +52,6 @@ class Router <
     /* Tree passed by parent */
     #tree:RouteTree<Env>;
 
-    /* Limit effective for this router and subrouters/routes */
-    #limit:TriFrostMiddleware<Env, State>|null = null;
-
     /* Timeout effective for this router and subrouters/routes */
     #timeout:number|null = null;
 
@@ -82,12 +78,6 @@ class Router <
             !isFn(options.rateLimit?.limit)
         ) throw new Error('TriFrostRouter@ctor: RateLimit is invalid');
 
-        /* Check limit */
-        if (
-            options.limit !== null &&
-            !isFn(options.limit)
-        ) throw new Error('TriFrostRouter@ctor: Limit is invalid');
-
         /* Check tree */
         if (
             !(options.tree instanceof RouteTree)
@@ -112,9 +102,6 @@ class Router <
 
         /* Configure Middleware */
         this.#middleware = [...options.middleware];
-
-        /* Configure limit */
-        this.#limit = options.limit;        
     }
 
 /**
@@ -168,7 +155,7 @@ class Router <
     limit (limit: number | TriFrostRateLimitLimitFunction<Env, State>) {
         if (!this.#rateLimit) throw new Error('TriFrostRoute@limit: RateLimit is not configured on App');
 
-        this.#limit = this.#rateLimit.limit<Env, State>(limit);
+        this.use(this.#rateLimit.limit<Env, State>(limit));
         return this;
     }
 
@@ -192,7 +179,6 @@ class Router <
             rateLimit: this.#rateLimit,
             timeout: timeout !== undefined ? timeout : this.#timeout,
             middleware: this.#middleware as TriFrostMiddleware<Env, State & PathParam<Path>>[],
-            limit: this.#limit as TriFrostMiddleware<Env, State & PathParam<Path>>|null,
         }));
 
         return this;
@@ -213,12 +199,7 @@ class Router <
         /* Loop through resulting stack and register */
         for (let i = 0; i < route.stack.length; i++) {
             const el = route.stack[i];
-            this.#register(
-                path,
-                [...el.middleware, el.handler],
-                el.methods,
-                el.limit as TriFrostMiddleware<Env, State>|null
-            );
+            this.#register(path, [...el.middleware, el.handler], el.methods);
         }
 
         return this;
@@ -241,7 +222,7 @@ class Router <
             [Sym_TriFrostName]: '404notfound',
             [Sym_TriFrostDescription]: '404 Not Found Handler',
             [Sym_TriFrostType]: 'handler',
-            [Sym_TriFrostMeta]: {name: '404notfound'},
+            [Sym_TriFrostMeta]: {},
         });
         return this;
     }
@@ -291,8 +272,7 @@ class Router <
     #register <Path extends string = string> (
         path:Path,
         handlers:unknown[],
-        methods:HttpMethod[],
-        limit?: TriFrostMiddleware<Env, State>|null
+        methods:HttpMethod[]
     ) {
         const fn = handlers[handlers.length - 1];
         const middleware = handlers.slice(0, -1) as TriFrostMiddleware<Env, State>[];
@@ -311,11 +291,8 @@ class Router <
         const n_name = isNeString(config.name) ? config.name : Reflect.get(config.fn, Sym_TriFrostName) || null;
         const n_desc = isNeString(config.description) ? config.description : null;
         const n_timeout = 'timeout' in config ? (config.timeout as number|null) : this.#timeout;
-        const n_limit = limit || config.limit || this.#limit;
 
         config.middleware = [
-            /* Ensure limitware is first */
-            ...isFn(n_limit) ? [n_limit] : [],
             /* Inherit router mware */
             ...this.#middleware,
             /* Route-specific mware */
