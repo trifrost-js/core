@@ -326,6 +326,22 @@ class App <
             this.#logger.debug('boot: Detected Runtime', {name: this.#runtime.name, version: this.#runtime.version});
             this.#running = true;
 
+            /* Error handler */
+            const onError = async (path:string, ctx:TriFrostContext<Env>) => {
+                /* Ok something's off ... let's see if we have a triage registered */
+                const error = this.#tree.matchError(path);
+                if (!error) return;
+                
+                if (Reflect.get(error.route.fn, Sym_TriFrostSpan)) {
+                    await error.route.fn(ctx);
+                } else {
+                    await ctx.logger.span(
+                        Reflect.get(error.route, Sym_TriFrostName) ?? 'anonymous_error_handler',
+                        async () => error.route.fn(ctx)
+                    );
+                }
+            };
+
             /* Start the runtime */
             await this.#runtime!.boot({
                 logger: this.#logger as TriFrostRootLogger,
@@ -398,10 +414,43 @@ class App <
                             await ctx.logger.span(name, async () => match!.route.fn(ctx as TriFrostContext<Env, State>));
                         }
 
-                        if (!ctx.isLocked) throw new Error('Handler did not respond');
+                        /* Let's run triage if context is not locked */
+                        if (!ctx.isLocked) {
+                            /* User might have forgotten to end ... */
+                            if (ctx.statusCode >= 200 && ctx.statusCode < 400) {
+                                ctx.end();
+                                return;
+                            } else if (ctx.statusCode === 404) {
+                                /* Maybe end-user has a specific notfound handler for this */
+                                const notfound = this.#tree.matchNotFound(path);
+                                if (notfound) {
+                                    if (Reflect.get(notfound.route.fn, Sym_TriFrostSpan)) {
+                                        await notfound.route.fn(ctx);
+                                    } else {
+                                        await ctx.logger.span(
+                                            Reflect.get(notfound.route, Sym_TriFrostName) ?? 'anonymous_notfound_handler',
+                                            async () => notfound.route.fn(ctx)
+                                        );
+                                    }
+                                }
+                                
+                                /* Let's just end it if still not locked */
+                                if (!ctx.isLocked) {
+                                    ctx.end();
+                                    return;
+                                }
+                            } else if (ctx.statusCode >= 400) {
+                                onError(path, ctx);
+                            }
+                        }
+                
+                        /* After error handler, check if finalized */
+                        if (!ctx.isLocked) throw new Error('Error handler did not respond');
                     } catch (err) {
                         ctx.logger.error(err);
-                        ctx.abort(500);
+
+                        onError(path, ctx);
+                        if (!ctx.isLocked) ctx.abort(500);
                     } finally {
                         /* Flush logger last */
                         ctx.addAfter(() => ctx.logger.flush());
@@ -481,12 +530,22 @@ class App <
     }
 
     /**
-     * configure a catch-all not found handler for subroutes of this router
+     * Configure a catch-all not found handler for subroutes of this router
      *
-     * @param {Handler} config - Configuration for the route
+     * @param {Handler} handler - Handler to run
      */
-    notfound (config:TriFrostHandler<Env, State>) {
-        super.notfound(config);
+    onNotFound (handler:TriFrostHandler<Env, State>) {
+        super.onNotFound(handler);
+        return this;
+    }
+
+    /**
+     * Configure a catch-all error handler for subroutes of this router
+     *
+     * @param {Handler} handler - Handler to run
+     */
+    onError (handler:TriFrostHandler<Env, State>) {
+        super.onError(handler);
         return this;
     }
 
