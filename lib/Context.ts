@@ -465,6 +465,8 @@ export abstract class Context <
      * Sets the response status code to a known HTTP status code
      */
     setStatus (status:HttpStatus|HttpStatusCode):void {
+        const og_code = this.res_code;
+
         if (status in HttpCodeToStatus) {
             this.res_code = status as HttpStatusCode;
             this.res_status = HttpCodeToStatus[status as HttpStatusCode];
@@ -476,10 +478,12 @@ export abstract class Context <
         }
 
         /* Patch logger attributes to reflect status for observability */
-        this.#logger.setAttributes({
-            'http.status_code': this.res_code,
-            'otel.status_code': this.res_code >= 500 ? 'ERROR' : 'OK',
-        });
+        if (og_code !== this.res_code) {
+            this.#logger.setAttributes({
+                'http.status_code': this.res_code,
+                'otel.status_code': this.res_code >= 500 ? 'ERROR' : 'OK',
+            });
+        }
     }
 
 /**

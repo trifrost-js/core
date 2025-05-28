@@ -370,14 +370,14 @@ class App <
 
                         const name = Reflect.get(match.route, Sym_TriFrostName);
 
-                        /* Add meta attributes to tracer */
-                        ctx.logger.setAttributes(Reflect.get(match.route, Sym_TriFrostMeta));
-
-                        /* Add matched http attributes to tracer */
+                        /* Add attributes to tracer */
                         ctx.logger.setAttributes({
+                            ...Reflect.get(match.route, Sym_TriFrostMeta) || {},
                             'http.method': method,
                             'http.target': path,
                             'http.route': match.route.path,
+                            'http.status_code': 200,
+                            'otel.status_code': 'OK',
                             'user_agent.original': ctx.headers['user-agent'] ?? '',
                         });
 
