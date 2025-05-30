@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.20.4] - 2025-05-30
 ### Improved
 - **feat**: The `hr` tag is now part of the known set of html tags the style engine will automatically space prefix.
 ```typescript
@@ -16,7 +16,7 @@ css.use({
 - **deps**: Upgrade @types/node to 22.15.28
 - **deps**: Upgrade @valkyriestudios/utils to 12.39.0
 
-## [0.20.3] - 2023-05-28
+## [0.20.3] - 2025-05-28
 This release brings an approximate 2x throughput improvement in performance for the new TrieRouter when dealing with Hot paths as well as a performance improvement for the CSS style engine thanks to an improved LRU design in the [Valkyrie Utils](https://github.com/ValkyrieStudios/utils/releases/tag/12.38.0) (sidenote: Valkyrie Utils is another package maintained by the creator of TriFrost and is heavily used within TriFrost).
 
 ### Improved
