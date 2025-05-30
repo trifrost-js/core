@@ -20,6 +20,7 @@ export const HTML_TAGS = {
     h4: true,
     h5: true,
     h6: true,
+    hr: true,
     p: true,
     a: true,
     img: true,
