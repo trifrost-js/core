@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 ### Improved
+- **feat**: `Cors` middleware now also allows passing an array of origin strings in addition to previous support for a single string or a function.
 - **feat**: The `CacheControl` middleware and subsequent `cacheControl` option on context responders now supports configuring `proxyAge` (Maximum time in seconds that shared caches like CDNS can cache the response)
 - **feat**: The `CacheControl` middleware and subsequent `cacheControl` option on context responders now supports configuring `immutable` (Set to `true` to mark the response as immutable signaling the it will never change)
 - **feat**: The `CacheControl` middleware and subsequent `cacheControl` option on context responders now supports configuring `mustRevalidate` (Set to `true` to indicate that once the response becomes stale it must be revalidated with the origin server)

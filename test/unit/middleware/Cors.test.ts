@@ -176,6 +176,37 @@ describe('Middleware - Cors', () => {
         });
     });
 
+    it('Applies origin as string array and matches allowed origin', () => {
+        const ctx = new MockContext({headers: {Origin: 'https://site1.com'}});
+        Cors({
+            origin: ['https://site1.com', 'https://site2.com'],
+        })(ctx);
+        expect(ctx.headers).toEqual({
+            Origin: 'https://site1.com',
+            Vary: 'Origin',
+            'Access-Control-Allow-Methods': 'GET, HEAD, POST',
+            'Access-Control-Allow-Origin': 'https://site1.com',
+        });
+    });
+
+    it('Applies origin as string array and ignores disallowed origin', () => {
+        const ctx = new MockContext({headers: {Origin: 'https://unknown.com'}});
+        Cors({
+            origin: ['https://site1.com', 'https://site2.com'],
+        })(ctx);
+        expect(ctx.headers).toEqual({
+            Origin: 'https://unknown.com',
+            Vary: 'Origin',
+            'Access-Control-Allow-Methods': 'GET, HEAD, POST',
+        });
+    });
+
+    it('Throws if provided an invalid origin array', () => {
+        expect(() => Cors({
+            origin: [...CONSTANTS.NOT_STRING_WITH_EMPTY] as string[],
+        })).toThrow();
+    });
+
     it('Applies wildcard methods with headers and maxage', () => {
         const ctx = new MockContext();
         Cors({

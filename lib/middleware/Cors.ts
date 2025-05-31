@@ -1,3 +1,5 @@
+/* eslint-disable max-statements,complexity */
+
 import {isNeArray} from '@valkyriestudios/utils/array';
 import {isIntGte} from '@valkyriestudios/utils/number';
 import {isNeString} from '@valkyriestudios/utils/string';
@@ -16,8 +18,10 @@ export const Sym_TriFrostMiddlewareCors = Symbol('TriFrost.Middleware.Cors');
 const METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'CONNECT', 'TRACE'] as const;
 const METHODSSet = new Set(METHODS);
 
+type TriFrostCorsOriginFunction = (origin:string|null) => string|null;
+
 export type TriFrostCorsOptions = {
-    origin?: string | ((origin: string | null) => string | null);
+    origin?: string|string[]|TriFrostCorsOriginFunction;
     methods?: ((typeof METHODS)[number])[] | '*';
     headers?: string[];
     expose?: string[];
@@ -44,10 +48,28 @@ export function Cors (opts: TriFrostCorsOptions = {}) {
         maxage,
     } = opts;
 
+    let originWhiteList:Set<string>|null = null;
+    let originFn:TriFrostCorsOriginFunction|null = null;
+
     const computed: Record<string, string> = {Vary: 'Origin'};
 
     /* Access-Control-Allow-Origin */
-    if (isNeString(origin)) computed['Access-Control-Allow-Origin'] = origin;
+    if (isNeString(origin)) {
+        computed['Access-Control-Allow-Origin'] = origin;
+    } else if (isNeArray(origin)) {
+        originWhiteList = new Set();
+        for (let i = 0; i < origin.length; i++) {
+            const val = origin[i];
+            if (isNeString(val)) originWhiteList.add(val.trim());
+        }
+        if (!originWhiteList.size) throw new Error('TriFrostMiddleware@Cors: Invalid origin');
+        originFn = reqOrigin => {
+            if (typeof reqOrigin === 'string' && originWhiteList!.has(reqOrigin)) return reqOrigin;
+            return null;
+        };
+    } else if (typeof origin === 'function') {
+        originFn = origin;
+    }
 
     /* Access-Control-Allow-Methods */
     if (isNeArray(methods)) {
@@ -100,8 +122,8 @@ export function Cors (opts: TriFrostCorsOptions = {}) {
         ctx.setHeaders(computed);
 
         /* If origin is function we should check to see if we need to add it */
-        if (typeof origin === 'function') {
-            const value = origin(ctx.headers.Origin ?? null);
+        if (originFn) {
+            const value = originFn(ctx.headers.origin ?? ctx.headers.Origin ?? null);
             if (value !== null) ctx.setHeader('Access-Control-Allow-Origin', value);
         }
 
