@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.21.0] - 2025-05-31
 This release brings a set of carefully crafted improvements born directly out of working on the TriFrost documentation.
 
 As we refined the docs, we uncovered small inconsistencies, rough edges, and opportunities to make the developer experience even smoother. This update is the result of that hands-on process — tightening the middleware, expanding ergonomic options, and sharpening semantic clarity across the framework.
