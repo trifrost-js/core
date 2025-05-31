@@ -5,15 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+This release brings a set of carefully crafted improvements born directly out of working on the TriFrost documentation.
+
+As we refined the docs, we uncovered small inconsistencies, rough edges, and opportunities to make the developer experience even smoother. This update is the result of that hands-on process — tightening the middleware, expanding ergonomic options, and sharpening semantic clarity across the framework.
+
 ### Improved
-- **feat**: `Cors` middleware now also allows passing an array of origin strings in addition to previous support for a single string or a function.
-- **feat**: The `CacheControl` middleware and subsequent `cacheControl` option on context responders now supports configuring `proxyAge` (Maximum time in seconds that shared caches like CDNS can cache the response)
-- **feat**: The `CacheControl` middleware and subsequent `cacheControl` option on context responders now supports configuring `immutable` (Set to `true` to mark the response as immutable signaling the it will never change)
-- **feat**: The `CacheControl` middleware and subsequent `cacheControl` option on context responders now supports configuring `mustRevalidate` (Set to `true` to indicate that once the response becomes stale it must be revalidated with the origin server)
-- **feat**: The `CacheControl` middleware and subsequent `cacheControl` option on context responders now supports configuring `proxyRevalidate` (Set to `true` to indicate that shared caches (proxies) must revalidate the response once stale)
+- **feat**: `Cors` middleware now supports passing an array of origin strings (`string[]`), alongside the existing single string or dynamic function — making origin whitelisting simpler and less verbose.
+```typescript
+app.use(Cors({
+  origin: ['https://site1.com', 'https://site2.com']
+}));
+```
+- **feat**: The `CacheControl` middleware and corresponding `cacheControl` options on context responders now support `proxyMaxage` (letting you finely control how long shared caches (like CDNs) can store content).
+- **feat**: The `CacheControl` middleware and corresponding `cacheControl` options on context responders now support `proxyRevalidate` (forces shared caches to revalidate stale responses).
+- **feat**: The `CacheControl` middleware and corresponding `cacheControl` options on context responders now support `mustRevalidate` (signaling that stale content must be revalidated with the origin).
+- **feat**: The `CacheControl` middleware and corresponding `cacheControl` options on context responders now support `immutable` (marking responses as never changing — perfect for long-lived static assets).
+```typescript
+app.use(CacheControl({
+  type: 'public',
+  maxage: 60,             // browsers: 1 min
+  proxyMaxage: 600,       // CDNs: 10 min
+  immutable: true,
+  mustRevalidate: true,
+  proxyRevalidate: true
+}));
+```
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250531.0
+- **deps**: Upgrade @types/node to 22.15.29
+- **deps**: Upgrade eslint to 9.28.0
 
 ### Breaking
-- The `cache` option on `ctx.html`, `ctx.file`, `ctx.text`, `ctx.json` has been renamed to `cacheControl` for better semantic clarity as under the hood it applies `Cache-Control` headers rather than working with the `cache` storage layer (which are two different things).
+- The `cache` option on `ctx.html`, `ctx.file`, `ctx.text`, `ctx.json` has been renamed to `cacheControl` for better semantic clarity. Reflecting that it applies HTTP `Cache-Control` headers, not the internal `cache` storage system. This improves naming alignment and reduces confusion between storage-level caching and response-level caching.
 
 ## [0.20.4] - 2025-05-30
 ### Improved
