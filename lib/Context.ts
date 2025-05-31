@@ -641,7 +641,7 @@ export abstract class Context <
             if (this.isLocked) throw new Error('Context@file: Cannot modify a finalized response');
 
             /* Cache Control */
-            if (opts?.cache) ParseAndApplyCacheControl(this as TriFrostContext, opts.cache);
+            if (opts?.cacheControl) ParseAndApplyCacheControl(this as TriFrostContext, opts.cacheControl);
 
             /* Get a streamable */
             const streamer = await this.getStream(path);
@@ -680,7 +680,7 @@ export abstract class Context <
             if (this.isLocked) throw new Error('Context@html: Cannot modify a finalized response');
 
             /* Cache Control */
-            if (opts?.cache) ParseAndApplyCacheControl(this, opts.cache);
+            if (opts?.cacheControl) ParseAndApplyCacheControl(this, opts.cacheControl);
 
             /* Set mime type if no mime type was set already */
             if (!this.res_headers['Content-Type']) this.res_headers['Content-Type'] = MimeTypes.HTML;
@@ -714,7 +714,7 @@ export abstract class Context <
             if (this.isLocked) throw new Error('Context@json: Cannot modify a finalized response');
 
             /* Cache Control */
-            if (opts?.cache) ParseAndApplyCacheControl(this, opts.cache);
+            if (opts?.cacheControl) ParseAndApplyCacheControl(this, opts.cacheControl);
 
             /* Set mime type if no mime type was set already */
             if (!this.res_headers['Content-Type']) this.res_headers['Content-Type'] = MimeTypes.JSON;
@@ -756,7 +756,7 @@ export abstract class Context <
             if (this.isLocked) throw new Error('Context@text: Cannot modify a finalized response');
 
             /* Cache Control */
-            if (opts?.cache) ParseAndApplyCacheControl(this, opts.cache);
+            if (opts?.cacheControl) ParseAndApplyCacheControl(this, opts.cacheControl);
 
             /* Set mime type if no mime type was set already */
             if (!this.res_headers['Content-Type']) this.res_headers['Content-Type'] = MimeTypes.TEXT;

@@ -58,7 +58,7 @@ export type TriFrostContextInit = {
 };
 
 export type TriFrostContextFileOptions = {
-    cache?: TriFrostCacheControlOptions;
+    cacheControl?: TriFrostCacheControlOptions;
     /**
      * Whether to force browser download behavior.
      * Set to true to instruct consumer system to download rather than display the file.
@@ -70,7 +70,7 @@ export type TriFrostContextFileOptions = {
 
 export type TriFrostContextResponseOptions = {
     status?: HttpStatus|HttpStatusCode;
-    cache?: TriFrostCacheControlOptions;
+    cacheControl?: TriFrostCacheControlOptions;
 };
 
 export type TriFrostContextRedirectOptions = {
