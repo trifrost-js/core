@@ -1,5 +1,4 @@
-import {join} from '@valkyriestudios/utils/array';
-import {isNeObject} from '@valkyriestudios/utils/object';
+import {isObject} from '@valkyriestudios/utils/object';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {
     Sym_TriFrostDescription,
@@ -37,15 +36,33 @@ const CacheControlSet:Set<CacheControlValue> = new Set([...Object.values(CacheCo
 
 export type TriFrostCacheControlOptions = {
     /**
-     * Specific predefine CacheControl symbol (eg: 'no-cache', 'no-store', ...), defaults to null
+     * Specific predefine CacheControl symbol (eg: 'no-cache', 'no-store', ...)
      */
-    type?: CacheControlValue | null;
+    type?: CacheControlValue;
     /**
-     * Amount of time in seconds the response can be cached for, defaults to null
+     * Amount of time in seconds the response can be cached for
      *
      * eg: 86400 = 1 day
      */
-    maxage?: number | null;
+    maxage?: number;
+    /**
+     * Marks the response as immutable, signaling that it will never change.
+     * Useful for long-lived static assets.
+     */
+    immutable?: boolean;
+    /**
+     * Indicates that once the response becomes stale, it must be revalidated with the origin server.
+     */
+    mustRevalidate?: boolean;
+    /**
+     * Maximum time in seconds that shared caches (like CDNs) can cache the response.
+     * Overrides maxage for shared caches.
+     */
+    proxyMaxage?: number;
+    /**
+     * Signals that shared caches (proxies) must revalidate the response once stale.
+     */
+    proxyRevalidate?: boolean;
 }
 
 /**
@@ -54,13 +71,29 @@ export type TriFrostCacheControlOptions = {
  * @param {TriFrostCacheControlOptions} opts - Cache Header Options
  */
 function parse (opts:TriFrostCacheControlOptions):string|null {
-    if (!isNeObject(opts)) return null;
+    const parts: string[] = [];
 
-    const type    = CacheControlSet.has(opts.type!) ? opts.type : null;
-    const maxage  = isIntGt(opts.maxage, 0) ? 'max-age=' + opts.maxage : null;
-    if (type === null && maxage === null) return null;
+    if (isObject(opts)) {
+        /* type: no-store, no-cache, public, private */
+        if (CacheControlSet.has(opts.type!)) parts.push(opts.type!);
 
-    return join([type, maxage], {delim: ', '});
+        /* max-age */
+        if (isIntGt(opts.maxage, 0)) parts.push('max-age=' + opts.maxage);
+
+        /* s-maxage */
+        if (isIntGt(opts.proxyMaxage, 0)) parts.push('s-maxage=' + opts.proxyMaxage);
+
+        /* immutable */
+        if (opts.immutable === true) parts.push('immutable');
+
+        /* must-revalidate */
+        if (opts.mustRevalidate === true) parts.push('must-revalidate');
+
+        /* proxy-revalidate */
+        if (opts.proxyRevalidate === true) parts.push('proxy-revalidate');
+    }
+
+    return parts.length ? parts.join(', ') : null;
 }
 
 /**

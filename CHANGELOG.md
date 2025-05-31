@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Improved
+- **feat**: The `CacheControl` middleware and subsequent `cacheControl` option on context responders now supports configuring `proxyAge` (Maximum time in seconds that shared caches like CDNS can cache the response)
+- **feat**: The `CacheControl` middleware and subsequent `cacheControl` option on context responders now supports configuring `immutable` (Set to `true` to mark the response as immutable signaling the it will never change)
+- **feat**: The `CacheControl` middleware and subsequent `cacheControl` option on context responders now supports configuring `mustRevalidate` (Set to `true` to indicate that once the response becomes stale it must be revalidated with the origin server)
+- **feat**: The `CacheControl` middleware and subsequent `cacheControl` option on context responders now supports configuring `proxyRevalidate` (Set to `true` to indicate that shared caches (proxies) must revalidate the response once stale)
+
 ### Breaking
 - The `cache` option on `ctx.html`, `ctx.file`, `ctx.text`, `ctx.json` has been renamed to `cacheControl` for better semantic clarity as under the hood it applies `Cache-Control` headers rather than working with the `cache` storage layer (which are two different things).
 

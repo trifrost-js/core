@@ -46,10 +46,43 @@ describe('Middleware - CacheControl', () => {
         expect(ctx.headers['Cache-Control']).toBe('max-age=3600');
     });
 
-    it('Sets a valid Cache-Control header with type and maxage', () => {
+    it('Sets a valid Cache-Control header with proxyMaxage only', () => {
         const ctx = new MockContext();
-        CacheControl({type: 'private', maxage: 600})(ctx);
-        expect(ctx.headers['Cache-Control']).toBe('private, max-age=600');
+        CacheControl({proxyMaxage: 120})(ctx);
+        expect(ctx.headers['Cache-Control']).toBe('s-maxage=120');
+    });
+
+    it('Sets a valid Cache-Control header with immutable', () => {
+        const ctx = new MockContext();
+        CacheControl({immutable: true})(ctx);
+        expect(ctx.headers['Cache-Control']).toBe('immutable');
+    });
+
+    it('Sets a valid Cache-Control header with must-revalidate', () => {
+        const ctx = new MockContext();
+        CacheControl({mustRevalidate: true})(ctx);
+        expect(ctx.headers['Cache-Control']).toBe('must-revalidate');
+    });
+
+    it('Sets a valid Cache-Control header with proxy-revalidate', () => {
+        const ctx = new MockContext();
+        CacheControl({proxyRevalidate: true})(ctx);
+        expect(ctx.headers['Cache-Control']).toBe('proxy-revalidate');
+    });
+
+    it('Sets a combined Cache-Control header with multiple options', () => {
+        const ctx = new MockContext();
+        CacheControl({
+            type: 'public',
+            maxage: 300,
+            proxyMaxage: 600,
+            immutable: true,
+            mustRevalidate: true,
+            proxyRevalidate: true,
+        })(ctx);
+        expect(ctx.headers['Cache-Control']).toBe(
+            'public, max-age=300, s-maxage=600, immutable, must-revalidate, proxy-revalidate'
+        );
     });
 
     it('Ignores invalid type', () => {
@@ -60,10 +93,10 @@ describe('Middleware - CacheControl', () => {
         }
     });
 
-    it('Ignores non-positive-integer maxage', () => {
+    it('Ignores non-positive-integer maxage and proxyMaxage', () => {
         for (const el of [...CONSTANTS.NOT_INTEGER, 0, -10, 1.5, -99.99, 99.99]) {
             const ctx = new MockContext();
-            CacheControl({type: 'public', maxage: el as number})(ctx);
+            CacheControl({type: 'public', maxage: el as number, proxyMaxage: el as number})(ctx);
             expect(ctx.headers['Cache-Control']).toBe('public');
         }
     });
@@ -80,8 +113,13 @@ describe('Middleware - CacheControl', () => {
     describe('ParseAndApplyCacheControl', () => {
         it('Applies valid header', () => {
             const ctx = new MockContext();
-            ParseAndApplyCacheControl(ctx, {type: 'public', maxage: 60});
-            expect(ctx.headers['Cache-Control']).toBe('public, max-age=60');
+            ParseAndApplyCacheControl(ctx, {
+                type: 'public',
+                maxage: 60,
+                proxyMaxage: 120,
+                immutable: true,
+            });
+            expect(ctx.headers['Cache-Control']).toBe('public, max-age=60, s-maxage=120, immutable');
         });
 
         it('Skips setting header if invalid', () => {

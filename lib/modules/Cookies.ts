@@ -37,7 +37,7 @@ const HMACAlgos = {
 
 export type SigningAlgorithm = `${keyof typeof HMACAlgos}`;
 
-type SigningOptions = {algorithm: SigningAlgorithm};
+export type TriFrostCookieSigningOptions = {algorithm: SigningAlgorithm};
 
 export class Cookies {
 
@@ -187,9 +187,9 @@ export class Cookies {
      * 
      * @param {string|number} val - Value to sign
      * @param {string} secret - Signing secret
-     * @param {SigningOptions} options - Options for signing (defaults to {algorithm: 'SHA-256'})
+     * @param {TriFrostCookieSigningOptions} options - Options for signing (defaults to {algorithm: 'SHA-256'})
      */
-    async sign (val:string|number, secret: string, options:SigningOptions = {algorithm: 'SHA-256'}): Promise<string> {
+    async sign (val:string|number, secret: string, options:TriFrostCookieSigningOptions = {algorithm: 'SHA-256'}): Promise<string> {
         if (
             !isNeString(secret) || 
             (!isString(val) && !isNum(val))
@@ -203,13 +203,13 @@ export class Cookies {
      * Verifies a signed cookie has not been tampered with, returns the value if untampered
      * 
      * @param {string} signed - Signed cookie value
-     * @param {string|(string|(SigningOptions & {val:string}))[]} secrets - Secret or Secrets to check
-     * @param {SigningOptions} options - Options for verifying (defaults to {algorithm: 'SHA-256'})
+     * @param {string|(string|(TriFrostCookieSigningOptions & {val:string}))[]} secrets - Secret or Secrets to check
+     * @param {TriFrostCookieSigningOptions} options - Options for verifying (defaults to {algorithm: 'SHA-256'})
      */
     async verify (
         signed:string,
-        secrets:string|(string|(SigningOptions & {val:string}))[],
-        options:SigningOptions = {algorithm: 'SHA-256'}
+        secrets:string|(string|(TriFrostCookieSigningOptions & {val:string}))[],
+        options:TriFrostCookieSigningOptions = {algorithm: 'SHA-256'}
     ) {
         const idx = isNeString(signed) ? signed.lastIndexOf('.') : -1;
         if (idx === -1) return null;
@@ -294,10 +294,10 @@ export class Cookies {
      * Generates HMAC for a specific value and a secret
      * @param {string|number} data - Value to generate HMAC for
      * @param {string} secret - Signing secret
-     * @param {SigningOptions} options - HMAC Options
+     * @param {TriFrostCookieSigningOptions} options - HMAC Options
      * @returns 
      */
-    private async generateHMAC (data:string, secret:string, options:SigningOptions) {
+    private async generateHMAC (data:string, secret:string, options:TriFrostCookieSigningOptions) {
         const algo = options?.algorithm in HMACAlgos ? options.algorithm : 'SHA-256';
         const cacheKey = algo + ':' + secret;
 
