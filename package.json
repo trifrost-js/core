@@ -100,7 +100,7 @@
         "@valkyriestudios/utils": "^12.39.0"
     },
     "devDependencies": {
-        "@cloudflare/workers-types": "^4.20250531.0",
+        "@cloudflare/workers-types": "^4.20250601.0",
         "@types/node": "^22.15.29",
         "@vitest/coverage-v8": "^3.1.4",
         "bun-types": "^1.2.15",
