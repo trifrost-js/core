@@ -13,23 +13,23 @@ import {Sym_TriFrostMiddlewareAuth} from './types';
 /* Specific symbol attached to auth mware to identify them by */
 export const Sym_TriFrostMiddlewareApiKeyAuth = Symbol('TriFrost.Middleware.ApiKeyAuth');
 
-export type ApiKeyAuthResult = {key:string};
+export type ApiKeyAuthResult = {apiKey:string; apiClient:string|null};
 
 export type ApiKeyAuthOptions <T extends Record<string, unknown> = ApiKeyAuthResult> = {
     /**
-     * Header to look for (eg: 'x-api-key')
+     * Where to extract the API key from
      */
-    header?: string;
+    apiKey: {header?:string; query?:string};
     /**
-     * Query variable to look for (eg: 'api_key')
+     * Where to extract the API client/app ID from
      */
-    query?: string;
+    apiClient?: {header?:string; query?:string};
     /**
      * Validation function.
      * @note Return true if valid or false if false
      * @note You can also return an object if valid, this will then be set on the state as $auth
      */
-    validate: (ctx:TriFrostContext, key: string) => Promise<T|boolean>|T|boolean;
+    validate: (ctx:TriFrostContext, val: ApiKeyAuthResult) => Promise<T|boolean>|T|boolean;
 };
 
 /**
@@ -43,8 +43,8 @@ export type ApiKeyAuthOptions <T extends Record<string, unknown> = ApiKeyAuthRes
  *
  * @example
  * .use(ApiKeyAuth({
- *   header: 'x-api-key',
- *   query: 'api_key',
+ *   apiKey: {header: 'x-api-key'},
+ *   apiClient: {header: 'x-api-id'},
  *   validate: (ctx, key) => key === ctx.env.MY_API_KEY
  * }))
  */
@@ -52,22 +52,43 @@ export function ApiKeyAuth <
     T extends Record<string, unknown> = ApiKeyAuthResult
 > (opts:ApiKeyAuthOptions<T>) {
     if (!isFn(opts?.validate)) throw new Error('TriFrostMiddleware@ApiKeyAuth: A validate function must be provided');
-    const header = isNeString(opts.header) ? opts.header : 'x-api-key';
-    const query = isNeString(opts.query) ? opts.query : 'api_key';
+
+    if (!isNeString(opts.apiKey?.header) && !isNeString(opts.apiKey?.query)) {
+        throw new Error('TriFrostMiddleware@ApiKeyAuth: You must configure apiKey header or query');
+    }
+
+    /* Determine key behavior */
+    const apiKeyHeader:string|null = isNeString(opts.apiKey?.header) ? opts.apiKey.header : null;
+    const apiKeyQuery:string|null = isNeString(opts.apiKey?.query) ? opts.apiKey.query : null;
+
+    /* Determine client behavior */
+    const apiClientHeader:string|null = isNeString(opts.apiClient?.header) ? opts.apiClient.header : null;
+    const apiClientQuery:string|null = isNeString(opts.apiClient?.query) ? opts.apiClient.query : null;
+    const apiClientEnabled = apiClientHeader || apiClientQuery;
 
     const mware = async function TriFrostApiKeyAuth <
         Env extends Record<string, unknown> = {},
         State extends Record<string, unknown> = {}
     > (ctx:TriFrostContext<Env, State>):Promise<void|TriFrostContext<Env, State & {$auth:T}>> {
+        /* Api Client */
+        let apiClient:string|null = null;
+        if (apiClientEnabled) {
+            if (apiClientHeader) apiClient = ctx.headers[apiClientHeader];
+            if (!apiClient && apiClientQuery) apiClient = ctx.query.get(apiClientQuery);
+            if (!isNeString(apiClient)) return ctx.status(401);
+        }
+
         /* Get value from header, falling back to query */
-        const key = ctx.headers[header] || ctx.query.get(query) || null;
-        if (!isNeString(key)) return ctx.status(401);
+        let apiKey:string|null = null;
+        if (apiKeyHeader) apiKey = ctx.headers[apiKeyHeader];
+        if (!apiKey && apiKeyQuery) apiKey = ctx.query.get(apiKeyQuery);
+        if (!isNeString(apiKey)) return ctx.status(401);
 
         /* Validate, if not valid return 401 */
-        const result = await opts.validate(ctx, key);
+        const result = await opts.validate(ctx, {apiKey, apiClient});
         if (!result) return ctx.status(401);
 
-        const authenticated = result === true ? {key} : result;
+        const authenticated = result === true ? {apiKey, apiClient} : result;
         return ctx.setState({$auth: authenticated} as {$auth:T});
     };
 
