@@ -4,6 +4,66 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.22.0] - 2025-06-01
+This release strengthens the `ApiKeyAuth` middleware by adding **explicit credential configuration** and support for **dual credential validation** (API key + client ID).
+These improvements came directly from refining the TriFrost documentation and aligning the middleware more closely with the Swagger/OpenAPI authentication patterns and best practices.
+
+It’s a small but meaningful change that improves clarity, predictability, and flexibility in your auth flows.
+
+### Improved
+- **feat**: `ApiKeyAuth` middleware now supports **dual credential extraction** with **optional** `apiClient`. Allowing you to validate both an API key and a paired client/app identifier.
+```typescript
+import {ApiKeyAuth} from '@trifrost/core';
+
+app.group('/partner-api', router => {
+  router
+    .use(ApiKeyAuth({
+      apiKey: {header: 'x-api-key'},
+      apiClient: {header: 'x-api-client'},
+      validate: async (ctx, {apiKey, apiClient}) => {
+        /* Example lookup: combine client + key for validation */
+        const isValid = await myApiKeyStore.checkClientKeyPair(apiClient!, apiKey);
+        if (!isValid) return false;
+
+        /* Return rich $auth context for downstream */
+        return {clientId: apiClient, permissions: ['read', 'write']};
+      }
+    }))
+    .get('/data', ctx => ctx.json({
+      message: `Hello, client ${ctx.state.$auth.clientId}!`,
+      permissions: ctx.state.$auth.permissions,
+    }));
+});
+```
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250601.0
+
+### Breaking
+- `ApiKeyAuth` no longer has default header or query names — you must now explicitly configure where to extract the API key using the `apiKey` option.
+```typescript
+/* Previous */
+app.use(ApiKeyAuth({
+    validate: (ctx, key) => checkKey(key)
+}));
+
+/* Now */
+app.use(ApiKeyAuth({
+    apiKey: {header: 'x-api-key'}, // explicitly configure where to pull the key from
+    validate: (ctx, {apiKey}) => checkKey(apiKey)
+}));
+```
+
+---
+
+### Why the change?
+The old behavior silently assumed `'x-api-key'` (header) or `'api_key'` (query), which could lead to unintentional mismatches or weak configs.
+By forcing explicit configuration, we ensure you know **exactly** where keys come from — and open the door to richer paired validation.
+
+---
+
+As we continue working on the TriFrost docs and gearing up for 1.0, expect more of these focused mini-releases delivering small but meaningful improvements across the framework.
+
+Stay frosty! ❄️
+
 ## [0.21.0] - 2025-05-31
 This release brings a set of carefully crafted improvements born directly out of working on the TriFrost documentation.
 
