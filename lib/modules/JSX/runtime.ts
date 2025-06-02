@@ -15,7 +15,7 @@ import {
  * @param {JSXKey} key - An optional key for element identity in a list.
  */
 export function jsx (type:JSXType, props:JSXProps, key?:JSXKey):JSXElement {
-    return {type, props: props || {}, key};
+    return {type, props: props || null, key};
 }
 
 /**

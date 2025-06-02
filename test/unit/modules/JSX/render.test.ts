@@ -43,6 +43,8 @@ describe('Modules - JSX - Renderer', () => {
     describe('render', () => {
         it('Renders basic primitives', () => {
             expect(render('hello')).toBe('hello');
+            expect(render('')).toBe('');
+            expect(render(0)).toBe('0');
             expect(render(123)).toBe('123');
             expect(render(false)).toBe('');
             expect(render(null)).toBe('');

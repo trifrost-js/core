@@ -105,13 +105,11 @@ function renderProps (props:Record<string, unknown>|null) {
  * Renders child elements
  */
 function renderChildren (children:JSXElement|string|number|boolean|null|JSXElement[]|string[]|number[]|boolean[]|null[]) {
-    if (Array.isArray(children)) {
-        let output = '';
-        for (let i = 0; i < children.length; i++) output += render(children[i]);
-        return output;
-    }
-    
-    return children ? render(children) : '';
+    if (!Array.isArray(children)) return children ? render(children) : '';
+
+    let output = '';
+    for (let i = 0; i < children.length; i++) output += render(children[i]);
+    return output;
 }
 
 /**
@@ -119,21 +117,21 @@ function renderChildren (children:JSXElement|string|number|boolean|null|JSXEleme
  * @param node - JSX tree or primitive.
  */
 export function render (node: JSXElement | string | number | boolean | null): string {
-    if (!node) return '';
-
     switch (typeof node) {
         case 'string':
-            return escape(node);
+            return node ? escape(node) : '';
         case 'number':
             return node + '';
-        default: {            
-            switch (isObject(node) ? typeof node?.type : 'null') {
+        case 'boolean':
+            return '';
+        default: {
+            switch (typeof node?.type) {
                 case 'string': {
                     const tag = (node as JSXElement).type;
                     let output = '<' + tag;
 
                     /* Props */
-                    output += renderProps((node as JSXElement).props || {});
+                    if ((node as JSXElement).props) output += renderProps((node as JSXElement).props);
 
                     /* Void tags like br are self-closing <br /> */
                     if (VOID_TAGS[tag as keyof typeof VOID_TAGS]) return output + ' />';
@@ -151,16 +149,17 @@ export function render (node: JSXElement | string | number | boolean | null): st
                     return (node as JSXElement).type === Fragment
                         ? renderChildren((node as JSXElement).props?.children as JSXElement | string | number | boolean | null)
                         : render(((node as JSXElement).type as any)((node as JSXElement).props));
-                case 'null': {
-                    if (Array.isArray(node)) {
+                default: {
+                    if (!node) {
+                        return '';
+                    } else if (Array.isArray(node)) {
                         let output = '';
                         for (let i = 0; i < node.length; i++) output += render(node[i]);
                         return output;
+                    } else {
+                        return '';
                     }
-                    return '';
                 }
-                default:
-                    return '';
             }
         }
     }

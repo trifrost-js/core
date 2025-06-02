@@ -23,6 +23,11 @@ createCss({
 });
 /* Will now result in: --v-font_header, --v-font_header, --something, --t-body_bg, --t-body_fg, --someborder */
 ```
+- **perf**: The JSX runtime will now fallback to null for props instead of an empty object, allowing for a micro optimization in the render engine to short-circuit prop rendering.
+
+The performance change in the JSX prop short-circuiting leads to an estimated **5-10% render performance boost** 🚀 (based on vitest bench snapshots of common JSX trees), without sacrificing determinism or memory safety.
+
+PS: The code for this benchmark lives [here](https://github.com/trifrost-js/core/blob/main/test/bench/modules/JSX/render.bench.ts)
 
 ## [0.22.0] - 2025-06-01
 This release strengthens the `ApiKeyAuth` middleware by adding **explicit credential configuration** and support for **dual credential validation** (API key + client ID).

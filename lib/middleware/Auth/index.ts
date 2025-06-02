@@ -1,3 +1,5 @@
+export {Sym_TriFrostMiddlewareAuth} from './types';
+
 export {
     BasicAuth,
     Sym_TriFrostMiddlewareBasicAuth,

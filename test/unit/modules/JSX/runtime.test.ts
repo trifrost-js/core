@@ -12,9 +12,9 @@ describe('Modules - JSX - Runtime', () => {
             });
         });
 
-        it('Should fallback to empty props if props is undefined', () => {
+        it('Should fallback to null if props is undefined', () => {
             const el = jsx('span', undefined as any, 'key');
-            expect(el.props).toEqual({});
+            expect(el.props).toEqual(null);
         });
     });
 
