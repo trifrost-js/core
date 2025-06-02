@@ -723,6 +723,29 @@ describe('Modules - JSX - style - use', () => {
             ].join(''));
         });
 
+        it('Does not prefix root-level CSS vars if they start with --', () => {
+            const css = createCss({
+                var: {
+                    spacing_m: '1rem',
+                    radius_l: '8px',
+                    '--someLib-spacing': '2rem',
+                    '--someLib--radius': '16px',
+                },
+                theme: {},
+                reset: false,
+            });
+    
+            css.root();
+    
+            const html = engine.inject(`${MARKER}<div>Vars</div>`);
+            expect(html).toBe([
+                '<style>',
+                ':root{--v-spacing_m:1rem;--v-radius_l:8px;--someLib-spacing:2rem;--someLib--radius:16px}',
+                '</style>',
+                '<div>Vars</div>',
+            ].join(''));
+        });
+
         it('Throws when an invalid theme var is provided', () => {
             expect(() => createCss({
                 var: {},
@@ -779,6 +802,35 @@ describe('Modules - JSX - style - use', () => {
                 '@media (prefers-color-scheme: dark){',
                 ':root[data-theme="light"]{--t-color:#ccc}',
                 ':root{--t-color:#333}',
+                '}',
+                '</style>',
+                '<div>Attr Theme</div>',
+            ].join(''));
+        });
+
+        it('Does not prefix theme var names if they start with --', () => {
+            const css = createCss({
+                var: {},
+                theme: {
+                    color: {light: '#ccc', dark: '#333'},
+                    '--someLib-fg': {light: '#ccc', dark: '#333'},
+                },
+                reset: false,
+                themeAttribute: true,
+            });
+    
+            css.root();
+    
+            const html = engine.inject(`${MARKER}<div>Attr Theme</div>`);
+            expect(html).toBe([
+                '<style>',
+                '@media (prefers-color-scheme: light){',
+                ':root[data-theme="dark"]{--t-color:#333;--someLib-fg:#333}',
+                ':root{--t-color:#ccc;--someLib-fg:#ccc}',
+                '}',
+                '@media (prefers-color-scheme: dark){',
+                ':root[data-theme="light"]{--t-color:#ccc;--someLib-fg:#ccc}',
+                ':root{--t-color:#333;--someLib-fg:#333}',
                 '}',
                 '</style>',
                 '<div>Attr Theme</div>',

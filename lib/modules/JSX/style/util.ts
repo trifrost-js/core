@@ -219,9 +219,16 @@ export function toKebab (key:string):string {
     /* Normalize vendor prefix (e.g. webkitTransform → -webkit-transform) */
     if (KEBAB_VENDOR_REGEX.test(key)) {
         key = key.replace(KEBAB_VENDOR_REGEX, (_, prefix, first) => '-' + prefix.toLowerCase() + '-' + first.toLowerCase());
+    } else if (key[0] === '-' && key[1] === '-') {
+        /* Do not kebabe-case variables */
+        CAMEL_TO_KEBAB_LUT[key] = key;
+        return key;
     }
 
-    return key.replace(KEBAB_REGEX, m => '-' + m.toLowerCase());
+    /* Convert and add to camel to kebab lookup table */
+    const result = key.replace(KEBAB_REGEX, m => '-' + m.toLowerCase());
+    CAMEL_TO_KEBAB_LUT[key] = result;
+    return result;
 }
 
 /**

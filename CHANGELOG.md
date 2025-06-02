@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Improved
+- **feat**: `createCss` will no longer prefix a variable with `--v-` if the variable's name starts with `--`.
+- **feat**: `createCss` will no longer prefix a theme variable with `--t-` if the variable's name starts with `--`.
+```typescript
+createCss({
+    var: {
+        font_header: '...',
+        font_body: '...',
+        '--something': '...'
+    },
+    theme: {
+        body_bg: {...},
+        body_fg: {...},
+        '--someborder': {...},
+    },
+});
+/* Will now result in: --v-font_header, --v-font_header, --something, --t-body_bg, --t-body_fg, --someborder */
+```
+
 ## [0.22.0] - 2025-06-01
 This release strengthens the `ApiKeyAuth` middleware by adding **explicit credential configuration** and support for **dual credential validation** (API key + client ID).
 These improvements came directly from refining the TriFrost documentation and aligning the middleware more closely with the Swagger/OpenAPI authentication patterns and best practices.

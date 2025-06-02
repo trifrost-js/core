@@ -110,6 +110,10 @@ function normalizeSelector (val:string) {
     return first === '>' || first === '+' || first === '~' || HTML_TAGS[val as keyof typeof HTML_TAGS] ? ' ' + val : val;
 }
 
+function normalizeVariable (val:string, prefix:string) {
+    return val[0] === '-' && val[1] === '-' ? val : prefix + val;
+}
+
 function flatten (
     obj:Record<string, unknown>,
     parent_query:string = '',
@@ -348,8 +352,11 @@ function cssFactory <
 type VarMap = Record<string, string>;
 type ThemeMap = Record<string, string|{light: string; dark: string}>;
 
-type VarVal <T extends string> = `var(--${T})`;
-type ThemeVal <T extends string> = `var(--t-${T})`;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type VarVal <T extends string> = T extends `--${infer Rest}` ? `var(${T})` : `var(--v-${T})`;
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type ThemeVal <T extends string> = T extends `--${infer Rest}` ? `var(${T})` : `var(--t-${T})`;
 
 type CssInstance <
     V extends VarMap,
@@ -567,7 +574,7 @@ export function createCss <
     mod.var = {} as any;
     if (isObject(config.var)) {
         for (const key in config.var) {
-            const v_key = '--v-' + key;
+            const v_key = normalizeVariable(key, '--v-');
             mod.var[key] = 'var(' + v_key + ')' as VarVal<typeof key>;
             root_vars[v_key] = config.var[key];
         }
@@ -580,14 +587,14 @@ export function createCss <
         for (const key in config.theme) {
             const entry = config.theme[key];
             if (isNeString(entry)) {
-                const t_key = '--t-' + key; 
+                const t_key = normalizeVariable(key, '--t-');
                 root_vars[t_key] = entry;
                 mod.theme[key] = 'var(' + t_key + ')' as ThemeVal<typeof key>;
             } else if (
                 isNeString(entry?.light) && 
                 isNeString(entry?.dark)
             ) {
-                const t_key = '--t-' + key; 
+                const t_key = normalizeVariable(key, '--t-');
                 theme_light[t_key] = entry.light;
                 theme_dark[t_key] = entry.dark;
                 mod.theme[key] = 'var(' + t_key + ')' as ThemeVal<typeof key>;
