@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.23.0] - 2025-06-02
+This release further sharpens TriFrost’s internals, making the `createCss` system more flexible for external libraries by respecting `--prefixed` variables and tuning the JSX engine for even faster prop rendering.
+
 ### Improved
 - **feat**: `createCss` will no longer prefix a variable with `--v-` if the variable's name starts with `--`.
 - **feat**: `createCss` will no longer prefix a theme variable with `--t-` if the variable's name starts with `--`.
