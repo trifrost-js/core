@@ -30,7 +30,7 @@ export enum ContentSecurityPolicy {
     ReportUri       = 'report-uri',
 }
 
-interface contentSecurityPolicyOptions {
+export interface TriFrostContentSecurityPolicyOptions {
     /**
      * Defines valid sources for loading content such as JavaScript, Images, CSS, etc.
      */
@@ -140,7 +140,7 @@ export interface TriFrostSecurityOptions {
     /**
      * Content-Security-Policy configuration, defaults to null
      */
-    contentSecurityPolicy?: contentSecurityPolicyOptions | null;
+    contentSecurityPolicy?: TriFrostContentSecurityPolicyOptions | null;
     /**
      * Cross-Origin-Embedder-Policy configuration, defaults to null
      */
@@ -215,7 +215,7 @@ function header (
     name: string
 ) {
     /* If val is null it means we don't want to set the header */
-    if (val === null) return;
+    if (val === undefined || val === null) return;
 
     /* Validation check */
     if (
@@ -236,9 +236,7 @@ function header (
  * @param {TriFrostSecurityOptions['contentSecurityPolicy']} val - Value to set
  */
 function contentSecurityPolicy (map: Record<string, string>, val:TriFrostSecurityOptions['contentSecurityPolicy']) {
-    if (val === null) return;
-
-    if (!isNeObject(val)) throw new Error('TriFrostMiddleware@Security: Invalid configuration for contentSecurityPolicy');
+    if (!isNeObject(val)) return;
 
     /* Loop through each key in the csp object being passed */
     const parts: string[] = [];
@@ -299,6 +297,7 @@ function originAgentCluster (map:Record<string, string>, val:TriFrostSecurityOpt
         case false:
             return map['Origin-Agent-Cluster'] = '?0';
         case null:
+        case undefined:
             return;
         default:
             throw new Error('TriFrostMiddleware@Security: Invalid configuration for originAgentCluster');
@@ -313,7 +312,7 @@ function originAgentCluster (map:Record<string, string>, val:TriFrostSecurityOpt
  * @param {TriFrostSecurityOptions['referrerPolicy']} val - Value to set
  */
 function referrerPolicy (map:Record<string, string>, val:TriFrostSecurityOptions['referrerPolicy']) {
-    if (val === null) return;
+    if (val === undefined || val === null) return;
 
     const input = Array.isArray(val) ? val : typeof val === 'string' ? [val] : [];
     if (!input.length) throw new Error('TriFrostMiddleware@Security: Invalid configuration for referrerPolicy');
@@ -348,7 +347,7 @@ function referrerPolicy (map:Record<string, string>, val:TriFrostSecurityOptions
  * @param {TriFrostSecurityOptions['strictTransportSecurity']} val - Value to set
  */
 function strictTransportSecurity (map:Record<string, string>, val:TriFrostSecurityOptions['strictTransportSecurity']) {
-    if (val === null) return;
+    if (val === undefined || val === null) return;
 
     if (isIntGt(val?.maxAge, 0)) {
         const parts = [`max-age=${val.maxAge}`];
@@ -374,7 +373,7 @@ function strictTransportSecurity (map:Record<string, string>, val:TriFrostSecuri
  * @param {TriFrostSecurityOptions['xXssProtection']} val - Value to set
  */
 function xXssProtection (map:Record<string, string>, val:TriFrostSecurityOptions['xXssProtection']) {
-    if (val === null) return;
+    if (val === undefined || val === null) return;
 
     if (val === '0') {
         return map['X-XSS-Protection'] = '0';
@@ -391,25 +390,33 @@ function xXssProtection (map:Record<string, string>, val:TriFrostSecurityOptions
 }
 
 /**
- * Middleware that returns a handler which configures security headers on a context
+ * Security defaults
  */
-export function Security (opts:TriFrostSecurityOptions = {}) {
-    const cfg:TriFrostSecurityOptions = {
-        contentSecurityPolicy               : null,
-        crossOriginEmbedderPolicy           : null,
-        crossOriginOpenerPolicy             : CrossOriginOpenerPolicy.SameOrigin,
-        crossOriginResourcePolicy           : CrossOriginResourcePolicy.SameSite,
-        originAgentCluster                  : true,
-        referrerPolicy                      : ReferrerPolicy.NoReferrer,
-        strictTransportSecurity             : {maxAge: 15552000, includeSubDomains: true},
-        xContentTypeOptions                 : XContentTypes.NoSniff,
-        xDnsPrefetchControl                 : XDnsPrefetchControl.Off,
-        xDownloadOptions                    : XDownloadOptions.NoOpen,
-        xFrameOptions                       : XFrameOptions.SameOrigin,
-        xXssProtection                      : '0',
-        /* Configuration overrides */
-        ...isNeObject(opts) && opts,
-    };
+const SecurityDefaults: TriFrostSecurityOptions = {
+    contentSecurityPolicy: null,
+    crossOriginEmbedderPolicy: null,
+    crossOriginOpenerPolicy: CrossOriginOpenerPolicy.SameOrigin,
+    crossOriginResourcePolicy: CrossOriginResourcePolicy.SameSite,
+    originAgentCluster: true,
+    referrerPolicy: ReferrerPolicy.NoReferrer,
+    strictTransportSecurity: {maxAge: 15552000, includeSubDomains: true},
+    xContentTypeOptions: XContentTypes.NoSniff,
+    xDnsPrefetchControl: XDnsPrefetchControl.Off,
+    xDownloadOptions: XDownloadOptions.NoOpen,
+    xFrameOptions: XFrameOptions.SameOrigin,
+    xXssProtection: '0',
+};
+
+/**
+ * Middleware that returns a handler which configures security headers on a context
+ * 
+ * @param {TriFrostSecurityOptions} opts - Options to apply
+ * @param {boolean} use_defaults - (Default=true) Merge with the defaults (true) or not (false)
+ */
+export function Security (opts:TriFrostSecurityOptions = {}, use_defaults:boolean = true) {
+    const cfg:TriFrostSecurityOptions = use_defaults === true
+        ? {...SecurityDefaults, ...isNeObject(opts) && opts}
+        : isNeObject(opts) ? opts : {};
 
     /* Generate configuration */
     const map:Record<string, string> = {};

@@ -60,6 +60,20 @@ describe('Middleware - Security', () => {
         });
     });
 
+    it('Skips defaults when use_defaults is false', () => {
+        const ctx = new MockContext();
+        Security({}, false)(ctx);
+        expect(ctx.headers).toEqual({});
+    });
+
+    it('Allows building config manually from defaults', () => {
+        const ctx = new MockContext();
+        Security({crossOriginOpenerPolicy: 'unsafe-none'}, false)(ctx);
+        expect(ctx.headers).toEqual({
+            'Cross-Origin-Opener-Policy': 'unsafe-none',
+        });
+    });
+
     describe('contentSecurityPolicy', () => {
         it('Sets a single valid directive (string)', () => {
             const ctx = new MockContext();
@@ -122,14 +136,6 @@ describe('Middleware - Security', () => {
             }).toThrow(/TriFrostMiddleware@Security: Invalid directive "foo-src" in contentSecurityPolicy/);
         });
 
-        it('Throws when no valid directives are defined', () => {
-            expect(() => {
-                Security({
-                    contentSecurityPolicy: {},
-                });
-            }).toThrow(/TriFrostMiddleware@Security: Invalid configuration for contentSecurityPolicy/);
-        });
-
         it('Throws when base-uri is not a valid string', () => {
             expect(() => {
                 Security({
@@ -158,15 +164,6 @@ describe('Middleware - Security', () => {
                     },
                 });
             }).toThrow(/TriFrostMiddleware@Security: Invalid value for directive "img-src"/);
-        });
-
-        it('Throws when passed a non-object value', () => {
-            for (const el of CONSTANTS.NOT_OBJECT_WITH_EMPTY) {
-                if (el === null || el === undefined) continue;
-                expect(() => {
-                    Security({contentSecurityPolicy: el as any});
-                }).toThrow(/TriFrostMiddleware@Security: Invalid configuration for contentSecurityPolicy/);
-            }
         });
 
         it('Omits header when passed null', () => {
