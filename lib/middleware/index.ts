@@ -12,5 +12,6 @@ export {
 export {
     Security,
     type TriFrostSecurityOptions,
+    type TriFrostContentSecurityPolicyOptions,
     Sym_TriFrostMiddlewareSecurity
 } from './Security';

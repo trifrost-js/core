@@ -1,3 +1,4 @@
+/* eslint-disable max-statements */
 import {isAsyncFn} from '@valkyriestudios/utils/function';
 import {describe, it, expect} from 'vitest';
 import {Cors, Sym_TriFrostMiddlewareCors} from '../../../lib/middleware/Cors';
@@ -36,6 +37,15 @@ describe('Middleware - Cors', () => {
         expect(ctx.headers).toEqual({
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, HEAD, POST',
+            Vary: 'Origin',
+        });
+    });
+
+    it('Skips defaults when use_defaults is false', () => {
+        const ctx = new MockContext();
+        Cors({origin: '*'}, false)(ctx);
+        expect(ctx.headers).toEqual({
+            'Access-Control-Allow-Origin': '*',
             Vary: 'Origin',
         });
     });

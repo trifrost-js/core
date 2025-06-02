@@ -11,6 +11,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 /* Only applies cross origin opener policy, nothing else */
 app.use(Security({ crossOriginOpenerPolicy: 'unsafe-none' }, false));
 ```
+- **feat**: Added `use_defaults` boolean flag (default: `true`) to the `Cors()` middleware, letting users opt out of applying built-in defaults.
+```typescript
+app.use(Cors({ methods: ['DELETE'] }, false));
+```
+
 ## [0.23.0] - 2025-06-02
 This release further sharpens TriFrost’s internals, making the `createCss` system more flexible for external libraries by respecting `--prefixed` variables and tuning the JSX engine for even faster prop rendering.
 

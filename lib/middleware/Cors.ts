@@ -2,6 +2,7 @@
 
 import {isNeArray} from '@valkyriestudios/utils/array';
 import {isIntGte} from '@valkyriestudios/utils/number';
+import {isNeObject} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
 import {
     HttpMethods,
@@ -30,7 +31,22 @@ export type TriFrostCorsOptions = {
 };
 
 /**
+ * Cors defaults
+ */
+const CorsDefaults: TriFrostCorsOptions = {
+    origin: '*',
+    methods: ['GET', 'HEAD', 'POST'],
+    headers: [],
+    expose: [],
+    credentials: false,
+};
+
+/**
  * CORS - Cross Origin Resource Sharing
+ * 
+ * @param {TriFrostCorsOptions} opts - Options to apply
+ * @param {boolean} use_defaults - (Default=true) Merge with the defaults (true) or not (false)
+ * 
  * @see origin - https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Allow-Origin
  * @see methods - https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Allow-Methods
  * @see headers - https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Allow-Headers
@@ -38,15 +54,10 @@ export type TriFrostCorsOptions = {
  * @see credentials - https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Allow-Credentials
  * @see maxage - https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Max-Age
  */
-export function Cors (opts: TriFrostCorsOptions = {}) {
-    const {
-        origin = '*',
-        methods = ['GET', 'HEAD', 'POST'],
-        headers = [],
-        expose = [],
-        credentials = false,
-        maxage,
-    } = opts;
+export function Cors (opts: TriFrostCorsOptions = {}, use_defaults:boolean = true) {
+    const {origin, methods, headers, expose, credentials, maxage} = use_defaults === true
+        ? {...CorsDefaults, ...isNeObject(opts) && opts}
+        : isNeObject(opts) ? opts : {};
 
     let originWhiteList:Set<string>|null = null;
     let originFn:TriFrostCorsOriginFunction|null = null;
