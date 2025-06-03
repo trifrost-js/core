@@ -16,6 +16,14 @@ new ConsoleExporter({
     omit: ['ctx.password', 'data.pin'],
 });
 ```
+- **feat**: Enhanced `JsonExporter` with a `sink` option, allowing users to replace the default `console` output with a custom sink function (e.g., pushing to a file or external stream).
+- **feat**: Enhanced `JsonExporter` with an `omit` option, allowing selective removal of keys (including nested keys) from the final exported JSON entry.
+```typescript
+new JsonExporter({
+    omit: ['ctx.password', 'data.pin'],
+    sink: entry => myUploadService.add(entry),
+});
+```
 
 ### Improved
 - **feat**: `ConsoleExporter` log meta will now also include `time` and `level` (which was previously not added in the meta object as it only existed in the label).
