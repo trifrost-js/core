@@ -5,7 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **feat**: Enhanced `ConsoleExporter` with `grouped` option (default: `true`). When `true` will use `console.groupCollapsed()` and `console.groupEnd()` for clearer, hierarchical log output.
+- **feat**: Enhanced `ConsoleExporter` with ability to pass a custom `format` function to construct the log label. This `format` function gets passed the entire log object.
+```typescript
+new ConsoleExporter({
+    grouped: true,
+    format: log => `[${log.level.toUpperCase()}]: ${log.message}`,
+});
+```
+
 ### Improved
+- **feat**: `ConsoleExporter` log meta will now also include `time` and `level` (which was previously not added in the meta object as it only existed in the label).
 - **feat**: Added `use_defaults` boolean flag (default: `true`) to the `Security()` middleware, letting users opt out of applying built-in defaults.
 ```typescript
 /* Only applies cross origin opener policy, nothing else */
