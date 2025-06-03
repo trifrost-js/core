@@ -8,10 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ### Added
 - **feat**: Enhanced `ConsoleExporter` with `grouped` option (default: `true`). When `true` will use `console.groupCollapsed()` and `console.groupEnd()` for clearer, hierarchical log output.
 - **feat**: Enhanced `ConsoleExporter` with ability to pass a custom `format` function to construct the log label. This `format` function gets passed the entire log object.
+- **feat**: Enhanced `ConsoleExporter` with an `omit` option, allowing selective removal of keys (including nested keys) from the final logged meta object.
 ```typescript
 new ConsoleExporter({
     grouped: true,
     format: log => `[${log.level.toUpperCase()}]: ${log.message}`,
+    omit: ['ctx.password', 'data.pin'],
 });
 ```
 

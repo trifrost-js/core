@@ -1,7 +1,9 @@
 /* eslint-disable no-console */
 
+import {isNeArray} from '@valkyriestudios/utils/array';
 import {isBoolean} from '@valkyriestudios/utils/boolean';
 import {isFn} from '@valkyriestudios/utils/function';
+import {omit} from '@valkyriestudios/utils/object';
 import {
     type TriFrostLoggerLogPayload,
     type TriFrostLoggerExporter,
@@ -9,6 +11,8 @@ import {
 
 /* Default format function */
 const DEFAULT_FORMAT = (log:TriFrostLoggerLogPayload) => '[' + log.time.toISOString() + '] [' + log.level + '] ' + log.message;
+
+type ConsoleExporterFormatter = (log:TriFrostLoggerLogPayload) => string;
 
 export class ConsoleExporter implements TriFrostLoggerExporter {
 
@@ -20,30 +24,39 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
     #grouped:boolean = true;
 
     /**
+     * Omit keys from the meta object that is logged to console
+     */
+    #omit:string[]|null = null;
+
+    /**
      * Function to use to format the primary label.
      * default format is "[{time}] [{level}] {message}"
      */
-    #format:(log: TriFrostLoggerLogPayload) => string = DEFAULT_FORMAT;
+    #format:ConsoleExporterFormatter = DEFAULT_FORMAT;
 
-    constructor (options?: {
-        grouped?: boolean;
-        format?: (log:TriFrostLoggerLogPayload) => string;
+    constructor (options?:{
+        grouped?:boolean;
+        omit?:string[];
+        format?:ConsoleExporterFormatter;
     }) {
         /* Configure grouped if passed */
         if (isBoolean(options?.grouped)) this.#grouped = options.grouped;
 
+        /* Configure omit */
+        if (isNeArray(options?.omit)) this.#omit = options.omit;
+
         /* Configure format if passed */
-        if (isFn(options?.format)) this.#format = options?.format;
+        if (isFn(options?.format)) this.#format = options.format;
     }
 
     init (global_attrs:Record<string, unknown>) {
         this.#global_attrs = global_attrs;
     }
 
-    async pushLog (log: TriFrostLoggerLogPayload): Promise<void> {
+    async pushLog (log:TriFrostLoggerLogPayload):Promise<void> {
         const msg = this.#format(log);
 
-        const meta:Record<string, unknown>|null = {
+        let meta:Record<string, unknown> = {
             time: log.time,
             level: log.level,
         };
@@ -58,13 +71,16 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
         if (log.parent_span_id) meta.parent_span_id = log.parent_span_id;
 
         /* Add context */
-        if (log.context) meta.context = log.context;
+        if (log.ctx) meta.ctx = log.ctx;
 
         /* Add data */
         if (log.data) meta.data = log.data;
 
         /* Add global attributes */
-        if (this.#global_attrs) meta.attributes = this.#global_attrs;
+        if (this.#global_attrs) meta.global = this.#global_attrs;
+
+        /* Clean */
+        if (this.#omit) meta = omit(meta, this.#omit);
 
         /* Write */
         if (this.#grouped) {
@@ -110,7 +126,7 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
         }
     }
 
-    async flush (): Promise<void> {
+    async flush ():Promise<void> {
         /* No-Op for console */
     }
 

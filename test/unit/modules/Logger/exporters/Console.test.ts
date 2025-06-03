@@ -11,7 +11,7 @@ describe('Modules - Logger - Exporters - Console', () => {
     const baseLog: Omit<TriFrostLoggerLogPayload, 'level'> = {
         time: fixedDate,
         message: 'Test message',
-        context: {user: 'test'},
+        ctx: {user: 'test'},
     };
 
     const customFormat = (log:TriFrostLoggerLogPayload) => `CUSTOM[${log.level.toUpperCase()}]: ${log.message}`;
@@ -43,8 +43,8 @@ describe('Modules - Logger - Exporters - Console', () => {
                 expect(spies[level]).toHaveBeenCalledWith(`[${fixedDate.toISOString()}] [${level}] Test message`, {
                     time: fixedDate,
                     level,
-                    context: {user: 'test'},
-                    attributes: {service: 'test'},
+                    ctx: {user: 'test'},
+                    global: {service: 'test'},
                 });
             });
 
@@ -67,9 +67,9 @@ describe('Modules - Logger - Exporters - Console', () => {
                     trace_id: 'trace-123',
                     span_id: 'span-abc',
                     parent_span_id: 'parent-span',
-                    context: {user: 'test'},
+                    ctx: {user: 'test'},
                     data: {extra: 'info'},
-                    attributes: {service: 'test'},
+                    global: {service: 'test'},
                 });
             });
 
@@ -88,8 +88,8 @@ describe('Modules - Logger - Exporters - Console', () => {
                     time: fixedDate,
                     level,
                     span_id: 'span-abc',
-                    context: {user: 'test'},
-                    attributes: {service: 'test'},
+                    ctx: {user: 'test'},
+                    global: {service: 'test'},
                 });
                 expect(spies.groupEnd).toHaveBeenCalled();
             });
@@ -107,8 +107,8 @@ describe('Modules - Logger - Exporters - Console', () => {
                 expect(spies[level]).toHaveBeenCalledWith({
                     time: fixedDate,
                     level,
-                    context: {user: 'test'},
-                    attributes: {service: 'test'},
+                    ctx: {user: 'test'},
+                    global: {service: 'test'},
                 });
                 expect(spies.groupEnd).toHaveBeenCalled();
             });
@@ -125,8 +125,8 @@ describe('Modules - Logger - Exporters - Console', () => {
                 expect(spies[level]).toHaveBeenCalledWith(`CUSTOM[${level.toUpperCase()}]: ${baseLog.message}`, {
                     time: fixedDate,
                     level,
-                    context: {user: 'test'},
-                    attributes: {service: 'test'},
+                    ctx: {user: 'test'},
+                    global: {service: 'test'},
                 });
             });
 
@@ -143,10 +143,32 @@ describe('Modules - Logger - Exporters - Console', () => {
                 expect(spies[level]).toHaveBeenCalledWith({
                     time: fixedDate,
                     level,
-                    context: {user: 'test'},
-                    attributes: {service: 'test'},
+                    ctx: {user: 'test'},
+                    global: {service: 'test'},
                 });
                 expect(spies.groupEnd).toHaveBeenCalled();
+            });
+
+            it('Omits specified keys from meta', async () => {
+                const exporter = new ConsoleExporter({
+                    grouped: false,
+                    omit: ['ctx.user', 'global.service'],
+                });
+                exporter.init({service: 'test'});
+
+                await exporter.pushLog({
+                    ...baseLog,
+                    level,
+                    data: {extra: 'info'},
+                });
+
+                expect(spies[level]).toHaveBeenCalledWith(`[${fixedDate.toISOString()}] [${level}] Test message`, {
+                    time: fixedDate,
+                    level,
+                    data: {extra: 'info'},
+                    ctx: {},
+                    global: {},
+                });
             });
         });
     });
