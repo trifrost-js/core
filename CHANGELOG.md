@@ -9,11 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **feat**: Added `use_defaults` boolean flag (default: `true`) to the `Security()` middleware, letting users opt out of applying built-in defaults.
 ```typescript
 /* Only applies cross origin opener policy, nothing else */
-app.use(Security({ crossOriginOpenerPolicy: 'unsafe-none' }, false));
+app.use(Security({crossOriginOpenerPolicy: 'unsafe-none'}, {use_defaults: false}));
 ```
 - **feat**: Added `use_defaults` boolean flag (default: `true`) to the `Cors()` middleware, letting users opt out of applying built-in defaults.
 ```typescript
-app.use(Cors({ methods: ['DELETE'] }, false));
+app.use(Cors({methods: ['DELETE']}, {use_Defaults: false}));
 ```
 
 ## [0.23.0] - 2025-06-02

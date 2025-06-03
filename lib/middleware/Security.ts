@@ -1,7 +1,8 @@
-import {isNeObject} from '@valkyriestudios/utils/object';
-import {isNeString} from '@valkyriestudios/utils/string';
-import {isIntGt} from '@valkyriestudios/utils/number';
 import {isNeArray} from '@valkyriestudios/utils/array';
+import {isBoolean} from '@valkyriestudios/utils/boolean';
+import {isIntGt} from '@valkyriestudios/utils/number';
+import {isObject, isNeObject} from '@valkyriestudios/utils/object';
+import {isNeString} from '@valkyriestudios/utils/string';
 import {
     Sym_TriFrostDescription,
     Sym_TriFrostFingerPrint,
@@ -187,6 +188,13 @@ export interface TriFrostSecurityOptions {
      */
     xXssProtection?: '0' | '1' | 'block' | string | null;
 }
+
+export type TriFrostSecurityConfig = {
+    /**
+     * (Default=true) Merge with the defaults (true) or not (false)
+     */
+    use_defaults?:boolean;
+};
 
 /**
  * Pre-baked CSP key lookup map
@@ -410,13 +418,14 @@ const SecurityDefaults: TriFrostSecurityOptions = {
 /**
  * Middleware that returns a handler which configures security headers on a context
  * 
- * @param {TriFrostSecurityOptions} opts - Options to apply
- * @param {boolean} use_defaults - (Default=true) Merge with the defaults (true) or not (false)
+ * @param {TriFrostSecurityOptions} options - Options to apply
+ * @param {TriFrostSecurityConfig} config - Additional behavioral config
  */
-export function Security (opts:TriFrostSecurityOptions = {}, use_defaults:boolean = true) {
+export function Security (options:TriFrostSecurityOptions = {}, config?:TriFrostSecurityConfig) {
+    const use_defaults = !isBoolean(config?.use_defaults) ? true : config.use_defaults;
     const cfg:TriFrostSecurityOptions = use_defaults === true
-        ? {...SecurityDefaults, ...isNeObject(opts) && opts}
-        : isNeObject(opts) ? opts : {};
+        ? {...SecurityDefaults, ...isObject(options) && options}
+        : isObject(options) ? options : {};
 
     /* Generate configuration */
     const map:Record<string, string> = {};

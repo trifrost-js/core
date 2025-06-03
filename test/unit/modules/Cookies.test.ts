@@ -462,7 +462,7 @@ describe('Modules - Cookies', () => {
                     'z.1=keep; Secure',
                     `x.1=; Expires=${addUTC(now, 0, 'seconds').toUTCString()}; Max-Age=0; Secure`,
                 ]);
-            });              
+            });      
         });
     });
 
@@ -566,7 +566,7 @@ describe('Modules - Cookies', () => {
             const cookies = new Cookies(createCtx('a.1=val; a.2=val; b=keep'), {});
             cookies.del({prefix: 'a.'});
             expect(cookies.all()).toEqual({b: 'keep'});
-        });          
+        });  
     });
 
     describe('sign', () => {
@@ -680,7 +680,7 @@ describe('Modules - Cookies', () => {
                 false,
                 ['sign']
             );
-        });        
+        });
     });
 
     describe('verify', () => {
@@ -789,7 +789,7 @@ describe('Modules - Cookies', () => {
             it('Verifies against correct secret + algorithm combo', async () => {
                 const cookies = new Cookies(createCtx(), {});
                 const signed512 = await cookies.sign('secure512', SECRET_SHA512, {algorithm: 'SHA-512'});
-                const spy = vi.spyOn(cookies as any, 'generateHMAC');        
+                const spy = vi.spyOn(cookies as any, 'generateHMAC');
                 const verified = await cookies.verify(signed512, [
                     {val: WRONG_SECRET, algorithm: 'SHA-512'},
                     {val: SECRET_SHA512, algorithm: 'SHA-512'},
@@ -800,7 +800,7 @@ describe('Modules - Cookies', () => {
             });
         
             it('Fails when algorithm is mismatched even if secret matches', async () => {
-                const cookies = new Cookies(createCtx(), {});        
+                const cookies = new Cookies(createCtx(), {});
                 const signed512 = await cookies.sign('secure512', SECRET_SHA512, {algorithm: 'SHA-512'});
                 const spy = vi.spyOn(cookies as any, 'generateHMAC');
                 const verified = await cookies.verify(signed512, [
@@ -824,7 +824,7 @@ describe('Modules - Cookies', () => {
             });
         
             it('Supports mixed array of strings and {val, algo} objects', async () => {
-                const cookies = new Cookies(createCtx(), {});        
+                const cookies = new Cookies(createCtx(), {});
                 const signed512 = await cookies.sign('mixedValue', SECRET_SHA512, {algorithm: 'SHA-512'});
                 const spy = vi.spyOn(cookies as any, 'generateHMAC');
                 const verified = await cookies.verify(signed512, [
@@ -838,7 +838,7 @@ describe('Modules - Cookies', () => {
             });
         
             it('Returns null if no matching secret+algo combo is found', async () => {
-                const cookies = new Cookies(createCtx(), {});        
+                const cookies = new Cookies(createCtx(), {});
                 const signed256 = await cookies.sign('noMatch', SECRET_SHA256, {algorithm: 'SHA-256'});
         
                 const spy = vi.spyOn(cookies as any, 'generateHMAC');
@@ -860,7 +860,7 @@ describe('Modules - Cookies', () => {
                 const verified = await cookies.verify(signed, [{val: 'testsecret'} as any], {algorithm: 'SHA-512'});
                 expect(verified).toBe('verifyFallback');
                 expect(spy).toHaveBeenNthCalledWith(1, 'verifyFallback', 'testsecret', {algorithm: 'SHA-512'});
-            });            
+            });    
         });
     });
 
@@ -903,6 +903,6 @@ describe('Modules - Cookies', () => {
         
             const verified = await cookies.verify(decodeURIComponent(tampered), SECRET);
             expect(verified).toBe(null);
-        });        
+        });
     });
 });

@@ -41,13 +41,31 @@ describe('Middleware - Cors', () => {
         });
     });
 
+    it('Sets default headers when invalid options provided', () => {
+        const ctx = new MockContext();
+        /* @ts-ignore */
+        Cors('bla')(ctx);
+        expect(ctx.headers).toEqual({
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, HEAD, POST',
+            Vary: 'Origin',
+        });
+    });
+
     it('Skips defaults when use_defaults is false', () => {
         const ctx = new MockContext();
-        Cors({origin: '*'}, false)(ctx);
+        Cors({origin: '*'}, {use_defaults: false})(ctx);
         expect(ctx.headers).toEqual({
             'Access-Control-Allow-Origin': '*',
             Vary: 'Origin',
         });
+    });
+
+    it('Sets only vary header when invalid options provided and use_defaults is false', () => {
+        const ctx = new MockContext();
+        /* @ts-ignore */
+        Cors('bla', {use_defaults: false})(ctx);
+        expect(ctx.headers).toEqual({Vary: 'Origin'});
     });
 
     it('Sets custom static origin', () => {

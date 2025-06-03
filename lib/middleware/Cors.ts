@@ -1,8 +1,9 @@
 /* eslint-disable max-statements,complexity */
 
 import {isNeArray} from '@valkyriestudios/utils/array';
+import {isBoolean} from '@valkyriestudios/utils/boolean';
 import {isIntGte} from '@valkyriestudios/utils/number';
-import {isNeObject} from '@valkyriestudios/utils/object';
+import {isObject} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
 import {
     HttpMethods,
@@ -30,6 +31,13 @@ export type TriFrostCorsOptions = {
     maxage?: number;
 };
 
+export type TriFrostCorsConfig = {
+    /**
+     * (Default=true) Merge with the defaults (true) or not (false)
+     */
+    use_defaults?:boolean;
+};
+
 /**
  * Cors defaults
  */
@@ -44,8 +52,8 @@ const CorsDefaults: TriFrostCorsOptions = {
 /**
  * CORS - Cross Origin Resource Sharing
  * 
- * @param {TriFrostCorsOptions} opts - Options to apply
- * @param {boolean} use_defaults - (Default=true) Merge with the defaults (true) or not (false)
+ * @param {TriFrostCorsOptions} options - Options to apply
+ * @param {TriFrostCorsConfig} config - Additional behavioral config
  * 
  * @see origin - https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Allow-Origin
  * @see methods - https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Allow-Methods
@@ -54,10 +62,11 @@ const CorsDefaults: TriFrostCorsOptions = {
  * @see credentials - https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Allow-Credentials
  * @see maxage - https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Max-Age
  */
-export function Cors (opts: TriFrostCorsOptions = {}, use_defaults:boolean = true) {
+export function Cors (options: TriFrostCorsOptions = {}, config?:TriFrostCorsConfig) {
+    const use_defaults = !isBoolean(config?.use_defaults) ? true : config.use_defaults;
     const {origin, methods, headers, expose, credentials, maxage} = use_defaults === true
-        ? {...CorsDefaults, ...isNeObject(opts) && opts}
-        : isNeObject(opts) ? opts : {};
+        ? {...CorsDefaults, ...isObject(options) && options}
+        : isObject(options) ? options : {};
 
     let originWhiteList:Set<string>|null = null;
     let originFn:TriFrostCorsOriginFunction|null = null;

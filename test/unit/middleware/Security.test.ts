@@ -60,15 +60,40 @@ describe('Middleware - Security', () => {
         });
     });
 
+    it('Sets default headers when invalid options provided', () => {
+        const ctx = new MockContext();
+        /* @ts-ignore */
+        Security('bla')(ctx);
+        expect(ctx.headers).toEqual({
+            'Cross-Origin-Opener-Policy': 'same-origin',
+            'Cross-Origin-Resource-Policy': 'same-site',
+            'Origin-Agent-Cluster': '?1',
+            'Referrer-Policy': 'no-referrer',
+            'Strict-Transport-Security': 'max-age=15552000; includeSubDomains',
+            'X-Content-Type-Options': 'nosniff',
+            'X-DNS-Prefetch-Control': 'off',
+            'X-Download-Options': 'noopen',
+            'X-Frame-Options': 'SAMEORIGIN',
+            'X-XSS-Protection': '0',
+        });
+    });
+
     it('Skips defaults when use_defaults is false', () => {
         const ctx = new MockContext();
-        Security({}, false)(ctx);
+        Security({}, {use_defaults: false})(ctx);
+        expect(ctx.headers).toEqual({});
+    });
+
+    it('Sets no headers when invalid options provided and use_defaults is false', () => {
+        const ctx = new MockContext();
+        /* @ts-ignore */
+        Security('bla', {use_defaults: false})(ctx);
         expect(ctx.headers).toEqual({});
     });
 
     it('Allows building config manually from defaults', () => {
         const ctx = new MockContext();
-        Security({crossOriginOpenerPolicy: 'unsafe-none'}, false)(ctx);
+        Security({crossOriginOpenerPolicy: 'unsafe-none'}, {use_defaults: false})(ctx);
         expect(ctx.headers).toEqual({
             'Cross-Origin-Opener-Policy': 'unsafe-none',
         });
