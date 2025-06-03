@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.24.0] - 2025-06-03
+This release brings a focused round of enhancements aimed at improving developer control, and strengthening TriFrost’s logging system.
+
 ### Added
 - **feat**: Enhanced `ConsoleExporter` with `grouped` option (default: `true`). When `true` will use `console.groupCollapsed()` and `console.groupEnd()` for clearer, hierarchical log output.
 - **feat**: Enhanced `ConsoleExporter` with ability to pass a custom `format` function to construct the log label. This `format` function gets passed the entire log object.
@@ -46,6 +48,12 @@ app.use(Security({crossOriginOpenerPolicy: 'unsafe-none'}, {use_defaults: false}
 ```typescript
 app.use(Cors({methods: ['DELETE']}, {use_Defaults: false}));
 ```
+
+---
+
+TriFrost continues its path toward 1.0, balancing polish, predictability, and power — and making sure every piece feels as solid as the core.
+
+Stay tuned — and as always, stay frosty. ❄️
 
 ## [0.23.0] - 2025-06-02
 This release further sharpens TriFrost’s internals, making the `createCss` system more flexible for external libraries by respecting `--prefixed` variables and tuning the JSX engine for even faster prop rendering.

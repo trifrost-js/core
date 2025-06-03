@@ -77,7 +77,7 @@ export class JsonExporter implements TriFrostLoggerExporter {
         if (this.#global_attrs) entry.global = this.#global_attrs;
 
         /* Clean */
-        /* @ts-ignore */
+        /* @ts-expect-error Should be good */
         if (this.#omit) entry = omit(entry, this.#omit) as JsonExporterEntry;
 
         if (this.#sink) {

@@ -152,7 +152,7 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
         const logRecords = [];
         for (let i = 0; i < batch.length; i++) {
             const log = (this.#omit
-                /* @ts-ignore */
+                /* @ts-expect-error Should be good */
                 ? omit(batch[i], this.#omit)
                 : batch[i]) as TriFrostLoggerLogPayload;
 
@@ -204,7 +204,7 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
         const otelSpans = [];
         for (let i = 0; i < batch.length; i++) {
             const span = (this.#omit
-                /* @ts-ignore */
+                /* @ts-expect-error Should be good */
                 ? omit(batch[i], this.#omit)
                 : batch[i]) as TriFrostLoggerSpanPayload;
 
