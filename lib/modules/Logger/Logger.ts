@@ -159,7 +159,7 @@ export class Logger implements TriFrostLogger {
                         name,
                         start,
                         end,
-                        context: {...this.#attributes, ...attributes},
+                        ctx: {...this.#attributes, ...attributes},
                     };
 
                     /* Set span status */
@@ -200,7 +200,7 @@ export class Logger implements TriFrostLogger {
             time: new Date(),
             message,
             data,
-            context: {...this.#attributes},
+            ctx: {...this.#attributes},
         };
         if (this.#traceId) log.trace_id = this.#traceId;
         if (spanId) {

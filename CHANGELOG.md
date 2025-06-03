@@ -24,9 +24,19 @@ new JsonExporter({
     sink: entry => myUploadService.add(entry),
 });
 ```
+- **feat**: Enhanced `OtelHttpExporter` with an `omit` option, allowing selective removal of keys (including nested keys) from log and span payloads before they are transformed into OpenTelemetry format and sent over the wire.
+- **feat**: Added `maxBufferSize` (default: 10,000) to `OtelHttpExporter` to cap the total in-memory buffer size and prevent unbounded memory growth in case of repeated failures.
+```typescript
+new OtelHttpExporter({
+    logEndpoint: 'https://otel.myservice.dev/v1/logs',
+    omit: ['ctx.secret', 'data.internalId'],
+    maxBufferSize: 5000,
+});
+```
 
 ### Improved
 - **feat**: `ConsoleExporter` log meta will now also include `time` and `level` (which was previously not added in the meta object as it only existed in the label).
+- **feat**: Enhanced `OtelHttpExporter` attribute conversion so attributes now work with `intValue`, `doubleValue`, `boolValue`, `stringValue` OpenTelemetry mappings
 - **feat**: Added `use_defaults` boolean flag (default: `true`) to the `Security()` middleware, letting users opt out of applying built-in defaults.
 ```typescript
 /* Only applies cross origin opener policy, nothing else */

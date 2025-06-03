@@ -8,7 +8,7 @@ export type TriFrostLoggerLogPayload = {
     trace_id?: string;
     span_id?: string;
     parent_span_id?: string;
-    context: Record<string, unknown>;
+    ctx: Record<string, unknown>;
 };
 
 export type TriFrostLoggerSpanPayload = {
@@ -18,7 +18,7 @@ export type TriFrostLoggerSpanPayload = {
     name: string;
     start: number;
     end: number;
-    context: Record<string, unknown>;
+    ctx: Record<string, unknown>;
     status?: {code: 1 | 2, message?: string};
 };
 
