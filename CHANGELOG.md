@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Improved
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250604.0
+- **deps**: Upgrade @vitest/coverage-v8 to 3.2.1
+- **deps**: Upgrade typescript-eslint to 8.33.1
+- **deps**: Upgrade vitest to 3.2.1
+
 ## [0.24.0] - 2025-06-03
 This release brings a focused round of enhancements aimed at improving developer control, and strengthening TriFrost’s logging system.
 
