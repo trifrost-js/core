@@ -26,6 +26,7 @@ import {
     HttpRedirectStatuses,
 } from '../../lib/types/constants';
 import {App} from '../../lib/App';
+import {isDevMode} from '../../lib/utils/Generic';
 import * as Index from '../../lib/index';
 
 describe('index', () => {
@@ -208,6 +209,12 @@ describe('index', () => {
 
         it('RedisRateLimit', () => {
             expect(Index.RedisRateLimit).toBe(RedisRateLimit);
+        });
+    });
+
+    describe('Utils', () => {
+        it('isDevMode', () => {
+            expect(Index.isDevMode).toBe(isDevMode);
         });
     });
 });

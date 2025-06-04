@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **feat**: `isDevMode(env)` utility — a lightweight runtime check that determines whether TriFrost is running in development mode. It checks: `TRIFROST_DEV` environment variable (recommended), set to `true` for dev mode, it falls back to checking `NODE_ENV !== 'production'`. Example when configuring exporters:
+```typescript
+import {App, isDevMode} from '@trifrost/core';
+
+const app = await new App<Env>({
+	...
+	tracing: {
+    exporters: ({env}) => {
+      if (isDevMode(env)) return [new ConsoleExporter()];
+      return [
+        new JsonExporter(),
+        new OtelHttpExporter({
+          logEndpoint: 'https://otlp.uptrace.dev/v1/logs',
+          spanEndpoint: 'https://otlp.uptrace.dev/v1/traces',
+          headers: {
+            'uptrace-dsn': env.UPTRACE_DSN,
+          },
+        }),
+      ];
+    },
+  },
+)
+```
+
 ### Improved
 - **deps**: Upgrade @cloudflare/workers-types to 4.20250604.0
 - **deps**: Upgrade @vitest/coverage-v8 to 3.2.1

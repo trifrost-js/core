@@ -56,3 +56,6 @@ export {
 
 /* Runtime-Specifics */
 export {TriFrostDurableObject} from './runtimes/Workerd/DurableObject';
+
+/* Utils */
+export {isDevMode} from './utils/Generic';
