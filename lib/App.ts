@@ -387,7 +387,10 @@ class App <
                     let match = this.#tree.match(method, path);
                     try {
                         /* If we have no match check the notfound handlers */
-                        if (!match) match = this.#tree.matchNotFound(path);
+                        if (!match) {
+                            match = this.#tree.matchNotFound(path);
+                            if (match) ctx.setStatus(404);
+                        }
 
                         /* Generic 404 response if we still dont have anything */
                         if (!match) return ctx.status(404);

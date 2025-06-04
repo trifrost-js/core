@@ -31,6 +31,13 @@ const app = await new App<Env>({
 ```
 
 ### Improved
+- **feat**: If no route is matched, the app now defaults to `ctx.setStatus(404)` automatically.
+This removes the need for boilerplate in `.onNotFound()` handlers:
+```typescript
+/* These now behave the same */
+.onNotFound(ctx => ctx.text('Not Found', {status: 404}));
+.onNotFound(ctx => ctx.text('Not Found'));
+```
 - **deps**: Upgrade @cloudflare/workers-types to 4.20250604.0
 - **deps**: Upgrade @vitest/coverage-v8 to 3.2.1
 - **deps**: Upgrade typescript-eslint to 8.33.1
