@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.25.0] - 2025-06-04
+From smarter exporter behavior to cleaner `404` fallbacks and a simple `isDevMode()` helper, this release removes noise and adds clarity, making development smoother, logs more readable, and defaults feel just right.
+
 ### Added
 - **feat**: `isDevMode(env)` utility — a lightweight runtime check that determines whether TriFrost is running in development mode. It checks: `TRIFROST_DEV` environment variable (recommended), set to `true` for dev mode, it falls back to checking `NODE_ENV !== 'production'`. Example when configuring exporters:
 ```typescript
@@ -52,6 +54,12 @@ This removes the need for boilerplate in `.onNotFound()` handlers:
 - **deps**: Upgrade @vitest/coverage-v8 to 3.2.1
 - **deps**: Upgrade typescript-eslint to 8.33.1
 - **deps**: Upgrade vitest to 3.2.1
+
+---
+
+As TriFrost approaches `1.0`, each release sharpens the edges and sands down the rough spots. Expect fewer footguns, more consistency, and even better ergonomics — because great systems should feel effortless.
+
+Stay frosty. ❄️
 
 ## [0.24.0] - 2025-06-03
 This release brings a focused round of enhancements aimed at improving developer control, and strengthening TriFrost’s logging system.
