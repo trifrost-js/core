@@ -56,7 +56,6 @@ describe('Modules - Logger - Exporters - Json', () => {
                     level,
                     trace_id: 'trace-123',
                     span_id: 'span-abc',
-                    parent_span_id: 'parent-span',
                     data: {extra: 'info'},
                 });
 
@@ -66,7 +65,6 @@ describe('Modules - Logger - Exporters - Json', () => {
                     message: 'Test message',
                     trace_id: 'trace-123',
                     span_id: 'span-abc',
-                    parent_span_id: 'parent-span',
                     ctx: {user: 'test'},
                     data: {extra: 'info'},
                     global: {service: 'test'},

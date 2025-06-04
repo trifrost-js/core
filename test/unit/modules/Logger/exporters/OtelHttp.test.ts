@@ -26,7 +26,6 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
             message: 'Test log',
             trace_id: 'trace-1',
             span_id: 'span-1',
-            parent_span_id: 'parent-1',
             ctx: {user: 'alice'},
             data: {requestId: 'req-1'},
         };
@@ -53,7 +52,6 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
                                 {key: 'data.requestId', value: {stringValue: 'req-1'}},
                                 {key: 'trace_id', value: {stringValue: 'trace-1'}},
                                 {key: 'span_id', value: {stringValue: 'span-1'}},
-                                {key: 'parent_span_id', value: {stringValue: 'parent-1'}},
                             ],
                         }],
                     }],

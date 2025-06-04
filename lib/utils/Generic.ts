@@ -12,6 +12,8 @@ export function isDevMode (env:Record<string, unknown>):boolean {
             case 'true':
             case '1':
                 return true;
+            default:
+                break;
         }
     }
 

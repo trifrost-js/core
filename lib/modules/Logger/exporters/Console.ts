@@ -3,7 +3,7 @@
 import {isNeArray} from '@valkyriestudios/utils/array';
 import {isBoolean} from '@valkyriestudios/utils/boolean';
 import {isFn} from '@valkyriestudios/utils/function';
-import {omit} from '@valkyriestudios/utils/object';
+import {isNeObject, omit} from '@valkyriestudios/utils/object';
 import {
     type TriFrostLoggerLogPayload,
     type TriFrostLoggerExporter,
@@ -12,16 +12,39 @@ import {
 /* Default format function */
 const DEFAULT_FORMAT = (log:TriFrostLoggerLogPayload) => '[' + log.time.toISOString() + '] [' + log.level + '] ' + log.message;
 
-type ConsoleExporterFormatter = (log:TriFrostLoggerLogPayload) => string;
+const INCLUSION_FIELDS = ['ctx', 'trace_id', 'span_id', 'time', 'level', 'global'] as const;
 
+type ConsoleExporterFormatter = (log:TriFrostLoggerLogPayload) => string;
+type ConsoleExporterIncludeField = typeof INCLUSION_FIELDS[number];
+
+function normalizeInclusion (inclusion:ConsoleExporterIncludeField[]) {
+    const acc:Set<ConsoleExporterIncludeField> = new Set();
+    for (let i = 0; i < inclusion.length; i++) {
+        const val = inclusion[i];
+        if (INCLUSION_FIELDS.includes(val)) acc.add(val);
+    }
+    return [...acc.values()];
+}
+
+/**
+ * A structured console logger with support for grouping, custom formatting,
+ * and selective metadata inclusion.
+ *
+ * Ideal for local development, where concise yet contextual logs are key.
+ */
 export class ConsoleExporter implements TriFrostLoggerExporter {
 
     #global_attrs:Record<string, unknown>|null = null;
 
     /**
-     * Whether or not to use console groups (defaults to true)
+     * Whether or not to use console groups (defaults to false)
      */
-    #grouped:boolean = true;
+    #grouped:boolean = false;
+
+    /**
+     * What aspects of the log object to be included
+     */
+    #inclusions:ConsoleExporterIncludeField[];
 
     /**
      * Omit keys from the meta object that is logged to console
@@ -38,6 +61,7 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
         grouped?:boolean;
         omit?:string[];
         format?:ConsoleExporterFormatter;
+        include?:ConsoleExporterIncludeField[];
     }) {
         /* Configure grouped if passed */
         if (isBoolean(options?.grouped)) this.#grouped = options.grouped;
@@ -47,6 +71,9 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
 
         /* Configure format if passed */
         if (isFn(options?.format)) this.#format = options.format;
+
+        /* Configure include if passed */
+        this.#inclusions = normalizeInclusion(isNeArray(options?.include) ? options.include : []);
     }
 
     init (global_attrs:Record<string, unknown>) {
@@ -56,73 +83,43 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
     async pushLog (log:TriFrostLoggerLogPayload):Promise<void> {
         const msg = this.#format(log);
 
-        let meta:Record<string, unknown> = {
-            time: log.time,
-            level: log.level,
-        };
+        let has_meta:boolean = false;
+        let meta:Record<string, unknown> = {};
 
-        /* Add trace id */
-        if (log.trace_id) meta.trace_id = log.trace_id;
-
-        /* Add span id */
-        if (log.span_id) meta.span_id = log.span_id;
-
-        /* Add parent span id */
-        if (log.parent_span_id) meta.parent_span_id = log.parent_span_id;
-
-        /* Add context */
-        if (log.ctx) meta.ctx = log.ctx;
-
-        /* Add data */
-        if (log.data) meta.data = log.data;
-
-        /* Add global attributes */
-        if (this.#global_attrs) meta.global = this.#global_attrs;
+        /* Data */
+        if (isNeObject(log.data)) {
+            has_meta = true;
+            meta.data = log.data;
+        }
+        
+        /* Run inclusions */
+        if (this.#inclusions.length) {
+            has_meta = true;
+            for (let i = 0; i < this.#inclusions.length; i++) {
+                const inc = this.#inclusions[i];
+                switch (inc) {
+                    case 'global':
+                        meta.global = this.#global_attrs;
+                        break;
+                    default:
+                        meta[inc] = log[inc];
+                    
+                }
+            }
+        }
 
         /* Clean */
         if (this.#omit) meta = omit(meta, this.#omit);
 
         /* Write */
-        if (this.#grouped) {
+        if (this.#grouped && has_meta) {
             console.groupCollapsed(msg);
-            switch (log.level) {
-                case 'error':
-                    console.error(meta);
-                    break;
-                case 'warn':
-                    console.warn(meta);
-                    break;
-                case 'debug':
-                    console.debug(meta);
-                    break;
-                case 'info':
-                    console.info(meta);
-                    break;
-                case 'log':
-                default:
-                    console.log(meta);
-                    break;
-            }
+            console[log.level](meta);
             console.groupEnd();
+        } else if (has_meta) {
+            console[log.level](msg, meta);
         } else {
-            switch (log.level) {
-                case 'error':
-                    console.error(msg, meta);
-                    break;
-                case 'warn':
-                    console.warn(msg, meta);
-                    break;
-                case 'debug':
-                    console.debug(msg, meta);
-                    break;
-                case 'info':
-                    console.info(msg, meta);
-                    break;
-                case 'log':
-                default:
-                    console.log(msg, meta);
-                    break;
-            }
+            console[log.level](msg);
         }
     }
 

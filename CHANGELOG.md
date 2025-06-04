@@ -31,6 +31,14 @@ const app = await new App<Env>({
 ```
 
 ### Improved
+- **feat**: `ConsoleExporter` now has a **cleaner, more human-readable** output by default. Fields like `ctx`, `trace_id`, `span_id`, `global`, etc. are no longer shown unless explicitly opted in via the new `include` option. These fields are part of the rich internal format used by the JSON and Otel exporters, but were found too noisy for use in a console. Note: The `data` payload is always included. Below is an example where you can see **explicit opt-in** through the new `include` option:
+```typescript
+new ConsoleExporter({
+    include: ['ctx', 'trace_id', 'span_id', 'global'],
+    grouped: true,
+});
+```
+- **feat**: The `group` option in `ConsoleExpoter` (introduced in 0.24.0) will now by default be set to `false`
 - **feat**: Workerd runtime now switches to `ConsoleExporter` if in **dev mode**.
 - **feat**: Node, Bun, uWS now default to a `ConsoleExporter` with no inclusions if **in dev mode**. If **not in dev mode** they default to a `ConsoleExporter` that includes only the `trace_id`, making logs concise but still traceable.
 - **feat**: If no route is matched, the app now defaults to `ctx.setStatus(404)` automatically.

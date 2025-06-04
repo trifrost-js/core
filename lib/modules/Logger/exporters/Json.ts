@@ -64,9 +64,6 @@ export class JsonExporter implements TriFrostLoggerExporter {
         /* Add span id */
         if (log.span_id) entry.span_id = log.span_id;
 
-        /* Add parent span id */
-        if (log.parent_span_id) entry.parent_span_id = log.parent_span_id;
-
         /* Add context */
         if (log.ctx) entry.ctx = log.ctx;
 
@@ -83,24 +80,7 @@ export class JsonExporter implements TriFrostLoggerExporter {
         if (this.#sink) {
             this.#sink(entry);
         } else {
-            switch (log.level) {
-                case 'error':
-                    console.error(JSON.stringify(entry));
-                    break;
-                case 'warn':
-                    console.warn(JSON.stringify(entry));
-                    break;
-                case 'debug':
-                    console.debug(JSON.stringify(entry));
-                    break;
-                case 'info':
-                    console.info(JSON.stringify(entry));
-                    break;
-                case 'log':
-                default:
-                    console.log(JSON.stringify(entry));
-                    break;
-            }
+            console[log.level](JSON.stringify(entry));
         }
     }
 

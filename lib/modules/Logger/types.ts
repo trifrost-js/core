@@ -7,7 +7,6 @@ export type TriFrostLoggerLogPayload = {
     data?: Record<string, unknown>;
     trace_id?: string;
     span_id?: string;
-    parent_span_id?: string;
     ctx: Record<string, unknown>;
 };
 
@@ -30,6 +29,8 @@ export interface TriFrostLoggerExporter {
 }
 
 export interface TriFrostLoggerSpan {
+    uid: () => string;
+
     setAttribute: (key:string, value:unknown) => TriFrostLoggerSpan;
     setAttributes: (obj:Record<string, unknown>) => TriFrostLoggerSpan;
 

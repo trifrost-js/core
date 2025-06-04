@@ -162,7 +162,6 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
             ];
             if (log.trace_id) attributes.push({key: 'trace_id', value: {stringValue: log.trace_id}});
             if (log.span_id) attributes.push({key: 'span_id', value: {stringValue: log.span_id}});
-            if (log.parent_span_id) attributes.push({key: 'parent_span_id', value: {stringValue: log.parent_span_id}});
 
             logRecords.push({
                 timeUnixNano: log.time.getTime() * 1_000_000,

@@ -8,10 +8,11 @@ import {
 } from './types';
 import {hexId} from '../../utils/String';
 
-function isValidTraceId (str:string):boolean {
-    if (str.length !== 16) return false;
+/* Ensure valid trace id, a otel trace id IS a 32 hexadecimal char string 0-9 a-f */
+export function isValidTraceId (str:string):boolean {
+    if (str.length !== 32) return false;
 
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 32; i++) {
         switch (str.charCodeAt(i)) {
             case 48: /* 0 */
             case 49: /* 1 */
@@ -133,6 +134,7 @@ export class Logger implements TriFrostLogger {
         const spanId = hexId(8);
         this.#activeSpanId = spanId;
         const obj:TriFrostLoggerSpan = {
+            uid: () => spanId,
             setAttribute: (key, value) => {
                 attributes[key] = value;
                 return obj;
@@ -143,13 +145,6 @@ export class Logger implements TriFrostLogger {
             },
             end: () => {
                 const end = Date.now();
-
-                if (this.#debug) {
-                    this.#log('debug', `Span: ${name}`, {
-                        duration_ms: end - start,
-                        ...attributes,
-                    }, spanId, parentSpanId);
-                }
 
                 if (this.#spanAwareExporters.length && this.#traceId) {
                     const span:TriFrostLoggerSpanPayload = {
@@ -191,9 +186,7 @@ export class Logger implements TriFrostLogger {
     #log (
         level:TriFrostLogLevel,
         message:string,
-        data?:Record<string, unknown>,
-        spanId?:string,
-        parentSpanId?:string|null
+        data?:Record<string, unknown>
     ) {
         const log:TriFrostLoggerLogPayload = {
             level,
@@ -203,12 +196,7 @@ export class Logger implements TriFrostLogger {
             ctx: {...this.#attributes},
         };
         if (this.#traceId) log.trace_id = this.#traceId;
-        if (spanId) {
-            log.span_id = spanId;
-        } else if (this.#activeSpanId) {
-            log.span_id = this.#activeSpanId;
-        }
-        if (parentSpanId) log.parent_span_id = parentSpanId;
+        if (this.#activeSpanId) log.span_id = this.#activeSpanId;
         for (let i = 0; i < this.#exporters.length; i++) this.#exporters[i].pushLog(log);
     }
 
