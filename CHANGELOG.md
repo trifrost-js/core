@@ -31,6 +31,8 @@ const app = await new App<Env>({
 ```
 
 ### Improved
+- **feat**: Workerd runtime now switches to `ConsoleExporter` if in **dev mode**.
+- **feat**: Node, Bun, uWS now default to a `ConsoleExporter` with no inclusions if **in dev mode**. If **not in dev mode** they default to a `ConsoleExporter` that includes only the `trace_id`, making logs concise but still traceable.
 - **feat**: If no route is matched, the app now defaults to `ctx.setStatus(404)` automatically.
 This removes the need for boilerplate in `.onNotFound()` handlers:
 ```typescript

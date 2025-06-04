@@ -57,7 +57,7 @@ export interface TriFrostRuntime {
     /**
      * Returns the default exporter for this runtime
      */
-    defaultExporter ():TriFrostLoggerExporter;
+    defaultExporter (env:Record<string, unknown>):TriFrostLoggerExporter;
 
     /**
      * Shutdown the runtime (only has effect if booted)

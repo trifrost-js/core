@@ -2,8 +2,10 @@
 
 import {
     type TriFrostRootLogger,
+    ConsoleExporter,
     JsonExporter,
 } from '../../modules/Logger';
+import {isDevMode} from '../../utils/Generic';
 import {
     type TriFrostRuntime,
     type TriFrostRuntimeOnIncoming,
@@ -84,8 +86,8 @@ export class WorkerdRuntime implements TriFrostRuntime {
         this.#logger!.debug('WorkerdRuntime@boot');
     }
 
-    defaultExporter () {
-        return new JsonExporter();
+    defaultExporter (env:Record<string, unknown>) {
+        return isDevMode(env) ? new ConsoleExporter() : new JsonExporter();
     }
 
     async shutdown () {

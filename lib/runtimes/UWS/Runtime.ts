@@ -9,6 +9,7 @@ import {
     type TriFrostRootLogger,
     ConsoleExporter,
 } from '../../modules/Logger';
+import {isDevMode} from '../../utils/Generic';
 
 export class UWSRuntime implements TriFrostRuntime {
 
@@ -128,7 +129,7 @@ export class UWSRuntime implements TriFrostRuntime {
                 /* Set Socket */
                 this.#socket = socket as Socket;
 
-                this.#logger!.debug('UWSRuntime@boot');
+                this.#logger!.info(`UWSRuntime@boot: Listening on port ${opts.cfg.port}`);
                 return resolve();
             });
 
@@ -147,8 +148,10 @@ export class UWSRuntime implements TriFrostRuntime {
         });
     }
 
-    defaultExporter () {
-        return new ConsoleExporter();
+    defaultExporter (env:Record<string, unknown>) {
+        return isDevMode(env)
+            ? new ConsoleExporter()
+            : new ConsoleExporter({include: ['trace_id']});
     }
 
     async shutdown () {

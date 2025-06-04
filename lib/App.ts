@@ -11,6 +11,7 @@ import {
     type TriFrostRateLimitLimitFunction,
 } from './modules/RateLimit/_RateLimit';
 import {
+    ConsoleExporter,
     TriFrostRootLogger,
     type TriFrostLoggerExporter,
 } from './modules/Logger';
@@ -305,16 +306,15 @@ class App <
         try {
             if (!this.#runtime) this.#runtime = await getRuntime();
 
-            /* Instantiate default logger for runtime if none available yet */
-            const exporter = this.#runtime.defaultExporter();
-
             this.#logger = new TriFrostRootLogger<Env>({
                 name: this.#name,
                 version: this.#version,
                 debug: this.isDebugEnabled,
-                rootExporter: exporter,
+                rootExporter: new ConsoleExporter(),
                 exporters: (opts:{env:Env}) => [
-                    ...this.#exporters ? this.#exporters(opts) : [exporter],
+                    ...this.#exporters
+                        ? this.#exporters(opts) /* Use provided exporters */
+                        : [this.#runtime!.defaultExporter(opts.env)] /* Fallback to default exporter if none provided */,
                 ],
                 trifrost: {
                     'runtime.name': this.#runtime.name,
@@ -323,7 +323,6 @@ class App <
                 },
             });
 
-            this.#logger.debug('boot: Detected Runtime', {name: this.#runtime.name, version: this.#runtime.version});
             this.#running = true;
 
             /* Triage handler */

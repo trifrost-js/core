@@ -11,6 +11,7 @@ import {
     type TriFrostRuntimeOnIncoming,
     type TriFrostRuntimeBootOptions,
 } from '../types';
+import {isDevMode} from '../../utils/Generic';
 
 export class BunRuntime implements TriFrostRuntime {
 
@@ -105,11 +106,13 @@ export class BunRuntime implements TriFrostRuntime {
         /* Bun serve */
         this.#server = serve(serveOpts);
 
-        this.#logger.debug('BunRuntime@boot');
+        this.#logger!.info(`BunRuntime@boot: Listening on port ${opts.cfg.port}`);
     }
 
-    defaultExporter () {
-        return new ConsoleExporter();
+    defaultExporter (env:Record<string, unknown>) {
+        return isDevMode(env)
+            ? new ConsoleExporter()
+            : new ConsoleExporter({include: ['trace_id']});
     }
 
     async shutdown () {

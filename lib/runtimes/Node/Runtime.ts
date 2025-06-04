@@ -13,6 +13,7 @@ import {
     type IncomingMessage,
     type ServerResponse,
 } from './types';
+import {isDevMode} from '../../utils/Generic';
 
 export class NodeRuntime implements TriFrostRuntime {
 
@@ -96,19 +97,21 @@ export class NodeRuntime implements TriFrostRuntime {
             /* Listen on the provided port, resolve if succeeds, reject if fails */
             this.#server!
                 .listen(opts.cfg.port, () => {
-                    this.#logger!.debug('NodeRuntime@boot');
+                    this.#logger!.info(`NodeRuntime@boot: Listening on port ${opts.cfg.port}`);
                     return resolve();
                 })
                 .on('error', () => {
                     this.#server = null;
                     this.#onIncoming = null;
-                    reject(new Error(`NodeRuntime@boot: Failed to listen on port ${opts.cfg.port}`));
+                    return reject(new Error(`NodeRuntime@boot: Failed to listen on port ${opts.cfg.port}`));
                 });
         });
     }
 
-    defaultExporter () {
-        return new ConsoleExporter();
+    defaultExporter (env:Record<string, unknown>) {
+        return isDevMode(env)
+            ? new ConsoleExporter()
+            : new ConsoleExporter({include: ['trace_id']});
     }
 
     async shutdown () {
