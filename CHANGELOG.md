@@ -4,9 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.26.0] - 2025-06-05
+This release brings deeper composition and sharper ergonomics to the `css` engine. `css.mix` and `css.use` now apply a **union-style deep merge**, preserving media queries and nested overrides across layers — **perfect for atom/molecule composition in JSX**.
+
+Selector normalization gets even smarter: combinators, HTML tags, and pseudo-prefixed selectors now auto-space with better contextual awareness. If you’ve used the spacing behavior before, this update makes it even more intelligent, reducing friction in complex nesting scenarios.
+
+We're also bumping the [valkyrie utils](https://github.com/valkyriestudios/utils) to 12.40.0 (valkyrie utils is also created by the creator of TriFrost), this version brings meaningful performance improvements for omit/merge/formdata conversion, all of which are used in core parts of TriFrost.
+
 ### Improved
-- **feat**: `css.mix` and `css.use` now apply a union merge behind the scenes, ensuring style blocks get deeply merged. This allows for deeper composition when building JSX atom/molecule components. This enables clean, layered overrides across a component hierarchy without losing responsive or nested styles. For example:
+- **feat**: Further enhanced selector normalization with intelligent auto-spacing. Selectors that begin with **combinators** (`>`, `+`, `~`), **known HTML tags** (e.g. `div`, `section`) or **known HTML tags followed by** `:` (pseudo), `.` (class), or space ` `. Are now automatically prefixed with a space during normalization. This ensures correct contextual matching in nested style blocks, safer output in deeply composed rules, less manual effort and cleaner style declarations. For Example:
+```typescript
+css({
+  section: {padding: '1rem'}, // auto-space => ' section'
+  div:hover: {color: 'red'},   // auto-space => ' div:hover'
+  'a.active' {textDecoration: 'underline'}, // auto-space => ' a.active'
+  'ul li': {fontSize: '1.6rem'}, // auto-space => ' ul li'
+  '#hero': {fontWeight: 'bold'}, // NOT auto-spaced => '#hero'
+});
+```
+- **feat**: Enhanced `css.mix` and `css.use` to support union-style deep merges. This change enables more powerful style composition patterns, particularly beneficial for JSX-based atomic/molecular components. Nested structures like responsive breakpoints or selector-based overrides are now preserved during merging. For example:
 ```tsx
 import {css} from './css'; /* Your css factory instance */
 
@@ -95,6 +111,10 @@ export function RedSmallButton({title, style = {}}: ButtonProps) {
 ```
 - **deps**: Upgrade @cloudflare/workers-types to 4.20250605.0
 - **deps**: Upgrade @valkyriestudios/utils to 12.40.0
+
+---
+
+Smarter styles. Still frosty. ❄️
 
 ## [0.25.0] - 2025-06-04
 From smarter exporter behavior to cleaner `404` fallbacks and a simple `isDevMode()` helper, this release removes noise and adds clarity, making development smoother, logs more readable, and defaults feel just right.
