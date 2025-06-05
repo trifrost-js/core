@@ -4,6 +4,96 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Improved
+- **feat**: `css.mix` and `css.use` now apply a union merge behind the scenes, ensuring style blocks get deeply merged. This allows for deeper composition when building JSX atom/molecule components. This enables clean, layered overrides across a component hierarchy without losing responsive or nested styles. For example:
+```tsx
+import {css} from './css'; /* Your css factory instance */
+
+type ButtonProps = {
+  title: string;
+  style?: Record<string, unknown>;
+};
+
+export function Button({title, style = {}}: ButtonProps) {
+  return (<button
+    type="button"
+    className={css.use(css.mix({
+      padding: '1rem 1.5rem',
+      borderRadius: css.$v.rad_m,
+      fontSize: css.$v.font_s_button,
+      border: 'none',
+      [css.media.mobile]: {
+        padding: '.5rem 1rem',
+        borderRadius: css.$v.rad_s,
+      },
+    }, style))}
+  >{title}</button>);
+}
+
+export function SmallButton({title, style = {}}: ButtonProps) {
+  return (<Button
+    title={title}
+    style={css.mix({
+      fontSize: `calc(${css.$v.font_s_button} - .2rem)`,
+      [css.media.mobile]: {
+        padding: '.5rem',
+      },
+    }, style)}
+  />);
+}
+
+export function BlueSmallButton({title, style = {}}: ButtonProps) {
+  /**
+   * Eventual Styles
+   * {
+   *  padding: '1rem 1.5rem',
+   *  borderRadius: '12px',
+   *  fontSize: 'calc(1rem - .2rem)',
+   *  border: 'none',
+   *  background: 'blue',
+   *  color: 'white',
+   *   [css.media.mobile]: {
+   *     padding: '.5rem',
+   *     borderRadius: '8px',
+   *   },
+   * }
+   */
+  return (<SmallButton
+    title={title}
+    style={css.mix({
+      background: 'blue',
+      color: 'white',
+    }, style)}
+  />);
+}
+
+export function RedSmallButton({title, style = {}}: ButtonProps) {
+  /**
+   * Eventual Styles
+   * {
+   *  padding: '1rem 1.5rem',
+   *  borderRadius: '12px',
+   *  fontSize: 'calc(1rem - .2rem)',
+   *  border: 'none',
+   *  background: 'red',
+   *  color: 'white',
+   *  [css.media.mobile]: {
+   *    padding: '.5rem',
+   *    borderRadius: '8px',
+   *  },
+   * }
+   */
+  return (<SmallButton
+    title={title}
+    style={css.mix({
+      background: 'red',
+      color: 'white',
+    }, style)}
+  />);
+}
+```
+
 ## [0.25.0] - 2025-06-04
 From smarter exporter behavior to cleaner `404` fallbacks and a simple `isDevMode()` helper, this release removes noise and adds clarity, making development smoother, logs more readable, and defaults feel just right.
 

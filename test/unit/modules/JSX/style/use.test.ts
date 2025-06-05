@@ -1224,6 +1224,91 @@ describe('Modules - JSX - style - use', () => {
             const css = createCss();
             expect(css.mix()).toEqual({});
         });
+
+        it('mix() deeply merges nested style objects like media queries', () => {
+            const css = createCss({
+                breakpoints: {
+                    mobile: '@media (max-width: 600px)',
+                },
+                definitions: mod => ({
+                    base: {
+                        padding: '1rem',
+                        [mod.media.mobile]: {
+                            padding: '.5rem',
+                            color: 'black',
+                        },
+                    },
+                }),
+            });
+        
+            const mixed = css.mix('base', {
+                [css.media.mobile]: {
+                    color: 'red',
+                },
+            });
+        
+            expect(mixed).toEqual({
+                padding: '1rem',
+                [css.media.mobile]: {
+                    padding: '.5rem',
+                    color: 'red',
+                },
+            });
+        });
+        
+        it('mix() merges inline styles and registered definitions correctly', () => {
+            const css = createCss({
+                var: {pad: '2rem'},
+                definitions: () => ({
+                    card: {
+                        background: 'white',
+                        borderRadius: '8px',
+                    },
+                }),
+            });
+        
+            const mixed = css.mix('card', {
+                padding: css.var.pad,
+                borderRadius: '12px',
+            });
+        
+            expect(mixed).toEqual({
+                background: 'white',
+                borderRadius: '12px',
+                padding: 'var(--v-pad)',
+            });
+        });
+        
+        it('mix() union-merges multiple objects without losing any keys', () => {
+            const css = createCss();
+        
+            const mixed = css.mix(
+                {color: 'blue', fontSize: '1rem'},
+                {background: 'red'},
+                {color: 'green'}
+            );
+        
+            expect(mixed).toEqual({
+                color: 'green',
+                fontSize: '1rem',
+                background: 'red',
+            });
+        });
+        
+        it('mix() skips string keys not found in definitions', () => {
+            const css = createCss({
+                definitions: () => ({
+                    good: {display: 'block'},
+                }),
+            });
+        
+            /* @ts-ignore */
+            const mixed = css.mix('good', 'bad', {opacity: 0.5});
+            expect(mixed).toEqual({
+                display: 'block',
+                opacity: 0.5,
+            });
+        });        
     
         it('use() returns class name for merged definitions', () => {
             const css = createCss({

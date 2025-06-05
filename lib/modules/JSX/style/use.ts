@@ -2,7 +2,7 @@
 
 import {LRU} from '@valkyriestudios/utils/caching';
 import {isFn} from '@valkyriestudios/utils/function';
-import {isNeObject, isObject} from '@valkyriestudios/utils/object';
+import {isNeObject, isObject, merge} from '@valkyriestudios/utils/object';
 import {isNeString, isString} from '@valkyriestudios/utils/string';
 import {StyleEngine} from './Engine';
 import {HTML_TAGS, styleToString} from './util';
@@ -655,16 +655,23 @@ export function createCss <
 
     /* Use a definition or set of definitions and combine into single style object */
     mod.mix = (...args: (keyof R | Record<string, unknown>)[]) => {
-        const acc: Record<string, unknown> = {};
+        const acc = [] as unknown as [Record<string, unknown>, ...Record<string, unknown>[]];
         for (let i = 0; i < args.length; i++) {
             const val = args[i];
-            if (isString(val)) {
-                Object.assign(acc, definitions[val] || {});
+            if (typeof val === 'string' && val in definitions) {
+                acc.push(definitions[val]);
             } else if (isObject(val)) {
-                Object.assign(acc, val);
+                acc.push(val);
             }
         }
-        return acc;
+        switch (acc.length) {
+            case 0:
+                return {};
+            case 1:
+                return acc[0];
+            default:
+                return merge(acc.shift()!, acc, {union: true});
+        }
     };
     
     /* Use a definition or set of definitions and register them with a classname*/
