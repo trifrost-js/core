@@ -8,6 +8,8 @@ import {StyleEngine} from './Engine';
 import {HTML_TAGS, styleToString} from './util';
 import {hexId} from '../../../utils/String';
 
+const RGX_SEPARATOR = /[:.#[]| /;
+
 const FIXED_FEATURE_QUERIES = {
     reducedMotion: '@media (prefers-reduced-motion: reduce)',
     dark: '@media (prefers-color-scheme: dark)',
@@ -106,8 +108,21 @@ export function getActiveStyleEngine () {
  */
 
 function normalizeSelector (val:string) {
-    const first = val[0];
-    return first === '>' || first === '+' || first === '~' || HTML_TAGS[val as keyof typeof HTML_TAGS] ? ' ' + val : val;
+    switch (val[0]) {
+        case '>':
+        case '+':
+        case '~':
+            return ' ' + val;
+        default: {
+            /**
+             * Eg: 'div:hover' {...} -> we should auto-space prefix to ' div:hover': {...}
+             * Eg: 'ul li' -> should be auto-space prefixed to ' ul li'
+             */
+            const separator_idx = val.search(RGX_SEPARATOR);
+            const base = separator_idx === -1 ? val : val.slice(0, separator_idx);
+            return HTML_TAGS[base as keyof typeof HTML_TAGS] ? ' ' + val : val;
+        }
+    }
 }
 
 function normalizeVariable (val:string, prefix:string) {

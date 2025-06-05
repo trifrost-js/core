@@ -506,7 +506,7 @@ describe('Modules - JSX - style - use', () => {
                         '<div>Nested Root</div>',
                     ].join(''));
                 });
-            });        
+            });
         
             describe('combinations', () => {
                 it(':not() and :nth-child()', () => {
@@ -1308,7 +1308,7 @@ describe('Modules - JSX - style - use', () => {
                 display: 'block',
                 opacity: 0.5,
             });
-        });        
+        });
     
         it('use() returns class name for merged definitions', () => {
             const css = createCss({
@@ -1708,7 +1708,7 @@ describe('Modules - JSX - style - use', () => {
             });
         });
 
-        describe('known HTML tags', () => {
+        describe('selector normalization', () => {
             let css: ReturnType<typeof createCss>;
         
             beforeEach(() => {
@@ -1808,7 +1808,118 @@ describe('Modules - JSX - style - use', () => {
                     `<div class="${cls}">Pseudo Tags</div>`,
                 ].join(''));
             });
-        });        
+            
+            it('auto-spaces HTML tag + pseudo class selectors', () => {
+                const cls = css({'div:hover': {opacity: 0.5}});
+                const html = engine.inject(`${MARKER}<div class="${cls}">Hover</div>`);
+                expect(html).toBe([
+                    '<style>',
+                    `.${cls} div:hover{opacity:0.5}`,
+                    '</style>',
+                    `<div class="${cls}">Hover</div>`,
+                ].join(''));
+            });
+            
+            it('auto-spaces HTML tag + class selector', () => {
+                const cls = css({'ul.list': {listStyle: 'disc'}});
+                const html = engine.inject(`${MARKER}<div class="${cls}">List</div>`);
+                expect(html).toBe([
+                    '<style>',
+                    `.${cls} ul.list{list-style:disc}`,
+                    '</style>',
+                    `<div class="${cls}">List</div>`,
+                ].join(''));
+            });
+            
+            it('auto-spaces HTML tag + attribute selector', () => {
+                const cls = css({'a[href]': {textDecoration: 'underline'}});
+                const html = engine.inject(`${MARKER}<div class="${cls}">Attr</div>`);
+                expect(html).toBe([
+                    '<style>',
+                    `.${cls} a[href]{text-decoration:underline}`,
+                    '</style>',
+                    `<div class="${cls}">Attr</div>`,
+                ].join(''));
+            });
+            
+            it('auto-spaces HTML tag + space selector', () => {
+                const cls = css({'nav a': {color: 'blue'}});
+                const html = engine.inject(`${MARKER}<div class="${cls}">Nested</div>`);
+                expect(html).toBe([
+                    '<style>',
+                    `.${cls} nav a{color:blue}`,
+                    '</style>',
+                    `<div class="${cls}">Nested</div>`,
+                ].join(''));
+            });
+            
+            it('does NOT auto-space #id when used alone', () => {
+                const cls = css({'#main': {display: 'grid'}});
+                const html = engine.inject(`${MARKER}<div class="${cls}">ID</div>`);
+                expect(html).toContain(`.${cls}#main{display:grid}`);
+                expect(html).toBe([
+                    '<style>',
+                    `.${cls}#main{display:grid}`,
+                    '</style>',
+                    `<div class="${cls}">ID</div>`,
+                ].join(''));
+            });
+            
+            it('does NOT auto-space .class when used alone', () => {
+                const cls = css({'.box': {border: '1px solid'}});
+                const html = engine.inject(`${MARKER}<div class="${cls}">Class</div>`);
+                expect(html).toBe([
+                    '<style>',
+                    `.${cls}.box{border:1px solid}`,
+                    '</style>',
+                    `<div class="${cls}">Class</div>`,
+                ].join(''));
+            });
+            
+            it('does NOT falsely match similar-looking non-tag selectors', () => {
+                const cls = css({inputy: {border: 'none'}});
+                const html = engine.inject(`${MARKER}<div class="${cls}">Not Tag</div>`);
+                expect(html).toBe([
+                    '<style>',
+                    `.${cls}inputy{border:none}`,
+                    '</style>',
+                    `<div class="${cls}">Not Tag</div>`,
+                ].join(''));
+            });
+            
+            it('auto-spaces combinator >', () => {
+                const cls = css({'> p': {lineHeight: 1.2}});
+                const html = engine.inject(`${MARKER}<div class="${cls}">Combinator</div>`);
+                expect(html).toBe([
+                    '<style>',
+                    `.${cls} > p{line-height:1.2}`,
+                    '</style>',
+                    `<div class="${cls}">Combinator</div>`,
+                ].join(''));
+            });
+            
+            it('auto-spaces combinator +', () => {
+                const cls = css({'+ p': {marginTop: '1rem'}});
+                const html = engine.inject(`${MARKER}<div class="${cls}">Combinator</div>`);
+                expect(html).toBe([
+                    '<style>',
+                    `.${cls} + p{margin-top:1rem}`,
+                    '</style>',
+                    `<div class="${cls}">Combinator</div>`,
+                ].join(''));
+            });
+            
+            it('auto-spaces combinator ~', () => {
+                const cls = css({'~ ul': {marginTop: '2rem'}});
+                const html = engine.inject(`${MARKER}<div class="${cls}">Combinator</div>`);
+                expect(html).toBe([
+                    '<style>',
+                    `.${cls} ~ ul{margin-top:2rem}`,
+                    '</style>',
+                    `<div class="${cls}">Combinator</div>`,
+                ].join(''));
+            });
+        });
 
         describe('css.is', () => {
             let css: ReturnType<typeof createCss>;
