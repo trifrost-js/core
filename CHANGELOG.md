@@ -93,6 +93,8 @@ export function RedSmallButton({title, style = {}}: ButtonProps) {
   />);
 }
 ```
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250605.0
+- **deps**: Upgrade @valkyriestudios/utils to 12.40.0
 
 ## [0.25.0] - 2025-06-04
 From smarter exporter behavior to cleaner `404` fallbacks and a simple `isDevMode()` helper, this release removes noise and adds clarity, making development smoother, logs more readable, and defaults feel just right.
