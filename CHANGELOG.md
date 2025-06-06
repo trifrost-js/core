@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Improved
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250606.0
+- **deps**: Upgrade @types/node to 22.15.30
+- **deps**: Upgrade @valkyriestudios/utils to 12.41.0
+- **deps**: Upgrade @vitest/coverage-v8 to 3.2.2
+- **deps**: Upgrade vitest to 3.2.2
+
 ## [0.26.0] - 2025-06-05
 This release brings deeper composition and sharper ergonomics to the `css` engine. `css.mix` and `css.use` now apply a **union-style deep merge**, preserving media queries and nested overrides across layers — **perfect for atom/molecule composition in JSX**.
 
