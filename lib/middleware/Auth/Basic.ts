@@ -16,7 +16,11 @@ export const Sym_TriFrostMiddlewareBasicAuth = Symbol('TriFrost.Middleware.Basic
 
 export type BasicAuthResult = {user:string};
 
-export type BasicAuthOptions <T extends Record<string, unknown> = BasicAuthResult> = {
+export type BasicAuthOptions <
+    Env extends Record<string, any> = {},
+    State extends Record<string, unknown> = {},
+    Patch extends Record<string, unknown> = BasicAuthResult
+> = {
     /**
      * Realm label to respond with when not authenticated
      */
@@ -26,7 +30,7 @@ export type BasicAuthOptions <T extends Record<string, unknown> = BasicAuthResul
      * @note Return true if valid or false if false
      * @note You can also return an object if valid, this will then be set on the state as $auth
      */
-    validate: (ctx:TriFrostContext, val: {user: string; pass: string}) => Promise<T|boolean>|T|boolean;
+    validate: (ctx:TriFrostContext<Env, State>, val: {user: string; pass: string}) => Promise<Patch|boolean>|Patch|boolean;
 };
 
 /**
@@ -44,16 +48,17 @@ export type BasicAuthOptions <T extends Record<string, unknown> = BasicAuthResul
  * }))
  */
 export function BasicAuth <
-    T extends Record<string, unknown> = BasicAuthResult
-> (opts:BasicAuthOptions<T>) {
+    Env extends Record<string, any> = {},
+    State extends Record<string, unknown> = {},
+    Patch extends Record<string, unknown> = BasicAuthResult
+> (opts:BasicAuthOptions<Env, State, Patch>) {
     if (!isFn(opts?.validate)) throw new Error('TriFrostMiddleware@BasicAuth: A validate function must be provided');
     const realm = isNeString(opts.realm) ? opts.realm : 'Restricted Area';
     const NOT_AUTH = 'Basic realm="' + realm + '"';
 
-    const mware = async function TriFrostBasicAuth <
-        Env extends Record<string, unknown> = {},
-        State extends Record<string, unknown> = {}
-    > (ctx:TriFrostContext<Env, State>):Promise<void|TriFrostContext<Env, State & {$auth:T}>> {
+    const mware = async function TriFrostBasicAuth (
+        ctx:TriFrostContext<Env, State>
+    ):Promise<void|TriFrostContext<Env, State & {$auth:Patch}>> {
         const authHeader = ctx.headers.authorization;
         if (!isString(authHeader) || !authHeader.startsWith('Basic ')) {
             ctx.setHeader('WWW-Authenticate', NOT_AUTH);
@@ -82,7 +87,7 @@ export function BasicAuth <
         }
 
         const authenticated = result === true ? {user} : result;
-        return ctx.setState({$auth: authenticated} as {$auth:T});
+        return ctx.setState({$auth: authenticated} as {$auth:Patch});
     };
 
     /* Add symbols for introspection/use further down the line */
