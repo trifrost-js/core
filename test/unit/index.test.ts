@@ -9,7 +9,7 @@ import {Cors, Sym_TriFrostMiddlewareCors} from '../../lib/middleware/Cors';
 import {Security, Sym_TriFrostMiddlewareSecurity} from '../../lib/middleware/Security';
 import {Sym_TriFrostMiddlewareRateLimit} from '../../lib/modules/RateLimit';
 import {cache, cacheFn, cacheSkip} from '../../lib/modules/Cache/util';
-import {ConsoleExporter, JsonExporter, OtelHttpExporter, span, spanFn} from '../../lib/modules/Logger';
+import {ConsoleExporter, JsonExporter, OtelHttpExporter, span, spanFn, OMIT_PRESETS} from '../../lib/modules/Logger';
 import {createCss, Style} from '../../lib/modules/JSX/style';
 import {DurableObjectCache, DurableObjectRateLimit} from '../../lib/storage/DurableObject';
 import {TriFrostDurableObject} from '../../lib/runtimes/Workerd/DurableObject';
@@ -163,6 +163,10 @@ describe('index', () => {
 
         it('spanFn', () => {
             expect(Index.spanFn).toBe(spanFn);
+        });
+
+        it('OMIT_PRESETS', () => {
+            expect(Index.OMIT_PRESETS).toBe(OMIT_PRESETS);
         });
 
         it('createCss', () => {

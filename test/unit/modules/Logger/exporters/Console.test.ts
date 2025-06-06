@@ -189,7 +189,7 @@ describe('Modules - Logger - Exporters - Console', () => {
             it('Scrambles global attributes using omit pattern', async () => {
                 const exporter = new ConsoleExporter({
                     include: ['global'],
-                    omit: ['*.token'],
+                    omit: [{global: 'token'}],
                 });
                 exporter.init({service: 'test', api: {token: 'secret-token'}});
             

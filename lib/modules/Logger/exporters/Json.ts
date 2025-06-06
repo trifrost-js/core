@@ -6,8 +6,9 @@ import {
     type TriFrostLoggerLogPayload,
     type TriFrostLoggerExporter,
     type TriFrostLogLevel,
+    type TriFrostLogScramblerValue,
 } from '../types';
-import {SCRAMBLER_PRESETS} from '../util';
+import {normalizeScramblerValues, OMIT_PRESETS} from '../util';
 
 type JsonExporterEntry = {
     time: string;
@@ -29,7 +30,7 @@ export class JsonExporter implements TriFrostLoggerExporter {
     /**
      * Omit keys from the meta object that is logged to console
      */
-    #omit:string[] = SCRAMBLER_PRESETS.default;
+    #omit:string[];
 
     /**
      * Sink for the json entries, if not defined will be console
@@ -37,11 +38,14 @@ export class JsonExporter implements TriFrostLoggerExporter {
     #sink:JsonExporterSink|null = null;
 
     constructor (options?:{
-        omit?:string[];
+        omit?:TriFrostLogScramblerValue[];
         sink?:JsonExporterSink;
     }) {
         /* Configure omit */
-        if (Array.isArray(options?.omit)) this.#omit = options.omit;
+        this.#omit = normalizeScramblerValues(Array.isArray(options?.omit)
+            ? options.omit
+            : OMIT_PRESETS.default
+        );
 
         /* Configure sink if passed */
         if (isFn(options?.sink)) this.#sink = options.sink;

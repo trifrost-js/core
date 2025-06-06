@@ -118,7 +118,7 @@ describe('Modules - Logger - Exporters - Json', () => {
 
             it('Scrambles deep values in ctx, data, and global using wildcards', async () => {
                 const exporter = new JsonExporter({
-                    omit: ['*.token'],
+                    omit: [{global: 'token'}],
                 });
             
                 exporter.init({
@@ -211,7 +211,11 @@ describe('Modules - Logger - Exporters - Json', () => {
             it('Sink receives fully scrambled payload according to omit rules', async () => {
                 const sink = vi.fn();
                 const exporter = new JsonExporter({
-                    omit: ['*.password', '*.token', 'secret'],
+                    omit: [
+                        {global: 'password'},
+                        {global: 'token'},
+                        'secret',
+                    ],
                     sink,
                 });
             

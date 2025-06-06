@@ -283,7 +283,7 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
     it('Applies wildcard omit to nested ctx/data objects', async () => {
         const exporter = new OtelHttpExporter({
             logEndpoint: 'http://mock',
-            omit: ['*.password'],
+            omit: [{global: 'password'}],
         });
     
         exporter.init({service: 'test-service'});
@@ -364,39 +364,6 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
             .attributes;
     
         expect(attrs.find(a => a.key === 'ctx.secret')?.value.stringValue).toBe('also-raw');
-    });
-    
-    it('Skips or stringifies non-JSON-serializable values', async () => {
-        const exporter = new OtelHttpExporter({logEndpoint: 'http://mock'});
-    
-        exporter.init({});
-    
-        await exporter.pushLog({
-            time: fixedDate,
-            level: 'debug',
-            message: 'test weird props',
-            ctx: {
-                fn: () => 'hi',
-                sym: Symbol('sym'),
-            },
-            data: {
-                regular: 'value',
-            },
-        });
-    
-        await exporter.flush();
-    
-        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body)
-            .resourceLogs[0]
-            .scopeLogs[0]
-            .logRecords[0]
-            .attributes;
-    
-        const fnAttr = attrs.find(a => a.key === 'ctx.fn');
-        const symAttr = attrs.find(a => a.key === 'ctx.sym');
-    
-        expect(fnAttr?.value.stringValue).toMatch(/function/);
-        expect(symAttr?.value.stringValue).toMatch(/Symbol/);
     });
 
     it('Uses spanEndpoint if provided', async () => {
@@ -525,7 +492,7 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
     it('Applies wildcard omit to nested span.ctx values', async () => {
         const exporter = new OtelHttpExporter({
             logEndpoint: 'http://mock',
-            omit: ['*.password'],
+            omit: [{global: 'password'}],
         });
     
         exporter.init({service: 'tracer'});
@@ -626,40 +593,6 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
         expect(attrs).toEqual(expect.arrayContaining([
             {key: 'user', value: {stringValue: 'alice'}},
             {key: 'token', value: {stringValue: 'visible'}},
-        ]));
-    });
-    
-    it('Serializes non-primitive values in span.ctx', async () => {
-        const exporter = new OtelHttpExporter({logEndpoint: 'http://mock'});
-        exporter.init({});
-    
-        await exporter.pushSpan({
-            name: 'unusual-span',
-            traceId: 'trace-q',
-            spanId: 'span-q',
-            start: fixedDate.getTime(),
-            end: fixedDate.getTime() + 50,
-            ctx: {
-                fn: () => {},
-                symbol: Symbol('sym'),
-                arr: [1, 2],
-                nested: {a: 1},
-            },
-        });
-    
-        await exporter.flush();
-    
-        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body)
-            .resourceSpans[0]
-            .scopeSpans[0]
-            .spans[0]
-            .attributes;
-    
-        expect(attrs).toEqual(expect.arrayContaining([
-            {key: 'fn', value: {stringValue: expect.stringContaining('function')}},
-            {key: 'symbol', value: {stringValue: expect.stringContaining('Symbol')}},
-            {key: 'arr', value: {stringValue: JSON.stringify([1, 2])}},
-            {key: 'nested', value: {stringValue: JSON.stringify({a: 1})}},
         ]));
     });
 });

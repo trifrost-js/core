@@ -6,8 +6,9 @@ import {
     type TriFrostLogLevel,
     type TriFrostLoggerLogPayload,
     type TriFrostLoggerExporter,
+    type TriFrostLogScramblerValue,
 } from '../types';
-import {SCRAMBLER_PRESETS} from '../util';
+import {normalizeScramblerValues, OMIT_PRESETS} from '../util';
 
 const LEVELSMAP:Record<TriFrostLogLevel, string> = {
     debug: 'DEBUG',
@@ -83,7 +84,7 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
     /**
      * Omit keys from the meta object that is logged to console
      */
-    #omit:string[] = SCRAMBLER_PRESETS.default;
+    #omit:string[];
 
     constructor (options: {
         logEndpoint:string;
@@ -92,7 +93,7 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
         maxBatchSize?:number;
         maxBufferSize?:number;
         maxRetries?:number;
-        omit?:string[];
+        omit?:TriFrostLogScramblerValue[];
     }) {
         this.#logEndpoint = options.logEndpoint;
         this.#spanEndpoint = options.spanEndpoint || options.logEndpoint;
@@ -114,7 +115,10 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
         if (isIntGt(options.maxRetries, 0)) this.#maxRetries = options.maxRetries;
 
         /* Configure omit */
-        if (Array.isArray(options?.omit)) this.#omit = options.omit;
+        this.#omit = normalizeScramblerValues(Array.isArray(options?.omit)
+            ? options.omit
+            : OMIT_PRESETS.default
+        );
     }
 
     init (trifrost:Record<string, unknown>) {

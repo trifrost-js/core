@@ -1,6 +1,7 @@
 import {isNeArray} from '@valkyriestudios/utils/array';
 import {isNeString} from '@valkyriestudios/utils/string';
 import {isFn} from '@valkyriestudios/utils/function';
+import {type TriFrostLogScramblerValue} from './types';
 
 type Fn = (...args: any[]) => any;
 
@@ -75,31 +76,38 @@ export function spanFn <T extends Fn> (...args:[string,T]|[T]):T {
 }
 
 /**
+ * Normalizes scrambler values to string array
+ * 
+ * @param {TriFrostLogScramblerValue[]} raw - Values to normalize
+ */
+export function normalizeScramblerValues (raw:TriFrostLogScramblerValue[]) {
+    const set:Set<string> = new Set();
+    for (let i = 0; i < raw.length; i++) {
+        const val = raw[i];
+        if (isNeString(val)) {
+            set.add(val);
+        } else if (isNeString(val.global)) {
+            set.add(val.global);
+            set.add('*.' + val.global);
+        }
+    }
+    return [...set.values()];
+}
+
+/**
  * Default TriFrost preset for sensitive data scrambling
  */
-export const SCRAMBLER_PRESETS = {
+export const OMIT_PRESETS = {
     default: [
-        /* Standard prop */
-        'password',
-        'secret',
-        'token',
-        'access_token',
-        'refresh_token',
-        'auth',
-        '$auth',
-        'authorization',
-        'client_secret',
-        'client_token',
-        /* Wildcard */
-        '*.password',
-        '*.secret',
-        '*.token',
-        '*.access_token',
-        '*.refresh_token',
-        '*.auth',
-        '*.$auth',
-        '*.authorization',
-        '*.client_secret',
-        '*.client_token',
+        {global: 'password'},
+        {global: 'secret'},
+        {global: 'token'},
+        {global: 'access_token'},
+        {global: 'refresh_token'},
+        {global: 'auth'},
+        {global: '$auth'},
+        {global: 'authorization'},
+        {global: 'client_secret'},
+        {global: 'client_token'},
     ],
 };

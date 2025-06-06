@@ -1,5 +1,7 @@
 export type TriFrostLogLevel = 'debug' | 'info' | 'log' | 'warn' | 'error';
 
+export type TriFrostLogScramblerValue = string | {global:string};
+
 export type TriFrostLoggerLogPayload = {
     level: TriFrostLogLevel;
     time: Date;

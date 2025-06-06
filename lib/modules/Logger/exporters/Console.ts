@@ -7,8 +7,9 @@ import {isNeObject, scramble} from '@valkyriestudios/utils/object';
 import {
     type TriFrostLoggerLogPayload,
     type TriFrostLoggerExporter,
+    type TriFrostLogScramblerValue,
 } from '../types';
-import {SCRAMBLER_PRESETS} from '../util';
+import {normalizeScramblerValues, OMIT_PRESETS} from '../util';
 
 /* Default format function */
 const DEFAULT_FORMAT = (log:TriFrostLoggerLogPayload) => '[' + log.time.toISOString() + '] [' + log.level + '] ' + log.message;
@@ -50,7 +51,7 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
     /**
      * Omit keys from the meta object that is logged to console
      */
-    #omit:string[] = SCRAMBLER_PRESETS.default;
+    #omit:string[];
 
     /**
      * Function to use to format the primary label.
@@ -60,7 +61,7 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
 
     constructor (options?:{
         grouped?:boolean;
-        omit?:string[];
+        omit?:TriFrostLogScramblerValue[];
         format?:ConsoleExporterFormatter;
         include?:ConsoleExporterIncludeField[];
     }) {
@@ -68,7 +69,10 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
         if (isBoolean(options?.grouped)) this.#grouped = options.grouped;
 
         /* Configure omit */
-        if (Array.isArray(options?.omit)) this.#omit = options.omit;
+        this.#omit = normalizeScramblerValues(Array.isArray(options?.omit)
+            ? options.omit
+            : OMIT_PRESETS.default
+        );
 
         /* Configure format if passed */
         if (isFn(options?.format)) this.#format = options.format;

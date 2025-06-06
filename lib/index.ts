@@ -30,7 +30,8 @@ export {
     JsonExporter,
     OtelHttpExporter,
     span,
-    spanFn
+    spanFn,
+    OMIT_PRESETS
 } from './modules/Logger';
 
 /* Modules - JSX */
