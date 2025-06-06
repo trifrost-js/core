@@ -15,7 +15,11 @@ export const Sym_TriFrostMiddlewareApiKeyAuth = Symbol('TriFrost.Middleware.ApiK
 
 export type ApiKeyAuthResult = {apiKey:string; apiClient:string|null};
 
-export type ApiKeyAuthOptions <T extends Record<string, unknown> = ApiKeyAuthResult> = {
+export type ApiKeyAuthOptions <
+    Env extends Record<string, any> = {},
+    State extends Record<string, unknown> = {},
+    Patch extends Record<string, unknown> = ApiKeyAuthResult
+> = {
     /**
      * Where to extract the API key from
      */
@@ -29,7 +33,7 @@ export type ApiKeyAuthOptions <T extends Record<string, unknown> = ApiKeyAuthRes
      * @note Return true if valid or false if false
      * @note You can also return an object if valid, this will then be set on the state as $auth
      */
-    validate: (ctx:TriFrostContext, val: ApiKeyAuthResult) => Promise<T|boolean>|T|boolean;
+    validate: (ctx:TriFrostContext<Env, State>, val: ApiKeyAuthResult) => Promise<Patch|boolean>|Patch|boolean;
 };
 
 /**
@@ -49,8 +53,10 @@ export type ApiKeyAuthOptions <T extends Record<string, unknown> = ApiKeyAuthRes
  * }))
  */
 export function ApiKeyAuth <
-    T extends Record<string, unknown> = ApiKeyAuthResult
-> (opts:ApiKeyAuthOptions<T>) {
+    Env extends Record<string, any> = {},
+    State extends Record<string, unknown> = {},
+    Patch extends Record<string, unknown> = ApiKeyAuthResult
+> (opts:ApiKeyAuthOptions<Env, State, Patch>) {
     if (!isFn(opts?.validate)) throw new Error('TriFrostMiddleware@ApiKeyAuth: A validate function must be provided');
 
     if (!isNeString(opts.apiKey?.header) && !isNeString(opts.apiKey?.query)) {
@@ -66,10 +72,9 @@ export function ApiKeyAuth <
     const apiClientQuery:string|null = isNeString(opts.apiClient?.query) ? opts.apiClient.query : null;
     const apiClientEnabled = apiClientHeader || apiClientQuery;
 
-    const mware = async function TriFrostApiKeyAuth <
-        Env extends Record<string, unknown> = {},
-        State extends Record<string, unknown> = {}
-    > (ctx:TriFrostContext<Env, State>):Promise<void|TriFrostContext<Env, State & {$auth:T}>> {
+    const mware = async function TriFrostApiKeyAuth (
+        ctx:TriFrostContext<Env, State>
+    ):Promise<void|TriFrostContext<Env, State & {$auth:Patch}>> {
         /* Api Client */
         let apiClient:string|null = null;
         if (apiClientEnabled) {
@@ -89,7 +94,7 @@ export function ApiKeyAuth <
         if (!result) return ctx.status(401);
 
         const authenticated = result === true ? {apiKey, apiClient} : result;
-        return ctx.setState({$auth: authenticated} as {$auth:T});
+        return ctx.setState({$auth: authenticated} as {$auth:Patch});
     };
 
     /* Add symbols for introspection/use further down the line */

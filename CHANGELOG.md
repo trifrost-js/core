@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 ### Improved
+- **dx**: ApiKeyAuth validate function is now correctly typed according to the Env and State of the current middleware chain it is used in
 - **deps**: Upgrade @valkyriestudios/utils to 12.41.3
 
 ### Fixed
@@ -16,7 +17,6 @@ Ever leaked a token ... or forgot to scrub a password from a log? While most obs
 
 This release further tightens the `omit` system with clear redaction (`***`), global redaction wildcard support, and a safe built-in default preset — giving you cleaner logs and ... fewer surprises.
 
-### Added
 ### Improved
 - **feat**: logger exporters just got a tad smarter. We’ve improved the ergonomics and baseline **safety** of the `omit` behavior across `ConsoleExporter`, `JsonExporter` and `OtelHttpExporter`. Instead of silently dropping values, we now **scramble them** to `***`, making it crystal clear which values **were redacted**. As well as **understanding whether or not they were set**.
 - **feat**: logger global omits are now fully supported (e.g. `{global: 'password'}`, `{global: 'auth_token'}`), global omits apply to the entire object and nested levels without having to write brittle paths.
