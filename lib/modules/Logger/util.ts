@@ -73,3 +73,33 @@ export function spanFn <T extends Fn> (...args:[string,T]|[T]):T {
 
     return fn_span;
 }
+
+/**
+ * Default TriFrost preset for sensitive data scrambling
+ */
+export const SCRAMBLER_PRESETS = {
+    default: [
+        /* Standard prop */
+        'password',
+        'secret',
+        'token',
+        'access_token',
+        'refresh_token',
+        'auth',
+        '$auth',
+        'authorization',
+        'client_secret',
+        'client_token',
+        /* Wildcard */
+        '*.password',
+        '*.secret',
+        '*.token',
+        '*.access_token',
+        '*.refresh_token',
+        '*.auth',
+        '*.$auth',
+        '*.authorization',
+        '*.client_secret',
+        '*.client_token',
+    ],
+};
