@@ -97,7 +97,7 @@
         }
     },
     "dependencies": {
-        "@valkyriestudios/utils": "^12.41.2"
+        "@valkyriestudios/utils": "^12.41.3"
     },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20250606.0",
