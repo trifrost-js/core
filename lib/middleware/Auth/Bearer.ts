@@ -15,13 +15,17 @@ export const Sym_TriFrostMiddlewareBearerAuth = Symbol('TriFrost.Middleware.Bear
 
 export type BearerAuthResult = {token:string};
 
-export type BearerAuthOptions <T extends Record<string, unknown> = BearerAuthResult> = {
+export type BearerAuthOptions <
+    Env extends Record<string, any> = {},
+    State extends Record<string, unknown> = {},
+    Patch extends Record<string, unknown> = BearerAuthResult
+> = {
     /**
      * Validation function.
      * @note Return true if valid or false if false
      * @note You can also return an object if valid, this will then be set on the state as $auth
      */
-    validate: (ctx:TriFrostContext, token: string) => Promise<T|boolean>|T|boolean;
+    validate: (ctx:TriFrostContext<Env, State>, token: string) => Promise<Patch|boolean>|Patch|boolean;
 };
 
 /**
@@ -39,14 +43,15 @@ export type BearerAuthOptions <T extends Record<string, unknown> = BearerAuthRes
  * }))
  */
 export function BearerAuth <
-    T extends Record<string, unknown> = BearerAuthResult
-> (opts:BearerAuthOptions<T>) {
+    Env extends Record<string, any> = {},
+    State extends Record<string, unknown> = {},
+    Patch extends Record<string, unknown> = BearerAuthResult
+> (opts:BearerAuthOptions<Env, State, Patch>) {
     if (!isFn(opts?.validate)) throw new Error('TriFrostMiddleware@BearerAuth: A validate function must be provided');
 
-    const mware = async function TriFrostBearerAuth <
-        Env extends Record<string, unknown> = {},
-        State extends Record<string, unknown> = {}
-    > (ctx:TriFrostContext<Env, State>):Promise<void|TriFrostContext<Env, State & {$auth:T}>> {
+    const mware = async function TriFrostBearerAuth (
+        ctx:TriFrostContext<Env, State>
+    ):Promise<void|TriFrostContext<Env, State & {$auth:Patch}>> {
         const raw = ctx.headers.authorization;
         if (!isString(raw) || !raw.startsWith('Bearer ')) return ctx.status(401);
 
@@ -55,7 +60,7 @@ export function BearerAuth <
         if (!result) return ctx.status(401);
 
         const authenticated = result === true ? {token} : result;
-        return ctx.setState({$auth: authenticated} as {$auth:T});
+        return ctx.setState({$auth: authenticated} as {$auth:Patch});
     };
 
     /* Add symbols for introspection/use further down the line */
