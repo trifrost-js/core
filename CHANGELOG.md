@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ### Improved
 - **deps**: Upgrade @cloudflare/workers-types to 4.20250606.0
 - **deps**: Upgrade @types/node to 22.15.30
-- **deps**: Upgrade @valkyriestudios/utils to 12.41.0
+- **deps**: Upgrade @valkyriestudios/utils to 12.41.2
 - **deps**: Upgrade @vitest/coverage-v8 to 3.2.2
 - **deps**: Upgrade vitest to 3.2.2
 
