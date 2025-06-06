@@ -4,16 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.27.1] - 2025-06-06
 ### Improved
+- **deps**: Upgrade @valkyriestudios/utils to 12.41.3
+
+### Fixed
 - **dx**: ApiKeyAuth validate function is now correctly typed according to the Env and State of the current middleware chain it is used in
 - **dx**: BasicAuth validate function is now correctly typed according to the Env and State of the current middleware chain it is used in
 - **dx**: BearerAuth validate function is now correctly typed according to the Env and State of the current middleware chain it is used in
 - **dx**: SessionCookieAuth validate function is now correctly typed according to the Env and State of the current middleware chain it is used in
-- **deps**: Upgrade @valkyriestudios/utils to 12.41.3
-
-### Fixed
-- Fix an edge case issue where under certain circumstances pass-by-reference style merges in the JSX engine would mutate a source object
+- **bug** Fix an edge case issue where under certain circumstances pass-by-reference style merges in the JSX engine would mutate a source object
 
 ## [0.27.0] - 2025-06-06
 Ever leaked a token ... or forgot to scrub a password from a log? While most observability platforms can scrub sensitive data on ingest, that rarely helps with console or file-based logs — better to nip it at the bud.
