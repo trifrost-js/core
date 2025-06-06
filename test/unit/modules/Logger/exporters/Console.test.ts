@@ -185,6 +185,106 @@ describe('Modules - Logger - Exporters - Console', () => {
                     data: {extra: 'info'},
                 });
             });
+
+            it('Scrambles global attributes using omit pattern', async () => {
+                const exporter = new ConsoleExporter({
+                    include: ['global'],
+                    omit: ['*.token'],
+                });
+                exporter.init({service: 'test', api: {token: 'secret-token'}});
+            
+                await exporter.pushLog({
+                    ...baseLog,
+                    level,
+                });
+            
+                expect(spies[level]).toHaveBeenCalledWith(`[${fixedDate.toISOString()}] [${level}] Test message`, {
+                    global: {
+                        service: 'test',
+                        api: {token: '***'},
+                    },
+                });
+            });
+            
+
+            it('Scrambles ctx using default SCRAMBLER_PRESETS', async () => {
+                const exporter = new ConsoleExporter({
+                    include: ['ctx'],
+                });
+                exporter.init({});
+            
+                await exporter.pushLog({
+                    ...baseLog,
+                    level,
+                    ctx: {
+                        password: 'super-secret',
+                        user: 'bob',
+                    },
+                });
+            
+                expect(spies[level]).toHaveBeenCalledWith(`[${fixedDate.toISOString()}] [${level}] Test message`, {
+                    ctx: {
+                        password: '***',
+                        user: 'bob',
+                    },
+                });
+            });
+            
+
+            it('Does not scramble anything if omit is empty array', async () => {
+                const exporter = new ConsoleExporter({
+                    include: ['ctx'],
+                    omit: [],
+                });
+                exporter.init({});
+            
+                await exporter.pushLog({
+                    ...baseLog,
+                    level,
+                    ctx: {
+                        password: 'super-secret',
+                        user: 'bob',
+                    },
+                });
+            
+                expect(spies[level]).toHaveBeenCalledWith(`[${fixedDate.toISOString()}] [${level}] Test message`, {
+                    ctx: {
+                        password: 'super-secret',
+                        user: 'bob',
+                    },
+                });
+            });
+
+            it('Skips meta logging when no data and no inclusions', async () => {
+                const exporter = new ConsoleExporter({omit: []});
+                exporter.init({});
+            
+                await exporter.pushLog({
+                    ...baseLog,
+                    level,
+                });
+            
+                expect(spies[level]).toHaveBeenCalledWith(`[${fixedDate.toISOString()}] [${level}] Test message`);
+                expect(spies.groupCollapsed).not.toHaveBeenCalled();
+            });
+
+            it('Ignores invalid include fields safely', async () => {
+                const exporter = new ConsoleExporter({
+                    include: ['invalid' as any, 'trace_id'],
+                });
+            
+                exporter.init({});
+            
+                await exporter.pushLog({
+                    ...baseLog,
+                    level,
+                    trace_id: 'trace-x',
+                });
+            
+                expect(spies[level]).toHaveBeenCalledWith(`[${fixedDate.toISOString()}] [${level}] Test message`, {
+                    trace_id: 'trace-x',
+                });
+            });
         });
     });
 

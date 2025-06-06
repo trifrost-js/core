@@ -3,11 +3,12 @@
 import {isNeArray} from '@valkyriestudios/utils/array';
 import {isBoolean} from '@valkyriestudios/utils/boolean';
 import {isFn} from '@valkyriestudios/utils/function';
-import {isNeObject, omit} from '@valkyriestudios/utils/object';
+import {isNeObject, scramble} from '@valkyriestudios/utils/object';
 import {
     type TriFrostLoggerLogPayload,
     type TriFrostLoggerExporter,
 } from '../types';
+import {SCRAMBLER_PRESETS} from '../util';
 
 /* Default format function */
 const DEFAULT_FORMAT = (log:TriFrostLoggerLogPayload) => '[' + log.time.toISOString() + '] [' + log.level + '] ' + log.message;
@@ -49,7 +50,7 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
     /**
      * Omit keys from the meta object that is logged to console
      */
-    #omit:string[]|null = null;
+    #omit:string[] = SCRAMBLER_PRESETS.default;
 
     /**
      * Function to use to format the primary label.
@@ -67,7 +68,7 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
         if (isBoolean(options?.grouped)) this.#grouped = options.grouped;
 
         /* Configure omit */
-        if (isNeArray(options?.omit)) this.#omit = options.omit;
+        if (Array.isArray(options?.omit)) this.#omit = options.omit;
 
         /* Configure format if passed */
         if (isFn(options?.format)) this.#format = options.format;
@@ -77,19 +78,23 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
     }
 
     init (global_attrs:Record<string, unknown>) {
-        this.#global_attrs = global_attrs;
+        this.#global_attrs = this.scramble(global_attrs);
+    }
+
+    scramble (val:Record<string, unknown>) {
+        return this.#omit.length ? scramble(val, this.#omit) : val;
     }
 
     async pushLog (log:TriFrostLoggerLogPayload):Promise<void> {
         const msg = this.#format(log);
 
         let has_meta:boolean = false;
-        let meta:Record<string, unknown> = {};
+        const meta:Record<string, unknown> = {};
 
         /* Data */
         if (isNeObject(log.data)) {
             has_meta = true;
-            meta.data = log.data;
+            meta.data = this.scramble(log.data);
         }
         
         /* Run inclusions */
@@ -101,15 +106,15 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
                     case 'global':
                         meta.global = this.#global_attrs;
                         break;
+                    case 'ctx':
+                        meta[inc] = this.scramble(log[inc]);
+                        break;
                     default:
                         meta[inc] = log[inc];
                     
                 }
             }
         }
-
-        /* Clean */
-        if (this.#omit) meta = omit(meta, this.#omit);
 
         /* Write */
         if (this.#grouped && has_meta) {
