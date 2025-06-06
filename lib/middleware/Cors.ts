@@ -1,4 +1,4 @@
-/* eslint-disable max-statements,complexity */
+/* eslint-disable @typescript-eslint/no-empty-object-type,max-statements,complexity */
 
 import {isNeArray} from '@valkyriestudios/utils/array';
 import {isBoolean} from '@valkyriestudios/utils/boolean';
@@ -62,7 +62,10 @@ const CorsDefaults: TriFrostCorsOptions = {
  * @see credentials - https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Allow-Credentials
  * @see maxage - https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Max-Age
  */
-export function Cors (options: TriFrostCorsOptions = {}, config?:TriFrostCorsConfig) {
+export function Cors <
+    Env extends Record<string, any> = {},
+    State extends Record<string, unknown> = {},
+> (options: TriFrostCorsOptions = {}, config?:TriFrostCorsConfig) {
     const use_defaults = !isBoolean(config?.use_defaults) ? true : config.use_defaults;
     const {origin, methods, headers, expose, credentials, maxage} = use_defaults === true
         ? {...CorsDefaults, ...isObject(options) && options}
@@ -137,7 +140,7 @@ export function Cors (options: TriFrostCorsOptions = {}, config?:TriFrostCorsCon
     }
 
     /* Baseline Middleware function */
-    const mware = function TriFrostCorsMiddleware <T extends TriFrostContext> (ctx:T):T|void {
+    const mware = function TriFrostCorsMiddleware (ctx:TriFrostContext<Env, State>):TriFrostContext<Env, State>|void {
         /* Add computed headers */
         ctx.setHeaders(computed);
 

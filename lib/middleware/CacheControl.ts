@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+
 import {isObject} from '@valkyriestudios/utils/object';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {
@@ -112,10 +114,13 @@ export function ParseAndApplyCacheControl (ctx:TriFrostContext, opts:TriFrostCac
  *
  * @param {TriFrostCacheControlOptions} opts - Cache Header Options
  */
-export function CacheControl (opts:TriFrostCacheControlOptions = {}) {
+export function CacheControl <
+    Env extends Record<string, any> = {},
+    State extends Record<string, unknown> = {},
+> (opts:TriFrostCacheControlOptions = {}) {
     const val = parse(opts);
 
-    const mware = function TriFrostCacheControlMiddleware <T extends TriFrostContext> (ctx:T):void {
+    const mware = function TriFrostCacheControlMiddleware (ctx:TriFrostContext<Env, State>):void {
         if (val) ctx.setHeader('Cache-Control', val);
     };
 

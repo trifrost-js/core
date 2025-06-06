@@ -29,8 +29,9 @@ export type SessionCookieAuthSecret <Env extends Record<string, unknown> = {}> =
 };
 
 export type SessionCookieAuthOptions <
-    T extends Record<string, unknown> = SessionCookieAuthResult,
-    Env extends Record<string, unknown> = {},
+    Env extends Record<string, any> = {},
+    State extends Record<string, unknown> = {},
+    Patch extends Record<string, unknown> = SessionCookieAuthResult,
 > = {
     /**
      * Name of the cookie to get from
@@ -45,7 +46,7 @@ export type SessionCookieAuthOptions <
      * @note Return true if valid or false if false
      * @note You can also return an object if valid, this will then be set on the state as $auth
      */
-    validate?: (ctx:TriFrostContext, value: string) => Promise<T|boolean>|T|boolean;
+    validate?: (ctx:TriFrostContext<Env, State>, value: string) => Promise<Patch|boolean>|Patch|boolean;
 };
 
 /**
@@ -64,9 +65,10 @@ export type SessionCookieAuthOptions <
  * }))
  */
 export function SessionCookieAuth <
-    TEnv extends Record<string, unknown> = {},
-    T extends Record<string, unknown> = SessionCookieAuthResult
-> (opts:SessionCookieAuthOptions<T, TEnv>) {
+    Env extends Record<string, any> = {},
+    State extends Record<string, unknown> = {},
+    Patch extends Record<string, unknown> = SessionCookieAuthResult
+> (opts:SessionCookieAuthOptions<Env, State, Patch>) {
     if (!isNeString(opts?.cookie)) throw new Error('TriFrostMiddleware@SessionCookieAuth: A cookie name must be provided');
     if (
         !isNeString(opts.secret?.val) &&
@@ -77,10 +79,9 @@ export function SessionCookieAuth <
     const algorithm = isNeString(opts.secret.algorithm) ? opts.secret.algorithm : 'SHA-256';
     const validateFn = isFn(opts.validate) ? opts.validate : null;
 
-    const mware = async function TriFrostSessionCookieAuth <
-        Env extends Record<string, unknown> = {},
-        State extends Record<string, unknown> = {}
-    > (ctx:TriFrostContext<Env, State>):Promise<void|TriFrostContext<Env, State & {$auth:T}>> {
+    const mware = async function TriFrostSessionCookieAuth (
+        ctx:TriFrostContext<Env, State>
+    ):Promise<void|TriFrostContext<Env, State & {$auth:Patch}>> {
         /* Get cookie, if cookie is not found return 401 */
         const cookie = ctx.cookies.get(opts.cookie);
         if (!isNeString(cookie)) return ctx.status(401);
@@ -94,7 +95,7 @@ export function SessionCookieAuth <
         if (!verified) return ctx.status(401);
 
         /* If no validation function, set state and continue */
-        if (!validateFn) return ctx.setState({$auth: {cookie: verified}} as unknown as {$auth:T});
+        if (!validateFn) return ctx.setState({$auth: {cookie: verified}} as unknown as {$auth:Patch});
         
 
         /* Validate, if not valid return 401 */
@@ -102,7 +103,7 @@ export function SessionCookieAuth <
         if (!result) return ctx.status(401);
 
         const authenticated = result === true ? {cookie: verified} : result;
-        return ctx.setState({$auth: authenticated} as {$auth:T});
+        return ctx.setState({$auth: authenticated} as {$auth:Patch});
     };
 
     /* Add symbols for introspection/use further down the line */

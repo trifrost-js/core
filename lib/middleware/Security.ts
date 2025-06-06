@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+
 import {isNeArray} from '@valkyriestudios/utils/array';
 import {isBoolean} from '@valkyriestudios/utils/boolean';
 import {isIntGt} from '@valkyriestudios/utils/number';
@@ -421,7 +423,10 @@ const SecurityDefaults: TriFrostSecurityOptions = {
  * @param {TriFrostSecurityOptions} options - Options to apply
  * @param {TriFrostSecurityConfig} config - Additional behavioral config
  */
-export function Security (options:TriFrostSecurityOptions = {}, config?:TriFrostSecurityConfig) {
+export function Security <
+    Env extends Record<string, any> = {},
+    State extends Record<string, unknown> = {},
+> (options:TriFrostSecurityOptions = {}, config?:TriFrostSecurityConfig) {
     const use_defaults = !isBoolean(config?.use_defaults) ? true : config.use_defaults;
     const cfg:TriFrostSecurityOptions = use_defaults === true
         ? {...SecurityDefaults, ...isObject(options) && options}
@@ -522,7 +527,7 @@ export function Security (options:TriFrostSecurityOptions = {}, config?:TriFrost
     xXssProtection(map, cfg.xXssProtection);
 
     /* Baseline Middleware function */
-    const mware = function TriFrostSecurityMiddleware <T extends TriFrostContext> (ctx:T):void {
+    const mware = function TriFrostSecurityMiddleware (ctx:TriFrostContext<Env, State>):void {
         ctx.setHeaders(map);
     };
 

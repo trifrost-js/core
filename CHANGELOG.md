@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **dx**: ApiKeyAuth validate function is now correctly typed according to the Env and State of the current middleware chain it is used in
 - **dx**: BasicAuth validate function is now correctly typed according to the Env and State of the current middleware chain it is used in
 - **dx**: BearerAuth validate function is now correctly typed according to the Env and State of the current middleware chain it is used in
+- **dx**: SessionCookieAuth validate function is now correctly typed according to the Env and State of the current middleware chain it is used in
 - **deps**: Upgrade @valkyriestudios/utils to 12.41.3
 
 ### Fixed
