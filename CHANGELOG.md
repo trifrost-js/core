@@ -4,13 +4,43 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.27.0] - 2025-06-06
+Ever leaked a token ... or forgot to scrub a password from a log? While most observability platforms can scrub sensitive data on ingest, that rarely helps with console or file-based logs — better to nip it at the bud.
+
+This release further tightens the `omit` system with clear redaction (`***`), global redaction wildcard support, and a safe built-in default preset — giving you cleaner logs and ... fewer surprises.
+
+### Added
 ### Improved
+- **feat**: logger exporters just got a tad smarter. We’ve improved the ergonomics and baseline **safety** of the `omit` behavior across `ConsoleExporter`, `JsonExporter` and `OtelHttpExporter`. Instead of silently dropping values, we now **scramble them** to `***`, making it crystal clear which values **were redacted**. As well as **understanding whether or not they were set**.
+- **feat**: logger global omits are now fully supported (e.g. `{global: 'password'}`, `{global: 'auth_token'}`), global omits apply to the entire object and nested levels without having to write brittle paths.
+- **feat**: We're introducing a **sensible default** preset for common **sensitive fields** across all exporters. This includes: `'password', 'secret', 'token', 'access_token', 'refresh_token', 'auth', '$auth', 'authorization', 'client_secret', 'client_token'` at any level of the log object.
+- **feat**: Want to define your own keys for omitting while also using the default preset?
+```typescript
+import {OMIT_PRESET} from '@trifrost/core';
+
+app({
+  ...
+  tracing: {
+    exporters: ({env}) => [
+        ...
+        new JsonExporter({
+          /* global here means 'at any level', pass as string to simply */
+          omit: [...OMIT_PRESET.minimal, {global: 'my_secret_key'}, 'my_root_key'],
+        }),
+      ];
+    },
+  },
+})
+```
 - **deps**: Upgrade @cloudflare/workers-types to 4.20250606.0
 - **deps**: Upgrade @types/node to 22.15.30
 - **deps**: Upgrade @valkyriestudios/utils to 12.41.2
 - **deps**: Upgrade @vitest/coverage-v8 to 3.2.2
 - **deps**: Upgrade vitest to 3.2.2
+
+---
+
+Scrub smart, log sharp — and as always, stay frosty ❄️.
 
 ## [0.26.0] - 2025-06-05
 This release brings deeper composition and sharper ergonomics to the `css` engine. `css.mix` and `css.use` now apply a **union-style deep merge**, preserving media queries and nested overrides across layers — **perfect for atom/molecule composition in JSX**.
