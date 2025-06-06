@@ -175,7 +175,7 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
                 ],
             }),
         });
-    });    
+    });
 
     it('Serializes nested objects and arrays as stringValue', async () => {
         const exporter = new OtelHttpExporter({logEndpoint: 'http://mock'});
@@ -224,7 +224,7 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
     it('applies omit keys on span payload', async () => {
         const exporter = new OtelHttpExporter({
             logEndpoint: 'http://mock',
-            omit: ['ctx.internalNote'],
+            omit: ['internalNote'],
         });
         exporter.init({service: 'test-service'});
 
@@ -246,13 +246,13 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
         expect(spanAttrs).toEqual(expect.arrayContaining([
             {key: 'operation', value: {stringValue: 'query'}},
         ]));
-        expect(spanAttrs.find(a => a.key === 'internalNote')).toBeUndefined();
+        expect(spanAttrs.find(a => a.key === 'internalNote')).toEqual({key: 'internalNote', value: {stringValue: '***'}});
     });
 
     it('Applies omit keys on log payload', async () => {
         const exporter = new OtelHttpExporter({
             logEndpoint: 'http://mock',
-            omit: ['ctx.secret', 'data.sensitiveId'],
+            omit: ['secret', 'sensitiveId'],
         });
         exporter.init({service: 'test-service'});
 
@@ -276,8 +276,127 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
         const logAttrs = sentBody.resourceLogs[0].scopeLogs[0].logRecords[0].attributes;
 
         expect(logAttrs).toEqual(expect.arrayContaining(expectedAttributes));
-        expect(logAttrs.find(a => a.key === 'ctx.secret')).toBeUndefined();
-        expect(logAttrs.find(a => a.key === 'data.sensitiveId')).toBeUndefined();
+        expect(logAttrs.find(a => a.key === 'ctx.secret')).toEqual({key: 'ctx.secret', value: {stringValue: '***'}});
+        expect(logAttrs.find(a => a.key === 'data.sensitiveId')).toEqual({key: 'data.sensitiveId', value: {stringValue: '***'}});
+    });
+
+    it('Applies wildcard omit to nested ctx/data objects', async () => {
+        const exporter = new OtelHttpExporter({
+            logEndpoint: 'http://mock',
+            omit: ['*.password'],
+        });
+    
+        exporter.init({service: 'test-service'});
+    
+        await exporter.pushLog({
+            time: fixedDate,
+            level: 'info',
+            message: 'wildcard omit',
+            ctx: {
+                user: {name: 'alice', password: '123'},
+            },
+            data: {
+                db: {password: '456', host: 'localhost'},
+            },
+        });
+        await exporter.flush();
+    
+        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body)
+            .resourceLogs[0]
+            .scopeLogs[0]
+            .logRecords[0]
+            .attributes;
+    
+        expect(attrs).toEqual(expect.arrayContaining([
+            {key: 'ctx.user', value: {stringValue: JSON.stringify({name: 'alice', password: '***'})}},
+            {key: 'data.db', value: {stringValue: JSON.stringify({password: '***', host: 'localhost'})}},
+        ]));
+    });
+    
+    it('Scrambles global init attributes using omit', async () => {
+        const exporter = new OtelHttpExporter({
+            logEndpoint: 'http://mock',
+            omit: ['secret'],
+        });
+    
+        exporter.init({service: 'logger', secret: 'hidden'});
+    
+        await exporter.pushLog({
+            time: fixedDate,
+            level: 'info',
+            message: 'global scramble',
+        } as TriFrostLoggerLogPayload);
+    
+        await exporter.flush();
+    
+        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body)
+            .resourceLogs[0]
+            .resource
+            .attributes;
+    
+        expect(attrs).toEqual(expect.arrayContaining([
+            {key: 'service', value: {stringValue: 'logger'}},
+            {key: 'secret', value: {stringValue: '***'}},
+        ]));
+    });
+    
+    it('Does not scramble if omit list is empty', async () => {
+        const exporter = new OtelHttpExporter({
+            logEndpoint: 'http://mock',
+            omit: [],
+        });
+    
+        exporter.init({service: 'logger', secret: 'should-not-scramble'});
+    
+        await exporter.pushLog({
+            time: fixedDate,
+            level: 'info',
+            message: 'no scramble',
+            ctx: {secret: 'also-raw'},
+        });
+    
+        await exporter.flush();
+    
+        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body)
+            .resourceLogs[0]
+            .scopeLogs[0]
+            .logRecords[0]
+            .attributes;
+    
+        expect(attrs.find(a => a.key === 'ctx.secret')?.value.stringValue).toBe('also-raw');
+    });
+    
+    it('Skips or stringifies non-JSON-serializable values', async () => {
+        const exporter = new OtelHttpExporter({logEndpoint: 'http://mock'});
+    
+        exporter.init({});
+    
+        await exporter.pushLog({
+            time: fixedDate,
+            level: 'debug',
+            message: 'test weird props',
+            ctx: {
+                fn: () => 'hi',
+                sym: Symbol('sym'),
+            },
+            data: {
+                regular: 'value',
+            },
+        });
+    
+        await exporter.flush();
+    
+        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body)
+            .resourceLogs[0]
+            .scopeLogs[0]
+            .logRecords[0]
+            .attributes;
+    
+        const fnAttr = attrs.find(a => a.key === 'ctx.fn');
+        const symAttr = attrs.find(a => a.key === 'ctx.sym');
+    
+        expect(fnAttr?.value.stringValue).toMatch(/function/);
+        expect(symAttr?.value.stringValue).toMatch(/Symbol/);
     });
 
     it('Uses spanEndpoint if provided', async () => {
@@ -401,5 +520,146 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
             ctx: {},
         }); /* should trigger flush */
         expect(fetchSpy).toHaveBeenCalled();
-    });    
+    });
+
+    it('Applies wildcard omit to nested span.ctx values', async () => {
+        const exporter = new OtelHttpExporter({
+            logEndpoint: 'http://mock',
+            omit: ['*.password'],
+        });
+    
+        exporter.init({service: 'tracer'});
+    
+        await exporter.pushSpan({
+            name: 'span-nested-ctx',
+            traceId: 'trace-x',
+            spanId: 'span-x',
+            start: fixedDate.getTime(),
+            end: fixedDate.getTime() + 50,
+            ctx: {
+                auth: {
+                    user: 'bob',
+                    password: 'hunter2',
+                },
+            },
+        });
+    
+        await exporter.flush();
+    
+        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body)
+            .resourceSpans[0]
+            .scopeSpans[0]
+            .spans[0]
+            .attributes;
+    
+        expect(attrs).toEqual(expect.arrayContaining([
+            {
+                key: 'auth',
+                value: {
+                    stringValue: JSON.stringify({
+                        user: 'bob',
+                        password: '***',
+                    }),
+                },
+            },
+        ]));
+    });
+    
+    it('Scrambles resource attributes during init for spans', async () => {
+        const exporter = new OtelHttpExporter({
+            logEndpoint: 'http://mock',
+            omit: ['secret'],
+        });
+    
+        exporter.init({service: 'tracing', secret: 'top-secret'});
+    
+        await exporter.pushSpan({
+            name: 'init-span',
+            traceId: 'trace-y',
+            spanId: 'span-y',
+            start: fixedDate.getTime(),
+            end: fixedDate.getTime() + 100,
+            ctx: {},
+        });
+    
+        await exporter.flush();
+    
+        const resAttrs = JSON.parse(fetchSpy.mock.calls[0][1].body)
+            .resourceSpans[0]
+            .resource
+            .attributes;
+    
+        expect(resAttrs).toEqual(expect.arrayContaining([
+            {key: 'service', value: {stringValue: 'tracing'}},
+            {key: 'secret', value: {stringValue: '***'}},
+        ]));
+    });
+    
+    it('Does not scramble span.ctx if omit is empty', async () => {
+        const exporter = new OtelHttpExporter({
+            logEndpoint: 'http://mock',
+            omit: [],
+        });
+    
+        exporter.init({});
+    
+        await exporter.pushSpan({
+            name: 'unmasked-span',
+            traceId: 'trace-z',
+            spanId: 'span-z',
+            start: fixedDate.getTime(),
+            end: fixedDate.getTime() + 100,
+            ctx: {
+                user: 'alice',
+                token: 'visible',
+            },
+        });
+    
+        await exporter.flush();
+    
+        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body)
+            .resourceSpans[0]
+            .scopeSpans[0]
+            .spans[0]
+            .attributes;
+    
+        expect(attrs).toEqual(expect.arrayContaining([
+            {key: 'user', value: {stringValue: 'alice'}},
+            {key: 'token', value: {stringValue: 'visible'}},
+        ]));
+    });
+    
+    it('Serializes non-primitive values in span.ctx', async () => {
+        const exporter = new OtelHttpExporter({logEndpoint: 'http://mock'});
+        exporter.init({});
+    
+        await exporter.pushSpan({
+            name: 'unusual-span',
+            traceId: 'trace-q',
+            spanId: 'span-q',
+            start: fixedDate.getTime(),
+            end: fixedDate.getTime() + 50,
+            ctx: {
+                fn: () => {},
+                symbol: Symbol('sym'),
+                arr: [1, 2],
+                nested: {a: 1},
+            },
+        });
+    
+        await exporter.flush();
+    
+        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body)
+            .resourceSpans[0]
+            .scopeSpans[0]
+            .spans[0]
+            .attributes;
+    
+        expect(attrs).toEqual(expect.arrayContaining([
+            {key: 'fn', value: {stringValue: expect.stringContaining('function')}},
+            {key: 'symbol', value: {stringValue: expect.stringContaining('Symbol')}},
+            {key: 'arr', value: {stringValue: JSON.stringify([1, 2])}},
+            {key: 'nested', value: {stringValue: JSON.stringify({a: 1})}},
+        ]));
+    });
 });

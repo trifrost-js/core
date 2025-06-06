@@ -1,13 +1,13 @@
-import {isNeArray} from '@valkyriestudios/utils/array';
 import {sleep} from '@valkyriestudios/utils/function';
 import {isIntGt} from '@valkyriestudios/utils/number';
-import {isObject, omit} from '@valkyriestudios/utils/object';
+import {isObject, scramble} from '@valkyriestudios/utils/object';
 import {
     type TriFrostLoggerSpanPayload,
     type TriFrostLogLevel,
     type TriFrostLoggerLogPayload,
     type TriFrostLoggerExporter,
 } from '../types';
+import {SCRAMBLER_PRESETS} from '../util';
 
 const LEVELSMAP:Record<TriFrostLogLevel, string> = {
     debug: 'DEBUG',
@@ -83,7 +83,7 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
     /**
      * Omit keys from the meta object that is logged to console
      */
-    #omit:string[]|null = null;
+    #omit:string[] = SCRAMBLER_PRESETS.default;
 
     constructor (options: {
         logEndpoint:string;
@@ -114,11 +114,15 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
         if (isIntGt(options.maxRetries, 0)) this.#maxRetries = options.maxRetries;
 
         /* Configure omit */
-        if (isNeArray(options?.omit)) this.#omit = options.omit;
+        if (Array.isArray(options?.omit)) this.#omit = options.omit;
     }
 
     init (trifrost:Record<string, unknown>) {
-        this.#resourceAttributes = convertObjectToAttributes(trifrost);
+        this.#resourceAttributes = convertObjectToAttributes(this.scramble(trifrost));
+    }
+
+    scramble (val:Record<string, unknown>) {
+        return this.#omit.length ? scramble(val, this.#omit) : val;
     }
 
     async pushLog (log:TriFrostLoggerLogPayload): Promise<void> {
@@ -151,14 +155,12 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
         /* Convert logs */
         const logRecords = [];
         for (let i = 0; i < batch.length; i++) {
-            const log = (this.#omit
-                /* @ts-expect-error Should be good */
-                ? omit(batch[i], this.#omit)
-                : batch[i]) as TriFrostLoggerLogPayload;
+            const log = batch[i];
 
+            /* Scramble sensitive values and convert to attributes */
             const attributes = [
-                ...convertObjectToAttributes(log.ctx || {}, 'ctx.'),
-                ...convertObjectToAttributes(log.data || {}, 'data.'),
+                ...log.ctx ? convertObjectToAttributes(this.scramble(log.ctx), 'ctx.') : [],
+                ...log.data ? convertObjectToAttributes(this.scramble(log.data), 'data.') : [],
             ];
             if (log.trace_id) attributes.push({key: 'trace_id', value: {stringValue: log.trace_id}});
             if (log.span_id) attributes.push({key: 'span_id', value: {stringValue: log.span_id}});
@@ -202,10 +204,7 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
         /* Convert to otel format */
         const otelSpans = [];
         for (let i = 0; i < batch.length; i++) {
-            const span = (this.#omit
-                /* @ts-expect-error Should be good */
-                ? omit(batch[i], this.#omit)
-                : batch[i]) as TriFrostLoggerSpanPayload;
+            const span = batch[i];
 
             otelSpans.push({
                 name: span.name,
@@ -213,7 +212,7 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
                 spanId: span.spanId,
                 startTimeUnixNano: span.start * 1_000_000,
                 endTimeUnixNano: span.end * 1_000_000,
-                attributes: convertObjectToAttributes(span.ctx),
+                attributes: convertObjectToAttributes(this.scramble(span.ctx)),
                 ...span.parentSpanId && {parentSpanId: span.parentSpanId},
                 ...span.status && {status: span.status},
             });
