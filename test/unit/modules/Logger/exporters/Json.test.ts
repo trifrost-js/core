@@ -94,7 +94,7 @@ describe('Modules - Logger - Exporters - Json', () => {
 
             it('Omits specified keys', async () => {
                 const exporter = new JsonExporter({
-                    omit: ['ctx.user', 'global.service', 'message'],
+                    omit: ['user', 'service'],
                 });
                 exporter.init({service: 'test'});
 
@@ -108,11 +108,158 @@ describe('Modules - Logger - Exporters - Json', () => {
                 expect(spies[level]).toHaveBeenCalledWith(JSON.stringify({
                     time: fixedDate.toISOString(),
                     level,
+                    message: 'Test message',
                     trace_id: 'trace-123',
-                    ctx: {},
+                    ctx: {user: '***'},
                     data: {extra: 'info'},
-                    global: {},
+                    global: {service: '***'},
                 }));
+            });
+
+            it('Scrambles deep values in ctx, data, and global using wildcards', async () => {
+                const exporter = new JsonExporter({
+                    omit: ['*.token'],
+                });
+            
+                exporter.init({
+                    service: 'api',
+                    auth: {token: 'top-secret'},
+                });
+            
+                await exporter.pushLog({
+                    ...baseLog,
+                    level,
+                    ctx: {
+                        session: {token: 'hidden-token'},
+                    },
+                    data: {
+                        user: {token: 'exposed-token'},
+                    },
+                });
+            
+                expect(spies[level]).toHaveBeenCalledWith(JSON.stringify({
+                    time: fixedDate.toISOString(),
+                    level,
+                    message: 'Test message',
+                    ctx: {
+                        session: {token: '***'},
+                    },
+                    data: {
+                        user: {token: '***'},
+                    },
+                    global: {
+                        service: 'api',
+                        auth: {token: '***'},
+                    },
+                }));
+            });
+
+            it('Does not scramble any values if omit is empty array', async () => {
+                const exporter = new JsonExporter({
+                    omit: [],
+                });
+            
+                exporter.init({
+                    service: 'api',
+                    token: '123abc',
+                });
+            
+                await exporter.pushLog({
+                    ...baseLog,
+                    level,
+                    ctx: {token: 'abc123'},
+                    data: {token: 'xyz789'},
+                });
+            
+                expect(spies[level]).toHaveBeenCalledWith(JSON.stringify({
+                    time: fixedDate.toISOString(),
+                    level,
+                    message: 'Test message',
+                    ctx: {token: 'abc123'},
+                    data: {token: 'xyz789'},
+                    global: {service: 'api', token: '123abc'},
+                }));
+            });
+
+            it('Only scrambles keys that exactly match (case-sensitive)', async () => {
+                const exporter = new JsonExporter({
+                    omit: ['token'], // lowercase 'token'
+                });
+            
+                exporter.init({Token: 'ShouldRemain'});
+            
+                await exporter.pushLog({
+                    ...baseLog,
+                    level,
+                    ctx: {Token: 'ShouldRemain', token: 'ShouldScramble'},
+                });
+            
+                expect(spies[level]).toHaveBeenCalledWith(JSON.stringify({
+                    time: fixedDate.toISOString(),
+                    level,
+                    message: 'Test message',
+                    ctx: {
+                        Token: 'ShouldRemain',
+                        token: '***',
+                    },
+                    global: {
+                        Token: 'ShouldRemain',
+                    },
+                }));
+            });
+
+            it('Sink receives fully scrambled payload according to omit rules', async () => {
+                const sink = vi.fn();
+                const exporter = new JsonExporter({
+                    omit: ['*.password', '*.token', 'secret'],
+                    sink,
+                });
+            
+                exporter.init({
+                    service: 'auth-service',
+                    secret: 'top-level-secret',
+                    nested: {token: 'abc'},
+                });
+            
+                await exporter.pushLog({
+                    ...baseLog,
+                    level,
+                    trace_id: 'trace-42',
+                    ctx: {
+                        user: 'admin',
+                        secret: 'ctx-secret',
+                    },
+                    data: {
+                        account: {
+                            password: 'p@ssw0rd',
+                            token: 'xyz',
+                        },
+                    },
+                });
+            
+                expect(sink).toHaveBeenCalledWith({
+                    time: fixedDate.toISOString(),
+                    level,
+                    message: 'Test message',
+                    trace_id: 'trace-42',
+                    ctx: {
+                        user: 'admin',
+                        secret: '***',
+                    },
+                    data: {
+                        account: {
+                            password: '***',
+                            token: '***',
+                        },
+                    },
+                    global: {
+                        service: 'auth-service',
+                        secret: '***',
+                        nested: {
+                            token: '***',
+                        },
+                    },
+                });
             });
         });
     });

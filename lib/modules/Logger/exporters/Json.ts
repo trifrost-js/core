@@ -1,13 +1,13 @@
 /* eslint-disable no-console */
 
-import {isNeArray} from '@valkyriestudios/utils/array';
 import {isFn} from '@valkyriestudios/utils/function';
-import {omit} from '@valkyriestudios/utils/object';
+import {scramble} from '@valkyriestudios/utils/object';
 import {
     type TriFrostLoggerLogPayload,
     type TriFrostLoggerExporter,
     type TriFrostLogLevel,
 } from '../types';
+import {SCRAMBLER_PRESETS} from '../util';
 
 type JsonExporterEntry = {
     time: string;
@@ -29,7 +29,7 @@ export class JsonExporter implements TriFrostLoggerExporter {
     /**
      * Omit keys from the meta object that is logged to console
      */
-    #omit:string[]|null = null;
+    #omit:string[] = SCRAMBLER_PRESETS.default;
 
     /**
      * Sink for the json entries, if not defined will be console
@@ -41,18 +41,22 @@ export class JsonExporter implements TriFrostLoggerExporter {
         sink?:JsonExporterSink;
     }) {
         /* Configure omit */
-        if (isNeArray(options?.omit)) this.#omit = options.omit;
+        if (Array.isArray(options?.omit)) this.#omit = options.omit;
 
         /* Configure sink if passed */
         if (isFn(options?.sink)) this.#sink = options.sink;
     }
 
     init (global_attrs:Record<string, unknown>) {
-        this.#global_attrs = global_attrs;
+        this.#global_attrs = this.scramble(global_attrs);
+    }
+
+    scramble (val:Record<string, unknown>) {
+        return this.#omit.length ? scramble(val, this.#omit) : val;
     }
 
     async pushLog (log: TriFrostLoggerLogPayload): Promise<void> {
-        let entry = {
+        const entry = {
             time: log.time.toISOString(),
             level: log.level,
             message: log.message,
@@ -65,17 +69,13 @@ export class JsonExporter implements TriFrostLoggerExporter {
         if (log.span_id) entry.span_id = log.span_id;
 
         /* Add context */
-        if (log.ctx) entry.ctx = log.ctx;
+        if (log.ctx) entry.ctx = this.scramble(log.ctx);
 
         /* Add data */
-        if (log.data) entry.data = log.data;
+        if (log.data) entry.data = this.scramble(log.data);
 
         /* Add global attributes */
         if (this.#global_attrs) entry.global = this.#global_attrs;
-
-        /* Clean */
-        /* @ts-expect-error Should be good */
-        if (this.#omit) entry = omit(entry, this.#omit) as JsonExporterEntry;
 
         if (this.#sink) {
             this.#sink(entry);
