@@ -2,14 +2,18 @@
 
 import {isNeArray} from '@valkyriestudios/utils/array';
 import {isBoolean} from '@valkyriestudios/utils/boolean';
+import {deepFreeze} from '@valkyriestudios/utils/deep';
 import {isFn} from '@valkyriestudios/utils/function';
-import {isNeObject, scramble} from '@valkyriestudios/utils/object';
+import {isNeObject} from '@valkyriestudios/utils/object';
 import {
     type TriFrostLoggerLogPayload,
     type TriFrostLoggerExporter,
-    type TriFrostLogScramblerValue,
 } from '../types';
-import {normalizeScramblerValues, OMIT_PRESETS} from '../util';
+import {
+    createScrambler,
+    OMIT_PRESETS,
+    type ScramblerValue,
+} from '../../../utils/Scrambler';
 
 /* Default format function */
 const DEFAULT_FORMAT = (log:TriFrostLoggerLogPayload) => '[' + log.time.toISOString() + '] [' + log.level + '] ' + log.message;
@@ -49,9 +53,9 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
     #inclusions:ConsoleExporterIncludeField[];
 
     /**
-     * Omit keys from the meta object that is logged to console
+     * Scrambler based on omit pattern provided
      */
-    #omit:string[];
+    #scramble:ReturnType<typeof createScrambler>;
 
     /**
      * Function to use to format the primary label.
@@ -61,18 +65,17 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
 
     constructor (options?:{
         grouped?:boolean;
-        omit?:TriFrostLogScramblerValue[];
+        omit?:ScramblerValue[];
         format?:ConsoleExporterFormatter;
         include?:ConsoleExporterIncludeField[];
     }) {
         /* Configure grouped if passed */
         if (isBoolean(options?.grouped)) this.#grouped = options.grouped;
 
-        /* Configure omit */
-        this.#omit = normalizeScramblerValues(Array.isArray(options?.omit)
-            ? options.omit
-            : OMIT_PRESETS.default
-        );
+        /* Configure scrambler */
+        this.#scramble = createScrambler({
+            checks: Array.isArray(options?.omit) ? deepFreeze([...options.omit]) : OMIT_PRESETS.default,
+        });
 
         /* Configure format if passed */
         if (isFn(options?.format)) this.#format = options.format;
@@ -82,11 +85,7 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
     }
 
     init (global_attrs:Record<string, unknown>) {
-        this.#global_attrs = this.scramble(global_attrs);
-    }
-
-    scramble (val:Record<string, unknown>) {
-        return this.#omit.length ? scramble(val, this.#omit) : val;
+        this.#global_attrs = this.#scramble(global_attrs);
     }
 
     async pushLog (log:TriFrostLoggerLogPayload):Promise<void> {
@@ -98,9 +97,9 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
         /* Data */
         if (isNeObject(log.data)) {
             has_meta = true;
-            meta.data = this.scramble(log.data);
+            meta.data = this.#scramble(log.data);
         }
-        
+
         /* Run inclusions */
         if (this.#inclusions.length) {
             has_meta = true;
@@ -111,11 +110,11 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
                         meta.global = this.#global_attrs;
                         break;
                     case 'ctx':
-                        meta[inc] = this.scramble(log[inc]);
+                        meta[inc] = this.#scramble(log[inc]);
                         break;
                     default:
                         meta[inc] = log[inc];
-                    
+
                 }
             }
         }

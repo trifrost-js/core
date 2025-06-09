@@ -120,12 +120,12 @@ describe('Modules - Logger - Exporters - Json', () => {
                 const exporter = new JsonExporter({
                     omit: [{global: 'token'}],
                 });
-            
+
                 exporter.init({
                     service: 'api',
                     auth: {token: 'top-secret'},
                 });
-            
+
                 await exporter.pushLog({
                     ...baseLog,
                     level,
@@ -136,7 +136,7 @@ describe('Modules - Logger - Exporters - Json', () => {
                         user: {token: 'exposed-token'},
                     },
                 });
-            
+
                 expect(spies[level]).toHaveBeenCalledWith(JSON.stringify({
                     time: fixedDate.toISOString(),
                     level,
@@ -158,19 +158,19 @@ describe('Modules - Logger - Exporters - Json', () => {
                 const exporter = new JsonExporter({
                     omit: [],
                 });
-            
+
                 exporter.init({
                     service: 'api',
                     token: '123abc',
                 });
-            
+
                 await exporter.pushLog({
                     ...baseLog,
                     level,
                     ctx: {token: 'abc123'},
                     data: {token: 'xyz789'},
                 });
-            
+
                 expect(spies[level]).toHaveBeenCalledWith(JSON.stringify({
                     time: fixedDate.toISOString(),
                     level,
@@ -185,15 +185,15 @@ describe('Modules - Logger - Exporters - Json', () => {
                 const exporter = new JsonExporter({
                     omit: ['token'], // lowercase 'token'
                 });
-            
+
                 exporter.init({Token: 'ShouldRemain'});
-            
+
                 await exporter.pushLog({
                     ...baseLog,
                     level,
                     ctx: {Token: 'ShouldRemain', token: 'ShouldScramble'},
                 });
-            
+
                 expect(spies[level]).toHaveBeenCalledWith(JSON.stringify({
                     time: fixedDate.toISOString(),
                     level,
@@ -218,13 +218,13 @@ describe('Modules - Logger - Exporters - Json', () => {
                     ],
                     sink,
                 });
-            
+
                 exporter.init({
                     service: 'auth-service',
                     secret: 'top-level-secret',
                     nested: {token: 'abc'},
                 });
-            
+
                 await exporter.pushLog({
                     ...baseLog,
                     level,
@@ -240,7 +240,7 @@ describe('Modules - Logger - Exporters - Json', () => {
                         },
                     },
                 });
-            
+
                 expect(sink).toHaveBeenCalledWith({
                     time: fixedDate.toISOString(),
                     level,

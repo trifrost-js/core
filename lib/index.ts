@@ -30,8 +30,7 @@ export {
     JsonExporter,
     OtelHttpExporter,
     span,
-    spanFn,
-    OMIT_PRESETS
+    spanFn
 } from './modules/Logger';
 
 /* Modules - JSX */
@@ -60,3 +59,4 @@ export {TriFrostDurableObject} from './runtimes/Workerd/DurableObject';
 
 /* Utils */
 export {isDevMode} from './utils/Generic';
+export {OMIT_PRESETS} from './utils/Scrambler';

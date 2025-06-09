@@ -4,7 +4,7 @@ import {JsonExporter} from '../../../../lib/modules/Logger/exporters/Json';
 import {OtelHttpExporter} from '../../../../lib/modules/Logger/exporters/OtelHttp';
 import {Logger} from '../../../../lib/modules/Logger/Logger';
 import {TriFrostRootLogger} from '../../../../lib/modules/Logger/RootLogger';
-import {span, spanFn, OMIT_PRESETS} from '../../../../lib/modules/Logger/util';
+import {span, spanFn} from '../../../../lib/modules/Logger/util';
 import * as Index from '../../../../lib/modules/Logger/index';
 
 describe('Modules - Logger - Index', () => {
@@ -34,9 +34,5 @@ describe('Modules - Logger - Index', () => {
 
     it('spanFn should link to the correct module', () => {
         expect(Index.spanFn).toEqual(spanFn);
-    });
-
-    it('OMIT_PRESETS should link to the correct module', () => {
-        expect(Index.OMIT_PRESETS).toEqual(OMIT_PRESETS);
     });
 });

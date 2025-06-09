@@ -8,6 +8,5 @@ export {
 } from './exporters';
 export {
     span,
-    spanFn,
-    OMIT_PRESETS
+    spanFn
 } from './util';

@@ -1,14 +1,18 @@
+import {deepFreeze} from '@valkyriestudios/utils/deep';
 import {sleep} from '@valkyriestudios/utils/function';
 import {isIntGt} from '@valkyriestudios/utils/number';
-import {isObject, scramble} from '@valkyriestudios/utils/object';
+import {isObject} from '@valkyriestudios/utils/object';
 import {
     type TriFrostLoggerSpanPayload,
     type TriFrostLogLevel,
     type TriFrostLoggerLogPayload,
     type TriFrostLoggerExporter,
-    type TriFrostLogScramblerValue,
 } from '../types';
-import {normalizeScramblerValues, OMIT_PRESETS} from '../util';
+import {
+    createScrambler,
+    OMIT_PRESETS,
+    type ScramblerValue,
+} from '../../../utils/Scrambler';
 
 const LEVELSMAP:Record<TriFrostLogLevel, string> = {
     debug: 'DEBUG',
@@ -82,9 +86,9 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
     #resourceAttributes:OtelAttribute[] = [];
 
     /**
-     * Omit keys from the meta object that is logged to console
+     * Scrambler based on omit pattern provided
      */
-    #omit:string[];
+    #scramble:ReturnType<typeof createScrambler>;
 
     constructor (options: {
         logEndpoint:string;
@@ -93,7 +97,7 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
         maxBatchSize?:number;
         maxBufferSize?:number;
         maxRetries?:number;
-        omit?:TriFrostLogScramblerValue[];
+        omit?:ScramblerValue[];
     }) {
         this.#logEndpoint = options.logEndpoint;
         this.#spanEndpoint = options.spanEndpoint || options.logEndpoint;
@@ -114,19 +118,14 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
         /* Configure max retries */
         if (isIntGt(options.maxRetries, 0)) this.#maxRetries = options.maxRetries;
 
-        /* Configure omit */
-        this.#omit = normalizeScramblerValues(Array.isArray(options?.omit)
-            ? options.omit
-            : OMIT_PRESETS.default
-        );
+        /* Configure scrambler */
+        this.#scramble = createScrambler({
+            checks: Array.isArray(options?.omit) ? deepFreeze([...options.omit]) : OMIT_PRESETS.default,
+        });
     }
 
     init (trifrost:Record<string, unknown>) {
-        this.#resourceAttributes = convertObjectToAttributes(this.scramble(trifrost));
-    }
-
-    scramble (val:Record<string, unknown>) {
-        return this.#omit.length ? scramble(val, this.#omit) : val;
+        this.#resourceAttributes = convertObjectToAttributes(this.#scramble(trifrost));
     }
 
     async pushLog (log:TriFrostLoggerLogPayload): Promise<void> {
@@ -163,8 +162,8 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
 
             /* Scramble sensitive values and convert to attributes */
             const attributes = [
-                ...log.ctx ? convertObjectToAttributes(this.scramble(log.ctx), 'ctx.') : [],
-                ...log.data ? convertObjectToAttributes(this.scramble(log.data), 'data.') : [],
+                ...log.ctx ? convertObjectToAttributes(this.#scramble(log.ctx), 'ctx.') : [],
+                ...log.data ? convertObjectToAttributes(this.#scramble(log.data), 'data.') : [],
             ];
             if (log.trace_id) attributes.push({key: 'trace_id', value: {stringValue: log.trace_id}});
             if (log.span_id) attributes.push({key: 'span_id', value: {stringValue: log.span_id}});
@@ -216,7 +215,7 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
                 spanId: span.spanId,
                 startTimeUnixNano: span.start * 1_000_000,
                 endTimeUnixNano: span.end * 1_000_000,
-                attributes: convertObjectToAttributes(this.scramble(span.ctx)),
+                attributes: convertObjectToAttributes(this.#scramble(span.ctx)),
                 ...span.parentSpanId && {parentSpanId: span.parentSpanId},
                 ...span.status && {status: span.status},
             });

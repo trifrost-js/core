@@ -1,7 +1,5 @@
 export type TriFrostLogLevel = 'debug' | 'info' | 'log' | 'warn' | 'error';
 
-export type TriFrostLogScramblerValue = string | {global:string};
-
 export type TriFrostLoggerLogPayload = {
     level: TriFrostLogLevel;
     time: Date;
@@ -25,7 +23,6 @@ export type TriFrostLoggerSpanPayload = {
 
 export interface TriFrostLoggerExporter {
     init: (globalAttributes:Record<string, unknown>) => void;
-    scramble: (val:Record<string, unknown>) => Record<string, unknown>;
     pushLog: (log:TriFrostLoggerLogPayload) => Promise<void>;
     pushSpan?: (span:TriFrostLoggerSpanPayload) => void;
     flush: () => Promise<void>;
