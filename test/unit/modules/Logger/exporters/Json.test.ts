@@ -37,9 +37,9 @@ describe('Modules - Logger - Exporters - Json', () => {
                 await exporter.pushLog({...baseLog, level});
 
                 const expected = {
+                    message: 'Test message',
                     time: fixedDate.toISOString(),
                     level,
-                    message: 'Test message',
                     ctx: {user: 'test'},
                     global: {service: 'test'},
                 };
@@ -60,9 +60,9 @@ describe('Modules - Logger - Exporters - Json', () => {
                 });
 
                 const expected = {
+                    message: 'Test message',
                     time: fixedDate.toISOString(),
                     level,
-                    message: 'Test message',
                     trace_id: 'trace-123',
                     span_id: 'span-abc',
                     ctx: {user: 'test'},
@@ -81,9 +81,9 @@ describe('Modules - Logger - Exporters - Json', () => {
                 await exporter.pushLog({...baseLog, level});
 
                 const expected = {
+                    message: 'Test message',
                     time: fixedDate.toISOString(),
                     level,
-                    message: 'Test message',
                     ctx: {user: 'test'},
                     global: {service: 'test'},
                 };
@@ -106,9 +106,9 @@ describe('Modules - Logger - Exporters - Json', () => {
                 });
 
                 expect(spies[level]).toHaveBeenCalledWith(JSON.stringify({
+                    message: 'Test message',
                     time: fixedDate.toISOString(),
                     level,
-                    message: 'Test message',
                     trace_id: 'trace-123',
                     ctx: {user: '***'},
                     data: {extra: 'info'},
@@ -138,9 +138,9 @@ describe('Modules - Logger - Exporters - Json', () => {
                 });
 
                 expect(spies[level]).toHaveBeenCalledWith(JSON.stringify({
+                    message: 'Test message',
                     time: fixedDate.toISOString(),
                     level,
-                    message: 'Test message',
                     ctx: {
                         session: {token: '***'},
                     },
@@ -172,9 +172,9 @@ describe('Modules - Logger - Exporters - Json', () => {
                 });
 
                 expect(spies[level]).toHaveBeenCalledWith(JSON.stringify({
+                    message: 'Test message',
                     time: fixedDate.toISOString(),
                     level,
-                    message: 'Test message',
                     ctx: {token: 'abc123'},
                     data: {token: 'xyz789'},
                     global: {service: 'api', token: '123abc'},
@@ -195,9 +195,9 @@ describe('Modules - Logger - Exporters - Json', () => {
                 });
 
                 expect(spies[level]).toHaveBeenCalledWith(JSON.stringify({
+                    message: 'Test message',
                     time: fixedDate.toISOString(),
                     level,
-                    message: 'Test message',
                     ctx: {
                         Token: 'ShouldRemain',
                         token: '***',
@@ -242,9 +242,9 @@ describe('Modules - Logger - Exporters - Json', () => {
                 });
 
                 expect(sink).toHaveBeenCalledWith({
+                    message: 'Test message',
                     time: fixedDate.toISOString(),
                     level,
-                    message: 'Test message',
                     trace_id: 'trace-42',
                     ctx: {
                         user: 'admin',

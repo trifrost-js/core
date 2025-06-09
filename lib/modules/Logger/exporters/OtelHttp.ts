@@ -171,7 +171,7 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
             logRecords.push({
                 timeUnixNano: log.time.getTime() * 1_000_000,
                 severityText: LEVELSMAP[log.level],
-                body: {stringValue: log.message},
+                body: this.#scramble({stringValue: log.message}),
                 attributes,
             });
         }

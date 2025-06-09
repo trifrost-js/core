@@ -89,7 +89,7 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
     }
 
     async pushLog (log:TriFrostLoggerLogPayload):Promise<void> {
-        const msg = this.#format(log);
+        const msg = this.#scramble({val: this.#format(log)}).val;
 
         let has_meta:boolean = false;
         const meta:Record<string, unknown> = {};

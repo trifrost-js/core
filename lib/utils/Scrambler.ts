@@ -31,7 +31,6 @@ const SENSITIVE = [
     {global: 'client_secret'},
     {global: 'client_token'},
     {global: 'id_token'},
-    {global: 'identity'},
     {global: 'password'},
     {global: 'private_key'},
     {global: 'public_key'},

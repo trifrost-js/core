@@ -58,11 +58,15 @@ export class JsonExporter implements TriFrostLoggerExporter {
     }
 
     async pushLog (log: TriFrostLoggerLogPayload): Promise<void> {
-        const entry = {
-            time: log.time.toISOString(),
-            level: log.level,
+        const entry = this.#scramble({
             message: log.message,
-        } as JsonExporterEntry;
+        }) as JsonExporterEntry;
+
+        /* Add time */
+        entry.time = log.time.toISOString();
+
+        /* Add level */
+        entry.level = log.level;
 
         /* Add trace id */
         if (log.trace_id) entry.trace_id = log.trace_id;
