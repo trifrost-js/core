@@ -4,6 +4,95 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.28.0] - 2025-06-09
+Building on the groundwork laid in [0.27.0](https://github.com/trifrost-js/core/releases/tag/0.27.0), this release supercharges TriFrost’s **redaction and log sanitization** pipeline with a powerful new **internal scrambler engine**, enabling fast, recursive, and pattern-aware field scrubbing across all exporters.
+
+While the scrambler is not exposed directly, it powers the `omit` behavior in exporters like:
+- `ConsoleExporter`
+- `JsonExporter`
+- `OtelHttpExporter`.
+
+Just pass a mix of:
+- 📌 **Path keys**: `'user.token'`
+- 🌍 **Global keys**: `{global: 'token'}` (these target **any level**)
+- 🎯 **Value patterns**: `{valuePattern: /\d{3}-\d{2}-\d{4}/}` (eg: SSNs)
+
+... and TriFrost handler the rest.
+
+## Added
+- **feat**: Internal `createScrambler()` engine powering `omit` behavior in all log exporters. Smartly scrubs **matching paths, wildcard keys, and regex patterns**.
+
+## Improved
+- **feat**: Expanded default `OMIT_PRESETS` with automated redaction of **PII** for `first_name`, `last_name`, `full_name`, email/phone/ssn/creditcard value patterns.
+- **feat**: Expanded default `OMIT_PRESETS` with automated redaction of `api_key`, `api_secret`, `apikey`, `apitoken`, `id_token`, `private_key`, `public_key`, `session`, `session_id`, `sid`, `user_token` globals and `Bearer ...` value pattern.
+```typescript
+/* 💡 Usage remains unchanged */
+import {OMIT_PRESETS} from '@trifrost/core';
+
+new JsonExporter({
+  omit: [...OMIT_PRESETS.default, {global: 'api_secret'}],
+});
+```
+
+---
+
+### Example: Redaction in Action
+Given the following input:
+```typescript
+{{
+  user: {
+    id: 42,
+    full_name: 'Jane Doe',
+    email: 'jane.doe@example.com',
+    preferences: {
+      theme: 'dark',
+      newsletter: true,
+    },
+  },
+  auth: {
+    method: 'oauth',
+    token: 'abc123',
+  },
+  activity: {
+    message: 'User Jane Doe logged in from +1 (800) 123-4567',
+    timestamp: '2025-06-09T12:00:00Z',
+  },
+}
+```
+
+... and applying the built-in `OMIT_PRESETS.default` (this is the default, so in practice you **don't even need to do anything**), TriFrost will output the following into your logs:
+```typescript
+{
+  user: {
+    id: 42,
+    full_name: '***',
+    email: '***',
+    preferences: {
+      theme: 'dark',
+      newsletter: true,
+    },
+  },
+  auth: {
+    method: 'oauth',
+    token: '***',
+  },
+  activity: {
+    message: 'User *** logged in from ***',
+    timestamp: '2025-06-09T12:00:00Z',
+  },
+}
+```
+
+No fields removed. No values silently missing.
+
+Just clear, predictable redaction with `***`, even inside nested strings.
+
+---
+
+Oh yes, and did we mention it's **fast** as well? The code for our benchmark can be found [here](https://github.com/trifrost-js/core/blob/main/test/bench/utils/scrambler.bench.ts) just run `npm run benchmark test/bench/utils/scrambler.bench.ts` to see it for yourself.
+
+As always, stay frosty ❄️
+
 ## [0.27.1] - 2025-06-06
 ### Improved
 - **deps**: Upgrade @valkyriestudios/utils to 12.41.3
