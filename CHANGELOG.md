@@ -4,6 +4,76 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.0] - 2025-06-10
+I've known the founders of [Aikido](https://aikido.dev/) for a long time, so when I was exploring ways to expand TriFrost’s automated security testing (we already used [GitHub CodeQL](https://codeql.github.com/), but there’s always room for more), I reached out to them. They got us set up quickly, and within minutes, Aikido flagged a single medium-severity issue, not in our code, but in our CI/CD setup, related to unpinned third-party modules. Resolved. ✅ Thanks [Aikido](https://aikido.dev/)!
+
+Then I thought: **Why not run a scan on our [website](https://www.trifrost.dev)**? Boom, “Content Security Policy not set.” Fair. So I dug in 💪, and that sparked a small but **meaningful improvement to our Security() middleware**.
+
+This patch brings **enhanced Content Security Policy (CSP)** handling via automatic nonce injection in the `Security()` middleware, improving script safety, SSR support, and JSX ergonomics.
+
+### Added
+- **feat**: `Security()` middleware now supports dynamic CSP **nonce injection**. You can specify `"'nonce'"` as a placeholder value in `contentSecurityPolicy`, and TriFrost will generate a secure, request-scoped `ctx.nonce`, replacing it across all matching directives:
+```typescript
+.use(Security({
+  contentSecurityPolicy: {
+    [ContentSecurityPolicy.ScriptSrc]: ['"self"', "'nonce'"],
+    [ContentSecurityPolicy.StyleSrc]: ['"self"', "'nonce'"],
+  },
+}));
+```
+This will automatically generate a secure base64 nonce and emit a valid CSP like:
+```txt
+Content-Security-Policy: script-src "self" 'nonce-AbC123...'; style-src "self" 'nonce-AbC123...'
+```
+- **feat**: A new `nonce` getter has been added to the TriFrost context, allowing easy access to the nonce (which is stored on ctx.state):
+```tsx
+ctx.html(<script nonce={ctx.nonce}>...</script>);
+```
+- **feat**: `ctx.nonce` is now automatically linked to the **JSX rendering engine** and exposes through a **nonce util**, accessible anywhere inside a ctx.html() JSX component render:
+```tsx
+import {nonce, Style} from '@trifrost/core';
+
+export function Scripts () {
+  return <>
+    <script nonce={nonce()}>...</script>
+    <script nonce={nonce()}>...</script>
+  </>
+}
+
+export function Layout () {
+  return <html>
+    <head>
+      <title>Hello world</title>
+      <Scripts />
+      <Style /> {/* This one automatically checks nonce */}
+      <style type="text/css" nonce={nonce()}>...</style>
+    </head>
+    <body>
+      ...
+    </body>
+  </html>;
+}
+
+export function myHandler (ctx) {
+  return ctx.html(<Layout />);
+}
+```
+
+### Improved
+- **feat**: The `StyleEngine` now auto-injects a nonce attribute on its `<Style />` tag when `ctx.nonce` is active. This ensures all TriFrost CSS is CSP-compliant under `style-src 'nonce-...'` policies — improving compatibility and SSR safety. **Without having to lift a finger**.
+- **cicd**: Pin 3rd github actions in workflow ci
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250610.0
+- **deps**: Upgrade @types/node to 22.15.31
+- **deps**: Upgrade @vitest/coverage-v8 to 3.2.3
+- **deps**: Upgrade typescript-eslint to 8.34.0
+- **deps**: Upgrade vitest to 3.2.3
+
+---
+
+This change makes nonce-based CSP safer and easier, no manual nonce generation, no middleware coordination. Just drop `'nonce'` where you need it, adjust your inline scripts to work with `nonce={nonce()}` and TriFrost takes care of the rest.
+
+As always, stay frosty ❄️
+
 ## [0.28.0] - 2025-06-09
 Building on the groundwork laid in [0.27.0](https://github.com/trifrost-js/core/releases/tag/0.27.0), this release supercharges TriFrost’s **redaction and log sanitization** pipeline with a powerful new **internal scrambler engine**, enabling fast, recursive, and pattern-aware field scrubbing across all exporters.
 
