@@ -3,7 +3,7 @@
 import {isNeArray} from '@valkyriestudios/utils/array';
 import {isBoolean} from '@valkyriestudios/utils/boolean';
 import {isIntGt} from '@valkyriestudios/utils/number';
-import {isObject, isNeObject} from '@valkyriestudios/utils/object';
+import {isObject} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
 import {
     Sym_TriFrostDescription,
@@ -12,6 +12,9 @@ import {
     Sym_TriFrostType,
 } from '../types/constants';
 import {type TriFrostContext} from '../types/context';
+import {hexId} from '../utils/String';
+
+const RGX_NONCE = /'nonce'/g
 
 /* Specific symbol attached to security mware to identify them by */
 export const Sym_TriFrostMiddlewareSecurity = Symbol('TriFrost.Middleware.Security');
@@ -246,7 +249,7 @@ function header (
  * @param {TriFrostSecurityOptions['contentSecurityPolicy']} val - Value to set
  */
 function contentSecurityPolicy (map: Record<string, string>, val:TriFrostSecurityOptions['contentSecurityPolicy']) {
-    if (!isNeObject(val)) return;
+    if (!isObject(val)) return;
 
     /* Loop through each key in the csp object being passed */
     const parts: string[] = [];
@@ -289,7 +292,7 @@ function contentSecurityPolicy (map: Record<string, string>, val:TriFrostSecurit
         if (isNeString(finalized_chunk)) parts.push(`${key} ${finalized_chunk.trim()}`);
     }
 
-    map['Content-Security-Policy'] = parts.join('; ');
+    if (parts.length) map['Content-Security-Policy'] = parts.join('; ');
 }
 
 /**
@@ -419,7 +422,7 @@ const SecurityDefaults: TriFrostSecurityOptions = {
 
 /**
  * Middleware that returns a handler which configures security headers on a context
- * 
+ *
  * @param {TriFrostSecurityOptions} options - Options to apply
  * @param {TriFrostSecurityConfig} config - Additional behavioral config
  */
@@ -529,6 +532,16 @@ export function Security <
     /* Baseline Middleware function */
     const mware = function TriFrostSecurityMiddleware (ctx:TriFrostContext<Env, State>):void {
         ctx.setHeaders(map);
+
+        /* Replace nonce placeholder with a generated nonce */
+        if ('Content-Security-Policy' in map) {
+            const val = map['Content-Security-Policy'];
+            if (RGX_NONCE.test(val)) {
+                const nonce = btoa(hexId(8));
+                ctx.setHeader('Content-Security-Policy', val.replace(RGX_NONCE, "'nonce-" + nonce + "'"));
+                ctx.setState({nonce});
+            }
+        }
     };
 
     /* Add symbols for introspection/use further down the line */

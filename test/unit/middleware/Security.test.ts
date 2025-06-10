@@ -236,6 +236,83 @@ describe('Middleware - Security', () => {
                 'report-uri /csp-report',
             ].join('; '));
         });
+
+        it('Replaces nonce placeholder in script-src and sets ctx.nonce', () => {
+            const ctx = new MockContext();
+
+            Security({
+                contentSecurityPolicy: {
+                    [ContentSecurityPolicy.ScriptSrc]: ['"self"', '\'nonce\''],
+                },
+            })(ctx);
+
+            const nonce = ctx.nonce;
+            expect(() => atob(nonce)).not.toThrow();
+            expect(nonce).toMatch(/^[A-Za-z0-9+/]+={0,2}$/);
+
+            const csp = ctx.headers['Content-Security-Policy'];
+            expect(csp).toBe(`script-src "self" 'nonce-${nonce}'`);
+        });
+
+        it('Does not replace substrings containing "nonce" like hello.nonce.com', () => {
+            const ctx = new MockContext();
+
+            Security({
+                contentSecurityPolicy: {
+                    [ContentSecurityPolicy.ScriptSrc]: ['"self"', 'hello.nonce.com'],
+                },
+            })(ctx);
+
+            expect(ctx.state).not.toHaveProperty('nonce');
+            expect(ctx.headers['Content-Security-Policy']).toBe('script-src "self" hello.nonce.com');
+        });
+
+        it('Replaces nonce placeholder in script-src and sets ctx.nonce but leaves things like hello.nonce.com intact', () => {
+            const ctx = new MockContext();
+
+            Security({
+                contentSecurityPolicy: {
+                    [ContentSecurityPolicy.ScriptSrc]: ['"self"', '\'nonce\''],
+                    [ContentSecurityPolicy.StyleSrc]: ['"self"', 'hello.nonce.com', '\'nonce\''],
+                },
+            })(ctx);
+
+            const nonce = ctx.nonce;
+            expect(() => atob(nonce)).not.toThrow();
+            expect(nonce).toMatch(/^[A-Za-z0-9+/]+={0,2}$/);
+
+            const csp = ctx.headers['Content-Security-Policy'];
+            expect(csp).toBe(`script-src "self" 'nonce-${nonce}'; style-src "self" hello.nonce.com 'nonce-${nonce}'`);
+        });
+
+        it('Does not generate a nonce if no directive uses it', () => {
+            const ctx = new MockContext();
+
+            Security({
+                contentSecurityPolicy: {
+                    [ContentSecurityPolicy.ScriptSrc]: ['"self"'],
+                },
+            })(ctx);
+
+            expect(ctx.state).not.toHaveProperty('nonce');
+        });
+
+        it('Replaces nonce in multiple directives and uses same ctx.nonce', () => {
+            const ctx = new MockContext();
+
+            Security({
+                contentSecurityPolicy: {
+                    [ContentSecurityPolicy.ScriptSrc]: ['"self"', '\'nonce\''],
+                    [ContentSecurityPolicy.StyleSrc]: ['"self"', '\'nonce\''],
+                },
+            })(ctx);
+
+            const nonce = ctx.nonce;
+            const csp = ctx.headers['Content-Security-Policy'];
+            const expected = `'nonce-${nonce}'`;
+
+            expect(csp).toBe(`script-src "self" ${expected}; style-src "self" ${expected}`);
+        });
     });
 
     describe('crossOriginEmbedderPolicy', () => {
