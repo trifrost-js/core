@@ -204,14 +204,18 @@ describe('Modules – JSX – style – Engine', () => {
         it('Replaces marker if present', () => {
             const cls = engine.hash('color:red');
             engine.register('color:red', cls, {});
-            expect(engine.inject(`<div>${MARKER}Hello there</div>`)).toBe('<div><style>.tf-1tlgz3l{color:red}</style>Hello there</div>');
+            expect(
+                engine.inject(`<div>${MARKER}Hello there</div>`)
+            ).toBe('<div><style>.tf-1tlgz3l{color:red}</style>Hello there</div>');
         });
 
         it('Includes nonce attribute when active', () => {
             const cls = engine.hash('color:red');
             setActiveNonce('abc123');
             engine.register('color:red', cls, {});
-            expect(engine.inject(`<div>${MARKER}Hello there</div>`)).toBe('<div><style nonce="abc123">.tf-1tlgz3l{color:red}</style>Hello there</div>');
+            expect(
+                engine.inject(`<div>${MARKER}Hello there</div>`)
+            ).toBe('<div><style nonce="abc123">.tf-1tlgz3l{color:red}</style>Hello there</div>');
         });
 
         it('Does not prepend styles if marker is not present', () => {

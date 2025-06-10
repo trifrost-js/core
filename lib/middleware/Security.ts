@@ -14,7 +14,7 @@ import {
 import {type TriFrostContext} from '../types/context';
 import {hexId} from '../utils/String';
 
-const RGX_NONCE = /'nonce'/g
+const RGX_NONCE = /'nonce'/g;
 
 /* Specific symbol attached to security mware to identify them by */
 export const Sym_TriFrostMiddlewareSecurity = Symbol('TriFrost.Middleware.Security');
@@ -538,7 +538,7 @@ export function Security <
             const val = map['Content-Security-Policy'];
             if (RGX_NONCE.test(val)) {
                 const nonce = btoa(hexId(8));
-                ctx.setHeader('Content-Security-Policy', val.replace(RGX_NONCE, "'nonce-" + nonce + "'"));
+                ctx.setHeader('Content-Security-Policy', val.replace(RGX_NONCE, '\'nonce-' + nonce + '\''));
                 ctx.setState({nonce});
             }
         }

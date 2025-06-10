@@ -230,8 +230,10 @@ describe('Modules - JSX - Renderer', () => {
 
             /* @ts-ignore */
             const html = rootRender(ctx, ['__TRIFROST_STYLE_MARKER__', {type: Component, props: {}}]);
-            expect(html)
-                .toBe(`<style nonce="${ctx.nonce}">.tf-46gioo{padding:1rem;background-color:blue}</style><div class="tf-46gioo">Hello</div>`);
+            expect(html).toBe([
+                `<style nonce="${ctx.nonce}">.tf-46gioo{padding:1rem;background-color:blue}</style>`,
+                '<div class="tf-46gioo">Hello</div>',
+            ].join(''));
         });
 
         it('Renders with expected class name and style from inside component', () => {
@@ -376,13 +378,14 @@ describe('Modules - JSX - Renderer', () => {
             };
             /* @ts-ignore */
             const html2 = rootRender(ctx2, ['__TRIFROST_STYLE_MARKER__', {type: Component2, props: {}}]);
-            expect(html2).toBe(`<style nonce="${ctx2.nonce}">.${cls2}{color:white;font-family:sans-serif}</style><p class="${cls2}">Styled</p>`);
+            expect(html2).toBe([
+                `<style nonce="${ctx2.nonce}">.${cls2}{color:white;font-family:sans-serif}</style>`,
+                `<p class="${cls2}">Styled</p>`,
+            ].join(''));
         });
 
         it('Exposes nonce via active context during render', () => {
-            const Component = () => {
-                return {type: 'script', props: {nonce: nonce(), children: 'Nonce-bound'}};
-            };
+            const Component = () => ({type: 'script', props: {nonce: nonce(), children: 'Nonce-bound'}});
 
             // @ts-ignore
             const html = rootRender(new MockContext({nonce: 'abc-123'}), {type: Component, props: {}});
