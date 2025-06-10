@@ -90,6 +90,9 @@ export abstract class Context <
     /* TriFrost Name */
     #name:string = 'unknown';
 
+    /* TriFrost Nonce */
+    #nonce:string|null = null;
+
     /* Kind of Context */
     #kind:TriFrostContextKind = 'std';
 
@@ -326,6 +329,23 @@ export abstract class Context <
      */
     get body ():Readonly<Record<string, unknown>|unknown[]> {
         return this.req_body || {};
+    }
+
+    /**
+     * Security nonce
+     */
+    get nonce (): string {
+        if (this.#nonce) return this.#nonce;
+
+        /* Check state nonce */
+        if (typeof (this.state as any)?.nonce === 'string') {
+            this.#nonce = (this.state as any)?.nonce as string;
+            return this.#nonce;
+        }
+
+        /* Fall back to using request id */
+        this.#nonce = btoa(this.requestId);
+        return this.#nonce;
     }
 
     /**
@@ -686,7 +706,7 @@ export abstract class Context <
             if (!this.res_headers['Content-Type']) this.res_headers['Content-Type'] = MimeTypes.HTML;
 
             /* Render html */
-            let html = typeof body === 'string' ? body : rootRender(body);
+            let html = typeof body === 'string' ? body : rootRender(this, body);
 
             /* Auto-prepend <!DOCTYPE html> if starts with <html */
             html = html.trimStart();
@@ -696,7 +716,7 @@ export abstract class Context <
 
             /* Set status if provided */
             this.setStatus(opts?.status || this.res_code);
-            
+
             this.end();
         } catch (err) {
             this.#logger.error(err, {body, opts});
@@ -774,7 +794,7 @@ export abstract class Context <
 
     /**
      * Respond by redirecting
-     * 
+     *
      * @note Default status is 307 Temporary Redirect
      * @note Default keep_query is true
      */
@@ -804,7 +824,7 @@ export abstract class Context <
             /* If keep_query is passed as true and a query exists add it to normalized to */
             if (
                 this.query.size && (
-                    (!opts || !('keep_query' in opts)) || 
+                    (!opts || !('keep_query' in opts)) ||
                     opts.keep_query === true
                 )
             ) normalized_to += '?' + this.query;
@@ -834,10 +854,10 @@ export abstract class Context <
             const name = IP_HEADER_CANDIDATES[i];
             let val = headers[name];
             if (typeof val !== 'string') continue;
-            
+
             val = val.trim();
             if (!val.length) continue;
-    
+
             const candidate:string|null = name === 'x-forwarded-for'
                 ? val.split(',', 1)[0]?.trim() ?? null
                 : val;
