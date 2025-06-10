@@ -92,6 +92,7 @@ export type TriFrostContext<
     get method          ():HttpMethod;
     get path            ():string;
     get name            ():string;
+    get nonce           ():string;
     get kind            ():TriFrostContextKind;
     get host            ():string|null;
     get ip              ():string|null;

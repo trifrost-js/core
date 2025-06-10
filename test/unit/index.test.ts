@@ -11,6 +11,7 @@ import {Sym_TriFrostMiddlewareRateLimit} from '../../lib/modules/RateLimit';
 import {cache, cacheFn, cacheSkip} from '../../lib/modules/Cache/util';
 import {ConsoleExporter, JsonExporter, OtelHttpExporter, span, spanFn} from '../../lib/modules/Logger';
 import {createCss, Style} from '../../lib/modules/JSX/style';
+import {nonce} from '../../lib/modules/JSX/nonce';
 import {DurableObjectCache, DurableObjectRateLimit} from '../../lib/storage/DurableObject';
 import {TriFrostDurableObject} from '../../lib/runtimes/Workerd/DurableObject';
 import {KVCache, KVRateLimit} from '../../lib/storage/KV';
@@ -172,6 +173,10 @@ describe('index', () => {
 
         it('Style', () => {
             expect(Index.Style).toBe(Style);
+        });
+
+        it('nonce', () => {
+            expect(Index.nonce).toBe(nonce);
         });
     });
 

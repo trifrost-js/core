@@ -1,5 +1,6 @@
 import {isNotEmptyString} from '@valkyriestudios/utils/string';
 import {MARKER} from './Style';
+import {hasActiveNonce, nonce} from '../nonce/use';
 
 type StyleEngineRegisterOptions = {
     /**
@@ -13,10 +14,10 @@ type StyleEngineRegisterOptions = {
 };
 
 export class StyleEngine {
-    
+
     /* rule -> className */
     protected base = {out: '', keys: new Set<string>()};
-    
+
     /* mediaQuery -> rule -> className */
     protected media: Record<string, {out: string; keys: Set<string>}> = {};
 
@@ -24,7 +25,7 @@ export class StyleEngine {
 
     /**
      * Generate a deterministic class name for a rule
-     * 
+     *
      * @note This internally uses DJB2 hashing and autoprefixes tf-
      */
     hash (input:string):string {
@@ -73,7 +74,10 @@ export class StyleEngine {
     flush ():string {
         let out = this.base.out;
         for (const query in this.media) out += query + '{' + this.media[query].out + '}';
-        return out ? '<style>' + out + '</style>' : '';
+        if (!out) return '';
+        return hasActiveNonce()
+            ? '<style nonce="' + nonce() + '">' + out + '</style>'
+            : '<style>' + out + '</style>';
     }
 
     /**

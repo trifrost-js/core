@@ -1,6 +1,7 @@
-import {describe, it, expect, beforeEach} from 'vitest';
+import {describe, it, expect, beforeEach, afterEach} from 'vitest';
 import {StyleEngine} from '../../../../../lib/modules/JSX/style/Engine';
 import {MARKER} from '../../../../../lib/modules/JSX/style/Style';
+import {setActiveNonce} from '../../../../../lib/modules/JSX/nonce/use';
 import CONSTANTS from '../../../../constants';
 
 describe('Modules – JSX – style – Engine', () => {
@@ -8,6 +9,10 @@ describe('Modules – JSX – style – Engine', () => {
 
     beforeEach(() => {
         engine = new StyleEngine();
+    });
+
+    afterEach(() => {
+        setActiveNonce(null);
     });
 
     describe('hash()', () => {
@@ -60,7 +65,7 @@ describe('Modules – JSX – style – Engine', () => {
             const cls = 'tf-custom';
             engine.register('font-weight:bold', cls, {selector: '.foo'});
             engine.register('text-decoration:underline', cls, {selector: '.bar'});
-        
+
             expect(engine.flush()).toBe('<style>.foo{font-weight:bold}.bar{text-decoration:underline}</style>');
         });
 
@@ -70,7 +75,7 @@ describe('Modules – JSX – style – Engine', () => {
             engine.register('color:white', 'tf-white', {query: '@media (prefers-color-scheme: dark)'});
             engine.register('font-size:1rem', 'tf-black', {query: '@media (prefers-color-scheme: light)'});
             engine.register('color:red', 'tf-black', {query: '@media (prefers-color-scheme: light)'});
-        
+
             expect(engine.flush()).toBe([
                 '<style>',
                 '.tf-black{color:black}',
@@ -95,7 +100,7 @@ describe('Modules – JSX – style – Engine', () => {
         it('Ignores rule when selector is an empty string', () => {
             engine.register('font-size:1rem', 'tf-empty', {selector: ''});
             expect(engine.flush()).toBe('');
-        });        
+        });
 
         it('Ignores non/empty string', () => {
             for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
@@ -130,7 +135,7 @@ describe('Modules – JSX – style – Engine', () => {
                 const cls = engine.hash(rule);
                 engine.register(rule, cls, {});
             }
-        
+
             expect(engine.flush()).toBe([
                 '<style>',
                 '.tf-1dma5fa{padding:0px}',
@@ -185,7 +190,14 @@ describe('Modules – JSX – style – Engine', () => {
                 '.tf-3pku8b{padding:49px}',
                 '</style>',
             ].join(''));
-        });        
+        });
+
+        it('Includes nonce attribute when active', () => {
+            const cls = engine.hash('display:grid');
+            engine.register('display:grid', cls, {});
+            setActiveNonce('abc123');
+            expect(engine.flush()).toBe('<style nonce="abc123">.tf-18n9a1p{display:grid}</style>');
+        });
     });
 
     describe('inject()', () => {
@@ -193,6 +205,13 @@ describe('Modules – JSX – style – Engine', () => {
             const cls = engine.hash('color:red');
             engine.register('color:red', cls, {});
             expect(engine.inject(`<div>${MARKER}Hello there</div>`)).toBe('<div><style>.tf-1tlgz3l{color:red}</style>Hello there</div>');
+        });
+
+        it('Includes nonce attribute when active', () => {
+            const cls = engine.hash('color:red');
+            setActiveNonce('abc123');
+            engine.register('color:red', cls, {});
+            expect(engine.inject(`<div>${MARKER}Hello there</div>`)).toBe('<div><style nonce="abc123">.tf-1tlgz3l{color:red}</style>Hello there</div>');
         });
 
         it('Does not prepend styles if marker is not present', () => {
@@ -219,7 +238,7 @@ describe('Modules – JSX – style – Engine', () => {
             for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
                 const cls = engine.hash('line-height:1.5');
                 engine.register('line-height:1.5', cls, {});
-                
+
                 const output = engine.inject(el as string);
                 expect(output).toBe(`<style>.${cls}{line-height:1.5}</style>`);
             }
@@ -242,7 +261,7 @@ describe('Modules – JSX – style – Engine', () => {
                 const rule = `border-radius:${i}px`;
                 engine.register(rule, engine.hash(rule), {});
             }
-        
+
             expect(engine.flush()).toBe([
                 '<style>',
                 '.tf-n8zwv2{border-radius:0px}',
@@ -270,7 +289,7 @@ describe('Modules – JSX – style – Engine', () => {
             engine.reset();
             expect(engine.flush()).toBe('');
         });
-        
+
         it('Clears both base and media style maps', () => {
             engine.register('font-weight:bold', engine.hash('font-weight:bold'), {});
             engine.register('font-size:0.9rem', engine.hash('font-size:0.9rem'), {
@@ -284,6 +303,6 @@ describe('Modules – JSX – style – Engine', () => {
             ].join(''));
             engine.reset();
             expect(engine.flush()).toBe('');
-        });        
+        });
     });
 });

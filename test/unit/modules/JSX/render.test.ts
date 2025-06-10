@@ -2,37 +2,39 @@ import {describe, it, expect, beforeEach} from 'vitest';
 import {render, escape, rootRender} from '../../../../lib/modules/JSX/render';
 import {Fragment} from '../../../../lib/modules/JSX/runtime';
 import {createCss} from '../../../../lib/modules/JSX/style/use';
+import {nonce} from '../../../../lib/modules/JSX/nonce/use';
 import {Style} from '../../../../lib/modules/JSX/style/Style';
+import {MockContext} from '../../../MockContext';
 
 describe('Modules - JSX - Renderer', () => {
     describe('escape()', () => {
         it('Escapes & to &amp;', () => {
             expect(escape('Fish & Chips')).toBe('Fish &amp; Chips');
         });
-  
+
         it('Escapes < and > to &lt; and &gt;', () => {
             expect(escape('<div>')).toBe('&lt;div&gt;');
             expect(escape('</script>')).toBe('&lt;/script&gt;');
         });
-  
+
         it('Escapes double and single quotes', () => {
             expect(escape('"quote"')).toBe('&quot;quote&quot;');
             expect(escape('\'quote\'')).toBe('&#39;quote&#39;');
         });
-  
+
         it('Escapes multiple entities in one string', () => {
             expect(escape('5 > 3 && 2 < 4')).toBe('5 &gt; 3 &amp;&amp; 2 &lt; 4');
         });
-  
+
         it('Returns original string if no escapable characters are present', () => {
             const clean = 'hello world';
             expect(escape(clean)).toBe(clean);
         });
-  
+
         it('Handles empty string', () => {
             expect(escape('')).toBe('');
         });
-  
+
         it('Is idempotent (double escape does nothing more)', () => {
             const once = escape('<>&\'"');
             const twice = escape(once);
@@ -112,7 +114,7 @@ describe('Modules - JSX - Renderer', () => {
                 {type: 'span', props: {children: 'one'}},
                 {type: 'span', props: {children: 'two'}},
             ]);
-        
+
             expect(out).toBe('<span>one</span><span>two</span>');
         });
 
@@ -223,27 +225,31 @@ describe('Modules - JSX - Renderer', () => {
                 const cls = css({padding: '1rem', backgroundColor: 'blue'});
                 return {type: 'div', props: {className: cls, children: 'Hello'}};
             };
-        
+
+            const ctx = new MockContext();
+
             /* @ts-ignore */
-            const html = rootRender(['__TRIFROST_STYLE_MARKER__', {type: Component, props: {}}]);
+            const html = rootRender(ctx, ['__TRIFROST_STYLE_MARKER__', {type: Component, props: {}}]);
             expect(html)
-                .toBe('<style>.tf-46gioo{padding:1rem;background-color:blue}</style><div class="tf-46gioo">Hello</div>');
+                .toBe(`<style nonce="${ctx.nonce}">.tf-46gioo{padding:1rem;background-color:blue}</style><div class="tf-46gioo">Hello</div>`);
         });
-       
-        it('renders with expected class name and style from inside component', () => {
+
+        it('Renders with expected class name and style from inside component', () => {
             let cls = '';
-        
+
             const Component = () => {
                 cls = css({margin: '2rem', color: 'black'});
                 return {type: 'div', props: {className: cls, children: 'Styled'}};
             };
-        
+
+            const ctx = new MockContext();
+
             /* @ts-ignore */
-            const html = rootRender(['__TRIFROST_STYLE_MARKER__', {type: Component, props: {}}]);
-            expect(html).toBe(`<style>.${cls}{margin:2rem;color:black}</style><div class="${cls}">Styled</div>`);
+            const html = rootRender(ctx, ['__TRIFROST_STYLE_MARKER__', {type: Component, props: {}}]);
+            expect(html).toBe(`<style nonce="${ctx.nonce}">.${cls}{margin:2rem;color:black}</style><div class="${cls}">Styled</div>`);
         });
 
-        it('injects full page with marker placement respected', () => {
+        it('Injects full page with marker placement respected', () => {
             const Header = () => {
                 const cls = css({fontSize: '1.5rem', fontWeight: 'bold'});
                 return {type: 'header', props: {className: cls, children: 'Title'}};
@@ -262,12 +268,13 @@ describe('Modules - JSX - Renderer', () => {
                     ],
                 },
             });
-    
+
+            const ctx = new MockContext();
             /* @ts-ignore */
-            const html = rootRender({type: Page, props: {}});
+            const html = rootRender(ctx, {type: Page, props: {}});
             expect(html).toBe([
                 '<header class="tf-iypj3">Title</header>',
-                '<style>',
+                `<style nonce="${ctx.nonce}">`,
                 '.tf-iypj3{font-size:1.5rem;font-weight:bold}',
                 '.tf-rnr4jx{line-height:1.5;padding:2rem}',
                 '</style>',
@@ -275,17 +282,17 @@ describe('Modules - JSX - Renderer', () => {
             ].join(''));
         });
 
-        it('returns class but does not inject style when css({…}, {inject: false}) is used', () => {
+        it('Returns class but does not inject style when css({…}, {inject: false}) is used', () => {
             let cls = '';
             const Component = () => {
                 cls = css({color: 'red'}, {inject: false});
                 return {type: 'div', props: {className: cls, children: 'Not styled'}};
             };
-            const html = rootRender({type: Component, props: {}});
+            const html = rootRender(new MockContext(), {type: Component, props: {}});
             expect(html).toBe(`<div class="${cls}">Not styled</div>`);
         });
 
-        it('injects styles into head and renders a complete page', () => {
+        it('Injects styles into head and renders a complete page', () => {
             const Button = () => {
                 const cls = css({
                     padding: '0.75rem 1.25rem',
@@ -328,12 +335,13 @@ describe('Modules - JSX - Renderer', () => {
                 },
             });
 
-            const output = rootRender({type: FullPage, props: {}});
+            const ctx = new MockContext();
+            const output = rootRender(ctx, {type: FullPage, props: {}});
             expect(output).toBe([
                 '<html>',
                 '<head>',
                 '<title>TriFrost Demo</title>',
-                '<style>',
+                `<style nonce="${ctx.nonce}">`,
                 '.tf-gz38p9:hover{background-color:darkblue}',
                 '.tf-gz38p9{padding:0.75rem 1.25rem;border:none;background-color:blue;color:white;font-weight:bold;border-radius:0.25rem}',
                 '</style>',
@@ -346,15 +354,20 @@ describe('Modules - JSX - Renderer', () => {
             ].join(''));
         });
 
-        it('resets the StyleEngine after rendering', () => {
+        it('Resets the StyleEngine after rendering', () => {
             let cls = '';
             const Component = () => {
                 cls = css({margin: '2rem', color: 'black'});
                 return {type: 'div', props: {className: cls, children: 'Styled'}};
             };
+
+            const ctx = new MockContext();
+
             /* @ts-ignore */
-            const html = rootRender(['__TRIFROST_STYLE_MARKER__', {type: Component, props: {}}]);
-            expect(html).toBe(`<style>.${cls}{margin:2rem;color:black}</style><div class="${cls}">Styled</div>`);
+            const html = rootRender(ctx, ['__TRIFROST_STYLE_MARKER__', {type: Component, props: {}}]);
+            expect(html).toBe(`<style nonce="${ctx.nonce}">.${cls}{margin:2rem;color:black}</style><div class="${cls}">Styled</div>`);
+
+            const ctx2 = new MockContext();
 
             let cls2 = '';
             const Component2 = () => {
@@ -362,8 +375,33 @@ describe('Modules - JSX - Renderer', () => {
                 return {type: 'p', props: {className: cls2, children: 'Styled'}};
             };
             /* @ts-ignore */
-            const html2 = rootRender(['__TRIFROST_STYLE_MARKER__', {type: Component2, props: {}}]);
-            expect(html2).toBe(`<style>.${cls2}{color:white;font-family:sans-serif}</style><p class="${cls2}">Styled</p>`);
+            const html2 = rootRender(ctx2, ['__TRIFROST_STYLE_MARKER__', {type: Component2, props: {}}]);
+            expect(html2).toBe(`<style nonce="${ctx2.nonce}">.${cls2}{color:white;font-family:sans-serif}</style><p class="${cls2}">Styled</p>`);
+        });
+
+        it('Exposes nonce via active context during render', () => {
+            const Component = () => {
+                return {type: 'script', props: {nonce: nonce(), children: 'Nonce-bound'}};
+            };
+
+            // @ts-ignore
+            const html = rootRender(new MockContext({nonce: 'abc-123'}), {type: Component, props: {}});
+            expect(html).toBe('<script nonce="abc-123">Nonce-bound</script>');
+        });
+
+        it('Throws if nonce is accessed outside render lifecycle', () => {
+            expect(() => nonce()).toThrowError('No active nonce is set');
+        });
+
+        it('Resets nonce after render completes', () => {
+            const Component = () => ({type: 'div', props: {children: nonce()}});
+
+            // @ts-ignore
+            const html = rootRender(new MockContext({nonce: 'abc123'}), {type: Component, props: {}});
+            expect(html).toContain('abc123');
+
+            // after render, calling nonce again should throw
+            expect(() => nonce()).toThrowError('No active nonce is set');
         });
     });
 });

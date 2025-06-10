@@ -1,11 +1,13 @@
 /* eslint-disable no-underscore-dangle,no-use-before-define */
 
 import {isObject} from '@valkyriestudios/utils/object';
+import {type TriFrostContext} from '../../types/context';
 import {type JSXElement} from './types';
 import {Fragment} from './runtime';
 import {StyleEngine} from './style/Engine';
 import {setActiveStyleEngine, getActiveStyleEngine} from './style/use';
-import {styleToString} from './style/util'; 
+import {setActiveNonce} from './nonce/use';
+import {styleToString} from './style/util';
 
 const VOID_TAGS = {
     area: true,
@@ -55,12 +57,12 @@ const ESCAPE_LOOKUP = {
     '"': '&quot;',
     '\'': '&#39;',
 } as const;
-  
+
 const ESCAPE_REGEX = /(?:&(?![a-z#0-9]+;))|[<>"']/gi;
-  
+
 /**
  * Escape HTML entities in strings to prevent XSS attacks.
- * 
+ *
  * @param {string} str - Input string to escape.
  */
 export function escape (str:string):string {
@@ -69,7 +71,7 @@ export function escape (str:string):string {
 
 /**
  * Renders properties such as style/attributes
- * 
+ *
  * @param {Record<string, unknown>} props - Props to render
  */
 function renderProps (props:Record<string, unknown>|null) {
@@ -168,14 +170,16 @@ export function render (node: JSXElement | string | number | boolean | null): st
 /**
  * Starts the render process for a JSX element
  */
-export function rootRender (tree:JSXElement):string {
+export function rootRender (ctx:TriFrostContext, tree:JSXElement):string {
     /* Instantiate globals */
     const style_engine = getActiveStyleEngine() || setActiveStyleEngine(new StyleEngine());
+    setActiveNonce(ctx.nonce);
 
     /* Render jsx to html */
     const html = style_engine.inject(render(tree));
 
     /* Cleanup globals */
+    setActiveNonce(null);
     setActiveStyleEngine(null);
 
     return html;

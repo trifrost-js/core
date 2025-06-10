@@ -36,8 +36,10 @@ export {
 /* Modules - JSX */
 export {
     createCss,
-    Style
-} from './modules/JSX/style';
+    Style,
+    nonce,
+    type JSXElement
+} from './modules/JSX';
 
 /* Modules - Rate Limit */
 export {Sym_TriFrostMiddlewareRateLimit} from './modules/RateLimit';
