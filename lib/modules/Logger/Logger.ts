@@ -6,7 +6,7 @@ import {
     type TriFrostLoggerLogPayload,
     type TriFrostLoggerSpanPayload,
 } from './types';
-import {hexId} from '../../utils/String';
+import {hexId} from '../../utils/Generic';
 
 /* Ensure valid trace id, a otel trace id IS a 32 hexadecimal char string 0-9 a-f */
 export function isValidTraceId (str:string):boolean {

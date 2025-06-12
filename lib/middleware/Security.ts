@@ -12,7 +12,7 @@ import {
     Sym_TriFrostType,
 } from '../types/constants';
 import {type TriFrostContext} from '../types/context';
-import {hexId} from '../utils/String';
+import {hexId} from '../utils/Generic';
 
 const RGX_NONCE = /'nonce'/g;
 

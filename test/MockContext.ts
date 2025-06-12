@@ -23,7 +23,7 @@ import {type TriFrostCache} from '../lib/modules/Cache';
 import {Logger, type TriFrostLogger} from '../lib/modules/Logger';
 import {type JSXElement} from '../lib/modules/JSX';
 import {MemoryCache} from '../lib/storage/Memory';
-import { hexId } from '../lib/utils/String';
+import { hexId } from '../lib/utils/Generic';
 
 export class MockContext<
     State extends Record<string | number, unknown> = Record<string | number, unknown>,

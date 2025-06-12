@@ -39,7 +39,7 @@ import {
     type TriFrostContextKind,
 } from './types/context';
 import {encodeFilename} from './utils/Http';
-import {hexId} from './utils/String';
+import {hexId} from './utils/Generic';
 
 type RequestConfig = {
     method: HttpMethod,
