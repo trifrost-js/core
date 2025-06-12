@@ -11,7 +11,6 @@ import CONSTANTS from '../../constants';
 import {
     Sym_TriFrostDescription,
     Sym_TriFrostName,
-    Sym_TriFrostType,
     Sym_TriFrostFingerPrint,
 } from '../../../lib/types/constants';
 
@@ -25,7 +24,6 @@ describe('Middleware - CacheControl', () => {
     it('Returns a function with TriFrost symbols set', () => {
         const fn = CacheControl();
         expect(Reflect.get(fn, Sym_TriFrostName)).toBe('TriFrostCacheControl');
-        expect(Reflect.get(fn, Sym_TriFrostType)).toBe('middleware');
         expect(Reflect.get(fn, Sym_TriFrostDescription)).toBe('Middleware adding Cache-Control headers to contexts passing through it');
     });
 

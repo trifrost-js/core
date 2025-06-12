@@ -3,7 +3,7 @@ import {isObject} from '@valkyriestudios/utils/object';
 import {describe, it, expect, beforeEach, vi, afterEach} from 'vitest';
 import {cacheSkip} from '../../../lib/modules/Cache/util';
 import {KVStore, KVCache, KVRateLimit} from '../../../lib/storage/KV';
-import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostType} from '../../../lib/types/constants';
+import {Sym_TriFrostDescription, Sym_TriFrostName} from '../../../lib/types/constants';
 import {type TriFrostContextKind} from '../../../lib/types/context';
 import {MockKV} from '../../MockKV';
 import {MockContext} from '../../MockContext';
@@ -22,17 +22,17 @@ describe('Storage - KV', () => {
 
     describe('Store', () => {
         let store:KVStore;
-    
+
         beforeEach(() => {
             store = new KVStore(kv);
         });
-        
+
         describe('constructor', () => {
             it('initializes correctly with a KV namespace', () => {
                 expect(store).toBeInstanceOf(KVStore);
             });
         });
-    
+
         describe('get', () => {
             it('Returns null for missing keys', async () => {
                 const result = await store.get('not-set');
@@ -41,7 +41,7 @@ describe('Storage - KV', () => {
                     ['get', ['not-set', 'json']],
                 ]);
             });
-    
+
             it('Returns parsed object if present', async () => {
                 await kv.put('obj', JSON.stringify({x: 1}));
                 const result = await store.get('obj');
@@ -51,7 +51,7 @@ describe('Storage - KV', () => {
                     ['get', ['obj', 'json']],
                 ]);
             });
-    
+
             it('Returns parsed array if present', async () => {
                 await kv.put('val', JSON.stringify([0, 1, 2, {x: 1}]));
                 const result = await store.get('val');
@@ -61,7 +61,7 @@ describe('Storage - KV', () => {
                     ['get', ['val', 'json']],
                 ]);
             });
-    
+
             it('Returns null if stored value is malformed JSON', async () => {
                 await kv.put('bad-json', 'not:json');
                 const result = await store.get('bad-json');
@@ -71,7 +71,7 @@ describe('Storage - KV', () => {
                     ['get', ['bad-json', 'json']],
                 ]);
             });
-    
+
             it('Throws on invalid key', async () => {
                 for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
                     await expect(store.get(el as string)).rejects.toThrow(/KVStore@get: Invalid key/);
@@ -83,28 +83,28 @@ describe('Storage - KV', () => {
                 const errStore = new KVStore({
                     ...kv,
                     get: async () => {
-                        throw new Error('kv failure'); 
+                        throw new Error('kv failure');
                     },
                 } as any);
-            
+
                 const result = await errStore.get('boom');
                 expect(result).toBeNull();
             });
-            
+
             it('Logs and returns null if adapter.get throws (spawned)', async () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
                 const result = await new KVStore({
                     ...kv,
                     get: async () => {
-                        throw new Error('kv exploded'); 
+                        throw new Error('kv exploded');
                     },
                 } as any).spawn(ctx).get('fail');
                 expect(result).toBeNull();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {key: 'fail'});
-            });            
+            });
         });
-    
+
         describe('set', () => {
             it('Defaults TTL to 60 if not provided', async () => {
                 await store.set('ttl-default', {hello: 'world'});
@@ -112,7 +112,7 @@ describe('Storage - KV', () => {
                     ['put', ['ttl-default', '{"hello":"world"}', {expirationTtl: 60}]],
                 ]);
             });
-    
+
             it('Stores object value as JSON', async () => {
                 await store.set('thing', {test: true});
                 const result = await store.get('thing');
@@ -122,7 +122,7 @@ describe('Storage - KV', () => {
                     ['get', ['thing', 'json']],
                 ]);
             });
-    
+
             it('Stores array value as JSON', async () => {
                 await store.set('thing', [0, 1, 2, {test: true}]);
                 const result = await store.get('thing');
@@ -132,14 +132,14 @@ describe('Storage - KV', () => {
                     ['get', ['thing', 'json']],
                 ]);
             });
-    
+
             it('Respects provided TTL if valid', async () => {
                 await store.set('ttl-key', {y: 2}, {ttl: 300});
                 expect(kv.calls).toEqual([
                     ['put', ['ttl-key', '{"y":2}', {expirationTtl: 300}]],
                 ]);
             });
-    
+
             it('Falls back to a TTL of 60 if provided TTL is not an integer above 0', async () => {
                 for (const el of [...CONSTANTS.NOT_INTEGER, 0, -1, 10.5]) {
                     await store.set('ttl-key', {y: 2}, {ttl: el as number});
@@ -149,20 +149,20 @@ describe('Storage - KV', () => {
                     kv.reset();
                 }
             });
-    
+
             it('Throws on invalid key', async () => {
                 for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
                     await expect(store.set(el as string, {x: 1})).rejects.toThrow(/KVStore@set: Invalid key/);
                 }
                 expect(kv.isEmpty).toBe(true);
             });
-    
+
             it('Throws on non-object/non-array value', async () => {
                 for (const el of CONSTANTS.NOT_OBJECT) {
                     if (Array.isArray(el)) continue;
                     await expect(store.set('key', el as Record<string, unknown>)).rejects.toThrow(/KVStore@set: Invalid value/);
                 }
-    
+
                 for (const el of CONSTANTS.NOT_ARRAY) {
                     if (isObject(el)) continue;
                     await expect(store.set('key', el as Record<string, unknown>)).rejects.toThrow(/KVStore@set: Invalid value/);
@@ -174,21 +174,21 @@ describe('Storage - KV', () => {
                 const errStore = new KVStore({
                     ...kv,
                     put: async () => {
-                        throw new Error('KV put died'); 
+                        throw new Error('KV put died');
                     },
                 } as any);
-            
+
                 await expect(errStore.set('key', {x: 1})).resolves.toBeUndefined();
             });
 
             it('Logs error if adapter.set fails (spawned)', async () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
-            
+
                 await expect(new KVStore({
                     ...kv,
                     put: async () => {
-                        throw new Error('cannot set'); 
+                        throw new Error('cannot set');
                     },
                 } as any).spawn(ctx).set('trouble', {x: 5})).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {
@@ -196,17 +196,17 @@ describe('Storage - KV', () => {
                     value: {x: 5},
                     opts: undefined,
                 });
-            });            
+            });
         });
-    
+
         describe('del', () => {
             it('Removes a key if it exists', async () => {
                 await store.set('toremove', {z: 9});
                 expect(await store.get('toremove')).toEqual({z: 9});
-                
+
                 await store.del('toremove');
                 expect(await store.get('toremove')).toBe(null);
-    
+
                 expect(kv.calls).toEqual([
                     ['put', ['toremove', '{"z":9}', {expirationTtl: 60}]],
                     ['get', ['toremove', 'json']],
@@ -214,7 +214,7 @@ describe('Storage - KV', () => {
                     ['get', ['toremove', 'json']],
                 ]);
             });
-    
+
             it('does nothing for non-existent key', async () => {
                 await expect(store.del('ghost')).resolves.toBe(undefined);
                 expect(kv.calls).toEqual([
@@ -226,9 +226,9 @@ describe('Storage - KV', () => {
                 await store.set('user.1', {x: 1});
                 await store.set('user.2', {y: 2});
                 await store.set('auth', {z: 3});
-            
+
                 await store.del({prefix: 'user.'});
-            
+
                 expect(await store.get('user.1')).toBe(null);
                 expect(await store.get('user.2')).toBe(null);
                 expect(await store.get('auth')).toEqual({z: 3});
@@ -244,7 +244,7 @@ describe('Storage - KV', () => {
                     ['get', ['auth', 'json']],
                 ]);
             });
-            
+
             it('Handles prefix that matches no keys gracefully', async () => {
                 await store.set('foo', {a: 1});
                 await store.del({prefix: 'doesnotexist:'});
@@ -255,7 +255,7 @@ describe('Storage - KV', () => {
                     ['get', ['foo', 'json']],
                 ]);
             });
-    
+
             it('throws on invalid key', async () => {
                 for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
                     await expect(store.del(el as string)).rejects.toThrow(/KVStore@del: Invalid deletion value/);
@@ -274,46 +274,46 @@ describe('Storage - KV', () => {
                 const errStore = new KVStore({
                     ...kv,
                     delete: async () => {
-                        throw new Error('kv delete error'); 
+                        throw new Error('kv delete error');
                     },
                 } as any);
-            
+
                 await expect(errStore.del('key')).resolves.toBeUndefined();
             });
-            
+
             it('Logs error if adapter.del fails for key (spawned)', async () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
-            
+
                 await expect(new KVStore({
                     ...kv,
                     delete: async () => {
-                        throw new Error('delete err'); 
+                        throw new Error('delete err');
                     },
                 } as any).spawn(ctx).del('key')).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: 'key'});
             });
-            
+
             it('Logs error if adapter.delPrefixed fails (spawned)', async () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
-            
+
                 await expect(new KVStore({
                     ...kv,
                     list: async () => {
-                        throw new Error('list explode'); 
+                        throw new Error('list explode');
                     },
                 } as any).spawn(ctx).del({prefix: 'x.'})).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: {prefix: 'x.'}});
-            });            
+            });
         });
-    
+
         describe('stop', () => {
             it('Should not do anything and not throw', async () => {
                 await store.stop();
                 expect(kv.isEmpty).toBe(true);
             });
-        });        
+        });
     });
 
     describe('Cache', () => {
@@ -384,10 +384,10 @@ describe('Storage - KV', () => {
             it('Returns null if value in KV is malformed or not wrapped', async () => {
                 await kv.put('corrupt', JSON.stringify({not_v: 123}));
                 expect(await cache.get('corrupt')).toBe(null);
-            
+
                 await kv.put('not-json', 'plain string');
                 expect(await cache.get('not-json')).toBe(null);
-            });        
+            });
 
             it('Returns stored object', async () => {
                 await kv.put('foo', JSON.stringify({v: {bar: 1}}));
@@ -623,7 +623,7 @@ describe('Storage - KV', () => {
                     expect(() => new KVRateLimit(el)).toThrow(/KVRateLimit: Expected a store initializer/);
                 }
             });
-    
+
             it('Initializes with default strategy (fixed) and window (60)', async () => {
                 const rl = new KVRateLimit({store: () => kv});
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
@@ -638,7 +638,7 @@ describe('Storage - KV', () => {
                     ['put', ['127.0.0.1:route:GET', `{"amt":1,"reset":${now+rl.window}}`, {expirationTtl: 60}]],
                 ]);
             });
-    
+
             it('Initializes with sliding strategy', async () => {
                 const rl = new KVRateLimit({
                     store: () => kv,
@@ -656,7 +656,7 @@ describe('Storage - KV', () => {
                     ['put', ['127.0.0.1:route:GET', `[${now}]`, {expirationTtl: 60}]],
                 ]);
             });
-    
+
             it('Throws for invalid limit types', async () => {
                 const rl = new KVRateLimit({store: () => kv});
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
@@ -667,11 +667,11 @@ describe('Storage - KV', () => {
                 expect(rl.window).toBe(60);
                 expect(kv.isEmpty).toBe(true);
             });
-    
+
             it('Skips processing for non-std context kinds', async () => {
                 const rl = new KVRateLimit({store: () => kv});
                 const mw = rl.limit(1);
-              
+
                 for (const kind of ['notfound', 'health', 'options']) {
                     const ctx = new MockContext({kind: kind as TriFrostContextKind});
                     await mw(ctx);
@@ -680,19 +680,18 @@ describe('Storage - KV', () => {
                     expect(kv.isEmpty).toBe(true);
                 }
             });
-    
+
             it('Registers correct introspection symbols', async () => {
                 const rl = new KVRateLimit({store: () => kv});
                 const mw = rl.limit(5);
-              
+
                 expect(rl.strategy).toBe('fixed');
                 expect(rl.window).toBe(60);
                 expect(Reflect.get(mw, Sym_TriFrostName)).toBe('TriFrostRateLimit');
-                expect(Reflect.get(mw, Sym_TriFrostType)).toBe('middleware');
                 expect(Reflect.get(mw, Sym_TriFrostDescription)).toBe('Middleware for rate limitting contexts passing through it');
                 expect(kv.isEmpty).toBe(true);
             });
-    
+
             it('Sets rate limit headers when enabled', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new KVRateLimit({window: 1, store: () => kv});
@@ -713,7 +712,7 @@ describe('Storage - KV', () => {
                     ['get', ['127.0.0.1:test:POST', 'json']],
                 ]);
             });
-    
+
             it('Disables rate limit headers when disabled', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new KVRateLimit({headers: false, store: () => kv});
@@ -731,7 +730,7 @@ describe('Storage - KV', () => {
                     ['get', ['127.0.0.1:test:POST', 'json']],
                 ]);
             });
-    
+
             it('Supports custom key generators', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new KVRateLimit({keygen: el => `ip:${el.ip}`, store: () => kv});
@@ -752,7 +751,7 @@ describe('Storage - KV', () => {
                     ['put', ['ip:127.0.0.1', `{"amt":2,"reset":${now+rl.window}}`, {expirationTtl: 60}]],
                 ]);
             });
-    
+
             it('Supports custom exceeded handler', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const exceeded = vi.fn(el => el.status(400));
@@ -769,17 +768,17 @@ describe('Storage - KV', () => {
                     ['get', ['127.0.0.1:test:POST', 'json']],
                 ]);
             });
-    
+
             it('Generates correct keys for all built-in keygens (with IP)', async () => {
                 const ctx = new MockContext({ip: '72.8.34.9', name: 'foo', method: 'GET'});
-              
+
                 const expected = {
                     ip: '72.8.34.9',
                     ip_name: '72.8.34.9:foo',
                     ip_method: '72.8.34.9:GET',
                     ip_name_method: '72.8.34.9:foo:GET',
                 };
-              
+
                 for (const [key, key_expected] of Object.entries(expected)) {
                     const rl = new KVRateLimit({keygen: key as any, store: () => kv});
                     const mw = rl.limit(1);
@@ -787,7 +786,7 @@ describe('Storage - KV', () => {
                     await mw(ctx);
                     await mw(ctx);
                     expect(ctx.statusCode).toBe(429);
-    
+
                     expect(kv.calls).toEqual([
                         ['get', [key_expected, 'json']],
                         ['put', [key_expected, `{"amt":1,"reset":${now+rl.window}}`, {expirationTtl: 60}]],
@@ -796,17 +795,17 @@ describe('Storage - KV', () => {
                     kv.reset();
                 }
             });
-              
+
             it('Falls back to "unknown" if no IP is available', async () => {
                 const ctx = new MockContext({ip: null, name: 'foo', method: 'GET'});
-              
+
                 const expected = {
                     ip: 'unknown',
                     ip_name: 'unknown:foo',
                     ip_method: 'unknown:GET',
                     ip_name_method: 'unknown:foo:GET',
                 };
-              
+
                 for (const [key, key_expected] of Object.entries(expected)) {
                     const rl = new KVRateLimit({keygen: key as any, store: () => kv});
                     const mw = rl.limit(1);
@@ -814,7 +813,7 @@ describe('Storage - KV', () => {
                     await mw(ctx);
                     await mw(ctx);
                     expect(ctx.statusCode).toBe(429);
-    
+
                     expect(kv.calls).toEqual([
                         ['get', [key_expected, 'json']],
                         ['put', [key_expected, `{"amt":1,"reset":${now+rl.window}}`, {expirationTtl: 60}]],
@@ -823,13 +822,13 @@ describe('Storage - KV', () => {
                     kv.reset();
                 }
             });
-    
+
             it('Falls back to "unknown" if keygen returns falsy', async () => {
                 const rl = new KVRateLimit({
                     store: () => kv,
                     keygen: () => undefined as unknown as string, /* Force falsy value */
                 });
-              
+
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const mw = rl.limit(1);
                 const now = Math.floor(Date.now()/1000);
@@ -840,11 +839,11 @@ describe('Storage - KV', () => {
                     ['put', ['unknown', `{"amt":1,"reset":${now+rl.window}}`, {expirationTtl: 60}]],
                     ['get', ['unknown', 'json']],
                 ]);
-              
+
                 expect(ctx.statusCode).toBe(429);
             });
         });
-    
+
         describe('strategy:fixed', () => {
             it('Allows requests within limit', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
@@ -855,7 +854,7 @@ describe('Storage - KV', () => {
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(200);
             });
-    
+
             it('Blocks requests over the limit', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new KVRateLimit({window: 1000, store: () => kv});
@@ -865,7 +864,7 @@ describe('Storage - KV', () => {
                 expect(ctx.statusCode).toBe(429);
             });
         });
-    
+
         describe('strategy:sliding', () => {
             it('Allows requests within windowed limit', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
@@ -875,7 +874,7 @@ describe('Storage - KV', () => {
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(200);
             });
-    
+
             it('Blocks when timestamps exceed limit in window', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new KVRateLimit({strategy: 'sliding', window: 1, store: () => kv});
@@ -884,7 +883,7 @@ describe('Storage - KV', () => {
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(429);
             });
-    
+
             it('Clears oldest timestamps after window expiry', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new KVRateLimit({strategy: 'sliding', window: 1, store: () => kv});
@@ -894,29 +893,29 @@ describe('Storage - KV', () => {
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(200);
             });
-    
+
             it('Prunes first timestamp if it falls outside the window', async () => {
                 const rl = new KVRateLimit({strategy: 'sliding', window: 1, store: () => kv});
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const mw = rl.limit(2);
-              
+
                 /* First request */
                 await mw(ctx);
-              
+
                 /* @ts-ignore Manually insert an old timestamp to simulate an aged entry */
                 await rl.resolvedStore.store.set('127.0.0.1:test:POST', [Math.floor(Date.now()/1000) - 2]);
-              
+
                 /* Second request triggers pruning of old timestamp */
                 await mw(ctx);
-              
+
                 /* @ts-ignore We want to test this */
                 const val = await rl.resolvedStore.store.get('127.0.0.1:test:POST');
-              
+
                 expect(Array.isArray(val)).toBe(true);
                 expect(val.length).toBe(1); /* old timestamp pruned */
                 expect(val[0]).toBeGreaterThan(Math.floor(Date.now()/1000) - 1); /* only recent timestamp remains */
                 expect(ctx.statusCode).toBe(200);
             });
         });
-    });    
+    });
 });

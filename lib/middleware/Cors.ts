@@ -10,7 +10,6 @@ import {
     Sym_TriFrostDescription,
     Sym_TriFrostFingerPrint,
     Sym_TriFrostName,
-    Sym_TriFrostType,
 } from '../types/constants';
 import {type TriFrostContext} from '../types/context';
 
@@ -51,10 +50,10 @@ const CorsDefaults: TriFrostCorsOptions = {
 
 /**
  * CORS - Cross Origin Resource Sharing
- * 
+ *
  * @param {TriFrostCorsOptions} options - Options to apply
  * @param {TriFrostCorsConfig} config - Additional behavioral config
- * 
+ *
  * @see origin - https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Allow-Origin
  * @see methods - https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Allow-Methods
  * @see headers - https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Allow-Headers
@@ -156,7 +155,6 @@ export function Cors <
 
     /* Add symbols for introspection/use further down the line */
     Reflect.set(mware, Sym_TriFrostName, 'TriFrostCors');
-    Reflect.set(mware, Sym_TriFrostType, 'middleware');
     Reflect.set(mware, Sym_TriFrostDescription, 'Middleware for Cross Origin Resource Sharing');
     Reflect.set(mware, Sym_TriFrostFingerPrint, Sym_TriFrostMiddlewareCors);
 

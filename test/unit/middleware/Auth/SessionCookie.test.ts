@@ -2,7 +2,7 @@ import {describe, it, expect, vi} from 'vitest';
 import {SessionCookieAuth, Sym_TriFrostMiddlewareSessionCookieAuth} from '../../../../lib/middleware/Auth/SessionCookie';
 import {Sym_TriFrostMiddlewareAuth} from '../../../../lib/middleware/Auth/types';
 import {MockContext} from '../../../MockContext';
-import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostType, Sym_TriFrostFingerPrint} from '../../../../lib/types/constants';
+import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostFingerPrint} from '../../../../lib/types/constants';
 import CONSTANTS from '../../../constants';
 
 const makeCtx = (cookieVal?: string|null) => {
@@ -164,7 +164,6 @@ describe('Middleware - Auth - SessionCookie', () => {
             secret: {val: 'secret'},
         });
         expect(Reflect.get(mw, Sym_TriFrostName)).toBe('TriFrostSessionCookieAuth');
-        expect(Reflect.get(mw, Sym_TriFrostType)).toBe('middleware');
         expect(Reflect.get(mw, Sym_TriFrostDescription)).toBe('Session Cookie Authentication middleware');
     });
 

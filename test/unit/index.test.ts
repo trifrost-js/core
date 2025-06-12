@@ -20,7 +20,6 @@ import {RedisCache, RedisRateLimit} from '../../lib/storage/Redis';
 import {
     Sym_TriFrostName,
     Sym_TriFrostDescription,
-    Sym_TriFrostMeta,
     Sym_TriFrostFingerPrint,
     MimeTypes,
     HttpStatuses,
@@ -57,10 +56,6 @@ describe('index', () => {
 
         it('Sym_TriFrostFingerPrint', () => {
             expect(Index.Sym_TriFrostFingerPrint).toBe(Sym_TriFrostFingerPrint);
-        });
-
-        it('Sym_TriFrostMeta', () => {
-            expect(Index.Sym_TriFrostMeta).toBe(Sym_TriFrostMeta);
         });
 
         it('Sym_TriFrostMiddlewareAuth', () => {

@@ -3,7 +3,6 @@ import {
     Sym_TriFrostDescription,
     Sym_TriFrostFingerPrint,
     Sym_TriFrostName,
-    Sym_TriFrostType,
 } from '../../types/constants';
 import {type TriFrostContext} from '../../types/context';
 import {type SigningAlgorithm} from '../../modules/Cookies';
@@ -116,7 +115,6 @@ export function SessionCookieAuth <
 
     /* Add symbols for introspection/use further down the line */
     Reflect.set(mware, Sym_TriFrostName, 'TriFrostSessionCookieAuth');
-    Reflect.set(mware, Sym_TriFrostType, 'middleware');
     Reflect.set(mware, Sym_TriFrostDescription, 'Session Cookie Authentication middleware');
     Reflect.set(mware, Sym_TriFrostMiddlewareAuth, true);
     Reflect.set(mware, Sym_TriFrostFingerPrint, Sym_TriFrostMiddlewareSessionCookieAuth);

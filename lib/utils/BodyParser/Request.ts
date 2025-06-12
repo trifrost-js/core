@@ -1,55 +1,18 @@
-import {toObject} from '@valkyriestudios/utils/formdata';
+import {type ParsedBody, type TriFrostBodyParserOptions} from './types';
 import {type TriFrostContext} from '../../types/context';
-import {MimeTypes} from '../../types/constants';
-import {type ParsedBody} from './types';
+import {parseBody as uint8Parser} from './Uint8Array';
 
-/**
- * Parses a raw request into an object for use on a trifrost context
- */
 export async function parseBody <T extends ParsedBody = ParsedBody> (
     ctx:TriFrostContext,
-    req:Request|null
-):Promise<T> {
+    req:Request,
+    config:TriFrostBodyParserOptions
+):Promise<T|null> {
     if (!(req instanceof Request)) return {} as T;
-    const type = typeof ctx.headers?.['content-type'] === 'string'
-        ? ctx.headers['content-type'].split(';', 1)[0].trim().toLowerCase()
-        : '';
-
     try {
-        switch (type) {
-            case MimeTypes.JSON:
-            case MimeTypes.JSON_TEXT:
-            case MimeTypes.JSON_LD: {
-                const body = await req.json() as T;
-                return body;
-            }
-            case MimeTypes.JSON_ND: {
-                const text = await req.text();
-                const lines = text.trim().split('\n');
-                const acc = [];
-                for (let i = 0; i < lines.length; i++) acc.push(JSON.parse(lines[i]));
-                return {raw: acc} as T;
-            }
-            case MimeTypes.HTML:
-            case MimeTypes.TEXT:
-            case MimeTypes.CSV:
-            case MimeTypes.XML:
-            case MimeTypes.XML_TEXT: {
-                const body = await req.text();
-                return {raw: body} as T;
-            }
-            case MimeTypes.FORM_URLENCODED:
-            case MimeTypes.FORM_MULTIPART: {
-                const body = await req.formData();
-                return toObject(body) as T;
-            }
-            default: {
-                const body = await req.arrayBuffer();
-                return {raw: body} as T;
-            }
-        }
+        const buf = new Uint8Array(await req.arrayBuffer());
+        return uint8Parser(ctx, buf, config);
     } catch (err:any) {
-        ctx.logger.debug('parseBody: Failed to parse', {type, msg: err.message});
+        ctx.logger.error(err);
         return {} as T;
     }
 }

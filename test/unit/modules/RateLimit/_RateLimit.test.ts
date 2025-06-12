@@ -4,7 +4,7 @@ import CONSTANTS from '../../../constants';
 import {Store} from '../../../../lib/storage/_Storage';
 import {MockContext} from '../../../MockContext';
 import {sleep} from '@valkyriestudios/utils/function';
-import {Sym_TriFrostDescription, Sym_TriFrostFingerPrint, Sym_TriFrostName, Sym_TriFrostType} from '../../../../lib/types/constants';
+import {Sym_TriFrostDescription, Sym_TriFrostFingerPrint, Sym_TriFrostName} from '../../../../lib/types/constants';
 import {TriFrostContextKind} from '../../../../lib/types/context';
 
 const mockStore = () => {
@@ -94,7 +94,7 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
         it('Skips processing for non-std context kinds', async () => {
             const rl = new TriFrostRateLimit({store: () => store});
             const mw = rl.limit(1);
-        
+
             for (const kind of ['notfound', 'health', 'options']) {
                 const ctx = new MockContext({kind: kind as TriFrostContextKind});
                 await mw(ctx);
@@ -107,11 +107,10 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
         it('Registers correct introspection symbols', async () => {
             const rl = new TriFrostRateLimit({store: () => store});
             const mw = rl.limit(5);
-        
+
             expect(rl.strategy).toBe('fixed');
             expect(rl.window).toBe(60);
             expect(Reflect.get(mw, Sym_TriFrostName)).toBe('TriFrostRateLimit');
-            expect(Reflect.get(mw, Sym_TriFrostType)).toBe('middleware');
             expect(Reflect.get(mw, Sym_TriFrostDescription)).toBe('Middleware for rate limitting contexts passing through it');
             expect(store.calls.length).toBe(0);
         });
@@ -119,7 +118,7 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
         it('Registers specific symbol to identify rate limiter to middleware', async () => {
             const rl = new TriFrostRateLimit({store: () => store});
             const mw = rl.limit(5);
-        
+
             expect(rl.strategy).toBe('fixed');
             expect(rl.window).toBe(60);
             expect(Reflect.get(mw, Sym_TriFrostFingerPrint)).toBe(Sym_TriFrostMiddlewareRateLimit);
@@ -205,14 +204,14 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
 
         it('Generates correct keys for all built-in keygens (with IP)', async () => {
             const ctx = new MockContext({ip: '72.8.34.9', name: 'foo', method: 'GET'});
-        
+
             const expected = {
                 ip: '72.8.34.9',
                 ip_name: '72.8.34.9:foo',
                 ip_method: '72.8.34.9:GET',
                 ip_name_method: '72.8.34.9:foo:GET',
             };
-        
+
             for (const [key, key_expected] of Object.entries(expected)) {
                 const rl = new TriFrostRateLimit({keygen: key as any, store: () => store});
                 const mw = rl.limit(1);
@@ -229,17 +228,17 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
                 store.calls = [];
             }
         });
-        
+
         it('Falls back to "unknown" if no IP is available', async () => {
             const ctx = new MockContext({ip: null, name: 'foo', method: 'GET'});
-        
+
             const expected = {
                 ip: 'unknown',
                 ip_name: 'unknown:foo',
                 ip_method: 'unknown:GET',
                 ip_name_method: 'unknown:foo:GET',
             };
-        
+
             for (const [key, key_expected] of Object.entries(expected)) {
                 const rl = new TriFrostRateLimit({keygen: key as any, store: () => store});
                 const mw = rl.limit(1);
@@ -262,7 +261,7 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
                 store: () => store,
                 keygen: () => undefined as unknown as string, /* Force falsy value */
             });
-        
+
             const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
             const mw = rl.limit(1);
             const now = Math.floor(Date.now()/1000);
@@ -273,7 +272,7 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
                 ['set:unknown', {amt:1, reset:now+rl.window}, {ttl: 60}],
                 ['get:unknown'],
             ]);
-        
+
             expect(ctx.statusCode).toBe(429);
         });
     });
@@ -332,19 +331,19 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
             const rl = new TriFrostRateLimit({strategy: 'sliding', window: 1, store: () => store});
             const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
             const mw = rl.limit(2);
-        
+
             /* First request */
             await mw(ctx);
-        
+
             /* @ts-ignore Manually insert an old timestamp to simulate an aged entry */
             await rl.resolvedStore.store.set('127.0.0.1:test:POST', [Math.floor(Date.now()/1000) - 2]);
-        
+
             /* Second request triggers pruning of old timestamp */
             await mw(ctx);
-        
+
             /* @ts-ignore We want to test this */
             const val = await rl.resolvedStore.store.get('127.0.0.1:test:POST');
-        
+
             expect(Array.isArray(val)).toBe(true);
             expect(val.length).toBe(1); /* old timestamp pruned */
             expect(val[0]).toBeGreaterThan(Math.floor(Date.now()/1000) - 1); /* only recent timestamp remains */

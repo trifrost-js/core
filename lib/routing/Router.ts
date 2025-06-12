@@ -22,19 +22,21 @@ import {
 import {
     type HttpMethod,
     HttpMethods,
-    Sym_TriFrostDescription,
-    Sym_TriFrostMeta,
     Sym_TriFrostName,
-    Sym_TriFrostType,
 } from '../types/constants';
 import {Route} from './Route';
 import {RouteTree} from './Tree';
 import {
+    isValidBodyParser,
     isValidGrouper,
     isValidHandler,
     isValidLimit,
     isValidMiddleware,
+    normalizeMiddleware,
 } from './util';
+import {
+    type TriFrostBodyParserOptions,
+} from '../utils/BodyParser/types';
 
 const RGX_SLASH = /\/{2,}/g;
 
@@ -48,6 +50,9 @@ class Router <
 
     /* Configured Rate limit instance from the app */
     #rateLimit:TriFrostRateLimit<Env>|null = null;
+
+    /* Configured Body Parser options */
+    #bodyParser:TriFrostBodyParserOptions|null = null;
 
     /* Tree passed by parent */
     #tree:RouteTree<Env>;
@@ -74,6 +79,9 @@ class Router <
             typeof options.rateLimit?.limit !== 'function'
         ) throw new Error('TriFrostRouter@ctor: RateLimit is invalid');
 
+        /* Check rate limit instance */
+        if (!isValidBodyParser(options.bodyParser)) throw new Error('TriFrostRouter@ctor: BodyParser is invalid');
+
         /* Check tree */
         if (
             !(options.tree instanceof RouteTree)
@@ -92,6 +100,9 @@ class Router <
 
         /* Configure RateLimit instance */
         this.#rateLimit = options.rateLimit || null;
+
+        /* Configure body parser */
+        this.#bodyParser = options.bodyParser;
 
         /* Configure tree */
         this.#tree = options.tree;
@@ -138,7 +149,6 @@ class Router <
 
         /* Add symbols for introspection/use further down the line */
         Reflect.set(fn, Sym_TriFrostName, name);
-        Reflect.set(fn, Sym_TriFrostType, Reflect.get(fn, Sym_TriFrostType) ?? 'middleware');
 
         this.#middleware.push(fn as TriFrostMiddleware<Env, State>);
 
@@ -152,6 +162,15 @@ class Router <
         if (!this.#rateLimit) throw new Error('TriFrostRouter@limit: RateLimit is not configured on App');
         if (!isValidLimit<Env, State>(limit)) throw new Error('TriFrostRouter@limit: Invalid limit');
         this.use(this.#rateLimit.limit<Env, State>(limit));
+        return this;
+    }
+
+    /**
+     * Configure body parser options for this router
+     */
+    bodyParser (options:TriFrostBodyParserOptions|null) {
+        if (!isValidBodyParser(options)) throw new Error('TriFrostRouter@bodyParser: Invalid bodyparser');
+        this.#bodyParser = options;
         return this;
     }
 
@@ -177,6 +196,7 @@ class Router <
             rateLimit: this.#rateLimit,
             timeout: timeout !== undefined ? timeout : this.#timeout,
             middleware: this.#middleware as TriFrostMiddleware<Env, State & PathParam<Path>>[],
+            bodyParser: this.#bodyParser,
         }));
 
         return this;
@@ -189,7 +209,10 @@ class Router <
         if (typeof handler !== 'function') throw new Error('TriFrostRouter@route: No handler provided for "' + path + '"');
 
         /* Instantiate route builder */
-        const route = new Route<Env, State & PathParam<Path>>({rateLimit: this.#rateLimit});
+        const route = new Route<Env, State & PathParam<Path>>({
+            rateLimit: this.#rateLimit,
+            bodyParser: this.#bodyParser,
+        });
 
         /* Run route through handler */
         handler(route);
@@ -197,7 +220,7 @@ class Router <
         /* Loop through resulting stack and register */
         for (let i = 0; i < route.stack.length; i++) {
             const el = route.stack[i];
-            this.#register(path, [...el.middleware, el.handler], el.methods);
+            this.#register(path, [...el.middleware, el.handler], el.methods, el.bodyParser);
         }
 
         return this;
@@ -216,13 +239,13 @@ class Router <
         this.#tree.addNotFound({
             path: this.#path + '/*',
             fn: handler as unknown as TriFrostHandler<Env, {}>,
-            middleware: [...this.#middleware] as TriFrostMiddleware<Env>[],
+            middleware: normalizeMiddleware<Env>(this.#middleware as TriFrostMiddleware<Env>[]),
             kind: 'notfound',
             timeout: this.#timeout,
-            [Sym_TriFrostName]: 'notfound',
-            [Sym_TriFrostDescription]: '404 Not Found Handler',
-            [Sym_TriFrostType]: 'handler',
-            [Sym_TriFrostMeta]: {name: 'notfound', kind: 'notfound'},
+            bodyParser: this.#bodyParser,
+            name: 'notfound',
+            description: '404 Not Found Handler',
+            meta: {name: 'notfound', kind: 'notfound'},
         });
         return this;
     }
@@ -240,13 +263,13 @@ class Router <
         this.#tree.addError({
             path: this.#path + '/*',
             fn: handler as unknown as TriFrostHandler<Env, {}>,
-            middleware: [...this.#middleware] as TriFrostMiddleware<Env>[],
+            middleware: normalizeMiddleware<Env>(this.#middleware as TriFrostMiddleware<Env>[]),
             kind: 'error',
             timeout: this.#timeout,
-            [Sym_TriFrostName]: 'error',
-            [Sym_TriFrostDescription]: 'Error Handler',
-            [Sym_TriFrostType]: 'handler',
-            [Sym_TriFrostMeta]: {name: 'error', kind: 'error'},
+            bodyParser: this.#bodyParser,
+            name: 'error',
+            description: 'Error Handler',
+            meta: {name: 'error', kind: 'error'},
         });
         return this;
     }
@@ -257,7 +280,7 @@ class Router <
     get <Path extends string = string> (path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
         if (typeof path !== 'string') throw new Error('TriFrostRouter@get: Invalid path');
         if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@get: Invalid handler');
-        return this.#register(path, [handler], [HttpMethods.GET, HttpMethods.HEAD]);
+        return this.#register(path, [handler], [HttpMethods.GET, HttpMethods.HEAD], this.#bodyParser);
     }
 
     /**
@@ -266,7 +289,7 @@ class Router <
     post <Path extends string = string> (path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
         if (typeof path !== 'string') throw new Error('TriFrostRouter@post: Invalid path');
         if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@post: Invalid handler');
-        return this.#register(path, [handler], [HttpMethods.POST]);
+        return this.#register(path, [handler], [HttpMethods.POST], this.#bodyParser);
     }
 
     /**
@@ -275,7 +298,7 @@ class Router <
     put <Path extends string = string> (path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
         if (typeof path !== 'string') throw new Error('TriFrostRouter@put: Invalid path');
         if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@put: Invalid handler');
-        return this.#register(path, [handler], [HttpMethods.PUT]);
+        return this.#register(path, [handler], [HttpMethods.PUT], this.#bodyParser);
     }
 
     /**
@@ -284,7 +307,7 @@ class Router <
     patch <Path extends string = string> (path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
         if (typeof path !== 'string') throw new Error('TriFrostRouter@patch: Invalid path');
         if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@patch: Invalid handler');
-        return this.#register(path, [handler], [HttpMethods.PATCH]);
+        return this.#register(path, [handler], [HttpMethods.PATCH], this.#bodyParser);
     }
 
     /**
@@ -293,7 +316,7 @@ class Router <
     del <Path extends string = string> (path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
         if (typeof path !== 'string') throw new Error('TriFrostRouter@del: Invalid path');
         if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@del: Invalid handler');
-        return this.#register(path, [handler], [HttpMethods.DELETE]);
+        return this.#register(path, [handler], [HttpMethods.DELETE], this.#bodyParser);
     }
 
 /**
@@ -306,7 +329,8 @@ class Router <
     #register <Path extends string = string> (
         path:Path,
         handlers:unknown[],
-        methods:HttpMethod[]
+        methods:HttpMethod[],
+        bodyParser:TriFrostBodyParserOptions|null
     ) {
         const fn = handlers[handlers.length - 1];
         const config = (Object.prototype.toString.call(fn) === '[object Object]'
@@ -336,35 +360,41 @@ class Router <
             ? (config.timeout as number|null)
             : this.#timeout;
 
+        /* Body Parser */
+        const n_bodyparser = 'bodyParser' in config && isValidBodyParser(config.bodyParser!)
+            ? config.bodyParser
+            : bodyParser;
+
+        /* Normalized middleware */
         const n_middleware = [
             /* Inherit router mware */
-            ...this.#middleware,
+            ...normalizeMiddleware<Env, State>(this.#middleware),
             /* Route-specific mware */
-            ...handlers.slice(0, -1) as TriFrostMiddleware<Env, State>[],
+            ...normalizeMiddleware<Env, State>(handlers.slice(0, -1) as TriFrostMiddleware<Env, State>[]),
             /* Potential config mware */
-            ...config.middleware || [],
-        ] as TriFrostMiddleware<Env>[];
+            ...normalizeMiddleware<Env, State>((config.middleware || []) as TriFrostMiddleware<Env, State>[]),
+        ];
 
         for (const method of methods) {
             const n_route_name = n_name
                 ? (method === 'HEAD' ? 'HEAD_' : '') + n_name
                 : method + '_' + n_path;
 
-            const routeObj:TriFrostRoute<Env> = {
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: n_route_name,
-                [Sym_TriFrostDescription]: n_desc,
-                [Sym_TriFrostMeta]: {name: n_route_name, kind: n_kind, ...isNeObject(config.meta) && config.meta},
+            const routeObj:TriFrostRoute<Env, State> = {
+                name: n_route_name,
+                description: n_desc,
+                meta: {name: n_route_name, kind: n_kind, ...isNeObject(config.meta) && config.meta},
                 method,
                 kind: n_kind,
                 path: n_path,
                 fn: config.fn as TriFrostHandler<Env>,
                 middleware: n_middleware,
                 timeout: n_timeout,
+                bodyParser: n_bodyparser,
             };
 
             // Directly add the full route object to the tree
-            this.#tree.add(routeObj);
+            this.#tree.add(routeObj as TriFrostRoute<Env>);
         }
 
         return this;

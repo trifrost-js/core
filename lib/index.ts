@@ -4,7 +4,6 @@ export {App} from './App';
 export {
     Sym_TriFrostName,
     Sym_TriFrostDescription,
-    Sym_TriFrostMeta,
     Sym_TriFrostFingerPrint,
     HttpStatuses,
     HttpRedirectStatuses,

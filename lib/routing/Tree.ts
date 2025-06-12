@@ -2,27 +2,14 @@
 
 import {LRU} from '@valkyriestudios/utils/caching';
 import {Sym_TriFrostMiddlewareCors} from '../middleware/Cors';
-import {TriFrostMiddleware, type TriFrostRoute} from '../types/routing';
+import {type TriFrostRoute, type TriFrostRouteMatch} from '../types/routing';
 import {type TriFrostContext} from '../types/context';
 import {
     type HttpMethod,
     HttpMethods,
     HttpMethodsSet,
-    Sym_TriFrostDescription,
-    Sym_TriFrostFingerPrint,
-    Sym_TriFrostMeta,
-    Sym_TriFrostName,
-    Sym_TriFrostType,
 } from '../types/constants';
-
-/**
- * Represents a match result when a route is found
- */
-interface RouteMatch<Env extends Record<string, any> = {}> {
-    path: string;
-    route: TriFrostRoute<Env>;
-    params: Record<string, string>;
-}
+import {normalizeMiddleware} from './util';
 
 /**
  * Internal trie node for dynamic routing.
@@ -60,14 +47,14 @@ function blankTrieNode <Env extends Record<string, any> = {}> () {
  * Factory for an options route
  *
  * @param {string} path - Path the options route is for
- * @param {HttpMethod[]} methods - Available methods array
+ * @param {TriFrostRoute[]} routes - Routes array for this path
  */
 function createOptionsRoute <Env extends Record<string, any>> (
     path: string,
     routes:TriFrostRoute<Env>[]
 ): TriFrostRoute<Env> {
-    let methods:HttpMethod[]|string = [HttpMethods.OPTIONS];
-    let cors_mware:TriFrostMiddleware<Env>|null = null;
+    const methods:HttpMethod[]|string = [HttpMethods.OPTIONS];
+    let cors_mware:ReturnType<typeof normalizeMiddleware<Env>>[number]|null = null;
     for (let i = 0; i < routes.length; i++) {
         const route = routes[i];
 
@@ -78,28 +65,25 @@ function createOptionsRoute <Env extends Record<string, any>> (
         if (cors_mware) continue;
 
         for (let y = 0; y < route.middleware.length; y++) {
-            const mware = route.middleware[y];
-            const is_cors = Reflect.get(mware, Sym_TriFrostFingerPrint) === Sym_TriFrostMiddlewareCors;
-            if (is_cors) cors_mware = mware;
+            const el = route.middleware[y];
+            if (el.fingerprint === Sym_TriFrostMiddlewareCors) cors_mware = el;
         }
     }
-
-    methods = methods.join(', ');
 
     return {
         method: HttpMethods.OPTIONS,
         kind: 'options',
         path,
         fn: (ctx:TriFrostContext<Env>) => {
-            ctx.setHeaders({Allow: methods, Vary: 'Origin'});
+            ctx.setHeaders({Allow: methods.join(', '), Vary: 'Origin'});
             ctx.status(204);
         },
         middleware: cors_mware ? [cors_mware] : [],
         timeout: null,
-        [Sym_TriFrostName]: `OPTIONS_${Reflect.get(routes, Sym_TriFrostName)}`,
-        [Sym_TriFrostDescription]: 'Auto-generated OPTIONS handler',
-        [Sym_TriFrostType]: 'handler',
-        [Sym_TriFrostMeta]: {},
+        bodyParser: null,
+        name: `OPTIONS_${path}`,
+        description: 'Auto-generated OPTIONS handler',
+        meta: {},
     };
 }
 
@@ -153,7 +137,7 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
      * @param {HttpMethod} method - HTTP method to match
      * @param {string} path - Path to find the match for
      */
-    match (method:HttpMethod, path:string):RouteMatch<Env>|null {
+    match (method:HttpMethod, path:string):TriFrostRouteMatch<Env>|null {
         const params = {};
         const matched = this.search(this.root, path.split('/'), 0, params, method);
         return matched ? {route: matched, path: matched.path, params} : null;
@@ -246,17 +230,17 @@ export class RouteTree<Env extends Record<string, any> = {}> {
     > = Object.create(null);
 
     protected dynamic:{
-        lru: LRU<{v: RouteMatch<Env>|null}>;
+        lru: LRU<{v: TriFrostRouteMatch<Env>|null}>;
         tree: TrieRouteTree<Env>;
     } = {lru: new LRU({max_size: 250}), tree: new TrieRouteTree()};
 
     protected notfound:{
-        lru: LRU<{v: RouteMatch<Env>|null}>;
+        lru: LRU<{v: TriFrostRouteMatch<Env>|null}>;
         tree: TrieRouteTree<Env>;
     } = {lru: new LRU({max_size: 250}), tree: new TrieRouteTree()};
 
     protected error:{
-        lru: LRU<{v: RouteMatch<Env>|null}>;
+        lru: LRU<{v: TriFrostRouteMatch<Env>|null}>;
         tree: TrieRouteTree<Env>;
     } = {lru: new LRU({max_size: 250}), tree: new TrieRouteTree()};
 
@@ -311,7 +295,7 @@ export class RouteTree<Env extends Record<string, any> = {}> {
      * @param {HttpMethod} method - HTTP Verb (GET, DELETE, POST, ...)
      * @param {string} path - Path to look for
      */
-    match (method:HttpMethod, path:string):RouteMatch<Env>|null {
+    match (method:HttpMethod, path:string):TriFrostRouteMatch<Env>|null {
         const normalized = path === '' ? '/' : path;
 
         /* Check static routes */
@@ -335,7 +319,7 @@ export class RouteTree<Env extends Record<string, any> = {}> {
         this.notfound.tree.add({...route, method: 'GET'}, true);
     }
 
-    matchNotFound (path:string): RouteMatch<Env>|null {
+    matchNotFound (path:string): TriFrostRouteMatch<Env>|null {
         const cached = this.notfound.lru.get(path);
         if (cached) return cached.v;
 
@@ -353,7 +337,7 @@ export class RouteTree<Env extends Record<string, any> = {}> {
         this.error.tree.add({...route, method: 'GET'}, true);
     }
 
-    matchError (path:string):RouteMatch<Env>|null {
+    matchError (path:string):TriFrostRouteMatch<Env>|null {
         const cached = this.error.lru.get(path);
         if (cached) return cached.v;
 

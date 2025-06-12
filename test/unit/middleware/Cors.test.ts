@@ -8,7 +8,6 @@ import {
     HttpMethods,
     Sym_TriFrostDescription,
     Sym_TriFrostName,
-    Sym_TriFrostType,
     Sym_TriFrostFingerPrint,
 } from '../../../lib/types/constants';
 
@@ -22,7 +21,6 @@ describe('Middleware - Cors', () => {
     it('Returns a function with TriFrost symbols set', () => {
         const fn = Cors();
         expect(Reflect.get(fn, Sym_TriFrostName)).toBe('TriFrostCors');
-        expect(Reflect.get(fn, Sym_TriFrostType)).toBe('middleware');
         expect(Reflect.get(fn, Sym_TriFrostDescription)).toBe('Middleware for Cross Origin Resource Sharing');
     });
 

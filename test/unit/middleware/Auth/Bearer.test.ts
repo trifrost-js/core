@@ -2,7 +2,7 @@ import {describe, it, expect, vi} from 'vitest';
 import {BearerAuth, Sym_TriFrostMiddlewareBearerAuth} from '../../../../lib/middleware/Auth/Bearer';
 import {Sym_TriFrostMiddlewareAuth} from '../../../../lib/middleware/Auth/types';
 import {MockContext} from '../../../MockContext';
-import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostType, Sym_TriFrostFingerPrint} from '../../../../lib/types/constants';
+import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostFingerPrint} from '../../../../lib/types/constants';
 import CONSTANTS from '../../../constants';
 
 const makeCtx = (authHeader?: string) => new MockContext({
@@ -68,7 +68,6 @@ describe('Middleware - Auth - Bearer', () => {
     it('Correctly attaches metadata symbols', () => {
         const mw = BearerAuth({validate: vi.fn()});
         expect(Reflect.get(mw, Sym_TriFrostName)).toBe('TriFrostBearerAuth');
-        expect(Reflect.get(mw, Sym_TriFrostType)).toBe('middleware');
         expect(Reflect.get(mw, Sym_TriFrostDescription)).toBe('HTTP Bearer Token Authentication middleware');
     });
 

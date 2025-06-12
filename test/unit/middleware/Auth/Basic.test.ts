@@ -2,7 +2,7 @@ import {describe, it, expect, vi} from 'vitest';
 import {BasicAuth, Sym_TriFrostMiddlewareBasicAuth} from '../../../../lib/middleware/Auth/Basic';
 import {Sym_TriFrostMiddlewareAuth} from '../../../../lib/middleware/Auth/types';
 import {MockContext} from '../../../MockContext';
-import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostType, Sym_TriFrostFingerPrint} from '../../../../lib/types/constants';
+import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostFingerPrint} from '../../../../lib/types/constants';
 import CONSTANTS from '../../../constants';
 
 const makeCtx = (authHeader?: string) => new MockContext({
@@ -107,7 +107,6 @@ describe('Middleware - Auth - Basic', () => {
     it('Correctly attaches metadata symbols', () => {
         const mw = BasicAuth({validate: vi.fn()});
         expect(Reflect.get(mw, Sym_TriFrostName)).toBe('TriFrostBasicAuth');
-        expect(Reflect.get(mw, Sym_TriFrostType)).toBe('middleware');
         expect(Reflect.get(mw, Sym_TriFrostDescription)).toBe('HTTP Basic Authentication middleware');
     });
 

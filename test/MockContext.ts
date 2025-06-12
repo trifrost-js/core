@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {type TriFrostCacheControlOptions} from '../lib/middleware/CacheControl';
 import {type TriFrostRateLimitLimitFunction} from '../lib/modules/RateLimit';
 import {
     HttpStatusToCode,
@@ -12,18 +11,20 @@ import {
 import {
     type TriFrostContext,
     type TriFrostContextKind,
-    type TriFrostContextInit,
     type TriFrostContextRedirectOptions,
     type TriFrostContextResponseOptions,
     type TriFrostContextFileOptions,
 } from '../lib/types/context';
-
+import {
+    type TriFrostRouteMatch,
+} from '../lib/types/routing';
 import {Cookies} from '../lib/modules/Cookies';
 import {type TriFrostCache} from '../lib/modules/Cache';
 import {Logger, type TriFrostLogger} from '../lib/modules/Logger';
 import {type JSXElement} from '../lib/modules/JSX';
 import {MemoryCache} from '../lib/storage/Memory';
-import { hexId } from '../lib/utils/Generic';
+import {hexId} from '../lib/utils/Generic';
+import {TriFrostBodyParserOptions, type ParsedBody} from '../lib/utils/BodyParser/types';
 
 export class MockContext<
     State extends Record<string | number, unknown> = Record<string | number, unknown>,
@@ -147,9 +148,7 @@ export class MockContext<
     setTimeout = (_: number | null): void => {};
     clearTimeout = (): void => {};
 
-    init = async (_: TriFrostContextInit, handler?: () => Promise<Record<string, unknown>|unknown[] | undefined>) => {
-        if (handler) await handler();
-    };
+    init = async (_: TriFrostRouteMatch<any>, _handler?: (options:TriFrostBodyParserOptions|null) => Promise<ParsedBody|null>) => {};
 
     abort = (_?: HttpStatus | HttpStatusCode): void => {};
 

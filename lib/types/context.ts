@@ -10,6 +10,11 @@ import {type JSXElement} from '../modules/JSX';
 import {
     type TriFrostLogger,
 } from '../modules/Logger';
+import {type TriFrostRouteMatch} from './routing';
+import {
+    type TriFrostBodyParserOptions,
+    type ParsedBody,
+} from '../utils/BodyParser/types';
 import {
     type HttpRedirectStatus,
     type HttpRedirectStatusCode,
@@ -50,12 +55,6 @@ export type TriFrostContextConfig <Env extends Record<string, any> = Record<stri
     requestId: TriFrostContextIdOptions|null;
     trustProxy?: boolean;
 }>;
-
-export type TriFrostContextInit = {
-    name    : string;
-    params  : Record<string, string>;
-    kind    : TriFrostContextKind;
-};
 
 export type TriFrostContextFileOptions = {
     cacheControl?: TriFrostCacheControlOptions;
@@ -98,7 +97,7 @@ export type TriFrostContext<
     get ip              ():string|null;
     get requestId       ():string;
     get query           ():Readonly<URLSearchParams>;
-    get body            ():Readonly<Record<string,unknown>|unknown[]>;
+    get body            ():Readonly<ParsedBody>;
     get isInitialized   ():boolean;
     get isDone          ():boolean;
     get isAborted       ():boolean;
@@ -126,7 +125,7 @@ export type TriFrostContext<
     setTimeout: (val:number|null) => void;
     clearTimeout: () => void;
 
-    init: (val:TriFrostContextInit, handler?:()=>Promise<Record<string,unknown>|unknown[]|undefined>) => Promise<void>;
+    init: (match:TriFrostRouteMatch<Env>, handler?:(config:TriFrostBodyParserOptions|null)=>Promise<ParsedBody|null>) => Promise<void>;
     abort: (status?:HttpStatus|HttpStatusCode) => void;
     fetch: (input: string | URL | globalThis.Request, init?: RequestInit) => Promise<Response>;
     status: (status:HttpStatus|HttpStatusCode) => void;

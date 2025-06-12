@@ -4,17 +4,16 @@ import {
     type TriFrostRootLogger,
     type TriFrostLogger,
 }  from '../../modules/Logger';
-import {
-    type TriFrostContextConfig,
-    type TriFrostContextInit,
-} from '../../types/context';
+import {type TriFrostContextConfig} from '../../types/context';
 import {
     HttpMethods,
     HttpMethodToNormal,
     type HttpStatus,
     type HttpStatusCode,
 } from '../../types/constants';
+import {type TriFrostRouteMatch} from '../../types/routing';
 import {parseBody} from '../../utils/BodyParser/Uint8Array';
+import {DEFAULT_BODY_PARSER_OPTIONS} from '../../utils/BodyParser/types';
 import {
     type HttpResponse,
     type HttpRequest,
@@ -99,10 +98,11 @@ export class UWSContext extends Context {
     /**
      * Initializes the context, this happens when a route is matched and tied to this context.
      */
-    async init (val:TriFrostContextInit) {
+    async init (val:TriFrostRouteMatch) {
         await super.init(val, async () => {
             const raw_body = await loadBody(this.logger, this.#uws_res);
-            return parseBody(this, raw_body as Uint8Array);
+            if (!raw_body) return null;
+            return parseBody(this, raw_body, val.route.bodyParser || DEFAULT_BODY_PARSER_OPTIONS);
         });
     }
 

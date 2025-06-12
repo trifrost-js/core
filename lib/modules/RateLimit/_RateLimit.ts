@@ -9,7 +9,6 @@ import {
     Sym_TriFrostDescription,
     Sym_TriFrostFingerPrint,
     Sym_TriFrostName,
-    Sym_TriFrostType,
 } from '../../types/constants';
 import {
     type TriFrostRateLimitObject,
@@ -197,7 +196,6 @@ export class TriFrostRateLimit <Env extends Record<string, any> = Record<string,
 
         /* Add symbols for introspection/use further down the line */
         Reflect.set(bound, Sym_TriFrostName, 'TriFrostRateLimit');
-        Reflect.set(bound, Sym_TriFrostType, 'middleware');
         Reflect.set(bound, Sym_TriFrostDescription, 'Middleware for rate limitting contexts passing through it');
         Reflect.set(bound, Sym_TriFrostFingerPrint, Sym_TriFrostMiddlewareRateLimit);
 

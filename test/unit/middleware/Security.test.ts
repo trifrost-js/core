@@ -17,7 +17,6 @@ import {
     Sym_TriFrostDescription,
     Sym_TriFrostFingerPrint,
     Sym_TriFrostName,
-    Sym_TriFrostType,
 } from '../../../lib/types/constants';
 import {MockContext} from '../../MockContext';
 import CONSTANTS from '../../constants';
@@ -32,7 +31,6 @@ describe('Middleware - Security', () => {
     it('Returns a function with TriFrost symbols set', () => {
         const fn = Security();
         expect(Reflect.get(fn, Sym_TriFrostName)).toBe('TriFrostSecurity');
-        expect(Reflect.get(fn, Sym_TriFrostType)).toBe('middleware');
         expect(
             Reflect.get(fn, Sym_TriFrostDescription)
         ).toBe('Middleware for configuring Security headers and CSP on contexts passing through it');

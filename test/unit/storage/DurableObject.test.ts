@@ -6,7 +6,7 @@ import {isObject} from '@valkyriestudios/utils/object';
 import {describe, it, expect, beforeEach, vi, afterEach} from 'vitest';
 import {cacheSkip} from '../../../lib/modules/Cache/util';
 import {DurableObjectStore, DurableObjectCache, DurableObjectRateLimit} from '../../../lib/storage/DurableObject';
-import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostType} from '../../../lib/types/constants';
+import {Sym_TriFrostDescription, Sym_TriFrostName} from '../../../lib/types/constants';
 import {type TriFrostContextKind} from '../../../lib/types/context';
 import {type TriFrostCFDurableObjectId} from '../../../lib/types/providers';
 import {MockContext} from '../../MockContext';
@@ -27,20 +27,20 @@ describe('Storage - DurableObject', () => {
     describe('Store', () => {
         let store: DurableObjectStore;
         let stub: ReturnType<MockDurableObjectNamespace['get']>;
-    
+
         beforeEach(() => {
             ns = new MockDurableObjectNamespace();
             store = new DurableObjectStore(ns, 'test');
             stub = ns.get(ns.idFromName('trifrost-test'));
             stub.reset();
         });
-    
+
         describe('constructor', () => {
             it('Initializes correctly with a namespace', () => {
                 expect(store).toBeInstanceOf(DurableObjectStore);
             });
         });
-    
+
         describe('get', () => {
             it('Returns null for missing key', async () => {
                 const result = await store.get('not-set');
@@ -49,7 +49,7 @@ describe('Storage - DurableObject', () => {
                     ['https://do/trifrost-test?key=not-set', {method: 'GET'}],
                 ]);
             });
-    
+
             it('Returns parsed object if present', async () => {
                 stub.map.set('obj', {x: 1});
                 const result = await store.get('obj');
@@ -58,7 +58,7 @@ describe('Storage - DurableObject', () => {
                     ['https://do/trifrost-test?key=obj', {method: 'GET'}],
                 ]);
             });
-    
+
             it('Returns parsed array if present', async () => {
                 stub.map.set('arr', [0, 1, 2]);
                 const result = await store.get('arr');
@@ -67,20 +67,20 @@ describe('Storage - DurableObject', () => {
                     ['https://do/trifrost-test?key=arr', {method: 'GET'}],
                 ]);
             });
-    
+
             it('Returns null if stored value is malformed JSON', async () => {
                 stub.fetch = async () => new Response('not-json', {status: 200});
                 const result = await store.get('bad');
                 expect(result).toBe(null);
                 expect(stub.isEmpty);
             });
-    
+
             it('Returns null if response is valid JSON but not object/array', async () => {
                 stub.fetch = async () => new Response(JSON.stringify('not-a-struct'), {status: 200});
                 const result = await store.get('scalar');
                 expect(result).toBe(null);
             });
-    
+
             it('Throws on invalid key', async () => {
                 for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
                     await expect(store.get(el as string)).rejects.toThrow(/DurableObjectStore@get: Invalid key/);
@@ -93,34 +93,34 @@ describe('Storage - DurableObject', () => {
                     idFromName: () => ({_tag: 'FakeId'}),
                     get: () => ({
                         fetch: async () => {
-                            throw new Error('explode-get'); 
+                            throw new Error('explode-get');
                         },
                     }),
                 } as any;
-            
+
                 const result = await new DurableObjectStore(brokenNs, 'test').get('fail-key');
                 expect(result).toBeNull();
             });
-            
+
             it('Logs and returns null if adapter.get throws (spawned)', async () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
-            
+
                 const brokenNs = {
                     idFromName: () => ({_tag: 'FailId'}),
                     get: () => ({
                         fetch: async () => {
-                            throw new Error('GET_ERR'); 
+                            throw new Error('GET_ERR');
                         },
                     }),
                 } as any;
-            
+
                 const result = await new DurableObjectStore(brokenNs, 'fail').spawn(ctx).get('x');
                 expect(result).toBeNull();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {key: 'x'});
-            });            
+            });
         });
-    
+
         describe('set', () => {
             it('Stores object with default TTL', async () => {
                 await store.set('foo', {a: 1});
@@ -132,7 +132,7 @@ describe('Storage - DurableObject', () => {
                     ],
                 ]);
             });
-    
+
             it('Stores array with default TTL', async () => {
                 await store.set('arr', [1, 2, 3]);
                 expect(stub.map.get('arr')).toEqual([1, 2, 3]);
@@ -143,7 +143,7 @@ describe('Storage - DurableObject', () => {
                     ],
                 ]);
             });
-    
+
             it('Respects custom TTL', async () => {
                 await store.set('ttl-key', {y: 2}, {ttl: 120});
                 expect(stub.calls).toEqual([
@@ -153,7 +153,7 @@ describe('Storage - DurableObject', () => {
                     ],
                 ]);
             });
-    
+
             it('Falls back to TTL = 60 if invalid', async () => {
                 for (const el of [...CONSTANTS.NOT_INTEGER, 0, -1, 10.5]) {
                     await store.set('fallback', {y: 1}, {ttl: el as number});
@@ -166,20 +166,20 @@ describe('Storage - DurableObject', () => {
                     stub.reset();
                 }
             });
-    
+
             it('Throws on invalid key', async () => {
                 for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
                     await expect(store.set(el as string, {x: 1})).rejects.toThrow(/DurableObjectStore@set: Invalid key/);
                 }
                 expect(stub.isEmpty).toBe(true);
             });
-    
+
             it('Throws on non-object/non-array value', async () => {
                 for (const el of CONSTANTS.NOT_OBJECT) {
                     if (isArray(el)) continue;
                     await expect(store.set('bad', el as any)).rejects.toThrow(/DurableObjectStore@set: Invalid value/);
                 }
-    
+
                 for (const el of CONSTANTS.NOT_ARRAY) {
                     if (isObject(el)) continue;
                     await expect(store.set('bad', el as any)).rejects.toThrow(/DurableObjectStore@set: Invalid value/);
@@ -192,36 +192,36 @@ describe('Storage - DurableObject', () => {
                     idFromName: () => ({_tag: 'BadId'}),
                     get: () => ({
                         fetch: async () => {
-                            throw new Error('PUT_ERR'); 
+                            throw new Error('PUT_ERR');
                         },
                     }),
                 } as any;
-            
+
                 await expect(new DurableObjectStore(brokenNs, 'test').set('key', {x: 1})).resolves.toBeUndefined();
             });
-            
+
             it('Logs error if adapter.set fails (spawned)', async () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
-            
+
                 const brokenNs = {
                     idFromName: () => ({_tag: 'SetFailId'}),
                     get: () => ({
                         fetch: async () => {
-                            throw new Error('set fail'); 
+                            throw new Error('set fail');
                         },
                     }),
                 } as any;
-            
+
                 await expect(new DurableObjectStore(brokenNs, 'test').spawn(ctx).set('trouble', {a: 2})).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {
                     key: 'trouble',
                     value: {a: 2},
                     opts: undefined,
                 });
-            });            
+            });
         });
-    
+
         describe('del', () => {
             it('Deletes key successfully', async () => {
                 await store.set('to-del', {z: 9});
@@ -237,7 +237,7 @@ describe('Storage - DurableObject', () => {
                     ],
                 ]);
             });
-    
+
             it('Does nothing for missing key', async () => {
                 await store.del('ghost');
                 expect(stub.calls).toEqual([
@@ -250,7 +250,7 @@ describe('Storage - DurableObject', () => {
 
             it('Deletes all keys matching prefix', async () => {
                 await store.del({prefix: 'user.'});
-                
+
                 expect(stub.calls).toEqual([
                     [
                         'https://do/trifrost-test?key=user.*',
@@ -258,7 +258,7 @@ describe('Storage - DurableObject', () => {
                     ],
                 ]);
             });
-    
+
             it('Throws on invalid key', async () => {
                 for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
                     await expect(store.del(el as string)).rejects.toThrow(/DurableObjectStore@del: Invalid deletion value/);
@@ -277,90 +277,90 @@ describe('Storage - DurableObject', () => {
                 const ns2 = new MockDurableObjectNamespace();
                 const stub2 = ns2.get(ns2.idFromName('trifrost-test'));
                 stub2.fetch = async () => new Response(null, {status: 500});
-            
+
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
-            
+
                 await expect(new DurableObjectStore(ns2, 'test').spawn(ctx).del('bad-key')).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: 'bad-key'});
-            });            
-            
+            });
+
             it('Logs and suppresses error if delPrefixed() receives non-OK, non-404 (spawned)', async () => {
                 const ns2 = new MockDurableObjectNamespace();
                 const stub2 = ns2.get(ns2.idFromName('trifrost-test'));
                 stub2.fetch = async () => new Response(null, {status: 403});
-            
+
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
-            
+
                 await expect(new DurableObjectStore(ns2, 'test').spawn(ctx).del({prefix: 'protected.'})).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: {prefix: 'protected.'}});
-            });            
+            });
 
             it('del() does not throw on 404 status', async () => {
                 const ns2 = new MockDurableObjectNamespace();
                 const stub2 = ns2.get(ns2.idFromName('trifrost-test'));
                 stub2.fetch = async () => new Response(null, {status: 404});
-            
+
                 await expect(new DurableObjectStore(ns2, 'test').del('missing-key')).resolves.toBeUndefined();
             });
-            
+
             it('delPrefixed() does not throw on 404 status', async () => {
                 const ns2 = new MockDurableObjectNamespace();
                 const stub2 = ns2.get(ns2.idFromName('trifrost-test'));
                 stub2.fetch = async () => new Response(null, {status: 404});
-            
+
                 await expect(new DurableObjectStore(ns2, 'test').del({prefix: 'ghost.'})).resolves.toBeUndefined();
-            });            
+            });
 
             it('Does not throw if adapter.del fails (non-spawned)', async () => {
                 const brokenNs = {
                     idFromName: () => ({_tag: 'DelFail'}),
                     get: () => ({
                         fetch: async () => {
-                            throw new Error('del exploded'); 
+                            throw new Error('del exploded');
                         },
                     }),
                 } as any;
-            
+
                 await expect(new DurableObjectStore(brokenNs, 'test').del('key')).resolves.toBeUndefined();
             });
-            
+
             it('Logs error if adapter.del fails for key (spawned)', async () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
-            
+
                 const brokenNs = {
                     idFromName: () => ({_tag: 'DelErr'}),
                     get: () => ({
                         fetch: async () => {
-                            throw new Error('fail-del'); 
+                            throw new Error('fail-del');
                         },
                     }),
                 } as any;
-            
+
                 await expect(new DurableObjectStore(brokenNs, 'store').spawn(ctx).del('user:1')).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: 'user:1'});
             });
-            
+
             it('Logs error if adapter.delPrefixed fails (spawned)', async () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
-            
+
                 const brokenNs = {
                     idFromName: () => ({_tag: 'PrefixBoom'}),
                     get: () => ({
                         fetch: async () => {
-                            throw new Error('prefix-wipe error'); 
+                            throw new Error('prefix-wipe error');
                         },
                     }),
                 } as any;
-            
+
                 await expect(new DurableObjectStore(brokenNs, 'store').spawn(ctx).del({prefix: 'user.'})).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: {prefix: 'user.'}});
-            });            
+            });
         });
-    
+
         describe('stop', () => {
             it('Should not do anything and not throw', async () => {
                 await store.stop();
@@ -453,7 +453,7 @@ describe('Storage - DurableObject', () => {
                     }
                 );
                 expect(await cache.get('corrupt')).toBe(null);
-            
+
                 await ns.get(stubId).fetch(
                     'https://do/trifrost-cache?key=not-json',
                     {
@@ -786,12 +786,12 @@ describe('Storage - DurableObject', () => {
 
     describe('RateLimit', () => {
         let stub: ReturnType<MockDurableObjectNamespace['get']>;
-    
+
         beforeEach(() => {
             stub = ns.get(ns.idFromName('trifrost-ratelimit'));
             stub.reset();
         });
-    
+
         describe('init', () => {
             it('Should throw if not provided a store', () => {
                 for (const el of [
@@ -802,7 +802,7 @@ describe('Storage - DurableObject', () => {
                     expect(() => new DurableObjectRateLimit(el)).toThrow(/DurableObjectRateLimit: Expected a store initializer/);
                 }
             });
-    
+
             it('Initializes with default strategy (fixed) and window (60)', async () => {
                 const rl = new DurableObjectRateLimit({store: () => ns});
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
@@ -821,7 +821,7 @@ describe('Storage - DurableObject', () => {
                     }],
                 ]);
             });
-    
+
             it('Initializes with sliding strategy', async () => {
                 const rl = new DurableObjectRateLimit({
                     store: () => ns,
@@ -843,7 +843,7 @@ describe('Storage - DurableObject', () => {
                     }],
                 ]);
             });
-    
+
             it('Throws for invalid limit types', async () => {
                 const rl = new DurableObjectRateLimit({store: () => ns});
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
@@ -854,11 +854,11 @@ describe('Storage - DurableObject', () => {
                 expect(rl.window).toBe(60);
                 expect(stub.isEmpty).toBe(true);
             });
-    
+
             it('Skips processing for non-std context kinds', async () => {
                 const rl = new DurableObjectRateLimit({store: () => ns});
                 const mw = rl.limit(1);
-              
+
                 for (const kind of ['notfound', 'health', 'options']) {
                     const ctx = new MockContext({kind: kind as TriFrostContextKind});
                     await mw(ctx);
@@ -867,19 +867,18 @@ describe('Storage - DurableObject', () => {
                     expect(stub.isEmpty).toBe(true);
                 }
             });
-    
+
             it('Registers correct introspection symbols', async () => {
                 const rl = new DurableObjectRateLimit({store: () => ns});
                 const mw = rl.limit(5);
-              
+
                 expect(rl.strategy).toBe('fixed');
                 expect(rl.window).toBe(60);
                 expect(Reflect.get(mw, Sym_TriFrostName)).toBe('TriFrostRateLimit');
-                expect(Reflect.get(mw, Sym_TriFrostType)).toBe('middleware');
                 expect(Reflect.get(mw, Sym_TriFrostDescription)).toBe('Middleware for rate limitting contexts passing through it');
                 expect(stub.isEmpty).toBe(true);
             });
-    
+
             it('Sets rate limit headers when enabled', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new DurableObjectRateLimit({window: 1, store: () => ns});
@@ -904,7 +903,7 @@ describe('Storage - DurableObject', () => {
                     [`https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:test:POST')}`, {method: 'GET'}],
                 ]);
             });
-    
+
             it('Disables rate limit headers when disabled', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new DurableObjectRateLimit({headers: false, store: () => ns});
@@ -926,7 +925,7 @@ describe('Storage - DurableObject', () => {
                     [`https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:test:POST')}`, {method: 'GET'}],
                 ]);
             });
-    
+
             it('Supports custom key generators', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new DurableObjectRateLimit({keygen: el => `ip:${el.ip}`, store: () => ns});
@@ -955,7 +954,7 @@ describe('Storage - DurableObject', () => {
                     }],
                 ]);
             });
-    
+
             it('Supports custom exceeded handler', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const exceeded = vi.fn(el => el.status(400));
@@ -976,17 +975,17 @@ describe('Storage - DurableObject', () => {
                     [`https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:test:POST')}`, {method: 'GET'}],
                 ]);
             });
-    
+
             it('Generates correct keys for all built-in keygens (with IP)', async () => {
                 const ctx = new MockContext({ip: '72.8.34.9', name: 'foo', method: 'GET'});
-              
+
                 const expected = {
                     ip: '72.8.34.9',
                     ip_name: '72.8.34.9:foo',
                     ip_method: '72.8.34.9:GET',
                     ip_name_method: '72.8.34.9:foo:GET',
                 };
-              
+
                 for (const [key, key_expected] of Object.entries(expected)) {
                     const rl = new DurableObjectRateLimit({keygen: key as any, store: () => ns});
                     const mw = rl.limit(1);
@@ -994,7 +993,7 @@ describe('Storage - DurableObject', () => {
                     await mw(ctx);
                     await mw(ctx);
                     expect(ctx.statusCode).toBe(429);
-    
+
                     expect(stub.calls).toEqual([
                         [`https://do/trifrost-ratelimit?key=${encodeURIComponent(key_expected)}`, {method: 'GET'}],
                         [`https://do/trifrost-ratelimit?key=${encodeURIComponent(key_expected)}`, {
@@ -1007,17 +1006,17 @@ describe('Storage - DurableObject', () => {
                     stub.reset();
                 }
             });
-              
+
             it('Falls back to "unknown" if no IP is available', async () => {
                 const ctx = new MockContext({ip: null, name: 'foo', method: 'GET'});
-              
+
                 const expected = {
                     ip: 'unknown',
                     ip_name: 'unknown:foo',
                     ip_method: 'unknown:GET',
                     ip_name_method: 'unknown:foo:GET',
                 };
-              
+
                 for (const [key, key_expected] of Object.entries(expected)) {
                     const rl = new DurableObjectRateLimit({keygen: key as any, store: () => ns});
                     const mw = rl.limit(1);
@@ -1025,7 +1024,7 @@ describe('Storage - DurableObject', () => {
                     await mw(ctx);
                     await mw(ctx);
                     expect(ctx.statusCode).toBe(429);
-    
+
                     expect(stub.calls).toEqual([
                         [`https://do/trifrost-ratelimit?key=${encodeURIComponent(key_expected)}`, {method: 'GET'}],
                         [`https://do/trifrost-ratelimit?key=${encodeURIComponent(key_expected)}`, {
@@ -1038,13 +1037,13 @@ describe('Storage - DurableObject', () => {
                     stub.reset();
                 }
             });
-    
+
             it('Falls back to "unknown" if keygen returns falsy', async () => {
                 const rl = new DurableObjectRateLimit({
                     store: () => ns,
                     keygen: () => undefined as unknown as string, /* Force falsy value */
                 });
-              
+
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const mw = rl.limit(1);
                 const now = Math.floor(Date.now()/1000);
@@ -1059,11 +1058,11 @@ describe('Storage - DurableObject', () => {
                     }],
                     ['https://do/trifrost-ratelimit?key=unknown', {method: 'GET'}],
                 ]);
-              
+
                 expect(ctx.statusCode).toBe(429);
             });
         });
-    
+
         describe('strategy:fixed', () => {
             it('Allows requests within limit', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
@@ -1074,7 +1073,7 @@ describe('Storage - DurableObject', () => {
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(200);
             });
-    
+
             it('Blocks requests over the limit', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new DurableObjectRateLimit({window: 1000, store: () => ns});
@@ -1084,7 +1083,7 @@ describe('Storage - DurableObject', () => {
                 expect(ctx.statusCode).toBe(429);
             });
         });
-    
+
         describe('strategy:sliding', () => {
             it('Allows requests within windowed limit', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
@@ -1094,7 +1093,7 @@ describe('Storage - DurableObject', () => {
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(200);
             });
-    
+
             it('Blocks when timestamps exceed limit in window', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new DurableObjectRateLimit({strategy: 'sliding', window: 1, store: () => ns});
@@ -1103,7 +1102,7 @@ describe('Storage - DurableObject', () => {
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(429);
             });
-    
+
             it('Clears oldest timestamps after window expiry', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new DurableObjectRateLimit({strategy: 'sliding', window: 1, store: () => ns});
@@ -1113,24 +1112,24 @@ describe('Storage - DurableObject', () => {
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(200);
             });
-    
+
             it('Prunes first timestamp if it falls outside the window', async () => {
                 const rl = new DurableObjectRateLimit({strategy: 'sliding', window: 1, store: () => ns});
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const mw = rl.limit(2);
-              
+
                 /* First request */
                 await mw(ctx);
-              
+
                 /* @ts-ignore Manually insert an old timestamp to simulate an aged entry */
                 await rl.resolvedStore.store.set('127.0.0.1:test:POST', [Math.floor(Date.now()/1000) - 2]);
-              
+
                 /* Second request triggers pruning of old timestamp */
                 await mw(ctx);
-              
+
                 /* @ts-ignore We want to test this */
                 const val = await rl.resolvedStore.store.get('127.0.0.1:test:POST');
-              
+
                 expect(Array.isArray(val)).toBe(true);
                 expect(val.length).toBe(1); /* old timestamp pruned */
                 expect(val[0]).toBeGreaterThan(Math.floor(Date.now()/1000) - 1); /* only recent timestamp remains */

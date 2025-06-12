@@ -6,7 +6,6 @@ import {
     Sym_TriFrostDescription,
     Sym_TriFrostFingerPrint,
     Sym_TriFrostName,
-    Sym_TriFrostType,
 } from '../types/constants';
 import {type TriFrostContext} from '../types/context';
 
@@ -126,7 +125,6 @@ export function CacheControl <
 
     /* Add symbols for introspection/use further down the line */
     Reflect.set(mware, Sym_TriFrostName, 'TriFrostCacheControl');
-    Reflect.set(mware, Sym_TriFrostType, 'middleware');
     Reflect.set(mware, Sym_TriFrostDescription, 'Middleware adding Cache-Control headers to contexts passing through it');
     Reflect.set(mware, Sym_TriFrostFingerPrint, Sym_TriFrostMiddlewareCacheControl);
 

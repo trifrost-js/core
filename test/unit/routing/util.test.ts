@@ -1,11 +1,18 @@
-import {describe, it, expect} from 'vitest';
+import {describe, it, expect, vi} from 'vitest';
 import {
     isValidHandler,
     isValidGrouper,
     isValidMiddleware,
     isValidLimit,
+    isValidBodyParser,
+    normalizeMiddleware,
 } from '../../../lib/routing/util';
 import CONSTANTS from '../../constants';
+import {
+    Sym_TriFrostDescription,
+    Sym_TriFrostFingerPrint,
+    Sym_TriFrostName,
+} from '../../../lib';
 
 describe('routing - util', () => {
     describe('isValidHandler', () => {
@@ -122,6 +129,67 @@ describe('routing - util', () => {
                 if (Number.isInteger(el) && (el as number) > 0) continue;
                 expect(isValidLimit(el as any)).toBe(false);
             }
+        });
+    });
+
+    describe('isValidBodyParser', () => {
+        it('Returns true for null', () => {
+            expect(isValidBodyParser(null)).toBe(true);
+        });
+
+        it('Returns true for plain object', () => {
+            expect(isValidBodyParser({})).toBe(true);
+            expect(isValidBodyParser({limit: 999_999})).toBe(true);
+        });
+
+        it('Returns false for non-object, non-null', () => {
+            for (const el of CONSTANTS.NOT_OBJECT) {
+                if (el === null) continue;
+                expect(isValidBodyParser(el as any)).toBe(false);
+            }
+        });
+    });
+
+    describe('normalizeMiddleware', () => {
+        it('Normalizes middleware with default anonymous fields', () => {
+            const fn = vi.fn();
+            const result = normalizeMiddleware([fn]);
+            expect(result).toEqual([
+                {
+                    name: 'anonymous_mware',
+                    description: null,
+                    fingerprint: null,
+                    handler: fn,
+                },
+            ]);
+        });
+
+        it('Extracts Sym_TriFrostName, Sym_TriFrostDescription, and Sym_TriFrostFingerPrint', () => {
+            const fn = vi.fn();
+            Reflect.set(fn, Sym_TriFrostName, 'mw_name');
+            Reflect.set(fn, Sym_TriFrostDescription, 'middleware description');
+            Reflect.set(fn, Sym_TriFrostFingerPrint, 'xyz-123');
+
+            const result = normalizeMiddleware([fn]);
+            expect(result[0]).toEqual({
+                name: 'mw_name',
+                description: 'middleware description',
+                fingerprint: 'xyz-123',
+                handler: fn,
+            });
+        });
+
+        it('Falls back to null for description and fingerprint if not set', () => {
+            const fn = vi.fn();
+            Reflect.set(fn, Sym_TriFrostName, 'just_name');
+
+            const result = normalizeMiddleware([fn]);
+            expect(result[0]).toEqual({
+                name: 'just_name',
+                description: null,
+                fingerprint: null,
+                handler: fn,
+            });
         });
     });
 });

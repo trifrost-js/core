@@ -9,6 +9,12 @@ import {
     type TriFrostHandlerConfig,
     type TriFrostRouteHandler,
 } from '../types/routing';
+import {type TriFrostBodyParserOptions} from '../utils/BodyParser/types';
+import {
+    Sym_TriFrostDescription,
+    Sym_TriFrostName,
+    Sym_TriFrostFingerPrint,
+} from '../types/constants';
 
 
 /**
@@ -67,4 +73,41 @@ export function isValidLimit <
     State extends Record<string, unknown> = {}
 > (val:number|TriFrostRateLimitLimitFunction<Env, State>):boolean {
     return isIntGt(val, 0) || typeof val === 'function';
+}
+
+/**
+ * Validates whether or not a provided value is a valid bodyparser config
+ *
+ * @param {TriFrostBodyParserOptions|null} val - Value to verify
+ */
+export function isValidBodyParser (
+    val:TriFrostBodyParserOptions|null
+):val is TriFrostBodyParserOptions|null {
+    return val === null || Object.prototype.toString.call(val) === '[object Object]';
+}
+
+/**
+ * Normalizes middleware for internal usage
+ * @param {TriFrostMiddleware[]} val - Value to normalize
+ */
+export function normalizeMiddleware <
+    Env extends Record<string, any>,
+    State extends Record<string, unknown> = {}
+> (val:TriFrostMiddleware<Env, State>[]) {
+    const acc:{
+        name:string;
+        description:string|null;
+        fingerprint:any;
+        handler:TriFrostMiddleware<Env, State>
+    }[] = [];
+    for (let i = 0; i < val.length; i++) {
+        const el = val[i];
+        acc.push({
+            name: Reflect.get(el, Sym_TriFrostName) || 'anonymous_mware',
+            description: Reflect.get(el, Sym_TriFrostDescription) || null,
+            fingerprint: Reflect.get(el, Sym_TriFrostFingerPrint) || null,
+            handler: el,
+        });
+    }
+    return acc;
 }

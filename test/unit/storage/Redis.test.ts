@@ -3,7 +3,7 @@ import {isObject} from '@valkyriestudios/utils/object';
 import {describe, it, expect, beforeEach, vi, afterEach} from 'vitest';
 import {cacheSkip} from '../../../lib/modules/Cache/util';
 import {RedisStore, RedisCache, RedisRateLimit} from '../../../lib/storage/Redis';
-import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostType} from '../../../lib/types/constants';
+import {Sym_TriFrostDescription, Sym_TriFrostName} from '../../../lib/types/constants';
 import {type TriFrostContextKind} from '../../../lib/types/context';
 import {MockRedis} from '../../MockRedis';
 import {MockContext} from '../../MockContext';
@@ -22,17 +22,17 @@ describe('Storage - Redis', () => {
 
     describe('Store', () => {
         let store: RedisStore;
-    
+
         beforeEach(() => {
             store = new RedisStore(redis);
         });
-    
+
         describe('constructor', () => {
             it('Initializes correctly with a Redis client', () => {
                 expect(store).toBeInstanceOf(RedisStore);
             });
         });
-    
+
         describe('get', () => {
             it('Returns null for missing keys', async () => {
                 const result = await store.get('not-set');
@@ -41,7 +41,7 @@ describe('Storage - Redis', () => {
                     ['get', ['not-set']],
                 ]);
             });
-    
+
             it('Returns parsed object if present', async () => {
                 await redis.set('obj', JSON.stringify({x: 1}));
                 const result = await store.get('obj');
@@ -51,7 +51,7 @@ describe('Storage - Redis', () => {
                     ['get', ['obj']],
                 ]);
             });
-    
+
             it('Returns parsed array if present', async () => {
                 await redis.set('arr', JSON.stringify([0, 1, 2]));
                 const result = await store.get('arr');
@@ -61,7 +61,7 @@ describe('Storage - Redis', () => {
                     ['get', ['arr']],
                 ]);
             });
-    
+
             it('Returns null if stored value is malformed JSON', async () => {
                 await redis.set('bad-json', '{invalid}');
                 const result = await store.get('bad-json');
@@ -71,22 +71,22 @@ describe('Storage - Redis', () => {
                     ['get', ['bad-json']],
                 ]);
             });
-    
+
             it('Throws on invalid key', async () => {
                 for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
                     await expect(store.get(el as string)).rejects.toThrow(/RedisStore@get: Invalid key/);
                 }
                 expect(redis.isEmpty).toBe(true);
             });
-    
+
             it('Returns null on Redis get failure', async () => {
                 const errStore = new RedisStore({
                     ...redis,
                     get: async () => {
-                        throw new Error('Redis down'); 
+                        throw new Error('Redis down');
                     },
                 } as any);
-    
+
                 const result = await errStore.get('foo');
                 expect(result).toBeNull();
             });
@@ -95,29 +95,29 @@ describe('Storage - Redis', () => {
                 const errStore = new RedisStore({
                     ...redis,
                     get: async () => {
-                        throw new Error('Redis failure'); 
+                        throw new Error('Redis failure');
                     },
                 } as any);
-            
+
                 const result = await errStore.get('foo');
                 expect(result).toBeNull();
             });
-            
+
             it('Logs and returns null if adapter.get throws (spawned)', async () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
-            
+
                 const result = await new RedisStore({
                     ...redis,
                     get: async () => {
-                        throw new Error('Redis failure'); 
+                        throw new Error('Redis failure');
                     },
                 } as any).spawn(ctx).get('foo');
                 expect(result).toBeNull();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {key: 'foo'});
-            });            
+            });
         });
-    
+
         describe('set', () => {
             it('Stores object with default TTL', async () => {
                 await store.set('foo', {a: 1});
@@ -125,21 +125,21 @@ describe('Storage - Redis', () => {
                     ['set', ['foo', '{"a":1}', ['EX', 60]]],
                 ]);
             });
-    
+
             it('Stores array with default TTL', async () => {
                 await store.set('arr', [1, 2, 3]);
                 expect(redis.calls).toEqual([
                     ['set', ['arr', '[1,2,3]', ['EX', 60]]],
                 ]);
             });
-    
+
             it('Respects custom TTL', async () => {
                 await store.set('foo', {x: 2}, {ttl: 120});
                 expect(redis.calls).toEqual([
                     ['set', ['foo', '{"x":2}', ['EX', 120]]],
                 ]);
             });
-    
+
             it('Falls back to TTL = 60 if invalid', async () => {
                 for (const el of [...CONSTANTS.NOT_INTEGER, 0, -1, 10.5]) {
                     await store.set('fallback', {y: 1}, {ttl: el as number});
@@ -149,36 +149,36 @@ describe('Storage - Redis', () => {
                     redis.reset();
                 }
             });
-    
+
             it('Throws on invalid key', async () => {
                 for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
                     await expect(store.set(el as string, {x: 1})).rejects.toThrow(/RedisStore@set: Invalid key/);
                 }
                 expect(redis.isEmpty).toBe(true);
             });
-    
+
             it('Throws on non-object/non-array value', async () => {
                 for (const el of CONSTANTS.NOT_OBJECT) {
                     if (Array.isArray(el)) continue;
                     await expect(store.set('bad', el as any)).rejects.toThrow(/RedisStore@set: Invalid value/);
                 }
-    
+
                 for (const el of CONSTANTS.NOT_ARRAY) {
                     if (isObject(el)) continue;
                     await expect(store.set('bad', el as any)).rejects.toThrow(/RedisStore@set: Invalid value/);
                 }
-    
+
                 expect(redis.isEmpty).toBe(true);
             });
-    
+
             it('Ignores Redis errors during set', async () => {
                 const errStore = new RedisStore({
                     ...redis,
                     set: async () => {
-                        throw new Error('Set failed'); 
+                        throw new Error('Set failed');
                     },
                 } as any);
-    
+
                 await expect(errStore.set('x', {ok: true})).resolves.toBeUndefined();
             });
 
@@ -186,21 +186,21 @@ describe('Storage - Redis', () => {
                 const errStore = new RedisStore({
                     ...redis,
                     set: async () => {
-                        throw new Error('Set exploded'); 
+                        throw new Error('Set exploded');
                     },
                 } as any);
-            
+
                 await expect(errStore.set('x', {val: 1})).resolves.toBeUndefined();
             });
 
             it('Logs error if adapter.set fails (spawned)', async () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
-            
+
                 await expect(new RedisStore({
                     ...redis,
                     set: async () => {
-                        throw new Error('fail-set'); 
+                        throw new Error('fail-set');
                     },
                 } as any).spawn(ctx).set('foo', {x: 1})).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {
@@ -208,9 +208,9 @@ describe('Storage - Redis', () => {
                     value: {x: 1},
                     opts: undefined,
                 });
-            });            
+            });
         });
-    
+
         describe('del', () => {
             it('Deletes key successfully', async () => {
                 await store.set('to-del', {z: 9});
@@ -220,14 +220,14 @@ describe('Storage - Redis', () => {
                     ['del', ['to-del']],
                 ]);
             });
-    
+
             it('Does nothing for missing key', async () => {
                 await store.del('ghost');
                 expect(redis.calls).toEqual([
                     ['del', ['ghost']],
                 ]);
             });
-    
+
             it('Deletes all keys matching prefix', async () => {
                 await store.set('a.1', {x: 1});
                 await store.set('a.2', {y: 2});
@@ -241,7 +241,7 @@ describe('Storage - Redis', () => {
                     ['del', ['a.1', 'a.2']],
                 ]);
             });
-    
+
             it('Handles no matches for prefix without error', async () => {
                 await store.set('x', {a: 1});
                 await store.del({prefix: 'not-found:'});
@@ -250,57 +250,57 @@ describe('Storage - Redis', () => {
                     ['scan', ['0', 'MATCH', 'not-found:*', 'COUNT', 250]],
                 ]);
             });
-    
+
             it('Performs multiple scan/del calls when prefix match exceeds count', async () => {
                 /* Insert 260 keys so that scan (COUNT = 250) will require 2 rounds */
                 for (let i = 0; i < 260; i++) {
                     await store.set(`p.${i}`, {x: i});
                 }
-            
+
                 await store.del({prefix: 'p.'});
-            
+
                 const scans = redis.calls.filter(([cmd]) => cmd === 'scan');
                 const dels = redis.calls.filter(([cmd]) => cmd === 'del');
-            
+
                 /* Expect at least two scan calls due to count limit */
                 expect(scans.length).toBeGreaterThanOrEqual(2);
-            
+
                 /* Expect del calls to be batched (100 per batch max) */
                 const del_keys = dels.flatMap(([, args]) => args);
                 expect(del_keys.length).toBe(260);
                 for (let i = 0; i < 260; i++) expect(del_keys).toContain(`p.${i}`);
             });
-    
+
             it('Throws on invalid key', async () => {
                 for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
                     await expect(store.del(el as string)).rejects.toThrow(/RedisStore@del: Invalid deletion value/);
                 }
                 expect(redis.isEmpty).toBe(true);
             });
-    
+
             it('Throws on invalid prefix', async () => {
                 for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
                     await expect(store.del({prefix: el as string})).rejects.toThrow(/RedisStore@del: Invalid deletion value/);
                 }
                 expect(redis.isEmpty).toBe(true);
             });
-    
+
             it('Gracefully handles scan errors during prefix deletion', async () => {
                 const errStore = new RedisStore({
                     ...redis,
                     scan: async () => {
-                        throw new Error('Scan failed'); 
+                        throw new Error('Scan failed');
                     },
                 } as any);
-    
+
                 await expect(errStore.del({prefix: 'some:'})).resolves.toBeUndefined();
             });
-    
+
             it('Gracefully handles del errors during prefix deletion', async () => {
                 await store.set('match.1', {x: 1});
                 await store.set('match.2', {x: 2});
                 redis.del = async () => {
-                    throw new Error('Del failed'); 
+                    throw new Error('Del failed');
                 };
                 await expect(store.del({prefix: 'match.'})).resolves.toBeUndefined();
             });
@@ -309,21 +309,21 @@ describe('Storage - Redis', () => {
                 const errStore = new RedisStore({
                     ...redis,
                     del: async () => {
-                        throw new Error('delete failed'); 
+                        throw new Error('delete failed');
                     },
                 } as any);
-            
+
                 await expect(errStore.del('bad-key')).resolves.toBeUndefined();
             });
 
             it('Logs error if adapter.del fails (spawned)', async () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
-            
+
                 await expect(new RedisStore({
                     ...redis,
                     del: async () => {
-                        throw new Error('bad delete'); 
+                        throw new Error('bad delete');
                     },
                 } as any).spawn(ctx).del('key123')).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: 'key123'});
@@ -332,17 +332,17 @@ describe('Storage - Redis', () => {
             it('Logs error if adapter.delPrefixed fails (spawned)', async () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
-            
+
                 await expect(new RedisStore({
                     ...redis,
                     delPrefixed: async () => {
-                        throw new Error('delPrefixed boom'); 
+                        throw new Error('delPrefixed boom');
                     },
                 } as any).spawn(ctx).del({prefix: 'x.'})).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: {prefix: 'x.'}});
-            });            
+            });
         });
-    
+
         describe('stop', () => {
             it('Should not do anything and not throw', async () => {
                 await store.stop();
@@ -419,10 +419,10 @@ describe('Storage - Redis', () => {
             it('Returns null if value in Redis is malformed or not wrapped', async () => {
                 await redis.set('corrupt', JSON.stringify({not_v: 123}));
                 expect(await cache.get('corrupt')).toBe(null);
-            
+
                 await redis.set('not-json', 'plain string');
                 expect(await cache.get('not-json')).toBe(null);
-            });        
+            });
 
             it('Returns stored object', async () => {
                 await redis.set('foo', JSON.stringify({v: {bar: 1}}));
@@ -614,7 +614,7 @@ describe('Storage - Redis', () => {
                     ['set', ['null-key', JSON.stringify({v: null}), ['EX', 60]]],
                     ['get', ['null-key']],
                 ]);
-            });        
+            });
 
             it('Delegates to internal get/set during wrap', async () => {
                 const getSpy = vi.spyOn(redis, 'get');
@@ -646,7 +646,7 @@ describe('Storage - Redis', () => {
         });
     });
 
-    describe('RateLimit', () => {        
+    describe('RateLimit', () => {
         describe('init', () => {
             it('Should throw if not provided a store', () => {
                 for (const el of [
@@ -657,7 +657,7 @@ describe('Storage - Redis', () => {
                     expect(() => new RedisRateLimit(el)).toThrow(/RedisRateLimit: Expected a store initializer/);
                 }
             });
-    
+
             it('Initializes with default strategy (fixed) and window (60)', async () => {
                 const rl = new RedisRateLimit({store: () => redis});
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
@@ -672,7 +672,7 @@ describe('Storage - Redis', () => {
                     ['set', ['127.0.0.1:route:GET', `{"amt":1,"reset":${now+rl.window}}`, ['EX', 60]]],
                 ]);
             });
-    
+
             it('Initializes with sliding strategy', async () => {
                 const rl = new RedisRateLimit({
                     store: () => redis,
@@ -690,7 +690,7 @@ describe('Storage - Redis', () => {
                     ['set', ['127.0.0.1:route:GET', `[${now}]`, ['EX', 60]]],
                 ]);
             });
-    
+
             it('Throws for invalid limit types', async () => {
                 const rl = new RedisRateLimit({store: () => redis});
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
@@ -701,11 +701,11 @@ describe('Storage - Redis', () => {
                 expect(rl.window).toBe(60);
                 expect(redis.isEmpty).toBe(true);
             });
-    
+
             it('Skips processing for non-std context kinds', async () => {
                 const rl = new RedisRateLimit({store: () => redis});
                 const mw = rl.limit(1);
-                
+
                 for (const kind of ['notfound', 'health', 'options']) {
                     const ctx = new MockContext({kind: kind as TriFrostContextKind});
                     await mw(ctx);
@@ -714,19 +714,18 @@ describe('Storage - Redis', () => {
                     expect(redis.isEmpty).toBe(true);
                 }
             });
-    
+
             it('Registers correct introspection symbols', async () => {
                 const rl = new RedisRateLimit({store: () => redis});
                 const mw = rl.limit(5);
-                
+
                 expect(rl.strategy).toBe('fixed');
                 expect(rl.window).toBe(60);
                 expect(Reflect.get(mw, Sym_TriFrostName)).toBe('TriFrostRateLimit');
-                expect(Reflect.get(mw, Sym_TriFrostType)).toBe('middleware');
                 expect(Reflect.get(mw, Sym_TriFrostDescription)).toBe('Middleware for rate limitting contexts passing through it');
                 expect(redis.isEmpty).toBe(true);
             });
-    
+
             it('Sets rate limit headers when enabled', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new RedisRateLimit({window: 1, store: () => redis});
@@ -747,7 +746,7 @@ describe('Storage - Redis', () => {
                     ['get', ['127.0.0.1:test:POST']],
                 ]);
             });
-    
+
             it('Disables rate limit headers when disabled', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new RedisRateLimit({headers: false, store: () => redis});
@@ -765,7 +764,7 @@ describe('Storage - Redis', () => {
                     ['get', ['127.0.0.1:test:POST']],
                 ]);
             });
-    
+
             it('Supports custom key generators', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new RedisRateLimit({keygen: el => `ip:${el.ip}`, store: () => redis});
@@ -786,7 +785,7 @@ describe('Storage - Redis', () => {
                     ['set', ['ip:127.0.0.1', `{"amt":2,"reset":${now+rl.window}}`, ['EX', 60]]],
                 ]);
             });
-    
+
             it('Supports custom exceeded handler', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const exceeded = vi.fn(el => el.status(400));
@@ -803,17 +802,17 @@ describe('Storage - Redis', () => {
                     ['get', ['127.0.0.1:test:POST']],
                 ]);
             });
-    
+
             it('Generates correct keys for all built-in keygens (with IP)', async () => {
                 const ctx = new MockContext({ip: '72.8.34.9', name: 'foo', method: 'GET'});
-                
+
                 const expected = {
                     ip: '72.8.34.9',
                     ip_name: '72.8.34.9:foo',
                     ip_method: '72.8.34.9:GET',
                     ip_name_method: '72.8.34.9:foo:GET',
                 };
-                
+
                 for (const [key, key_expected] of Object.entries(expected)) {
                     const rl = new RedisRateLimit({keygen: key as any, store: () => redis});
                     const mw = rl.limit(1);
@@ -821,7 +820,7 @@ describe('Storage - Redis', () => {
                     await mw(ctx);
                     await mw(ctx);
                     expect(ctx.statusCode).toBe(429);
-    
+
                     expect(redis.calls).toEqual([
                         ['get', [key_expected]],
                         ['set', [key_expected, `{"amt":1,"reset":${now+rl.window}}`, ['EX', 60]]],
@@ -830,17 +829,17 @@ describe('Storage - Redis', () => {
                     redis.reset();
                 }
             });
-                
+
             it('Falls back to "unknown" if no IP is available', async () => {
                 const ctx = new MockContext({ip: null, name: 'foo', method: 'GET'});
-                
+
                 const expected = {
                     ip: 'unknown',
                     ip_name: 'unknown:foo',
                     ip_method: 'unknown:GET',
                     ip_name_method: 'unknown:foo:GET',
                 };
-                
+
                 for (const [key, key_expected] of Object.entries(expected)) {
                     const rl = new RedisRateLimit({keygen: key as any, store: () => redis});
                     const mw = rl.limit(1);
@@ -848,7 +847,7 @@ describe('Storage - Redis', () => {
                     await mw(ctx);
                     await mw(ctx);
                     expect(ctx.statusCode).toBe(429);
-    
+
                     expect(redis.calls).toEqual([
                         ['get', [key_expected]],
                         ['set', [key_expected, `{"amt":1,"reset":${now+rl.window}}`, ['EX', 60]]],
@@ -857,13 +856,13 @@ describe('Storage - Redis', () => {
                     redis.reset();
                 }
             });
-    
+
             it('Falls back to "unknown" if keygen returns falsy', async () => {
                 const rl = new RedisRateLimit({
                     store: () => redis,
                     keygen: () => undefined as unknown as string, /* Force falsy value */
                 });
-                
+
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const mw = rl.limit(1);
                 const now = Math.floor(Date.now()/1000);
@@ -874,11 +873,11 @@ describe('Storage - Redis', () => {
                     ['set', ['unknown', `{"amt":1,"reset":${now+rl.window}}`, ['EX', 60]]],
                     ['get', ['unknown']],
                 ]);
-                
+
                 expect(ctx.statusCode).toBe(429);
             });
         });
-    
+
         describe('strategy:fixed', () => {
             it('Allows requests within limit', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
@@ -889,7 +888,7 @@ describe('Storage - Redis', () => {
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(200);
             });
-    
+
             it('Blocks requests over the limit', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new RedisRateLimit({window: 1000, store: () => redis});
@@ -899,7 +898,7 @@ describe('Storage - Redis', () => {
                 expect(ctx.statusCode).toBe(429);
             });
         });
-    
+
         describe('strategy:sliding', () => {
             it('Allows requests within windowed limit', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
@@ -909,7 +908,7 @@ describe('Storage - Redis', () => {
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(200);
             });
-    
+
             it('Blocks when timestamps exceed limit in window', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new RedisRateLimit({strategy: 'sliding', window: 1, store: () => redis});
@@ -918,7 +917,7 @@ describe('Storage - Redis', () => {
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(429);
             });
-    
+
             it('Clears oldest timestamps after window expiry', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new RedisRateLimit({strategy: 'sliding', window: 1, store: () => redis});
@@ -928,24 +927,24 @@ describe('Storage - Redis', () => {
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(200);
             });
-    
+
             it('Prunes first timestamp if it falls outside the window', async () => {
                 const rl = new RedisRateLimit({strategy: 'sliding', window: 1, store: () => redis});
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const mw = rl.limit(2);
-                
+
                 /* First request */
                 await mw(ctx);
-                
+
                 /* @ts-ignore Manually insert an old timestamp to simulate an aged entry */
                 await rl.resolvedStore.store.set('127.0.0.1:test:POST', [Math.floor(Date.now()/1000) - 2]);
-                
+
                 /* Second request triggers pruning of old timestamp */
                 await mw(ctx);
-                
+
                 /* @ts-ignore We want to test this */
                 const val = await rl.resolvedStore.store.get('127.0.0.1:test:POST');
-                
+
                 expect(Array.isArray(val)).toBe(true);
                 expect(val.length).toBe(1); /* old timestamp pruned */
                 expect(val[0]).toBeGreaterThan(Math.floor(Date.now()/1000) - 1); /* only recent timestamp remains */

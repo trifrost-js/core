@@ -1,5 +1,3 @@
-/* eslint-disable no-use-before-define */
-
 export type JSXType = string|((props:JSXProps) => JSXElement);
 export type JSXProps = {dangerouslySetInnerHTML?: {__html: string;}} & Record<string, unknown> | null;
 export type JSXKey = string|number|null;

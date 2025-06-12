@@ -9,7 +9,6 @@ import {
     Sym_TriFrostDescription,
     Sym_TriFrostFingerPrint,
     Sym_TriFrostName,
-    Sym_TriFrostType,
 } from '../types/constants';
 import {type TriFrostContext} from '../types/context';
 import {hexId} from '../utils/Generic';
@@ -546,7 +545,6 @@ export function Security <
 
     /* Add symbols for introspection/use further down the line */
     Reflect.set(mware, Sym_TriFrostName, 'TriFrostSecurity');
-    Reflect.set(mware, Sym_TriFrostType, 'middleware');
     Reflect.set(mware, Sym_TriFrostDescription, 'Middleware for configuring Security headers and CSP on contexts passing through it');
     Reflect.set(mware, Sym_TriFrostFingerPrint, Sym_TriFrostMiddlewareSecurity);
 

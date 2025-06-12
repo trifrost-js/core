@@ -5,7 +5,6 @@ import {
     Sym_TriFrostDescription,
     Sym_TriFrostFingerPrint,
     Sym_TriFrostName,
-    Sym_TriFrostType,
 } from '../../types/constants';
 import {type TriFrostContext} from '../../types/context';
 import {Sym_TriFrostMiddlewareAuth} from './types';
@@ -91,7 +90,6 @@ export function BasicAuth <
 
     /* Add symbols for introspection/use further down the line */
     Reflect.set(mware, Sym_TriFrostName, 'TriFrostBasicAuth');
-    Reflect.set(mware, Sym_TriFrostType, 'middleware');
     Reflect.set(mware, Sym_TriFrostDescription, 'HTTP Basic Authentication middleware');
     Reflect.set(mware, Sym_TriFrostMiddlewareAuth, true);
     Reflect.set(mware, Sym_TriFrostFingerPrint, Sym_TriFrostMiddlewareBasicAuth);

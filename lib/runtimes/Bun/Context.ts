@@ -3,18 +3,17 @@
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {Context} from '../../Context';
 import {type TriFrostRootLogger} from '../../modules/Logger';
-import {
-    type TriFrostContextConfig,
-    type TriFrostContextInit,
-} from '../../types/context';
+import {type TriFrostContextConfig} from '../../types/context';
 import {
     HttpMethods,
     HttpMethodToNormal,
     type HttpStatus,
     type HttpStatusCode,
 } from '../../types/constants';
+import {type TriFrostRouteMatch} from '../../types/routing';
 import {parseBody} from '../../utils/BodyParser/Request';
 import {extractPartsFromUrl} from '../../utils/Http';
+import {DEFAULT_BODY_PARSER_OPTIONS} from '../../utils/BodyParser/types';
 
 export class BunContext extends Context {
 
@@ -63,8 +62,8 @@ export class BunContext extends Context {
     /**
      * Initializes the context, this happens when a route is matched and tied to this context.
      */
-    async init (val:TriFrostContextInit) {
-        await super.init(val, async () => parseBody(this, this.#bun_req));
+    async init (val:TriFrostRouteMatch) {
+        await super.init(val, async () => parseBody(this, this.#bun_req, val.route.bodyParser || DEFAULT_BODY_PARSER_OPTIONS));
     }
 
     /**

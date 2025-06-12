@@ -1,14 +1,7 @@
 /* eslint-disable max-lines */
 import {describe, it, expect, beforeEach} from 'vitest';
 import {RouteTree} from '../../../lib/routing/Tree';
-import {
-    HttpMethods,
-    Sym_TriFrostDescription,
-    Sym_TriFrostFingerPrint,
-    Sym_TriFrostMeta,
-    Sym_TriFrostName,
-    Sym_TriFrostType,
-} from '../../../lib/types/constants';
+import {HttpMethods} from '../../../lib/types/constants';
 import CONSTANTS from '../../constants';
 import {type TriFrostRoute} from '../../../lib/types/routing';
 import {MockContext} from '../../MockContext';
@@ -32,27 +25,27 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'anonymous',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'anonymous',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.match(HttpMethods.GET, '/static');
             expect(match).not.toBe(null);
             expect(match?.params).toEqual({});
             expect(match?.route.fn).toBe(handler);
         });
-    
+
         it('Returns null when static route not found', () => {
             const match = tree.match(HttpMethods.GET, '/missing');
             expect(match).toBe(null);
         });
-    
+
         it('Handles trailing slash as distinct static route', () => {
             const withSlashHandler = () => {};
             const noSlashHandler = () => {};
-    
+
             const with_slash_route = {
                 path: '/trail/',
                 fn: withSlashHandler,
@@ -60,13 +53,13 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'anonymous',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'anonymous',
+                description: null,
+                meta: {},
+                bodyParser: null,
             } as TriFrostRoute<any>;
             tree.add(with_slash_route);
-    
+
             const no_slash_route = {
                 path: '/trail',
                 fn: noSlashHandler,
@@ -74,23 +67,23 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'anonymous',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'anonymous',
+                description: null,
+                meta: {},
+                bodyParser: null,
             } as TriFrostRoute<any>;
             tree.add(no_slash_route);
-    
+
             const no_slash = tree.match(HttpMethods.GET, '/trail');
             const with_slash = tree.match(HttpMethods.GET, '/trail/');
-    
+
             expect(no_slash?.route.fn).toBe(noSlashHandler);
             expect(no_slash?.route.middleware).toEqual([]);
-    
+
             expect(with_slash?.route.fn).toBe(withSlashHandler);
             expect(with_slash?.route.middleware).toEqual([]);
         });
-    
+
         it('Matches root path', () => {
             const handler = () => {};
             tree.add({
@@ -100,12 +93,12 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'anonymous',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'anonymous',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.match(HttpMethods.GET, '/');
             expect(match).not.toBe(null);
             expect(match?.route.fn).toBe(handler);
@@ -122,18 +115,18 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'anonymous',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'anonymous',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.match(HttpMethods.GET, '/user/42');
             expect(match).not.toBe(null);
             expect(match?.params).toEqual({id: '42'});
             expect(match?.route.fn).toBe(handler);
         });
-    
+
         it('Adds and matches wildcard route', () => {
             const handler = () => {};
             tree.add({
@@ -143,22 +136,22 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'anonymous',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'anonymous',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.match(HttpMethods.GET, '/wild/anything/here');
             expect(match).not.toBe(null);
             expect(match?.params).toEqual({});
             expect(match?.route.fn).toBe(handler);
         });
-    
+
         it('Matches multiple param route', () => {
             const teamHandler = () => {};
             const fileHandler = () => {};
-    
+
             tree.add({
                 path: '/team/:teamId/user/:userId',
                 fn: teamHandler,
@@ -166,12 +159,12 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'anonymous',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'anonymous',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             tree.add({
                 path: '/files/:folder/:year/:file',
                 fn: fileHandler,
@@ -179,21 +172,21 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'anonymous',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'anonymous',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match1 = tree.match(HttpMethods.GET, '/team/7/user/88');
             expect(match1?.params).toEqual({teamId: '7', userId: '88'});
             expect(match1?.route.fn).toBe(teamHandler);
-    
+
             const match2 = tree.match(HttpMethods.GET, '/files/photos/2024/pic.jpg');
             expect(match2?.params).toEqual({folder: 'photos', year: '2024', file: 'pic.jpg'});
             expect(match2?.route.fn).toBe(fileHandler);
         });
-    
+
         it('Matches param + wildcard combo', () => {
             const handler = () => {};
             tree.add({
@@ -203,17 +196,17 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'anonymous',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'anonymous',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.match(HttpMethods.GET, '/files/photos/2024/pic.jpg');
             expect(match?.params).toEqual({folder: 'photos', year: '2024'});
             expect(match?.route.fn).toBe(handler);
         });
-    
+
         it('Matches deep wildcard chains', () => {
             const handler = () => {};
             tree.add({
@@ -223,16 +216,16 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'anonymous',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'anonymous',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.match(HttpMethods.GET, '/wild/a/b/c/d');
             expect(match?.route.fn).toBe(handler);
         });
-    
+
         it('Does not match wildcard chain on other methods', () => {
             tree.add({
                 path: '/wild/*',
@@ -241,12 +234,12 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'anonymous',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'anonymous',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             expect(tree.match(HttpMethods.POST, '/wild/a/b/c/d')).toBe(null);
             expect(tree.match(HttpMethods.PUT, '/wild/a/b/c/d')).toBe(null);
             expect(tree.match(HttpMethods.PATCH, '/wild/a/b/c/d')).toBe(null);
@@ -254,11 +247,11 @@ describe('routing - Tree', () => {
             expect(tree.match(HttpMethods.HEAD, '/wild/a/b/c/d')).toBe(null);
             expect(tree.match(HttpMethods.OPTIONS, '/wild/a/b/c/d')).toBe(null);
         });
-    
+
         it('Does not leak params across routes', () => {
             const firstHandler = () => {};
             const secondHandler = () => {};
-    
+
             tree.add({
                 path: '/first/:id',
                 fn: firstHandler,
@@ -266,12 +259,12 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'anonymous',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'anonymous',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             tree.add({
                 path: '/second/:name',
                 fn: secondHandler,
@@ -279,26 +272,26 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'anonymous',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'anonymous',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const first = tree.match(HttpMethods.GET, '/first/1');
             const second = tree.match(HttpMethods.GET, '/second/abc');
-    
+
             expect(first?.params).toEqual({id: '1'});
             expect(first?.route.fn).toBe(firstHandler);
-    
+
             expect(second?.params).toEqual({name: 'abc'});
             expect(second?.route.fn).toBe(secondHandler);
         });
-    
+
         it('Correctly matches across methods', () => {
             const getHandler = () => {};
             const postHandler = () => {};
-    
+
             tree.add({
                 path: '/first/:id',
                 fn: getHandler,
@@ -306,12 +299,12 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'anonymous',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'anonymous',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             tree.add({
                 path: '/first/:id',
                 fn: postHandler,
@@ -319,27 +312,27 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.POST,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'anonymous',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'anonymous',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const get = tree.match(HttpMethods.GET, '/first/1');
             const post = tree.match(HttpMethods.POST, '/first/abc');
-    
+
             expect(get?.route.fn).toBe(getHandler);
             expect(get?.params).toEqual({id: '1'});
-    
+
             expect(post?.route.fn).toBe(postHandler);
             expect(post?.params).toEqual({id: 'abc'});
         });
-    
+
         it('Returns null when dynamic route not found', () => {
             const match = tree.match(HttpMethods.GET, '/user');
             expect(match).toBe(null);
         });
-    });    
+    });
 
     describe('notfound', () => {
         it('Adds and matches notfound wildcard handler', () => {
@@ -350,17 +343,17 @@ describe('routing - Tree', () => {
                 middleware: [],
                 timeout: null,
                 kind: 'notfound',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: '404_api',
-                [Sym_TriFrostDescription]: 'API notfound handler',
-                [Sym_TriFrostMeta]: {},
+                name: '404_api',
+                description: 'API notfound handler',
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.matchNotFound('/api/missing/endpoint');
             expect(match).not.toBe(null);
             expect(match?.route.fn).toBe(handler);
         });
-    
+
         it('Matches nested notfound fallback', () => {
             const handler = () => {};
             tree.addNotFound({
@@ -369,17 +362,17 @@ describe('routing - Tree', () => {
                 middleware: [],
                 timeout: null,
                 kind: 'notfound',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: '404_nested',
-                [Sym_TriFrostDescription]: 'Nested notfound handler',
-                [Sym_TriFrostMeta]: {},
+                name: '404_nested',
+                description: 'Nested notfound handler',
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.matchNotFound('/nested/deeper/path');
             expect(match).not.toBe(null);
             expect(match?.route.fn).toBe(handler);
         });
-    
+
         it('Returns null when no notfound handler matches', () => {
             const match = tree.matchNotFound('/random/path');
             expect(match).toBe(null);
@@ -393,21 +386,21 @@ describe('routing - Tree', () => {
                 middleware: [],
                 timeout: null,
                 kind: 'notfound',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'cached_nf',
-                [Sym_TriFrostDescription]: 'Cached notfound',
-                [Sym_TriFrostMeta]: {},
+                name: 'cached_nf',
+                description: 'Cached notfound',
+                meta: {},
+                bodyParser: null,
             });
-        
+
             const first = tree.matchNotFound('/cached/something');
             expect(first).not.toBe(null);
-        
+
             const second = tree.matchNotFound('/cached/something');
             expect(second).not.toBe(null);
             expect(second).toBe(first);
         });
     });
-    
+
     describe('error', () => {
         it('Adds and matches error wildcard handler', () => {
             const handler = () => {};
@@ -417,17 +410,17 @@ describe('routing - Tree', () => {
                 middleware: [],
                 timeout: null,
                 kind: 'error',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: '500_server',
-                [Sym_TriFrostDescription]: 'Server error handler',
-                [Sym_TriFrostMeta]: {},
+                name: '500_server',
+                description: 'Server error handler',
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.matchError('/server/boom');
             expect(match).not.toBe(null);
             expect(match?.route.fn).toBe(handler);
         });
-    
+
         it('Matches specific error fallback', () => {
             const handler = () => {};
             tree.addError({
@@ -436,17 +429,17 @@ describe('routing - Tree', () => {
                 middleware: [],
                 timeout: null,
                 kind: 'error',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: '500_failures',
-                [Sym_TriFrostDescription]: 'Failures error handler',
-                [Sym_TriFrostMeta]: {},
+                name: '500_failures',
+                description: 'Failures error handler',
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.matchError('/failures/deep/error');
             expect(match).not.toBe(null);
             expect(match?.route.fn).toBe(handler);
         });
-    
+
         it('Returns null when no error handler matches', () => {
             const match = tree.matchError('/ok/path');
             expect(match).toBe(null);
@@ -460,25 +453,25 @@ describe('routing - Tree', () => {
                 middleware: [],
                 timeout: null,
                 kind: 'error',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'cached_err',
-                [Sym_TriFrostDescription]: 'Cached error',
-                [Sym_TriFrostMeta]: {},
+                name: 'cached_err',
+                description: 'Cached error',
+                meta: {},
+                bodyParser: null,
             });
-        
+
             const first = tree.matchError('/error/boom');
             expect(first).not.toBe(null);
-        
+
             const second = tree.matchError('/error/boom');
             expect(second).not.toBe(null);
             expect(second).toBe(first);
         });
-    });    
+    });
 
     describe('reset()', () => {
         it('Resets all registered routes', () => {
             const handler = () => {};
-    
+
             tree.add({
                 path: '/wipe',
                 fn: handler,
@@ -486,43 +479,43 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'wipe_route',
-                [Sym_TriFrostDescription]: 'wipe route',
-                [Sym_TriFrostMeta]: {},
+                name: 'wipe_route',
+                description: 'wipe route',
+                meta: {},
+                bodyParser: null,
             });
-    
+
             tree.addNotFound({
                 path: '/wipe/*',
                 fn: handler,
                 middleware: [],
                 timeout: null,
                 kind: 'notfound',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'wipe_notfound',
-                [Sym_TriFrostDescription]: 'wipe notfound handler',
-                [Sym_TriFrostMeta]: {},
+                name: 'wipe_notfound',
+                description: 'wipe notfound handler',
+                meta: {},
+                bodyParser: null,
             });
-    
+
             tree.addError({
                 path: '/wipe/*',
                 fn: handler,
                 middleware: [],
                 timeout: null,
                 kind: 'error',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'wipe_error',
-                [Sym_TriFrostDescription]: 'wipe error handler',
-                [Sym_TriFrostMeta]: {},
+                name: 'wipe_error',
+                description: 'wipe error handler',
+                meta: {},
+                bodyParser: null,
             });
-    
+
             /* Before reset: matches should succeed */
             expect(tree.match(HttpMethods.GET, '/wipe')).not.toBe(null);
             expect(tree.matchNotFound('/wipe/abc')).not.toBe(null);
             expect(tree.matchError('/wipe/abc')).not.toBe(null);
-    
+
             tree.reset();
-    
+
             /* After reset: everything should be gone */
             expect(tree.match(HttpMethods.GET, '/wipe')).toBe(null);
             expect(tree.matchNotFound('/wipe/abc')).toBe(null);
@@ -533,7 +526,7 @@ describe('routing - Tree', () => {
     describe('GET stack', () => {
         it('collects all routes across static, dynamic, notfound, and error', () => {
             const handler = () => {};
-        
+
             tree.add({
                 path: '/static',
                 fn: handler,
@@ -541,12 +534,12 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: 'GET',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'static_get',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'static_get',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-        
+
             tree.add({
                 path: '/dynamic/:id',
                 fn: handler,
@@ -554,36 +547,36 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: 'POST',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'dynamic_post',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'dynamic_post',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-        
+
             tree.addNotFound({
                 path: '/nf/*',
                 fn: handler,
                 middleware: [],
                 timeout: null,
                 kind: 'notfound',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'notfound',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'notfound',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-        
+
             tree.addError({
                 path: '/err/*',
                 fn: handler,
                 middleware: [],
                 timeout: null,
                 kind: 'error',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'error',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'error',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-        
+
             expect(tree.stack).toEqual(expect.arrayContaining([
                 expect.objectContaining({path: '/static', method: 'GET'}),
                 expect.objectContaining({path: '/static', method: 'OPTIONS'}),
@@ -605,14 +598,14 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: 'GET',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'options_test',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'options_test',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-        
+
             const allRoutes = tree.stack;
-        
+
             const optionRoute = allRoutes.find(r => r.method === 'OPTIONS' && r.path === '/options-test');
             expect(optionRoute).toBeDefined();
             expect(optionRoute?.kind).toBe('options');
@@ -628,16 +621,16 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: 'GET',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'somewhere',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'somewhere',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-        
+
             expect(tree.stack.length).toBeGreaterThan(0);
-        
+
             tree.reset();
-        
+
             expect(tree.stack.length).toBe(0);
         });
     });
@@ -652,17 +645,17 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'root',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'root',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.match(HttpMethods.GET, '');
             expect(match).not.toBe(null);
             expect(match?.route.fn).toBe(handler);
         });
-    
+
         it('Handles multiple consecutive slashes', () => {
             const handler = () => {};
             tree.add({
@@ -672,16 +665,16 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'multi_slash',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'multi_slash',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.match(HttpMethods.GET, '/multi//slash///');
             expect(match).toBe(null);
         });
-    
+
         it('Matches percent-encoded segments', () => {
             const handler = () => {};
             tree.add({
@@ -691,17 +684,17 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'percent_encoded',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'percent_encoded',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.match(HttpMethods.GET, '/file/space%20here');
             expect(match).not.toBe(null);
             expect(match?.route.fn).toBe(handler);
         });
-    
+
         it('Handles non-ASCII segments', () => {
             const handler = () => {};
             tree.add({
@@ -711,17 +704,17 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'non_ascii',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'non_ascii',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.match(HttpMethods.GET, '/emoji/💥/🔥');
             expect(match).not.toBe(null);
             expect(match?.route.fn).toBe(handler);
         });
-    
+
         it('Captures many params correctly', () => {
             const handler = () => {};
             tree.add({
@@ -731,12 +724,12 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'multi_params',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'multi_params',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.match(HttpMethods.GET, '/a/1/b/2/c/3/d/4/e/5');
             expect(match?.params).toEqual({
                 p1: '1',
@@ -747,12 +740,12 @@ describe('routing - Tree', () => {
             });
             expect(match?.route.fn).toBe(handler);
         });
-    
+
         it('Handles overlapping routes', () => {
             const staticHandler = () => {};
             const paramHandler = () => {};
             const wildcardHandler = () => {};
-    
+
             tree.add({
                 path: '/foo/bar',
                 fn: staticHandler,
@@ -760,12 +753,12 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'foo_bar_static',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'foo_bar_static',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             tree.add({
                 path: '/foo/:param',
                 fn: paramHandler,
@@ -773,12 +766,12 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'foo_param',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'foo_param',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             tree.add({
                 path: '/foo/*',
                 fn: wildcardHandler,
@@ -786,16 +779,16 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'foo_wildcard',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'foo_wildcard',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const staticMatch = tree.match(HttpMethods.GET, '/foo/bar');
             const paramMatch = tree.match(HttpMethods.GET, '/foo/value');
             const wildcardMatch = tree.match(HttpMethods.GET, '/foo/extra/path');
-    
+
             expect(staticMatch?.route.fn).toBe(staticHandler);
             expect(paramMatch?.route.fn).toBe(paramHandler);
             expect(wildcardMatch?.route.fn).toBe(wildcardHandler);
@@ -810,21 +803,31 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'wild_deep',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'wild_deep',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.match(HttpMethods.GET, '/wild/a/b/c/d/e/f/g/h/i');
             expect(match).not.toBe(null);
             expect(match?.route.fn).toBe(handler);
         });
-    
+
         it('Returns correct middleware stack', () => {
-            const mw1 = () => {};
-            const mw2 = () => {};
-    
+            const mw1 = {
+                name: 'mw1',
+                description: null,
+                fingerprint: null,
+                handler: () => {},
+            };
+            const mw2 = {
+                name: 'mw2',
+                description: null,
+                fingerprint: null,
+                handler: () => {},
+            };
+
             tree.add({
                 path: '/with/mw',
                 fn: () => {},
@@ -832,12 +835,12 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'with_mw',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'with_mw',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.match(HttpMethods.GET, '/with/mw');
             expect(match?.route.middleware).toEqual([mw1, mw2]);
         });
@@ -845,7 +848,7 @@ describe('routing - Tree', () => {
         it('Prioritizes static over param (param shadowing)', () => {
             const staticHandler = () => {};
             const paramHandler = () => {};
-    
+
             tree.add({
                 path: '/shadow/static',
                 fn: staticHandler,
@@ -853,12 +856,12 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'shadow_static',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'shadow_static',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             tree.add({
                 path: '/shadow/:param',
                 fn: paramHandler,
@@ -866,15 +869,15 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'shadow_param',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'shadow_param',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const staticMatch = tree.match(HttpMethods.GET, '/shadow/static');
             const paramMatch = tree.match(HttpMethods.GET, '/shadow/value');
-    
+
             expect(staticMatch?.route.fn).toBe(staticHandler);
             expect(paramMatch?.route.fn).toBe(paramHandler);
             expect(paramMatch?.params).toEqual({param: 'value'});
@@ -889,19 +892,19 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'normalize_slash',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'normalize_slash',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const matchWith = tree.match(HttpMethods.GET, '/normalize/slash/');
             const matchWithout = tree.match(HttpMethods.GET, '/normalize/slash');
-    
+
             expect(matchWith).toBe(null);
             expect(matchWithout?.route.fn).toBe(handler);
         });
-    
+
         it('Rejects double slashes internally', () => {
             const handler = () => {};
             tree.add({
@@ -911,12 +914,12 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'double_slash',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'double_slash',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.match(HttpMethods.GET, '/double//slash');
             expect(match).toBe(null);
         });
@@ -924,77 +927,77 @@ describe('routing - Tree', () => {
         it('Matches most specific notfound wildcard', () => {
             const outerHandler = () => {};
             const innerHandler = () => {};
-        
+
             tree.addNotFound({
                 path: '/api/*',
                 fn: outerHandler,
                 middleware: [],
                 timeout: null,
                 kind: 'notfound',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'outer_nf',
-                [Sym_TriFrostDescription]: 'Outer notfound',
-                [Sym_TriFrostMeta]: {},
+                name: 'outer_nf',
+                description: 'Outer notfound',
+                meta: {},
+                bodyParser: null,
             });
-        
+
             tree.addNotFound({
                 path: '/api/v2/*',
                 fn: innerHandler,
                 middleware: [],
                 timeout: null,
                 kind: 'notfound',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'inner_nf',
-                [Sym_TriFrostDescription]: 'Inner notfound',
-                [Sym_TriFrostMeta]: {},
+                name: 'inner_nf',
+                description: 'Inner notfound',
+                meta: {},
+                bodyParser: null,
             });
-        
+
             const matchOuter = tree.matchNotFound('/api/unknown');
             const matchInner = tree.matchNotFound('/api/v2/unknown');
-        
+
             expect(matchOuter?.route.fn).toBe(outerHandler);
             expect(matchInner?.route.fn).toBe(innerHandler);
         });
-    
+
         it('Handles error routes with multiple wildcards', () => {
             const generalErrorHandler = () => {};
             const specificErrorHandler = () => {};
-        
+
             tree.addError({
                 path: '/error/*',
                 fn: generalErrorHandler,
                 middleware: [],
                 timeout: null,
                 kind: 'error',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'general_error',
-                [Sym_TriFrostDescription]: 'General error handler',
-                [Sym_TriFrostMeta]: {},
+                name: 'general_error',
+                description: 'General error handler',
+                meta: {},
+                bodyParser: null,
             });
-        
+
             tree.addError({
                 path: '/error/critical/*',
                 fn: specificErrorHandler,
                 middleware: [],
                 timeout: null,
                 kind: 'error',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'specific_error',
-                [Sym_TriFrostDescription]: 'Specific error handler',
-                [Sym_TriFrostMeta]: {},
+                name: 'specific_error',
+                description: 'Specific error handler',
+                meta: {},
+                bodyParser: null,
             });
-        
+
             const generalMatch = tree.matchError('/error/timeout');
             const specificMatch = tree.matchError('/error/critical/failure');
-        
+
             expect(generalMatch?.route.fn).toBe(generalErrorHandler);
             expect(specificMatch?.route.fn).toBe(specificErrorHandler);
         });
-    
+
         it('Returns null when no notfound or error handler matches', () => {
             const nfMatch = tree.matchNotFound('/no/match');
             const errMatch = tree.matchError('/no/match');
-        
+
             expect(nfMatch).toBe(null);
             expect(errMatch).toBe(null);
         });
@@ -1002,7 +1005,7 @@ describe('routing - Tree', () => {
         it('Returns null when segment length matches but no method exists', () => {
             const handler = () => {};
             const path = '/nomethod';
-        
+
             tree.add({
                 path,
                 fn: handler,
@@ -1010,12 +1013,12 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.POST,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'post_only',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'post_only',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-        
+
             const result = tree.match(HttpMethods.GET, path);
             expect(result).toBe(null);
         });
@@ -1023,7 +1026,7 @@ describe('routing - Tree', () => {
         it('Returns null on dynamic paths when segment length matches but no method exists', () => {
             const handler = () => {};
             const path = '/nomethod/:id';
-        
+
             tree.add({
                 path,
                 fn: handler,
@@ -1031,12 +1034,12 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.POST,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'post_only',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'post_only',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-        
+
             const result = tree.match(HttpMethods.GET, path);
             expect(result).toBe(null);
         });
@@ -1053,13 +1056,13 @@ describe('routing - Tree', () => {
                         timeout: null,
                         kind: 'std',
                         method: HttpMethods.GET,
-                        [Sym_TriFrostType]: 'handler',
-                        [Sym_TriFrostName]: 'invalid_path',
-                        [Sym_TriFrostDescription]: null,
-                        [Sym_TriFrostMeta]: {},
+                        name: 'invalid_path',
+                        description: null,
+                        meta: {},
+                        bodyParser: null,
                     })).toThrowError(/RouteTree@add: invalid path/);
                 }
-    
+
                 expect(() => tree.add({
                     path: 'no-slash',
                     fn: () => {},
@@ -1067,13 +1070,13 @@ describe('routing - Tree', () => {
                     timeout: null,
                     kind: 'std',
                     method: HttpMethods.GET,
-                    [Sym_TriFrostType]: 'handler',
-                    [Sym_TriFrostName]: 'no_slash',
-                    [Sym_TriFrostDescription]: null,
-                    [Sym_TriFrostMeta]: {},
+                    name: 'no_slash',
+                    description: null,
+                    meta: {},
+                    bodyParser: null,
                 })).toThrowError(/RouteTree@add: invalid path/);
             });
-    
+
             it('Throws on invalid handler', () => {
                 for (const el of CONSTANTS.NOT_FUNCTION) {
                     expect(() => tree.add({
@@ -1083,14 +1086,14 @@ describe('routing - Tree', () => {
                         timeout: null,
                         kind: 'std',
                         method: HttpMethods.GET,
-                        [Sym_TriFrostType]: 'handler',
-                        [Sym_TriFrostName]: 'invalid_fn',
-                        [Sym_TriFrostDescription]: null,
-                        [Sym_TriFrostMeta]: {},
+                        name: 'invalid_fn',
+                        description: null,
+                        meta: {},
+                        bodyParser: null,
                     })).toThrowError(/RouteTree@add: route\.fn must be a function/);
                 }
             });
-    
+
             it('Throws on invalid method', () => {
                 for (const el of [...CONSTANTS.NOT_STRING_WITH_EMPTY, 'GOT', 'PAT', 'PUST', ' GET ']) {
                     expect(() => tree.add({
@@ -1100,15 +1103,15 @@ describe('routing - Tree', () => {
                         timeout: null,
                         kind: 'std',
                         method: el as any,
-                        [Sym_TriFrostType]: 'handler',
-                        [Sym_TriFrostName]: 'invalid_method',
-                        [Sym_TriFrostDescription]: null,
-                        [Sym_TriFrostMeta]: {},
+                        name: 'invalid_method',
+                        description: null,
+                        meta: {},
+                        bodyParser: null,
                     })).toThrowError(/RouteTree@add: method is not valid/);
                 }
             });
         });
-    
+
         describe('addNotFound', () => {
             it('Throws on invalid path', () => {
                 for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
@@ -1118,27 +1121,27 @@ describe('routing - Tree', () => {
                         middleware: [],
                         timeout: null,
                         kind: 'notfound',
-                        [Sym_TriFrostType]: 'handler',
-                        [Sym_TriFrostName]: 'invalid_nf_path',
-                        [Sym_TriFrostDescription]: null,
-                        [Sym_TriFrostMeta]: {},
+                        name: 'invalid_nf_path',
+                        description: null,
+                        meta: {},
+                        bodyParser: null,
                     })).toThrowError(/RouteTree@addNotFound: invalid path/);
                 }
-    
+
                 expect(() => tree.addNotFound({
                     path: 'no-slash',
                     fn: () => {},
                     middleware: [],
                     timeout: null,
                     kind: 'notfound',
-                    [Sym_TriFrostType]: 'handler',
-                    [Sym_TriFrostName]: 'invalid_nf_path2',
-                    [Sym_TriFrostDescription]: null,
-                    [Sym_TriFrostMeta]: {},
+                    name: 'invalid_nf_path2',
+                    description: null,
+                    meta: {},
+                    bodyParser: null,
                 })).toThrowError(/RouteTree@addNotFound: invalid path/);
             });
         });
-    
+
         describe('addError', () => {
             it('Throws on invalid path', () => {
                 for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
@@ -1148,32 +1151,32 @@ describe('routing - Tree', () => {
                         middleware: [],
                         timeout: null,
                         kind: 'error',
-                        [Sym_TriFrostType]: 'handler',
-                        [Sym_TriFrostName]: 'invalid_err_path',
-                        [Sym_TriFrostDescription]: null,
-                        [Sym_TriFrostMeta]: {},
+                        name: 'invalid_err_path',
+                        description: null,
+                        meta: {},
+                        bodyParser: null,
                     })).toThrowError(/RouteTree@addError: invalid path/);
                 }
-    
+
                 expect(() => tree.addError({
                     path: 'no-slash',
                     fn: () => {},
                     middleware: [],
                     timeout: null,
                     kind: 'error',
-                    [Sym_TriFrostType]: 'handler',
-                    [Sym_TriFrostName]: 'invalid_err_path2',
-                    [Sym_TriFrostDescription]: null,
-                    [Sym_TriFrostMeta]: {},
+                    name: 'invalid_err_path2',
+                    description: null,
+                    meta: {},
+                    bodyParser: null,
                 })).toThrowError(/RouteTree@addError: invalid path/);
             });
         });
     });
-    
+
     describe('performance stress', () => {
         it('Matches among 100 dynamic routes', () => {
             const start = performance.now();
-    
+
             for (let i = 0; i < 100; i++) {
                 tree.add({
                     path: `/bulk/${i}/:id`,
@@ -1182,26 +1185,26 @@ describe('routing - Tree', () => {
                     timeout: null,
                     kind: 'std',
                     method: HttpMethods.GET,
-                    [Sym_TriFrostType]: 'handler',
-                    [Sym_TriFrostName]: `bulk_${i}`,
-                    [Sym_TriFrostDescription]: null,
-                    [Sym_TriFrostMeta]: {},
+                    name: `bulk_${i}`,
+                    description: null,
+                    meta: {},
+                    bodyParser: null,
                 });
             }
-    
+
             const match = tree.match(HttpMethods.GET, '/bulk/99/abc');
             expect(match).not.toBe(null);
             expect(match?.params).toEqual({id: 'abc'});
-    
+
             const end = performance.now();
 
             /* eslint-disable-next-line no-console */
             console.log(`Matched among 100 routes in ${(end - start).toFixed(2)}ms`);
         });
-    
+
         it('Matches among 1000 dynamic routes', () => {
             const start = performance.now();
-    
+
             for (let i = 0; i < 1000; i++) {
                 tree.add({
                     path: `/bulk/${i}/:id`,
@@ -1210,26 +1213,26 @@ describe('routing - Tree', () => {
                     timeout: null,
                     kind: 'std',
                     method: HttpMethods.GET,
-                    [Sym_TriFrostType]: 'handler',
-                    [Sym_TriFrostName]: `bulk_${i}`,
-                    [Sym_TriFrostDescription]: null,
-                    [Sym_TriFrostMeta]: {},
+                    name: `bulk_${i}`,
+                    description: null,
+                    meta: {},
+                    bodyParser: null,
                 });
             }
-    
+
             const match = tree.match(HttpMethods.GET, '/bulk/999/abc');
             expect(match).not.toBe(null);
             expect(match?.params).toEqual({id: 'abc'});
-    
+
             const end = performance.now();
 
             /* eslint-disable-next-line no-console */
             console.log(`Matched among 1000 routes in ${(end - start).toFixed(2)}ms`);
         });
-    
+
         it('Matches among 10,000 dynamic routes', () => {
             const start = performance.now();
-    
+
             for (let i = 0; i < 10_000; i++) {
                 tree.add({
                     path: `/bulk/${i}/:id`,
@@ -1238,17 +1241,17 @@ describe('routing - Tree', () => {
                     timeout: null,
                     kind: 'std',
                     method: HttpMethods.GET,
-                    [Sym_TriFrostType]: 'handler',
-                    [Sym_TriFrostName]: `bulk_${i}`,
-                    [Sym_TriFrostDescription]: null,
-                    [Sym_TriFrostMeta]: {},
+                    name: `bulk_${i}`,
+                    description: null,
+                    meta: {},
+                    bodyParser: null,
                 });
             }
-    
+
             const match = tree.match(HttpMethods.GET, '/bulk/9999/abc');
             expect(match).not.toBe(null);
             expect(match?.params).toEqual({id: 'abc'});
-    
+
             const end = performance.now();
 
             /* eslint-disable-next-line no-console */
@@ -1262,21 +1265,25 @@ describe('routing - Tree', () => {
             const corsMiddleware = (ctx:TriFrostContext) => {
                 ctx.setHeader('x-cors-hit', 'true');
             };
-            Reflect.set(corsMiddleware, Sym_TriFrostFingerPrint, Sym_TriFrostMiddlewareCors);
-    
+
             tree.add({
                 path: '/options-test',
                 fn: handler,
-                middleware: [corsMiddleware],
+                middleware: [{
+                    name: 'Cors Middleware',
+                    description: null,
+                    fingerprint: Sym_TriFrostMiddlewareCors,
+                    handler: corsMiddleware,
+                }],
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'options_test_get',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'options_test_get',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             tree.add({
                 path: '/options-test',
                 fn: handler,
@@ -1284,26 +1291,26 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.POST,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'options_test_post',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'options_test_post',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.match(HttpMethods.OPTIONS, '/options-test');
             expect(match).not.toBe(null);
             expect(match?.route.kind).toBe('options');
-    
+
             const ctx = new MockContext({method: HttpMethods.OPTIONS, path: '/options-test'});
-            await match!.route.middleware[0](ctx);
+            await match!.route.middleware[0].handler(ctx);
             await match!.route.fn(ctx);
-    
+
             expect(ctx.statusCode).toBe(204);
             expect(ctx.headers.Allow).toBe('OPTIONS, GET, POST');
             expect(ctx.headers.Vary).toBe('Origin');
             expect(ctx.headers['x-cors-hit']).toBe('true');
         });
-    
+
         it('Does not attach CORS if no underlying route has it', async () => {
             const handler = () => {};
             tree.add({
@@ -1313,19 +1320,19 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'no_cors_get',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'no_cors_get',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-    
+
             const match = tree.match(HttpMethods.OPTIONS, '/no-cors');
             expect(match).not.toBe(null);
             expect(match?.route.kind).toBe('options');
-    
+
             const ctx = new MockContext({method: HttpMethods.OPTIONS, path: '/no-cors'});
             await match!.route.fn(ctx);
-    
+
             expect(ctx.statusCode).toBe(204);
             expect(ctx.headers.Allow).toBe('OPTIONS, GET');
             expect(ctx.headers['x-cors-hit']).toBeUndefined();
@@ -1340,10 +1347,10 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'param_get',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'param_get',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
             tree.add({
                 path: '/param/:id',
@@ -1352,19 +1359,19 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.PUT,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'param_put',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'param_put',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-        
+
             const match = tree.match(HttpMethods.OPTIONS, '/param/123');
             expect(match).not.toBe(null);
             expect(match?.route.kind).toBe('options');
-        
+
             const ctx = new MockContext({method: HttpMethods.OPTIONS, path: '/param/123'});
             await match!.route.fn(ctx);
-        
+
             expect(ctx.statusCode).toBe(204);
             expect(ctx.headers.Allow).toContain('OPTIONS');
             expect(ctx.headers.Allow).toContain('GET');
@@ -1380,19 +1387,19 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.POST,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'wild_post',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'wild_post',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-        
+
             const match = tree.match(HttpMethods.OPTIONS, '/wild/anything/here');
             expect(match).not.toBe(null);
             expect(match?.route.kind).toBe('options');
-        
+
             const ctx = new MockContext({method: HttpMethods.OPTIONS, path: '/wild/anything/here'});
             await match!.route.fn(ctx);
-        
+
             expect(ctx.statusCode).toBe(204);
             expect(ctx.headers.Allow).toContain('OPTIONS');
             expect(ctx.headers.Allow).toContain('POST');
@@ -1405,19 +1412,19 @@ describe('routing - Tree', () => {
                 middleware: [],
                 timeout: null,
                 kind: 'notfound',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'nf_api',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'nf_api',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-        
+
             const match = tree.matchNotFound('/api/missing');
             expect(match?.route.method).toBe('GET');
-        
+
             const no_opt = tree.match(HttpMethods.OPTIONS, '/api/missing');
             expect(no_opt).toBe(null);
         });
-        
+
         it('Does not generate OPTIONS routes in error trees', () => {
             tree.addError({
                 path: '/error/*',
@@ -1425,15 +1432,15 @@ describe('routing - Tree', () => {
                 middleware: [],
                 timeout: null,
                 kind: 'error',
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'err_path',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'err_path',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-        
+
             const match = tree.matchError('/error/boom');
             expect(match?.route.method).toBe('GET');
-        
+
             const no_opt = tree.match(HttpMethods.OPTIONS, '/error/boom');
             expect(no_opt).toBe(null);
         });
@@ -1441,7 +1448,7 @@ describe('routing - Tree', () => {
         it('Handles many methods on the same path in OPTIONS', async () => {
             const handler = () => {};
             const path = '/stress';
-        
+
             const methods = [
                 HttpMethods.GET,
                 HttpMethods.POST,
@@ -1450,7 +1457,7 @@ describe('routing - Tree', () => {
                 HttpMethods.DELETE,
                 HttpMethods.HEAD,
             ];
-        
+
             for (const method of methods) {
                 tree.add({
                     path,
@@ -1459,20 +1466,20 @@ describe('routing - Tree', () => {
                     timeout: null,
                     kind: 'std',
                     method,
-                    [Sym_TriFrostType]: 'handler',
-                    [Sym_TriFrostName]: `stress_${method}`,
-                    [Sym_TriFrostDescription]: null,
-                    [Sym_TriFrostMeta]: {},
+                    name: `stress_${method}`,
+                    description: null,
+                    meta: {},
+                    bodyParser: null,
                 });
             }
-        
+
             const match = tree.match(HttpMethods.OPTIONS, path);
             expect(match).not.toBe(null);
             expect(match?.route.kind).toBe('options');
-        
+
             const ctx = new MockContext({method: HttpMethods.OPTIONS, path});
             await match!.route.fn(ctx);
-        
+
             expect(ctx.statusCode).toBe(204);
             for (const method of methods) {
                 expect(ctx.headers.Allow).toContain(method);
@@ -1483,7 +1490,7 @@ describe('routing - Tree', () => {
         it('Handles duplicate methods on same path without duplicating Allow header', async () => {
             const handler = () => {};
             const path = '/dup';
-        
+
             /* Add GET twice (should only appear once in OPTIONS) */
             tree.add({
                 path,
@@ -1492,12 +1499,12 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'dup_get1',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'dup_get1',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-        
+
             tree.add({
                 path,
                 fn: handler,
@@ -1505,19 +1512,19 @@ describe('routing - Tree', () => {
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
-                [Sym_TriFrostType]: 'handler',
-                [Sym_TriFrostName]: 'dup_get2',
-                [Sym_TriFrostDescription]: null,
-                [Sym_TriFrostMeta]: {},
+                name: 'dup_get2',
+                description: null,
+                meta: {},
+                bodyParser: null,
             });
-        
+
             const match = tree.match(HttpMethods.OPTIONS, path);
             expect(match).not.toBe(null);
             expect(match?.route.kind).toBe('options');
-        
+
             const ctx = new MockContext({method: HttpMethods.OPTIONS, path});
             await match!.route.fn(ctx);
-        
+
             expect(ctx.statusCode).toBe(204);
             const allow = ctx.headers.Allow.split(',').map(s => s.trim());
             const seen = new Set(allow);

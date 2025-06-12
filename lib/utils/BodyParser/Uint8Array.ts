@@ -1,9 +1,14 @@
 /* eslint-disable max-statements,complexity,no-labels */
 
+import {isInt} from '@valkyriestudios/utils/number';
 import {toObject} from '@valkyriestudios/utils/formdata';
 import {type TriFrostContext} from '../../types/context';
-import {MimeTypes} from '../../types/constants';
-import {type ParsedBody} from './types';
+import {type MimeType, MimeTypes} from '../../types/constants';
+import {
+    type TriFrostBodyParserFormOptions,
+    type TriFrostBodyParserOptions,
+    type ParsedBody,
+} from './types';
 
 const encoder = new TextEncoder();
 const enc_newline = encoder.encode('\r\n');
@@ -38,15 +43,46 @@ function decode (dec:TextDecoder, buf:Uint8Array) {
 }
 
 /**
+ * Returns true/false if the buffer size is bigger than the type limit, falling back to
+ * checking against the fallback limit
+ *
+ * @param {TriFrostContext} ctx - TriFrost Context
+ * @param {Uint8Array} buf - Buffer to check against
+ * @param {number|undefined} typeLim - Type limit
+ * @param {number|undefined} globalLim - Global limit
+ */
+function isAboveLimit (ctx:TriFrostContext, buf:Uint8Array, typeLim:number|undefined, globalLim?:number|undefined) {
+    const bufLength = buf.byteLength;
+    if (isInt(typeLim)) {
+        if (bufLength > typeLim) {
+            ctx.logger.debug('parseBody: too large', {size: bufLength, limit: typeLim});
+            return true;
+        }
+
+        return false;
+    }
+
+    if (isInt(globalLim) && bufLength > globalLim) {
+        ctx.logger.debug('parseBody: too large', {size: bufLength, limit: globalLim});
+        return true;
+    }
+
+    return false;
+}
+
+/**
  * Parses multipart/form-data from a Uint8Array and returns a FormData (binary-safe)
  */
 export async function parseMultipart (
     ctx:TriFrostContext,
     bytes:Uint8Array,
     boundary:string,
-    decoder:TextDecoder
+    decoder:TextDecoder,
+    config:TriFrostBodyParserFormOptions
 ): Promise<FormData> {
     const form = new FormData();
+    const files:string[] = [];
+    const files_allowed:Set<MimeType>|null = Array.isArray(config.files?.types) ? new Set(config.files.types) : null;
     const delimiter = encoder.encode('--' + boundary);
 
     /* Get start index using delimiter */
@@ -110,12 +146,29 @@ export async function parseMultipart (
             const filename_match = disposition!.match(RGX_FILENAME);
             if (filename_match) {
                 const filename = filename_match[1];
-                if (content.length > 0) {
+                if (config.files === null) {
+                    /* Option: skip files entirely */
+                    ctx.logger.debug('parseBody@multipart: skipping file due to allowFiles=false', {name, filename});
+                } else if (isInt(config.files?.maxCount) && files.length >= config.files!.maxCount) {
+                    /* Option: Max file count */
+                    ctx.logger.debug('parseBody@multipart: file skipped due to maxFileCount', {filename});
+                } else if (isInt(config.files?.maxSize) && content.length > config.files!.maxSize) {
+                    /* Option: Max file size */
+                    ctx.logger.debug('parseBody@multipart: file too large', {filename, size: content.length});
+                } else if (content.length > 0) {
                     try {
-                        form.append(
-                            name,
-                            new File([content], filename, {type: type || MimeTypes.BINARY})
-                        );
+                        const n_type = (type || MimeTypes.BINARY) as MimeType;
+                        /* Option: Allowed file types */
+                        /* eslint-disable-next-line max-depth */
+                        if (files_allowed && !files_allowed.has(n_type)) {
+                            ctx.logger.debug('parseBody@multipart: disallowed type', {filename, type: n_type, size: content.length});
+                        } else {
+                            form.append(
+                                name,
+                                new File([content], filename, {type: n_type})
+                            );
+                            files.push(filename);
+                        }
                     } catch (err: any) {
                         ctx.logger.debug(
                             'parseBody@multipart: Failed to create File',
@@ -148,8 +201,9 @@ export async function parseMultipart (
  */
 export async function parseBody <T extends ParsedBody = ParsedBody> (
     ctx:TriFrostContext,
-    buf:Uint8Array
-):Promise<T> {
+    buf:Uint8Array,
+    config:TriFrostBodyParserOptions
+):Promise<T|null> {
     if (!(buf instanceof Uint8Array)) return {} as T;
 
     const raw_type = typeof ctx.headers?.['content-type'] === 'string'
@@ -181,10 +235,11 @@ export async function parseBody <T extends ParsedBody = ParsedBody> (
         switch (type) {
             case MimeTypes.JSON:
             case MimeTypes.JSON_TEXT:
-            case MimeTypes.JSON_LD: {
+            case MimeTypes.JSON_LD:
+                if (isAboveLimit(ctx, buf, config.json?.limit, config.limit)) return null;
                 return JSON.parse(decode(strict_decoder, buf)) as T;
-            }
             case MimeTypes.JSON_ND: {
+                if (isAboveLimit(ctx, buf, config.json?.limit, config.limit)) return null;
                 const text = decode(strict_decoder, buf);
                 const lines = text.trim().split('\n');
                 const acc = [];
@@ -196,8 +251,10 @@ export async function parseBody <T extends ParsedBody = ParsedBody> (
             case MimeTypes.CSV:
             case MimeTypes.XML:
             case MimeTypes.XML_TEXT:
+                if (isAboveLimit(ctx, buf, config.text?.limit, config.limit)) return null;
                 return {raw: decode(strict_decoder, buf)} as T;
             case MimeTypes.FORM_URLENCODED: {
+                if (isAboveLimit(ctx, buf, config.form?.limit, config.limit)) return null;
                 const form = new FormData();
                 const parts = decode(strict_decoder, buf).split('&');
                 for (let i = 0; i < parts.length; i++) {
@@ -210,17 +267,37 @@ export async function parseBody <T extends ParsedBody = ParsedBody> (
                         }
                     }
                 }
-                return toObject(form) as T;
+                return toObject<T>(form, {
+                    raw: config.form?.normalizeRaw ?? [],
+                    normalize_bool: config.form?.normalizeBool ?? true,
+                    normalize_date: config.form?.normalizeDate ?? true,
+                    normalize_null: config.form?.normalizeNull ?? true,
+                    normalize_number: config.form?.normalizeNumber ?? false,
+                });
             }
             case MimeTypes.FORM_MULTIPART: {
+                if (isAboveLimit(ctx, buf, config.form?.limit, config.limit)) return null;
+
                 const boundary = raw_type.match(RGX_BOUNDARY)?.[1];
                 if (!boundary) throw new Error('multipart: Missing boundary');
 
-                const form = await parseMultipart(ctx, buf, boundary, strict_decoder);
-                return toObject(form) as T;
+                const form = await parseMultipart(
+                    ctx,
+                    buf,
+                    boundary,
+                    strict_decoder,
+                    config.form || {}
+                );
+                return toObject(form, {
+                    raw: config.form?.normalizeRaw ?? [],
+                    normalize_bool: config.form?.normalizeBool ?? true,
+                    normalize_date: config.form?.normalizeDate ?? true,
+                    normalize_null: config.form?.normalizeNull ?? true,
+                    normalize_number: config.form?.normalizeNumber ?? false,
+                }) as T;
             }
             default:
-                return {raw: buf} as T;
+                return isAboveLimit(ctx, buf, config.limit) ? null : {raw: buf} as T;
         }
     } catch (err:any) {
         ctx.logger.debug('parseBody: Failed to parse', {type, msg: err.message});

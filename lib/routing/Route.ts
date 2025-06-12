@@ -13,7 +13,9 @@ import {
     isValidHandler,
     isValidLimit,
     isValidMiddleware,
+    isValidBodyParser,
 } from './util';
+import {type TriFrostBodyParserOptions} from '../utils/BodyParser/types';
 
 export class Route <
     Env extends Record<string, any> = {},
@@ -27,13 +29,21 @@ export class Route <
     #routes:Record<HttpMethod, {
         handler: TriFrostRouteHandler<Env, State>,
         middleware: TriFrostMiddleware<Env, State>[],
+        bodyParser: TriFrostBodyParserOptions|null,
     }> = Object.create(null);
 
     /* Configured Rate limit instance from the app */
     #rateLimit:TriFrostRateLimit<Env>|null = null;
 
-    constructor (options:{rateLimit?:TriFrostRateLimit<Env>|null;}) {
-        if (options.rateLimit) this.#rateLimit = options.rateLimit;
+    /* Configured body parser from the parent router */
+    #bodyParser:TriFrostBodyParserOptions|null = null;
+
+    constructor (options:{
+        rateLimit:TriFrostRateLimit<Env>|null;
+        bodyParser:TriFrostBodyParserOptions|null;
+    }) {
+        this.#rateLimit = options.rateLimit;
+        this.#bodyParser = options.bodyParser;
     }
 
     /**
@@ -43,11 +53,17 @@ export class Route <
         const acc:{
             middleware:TriFrostMiddleware<Env, State>[];
             handler:TriFrostRouteHandler<Env, State>;
+            bodyParser:TriFrostBodyParserOptions|null;
             methods: HttpMethod[];
         }[] = [];
         for (const method in this.#routes) {
             const el = this.#routes[method as HttpMethod];
-            acc.push({methods: [method as HttpMethod], handler: el.handler, middleware: el.middleware});
+            acc.push({
+                methods: [method as HttpMethod],
+                handler: el.handler,
+                bodyParser: el.bodyParser,
+                middleware: el.middleware,
+            });
         }
         return acc;
     }
@@ -77,12 +93,29 @@ export class Route <
     }
 
     /**
+     * Configure body parser options for this route
+     */
+    bodyParser (options:TriFrostBodyParserOptions|null) {
+        if (!isValidBodyParser(options)) throw new Error('TriFrostRoute@bodyParser: Invalid bodyparser');
+        this.#bodyParser = options;
+        return this;
+    }
+
+    /**
      * Configure a HTTP Get route
      */
     get (handler: TriFrostRouteHandler<Env, State>) {
         if (!isValidHandler<Env, State>(handler)) throw new Error('TriFrostRoute@get: Invalid handler');
-        this.#routes[HttpMethods.GET] = {handler, middleware: [...this.#middleware]};
-        this.#routes[HttpMethods.HEAD] = {handler, middleware: [...this.#middleware]};
+        this.#routes[HttpMethods.GET] = {
+            handler,
+            bodyParser: this.#bodyParser,
+            middleware: [...this.#middleware],
+        };
+        this.#routes[HttpMethods.HEAD] = {
+            handler,
+            bodyParser: this.#bodyParser,
+            middleware: [...this.#middleware],
+        };
         return this;
     }
 
@@ -91,7 +124,11 @@ export class Route <
      */
     post (handler: TriFrostRouteHandler<Env, State>) {
         if (!isValidHandler<Env, State>(handler)) throw new Error('TriFrostRoute@post: Invalid handler');
-        this.#routes[HttpMethods.POST] = {handler, middleware: [...this.#middleware]};
+        this.#routes[HttpMethods.POST] = {
+            handler,
+            bodyParser: this.#bodyParser,
+            middleware: [...this.#middleware],
+        };
         return this;
     }
 
@@ -100,7 +137,11 @@ export class Route <
      */
     put (handler: TriFrostRouteHandler<Env, State>) {
         if (!isValidHandler<Env, State>(handler)) throw new Error('TriFrostRoute@put: Invalid handler');
-        this.#routes[HttpMethods.PUT] = {handler, middleware: [...this.#middleware]};
+        this.#routes[HttpMethods.PUT] = {
+            handler,
+            bodyParser: this.#bodyParser,
+            middleware: [...this.#middleware],
+        };
         return this;
     }
 
@@ -109,7 +150,11 @@ export class Route <
      */
     patch (handler: TriFrostRouteHandler<Env, State>) {
         if (!isValidHandler<Env, State>(handler)) throw new Error('TriFrostRoute@patch: Invalid handler');
-        this.#routes[HttpMethods.PATCH] = {handler, middleware: [...this.#middleware]};
+        this.#routes[HttpMethods.PATCH] = {
+            handler,
+            bodyParser: this.#bodyParser,
+            middleware: [...this.#middleware],
+        };
         return this;
     }
 
@@ -118,7 +163,11 @@ export class Route <
      */
     del (handler: TriFrostRouteHandler<Env, State>) {
         if (!isValidHandler<Env, State>(handler)) throw new Error('TriFrostRoute@del: Invalid handler');
-        this.#routes[HttpMethods.DELETE] = {handler, middleware: [...this.#middleware]};
+        this.#routes[HttpMethods.DELETE] = {
+            handler,
+            bodyParser: this.#bodyParser,
+            middleware: [...this.#middleware],
+        };
         return this;
     }
 

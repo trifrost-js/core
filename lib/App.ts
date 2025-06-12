@@ -33,10 +33,6 @@ import {
     type TriFrostContext,
     type TriFrostContextIdOptions,
 } from './types/context';
-import {
-    Sym_TriFrostName,
-    Sym_TriFrostMeta,
-} from './types/constants';
 import {type LazyInitFn} from './utils/Lazy';
 import {RouteTree} from './routing/Tree';
 
@@ -197,6 +193,7 @@ class App <
             rateLimit: 'rateLimit' in options && options.rateLimit ? options.rateLimit : null,
             tree: tree,
             middleware: [],
+            bodyParser: null,
         });
 
         /* Set tree */
@@ -329,7 +326,7 @@ class App <
                             await notfound.route.fn(ctx);
                         } else {
                             await ctx.logger.span(
-                                Reflect.get(notfound.route, Sym_TriFrostName) ?? 'anonymous_notfound_handler',
+                                notfound.route.name,
                                 async () => notfound.route.fn(ctx)
                             );
                         }
@@ -345,7 +342,7 @@ class App <
                             await error.route.fn(ctx);
                         } else {
                             await ctx.logger.span(
-                                Reflect.get(error.route, Sym_TriFrostName) ?? 'anonymous_error_handler',
+                                error.route.name,
                                 async () => error.route.fn(ctx)
                             );
                         }
@@ -385,11 +382,9 @@ class App <
                         /* Generic 404 response if we still dont have anything */
                         if (!match) return ctx.status(404);
 
-                        const name = Reflect.get(match.route, Sym_TriFrostName);
-
                         /* Add attributes to tracer */
                         ctx.logger.setAttributes({
-                            ...Reflect.get(match.route, Sym_TriFrostMeta) || {},
+                            ...match.route.meta || {},
                             'http.method': method,
                             'http.target': path,
                             'http.route': match.route.path,
@@ -401,23 +396,17 @@ class App <
                         /* Initialize Timeout */
                         ctx.setTimeout(match.route.timeout);
 
-                        /* Initialize context with matched route data */
-                        await ctx.init({
-                            name,
-                            kind: match.route.kind,
-                            params: match.params,
-                        });
+                        /* Initialize context with matched route data, check if triage is necessary (eg payload too large) */
+                        await ctx.init(match);
+                        if (!ctx.isAborted && ctx.statusCode >= 400) return await runTriage(path, ctx);
 
                         /* Run chain */
                         for (let i = 0; i < match.route.middleware.length; i++) {
-                            const fn = match.route.middleware[i];
-                            if (Reflect.get(fn, Sym_TriFrostSpan)) {
-                                await fn(ctx);
+                            const el = match.route.middleware[i];
+                            if (Reflect.get(el.handler, Sym_TriFrostSpan)) {
+                                await el.handler(ctx);
                             } else {
-                                await ctx.logger.span(
-                                    Reflect.get(fn, Sym_TriFrostName) ?? `anonymous_${i}`,
-                                    async () => fn(ctx as TriFrostContext<Env, State>)
-                                );
+                                await ctx.logger.span(el.name,  async () => el.handler(ctx as TriFrostContext<Env, State>));
                             }
 
                             /* If context is locked at this point, return as the route has been handled */
@@ -431,7 +420,10 @@ class App <
                         if (Reflect.get(match.route.fn, Sym_TriFrostSpan)) {
                             await match.route.fn(ctx);
                         } else {
-                            await ctx.logger.span(name, async () => match!.route.fn(ctx as TriFrostContext<Env, State>));
+                            await ctx.logger.span(
+                                match.route.name,
+                                async () => match!.route.fn(ctx as TriFrostContext<Env, State>)
+                            );
                         }
 
                         /* Let's run triage if context is not locked */

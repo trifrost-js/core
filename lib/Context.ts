@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
-import {noopresolve} from '@valkyriestudios/utils/function';
 import {type TriFrostCache} from './modules/Cache';
 import {Cookies} from './modules/Cookies';
 import {type JSXElement} from './modules/JSX';
@@ -30,16 +29,19 @@ import {
     HttpMethods,
 } from './types/constants';
 import {
+    type TriFrostRouteMatch,
+} from './types/routing';
+import {
     type TriFrostContextFileOptions,
     type TriFrostContextRedirectOptions,
     type TriFrostContextResponseOptions,
     type TriFrostContext,
     type TriFrostContextConfig,
-    type TriFrostContextInit,
     type TriFrostContextKind,
 } from './types/context';
 import {encodeFilename} from './utils/Http';
 import {hexId} from './utils/Generic';
+import {TriFrostBodyParserOptions, type ParsedBody} from './utils/BodyParser/types';
 
 type RequestConfig = {
     method: HttpMethod,
@@ -122,7 +124,7 @@ export abstract class Context <
     protected req_config:Readonly<RequestConfig>;
 
     /* TriFrost Request body */
-    protected req_body:Readonly<Record<string, unknown>|unknown[]>|null = null;
+    protected req_body:Readonly<ParsedBody>|null = null;
 
     /* Whether or not the context is initialized */
     protected is_initialized:boolean = false;
@@ -324,7 +326,7 @@ export abstract class Context <
     /**
      * Request Body
      */
-    get body ():Readonly<Record<string, unknown>|unknown[]> {
+    get body ():Readonly<NonNullable<ParsedBody>> {
         return this.req_body || {};
     }
 
@@ -525,7 +527,10 @@ export abstract class Context <
     /**
      * Initializes the request body and parses it into Json or FormData depending on its type
      */
-    async init (val:TriFrostContextInit, handler:()=>Promise<Record<string, unknown>|unknown[]|undefined> = noopresolve) {
+    async init (
+        match:TriFrostRouteMatch<Env>,
+        handler?:(config:TriFrostBodyParserOptions|null)=>Promise<ParsedBody|null>
+    ) {
         try {
             /* No need to do anything if already initialized */
             if (this.is_initialized) return;
@@ -534,13 +539,13 @@ export abstract class Context <
             this.is_initialized = true;
 
             /* Set params as baseline state */
-            this.#state = val.params as State;
+            this.#state = match.params as State;
 
             /* Set name */
-            this.#name = val.name;
+            this.#name = match.route.name;
 
             /* Set kind */
-            this.#kind = val.kind;
+            this.#kind = match.route.kind;
 
             /* If we have a method that allows writing to we need to load up the body from the request */
             switch (this.req_config.method) {
@@ -548,9 +553,12 @@ export abstract class Context <
                 case HttpMethods.PATCH:
                 case HttpMethods.PUT:
                 case HttpMethods.DELETE: {
-                    const body = await handler();
-                    if (!body) throw new Error('Context@init: Failed to load body');
-                    this.req_body = body as Record<string, unknown>|unknown[];
+                    const body = await handler!(match.route.bodyParser);
+                    if (body === null) {
+                        this.setStatus(413);
+                    } else {
+                        this.req_body = body;
+                    }
                     break;
                 }
                 default:

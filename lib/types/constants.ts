@@ -3,12 +3,6 @@
  */
 
 /**
- * Enum-like tag: "middleware", "handler", "router", etc.
- * Useful for debugging or route inspection tooling.
- */
-export const Sym_TriFrostType = Symbol('TriFrost.Type');
-
-/**
  * Label or name for a middleware or handler.
  * Useful for debugging or route inspection tooling and generation.
  */
@@ -19,12 +13,6 @@ export const Sym_TriFrostName = Symbol('TriFrost.Name');
  * Useful for debugging, route inspection tooling and generation.
  */
 export const Sym_TriFrostDescription = Symbol('TriFrost.Description');
-
-/**
- * Tag used for meta information
- * Useful for debugging or route inspection tooling.
- */
-export const Sym_TriFrostMeta = Symbol('TriFrost.Meta');
 
 /**
  * Tag used to identify specific internals, this will be filled in by all trifrost middlewares

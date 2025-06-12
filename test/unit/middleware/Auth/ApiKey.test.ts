@@ -2,7 +2,7 @@ import {describe, it, expect, vi} from 'vitest';
 import {ApiKeyAuth, Sym_TriFrostMiddlewareApiKeyAuth} from '../../../../lib/middleware/Auth/ApiKey';
 import {Sym_TriFrostMiddlewareAuth} from '../../../../lib/middleware/Auth/types';
 import {MockContext} from '../../../MockContext';
-import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostType, Sym_TriFrostFingerPrint} from '../../../../lib/types/constants';
+import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostFingerPrint} from '../../../../lib/types/constants';
 import CONSTANTS from '../../../constants';
 
 const makeCtx = (headers: Record<string, string> = {}, queryStr: string = '') => new MockContext({
@@ -219,7 +219,6 @@ describe('Middleware - Auth - ApiKey', () => {
             validate: vi.fn(),
         });
         expect(Reflect.get(mw, Sym_TriFrostName)).toBe('TriFrostApiKeyAuth');
-        expect(Reflect.get(mw, Sym_TriFrostType)).toBe('middleware');
         expect(Reflect.get(mw, Sym_TriFrostDescription)).toBe('API Key Authentication middleware');
         expect(Reflect.get(mw, Sym_TriFrostMiddlewareAuth)).toBe(true);
         expect(Reflect.get(mw, Sym_TriFrostFingerPrint)).toBe(Sym_TriFrostMiddlewareApiKeyAuth);

@@ -1,4 +1,4 @@
-/* eslint-disable no-use-before-define,@typescript-eslint/no-empty-object-type,@typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-empty-object-type,@typescript-eslint/no-unused-vars */
 
 import {
     type TriFrostRateLimitLimitFunction,
@@ -6,12 +6,11 @@ import {
 } from '../modules/RateLimit/_RateLimit';
 import {type Route} from '../routing/Route';
 import {type RouteTree} from '../routing/Tree';
+import {type TriFrostBodyParserOptions} from '../utils/BodyParser/types';
 import {
     type HttpMethod,
     Sym_TriFrostDescription,
-    Sym_TriFrostMeta,
     Sym_TriFrostName,
-    Sym_TriFrostType,
 } from './constants';
 import {
     type TriFrostContext,
@@ -41,7 +40,6 @@ export type TriFrostMiddleware <
     State extends Record<string, unknown> = {},
     Patch extends Record<string, unknown> = {}
 > = ((ctx: TriFrostContext<Env, State>) => void|TriFrostContext<Env, State & Patch>|Promise<void|TriFrostContext<Env, State & Patch>>) & {
-    [Sym_TriFrostType]?: TriFrostType;
     [Sym_TriFrostDescription]?: string;
     [Sym_TriFrostName]?: string;
 };
@@ -62,6 +60,7 @@ export type TriFrostHandlerConfig<
   kind?: TriFrostContextKind;
   meta?: Record<string, unknown>;
   middleware?: TriFrostMiddleware<Env, State>[];
+  bodyParser?: TriFrostBodyParserOptions|null;
 };
 
 export type TriFrostRouteHandler<
@@ -75,16 +74,16 @@ export type TriFrostRoute <
     Env extends Record<string, any>,
     State extends Record<string, unknown> = {}
 > = {
-    path                        : string;
-    middleware                  : TriFrostMiddleware<Env, State>[];
-    fn                          : TriFrostHandler<Env, State>;
-    timeout                     : number | null;
-    kind                        : TriFrostContextKind;
-    method                      : HttpMethod;
-    [Sym_TriFrostType]          : TriFrostType;
-    [Sym_TriFrostName]          : string;
-    [Sym_TriFrostDescription]   : string | null;
-    [Sym_TriFrostMeta]          : Record<string, unknown>;
+    path        : string;
+    middleware  : {name:string; description:string|null; fingerprint:any; handler: TriFrostMiddleware<Env, State>}[];
+    fn          : TriFrostHandler<Env, State>;
+    timeout     : number | null;
+    kind        : TriFrostContextKind;
+    method      : HttpMethod;
+    bodyParser  : TriFrostBodyParserOptions|null;
+    name        : string;
+    description : string | null;
+    meta        : Record<string, unknown>;
 };
 
 export type TriFrostGrouper<
@@ -134,6 +133,10 @@ export type TriFrostRouterOptions <
      * Global Rate Limit instance or null
      */
     rateLimit: TriFrostRateLimit<Env>|null;
+    /**
+     * Body Parser Config
+     */
+    bodyParser: TriFrostBodyParserOptions|null;
 };
 
 export type TriFrostRouter <
@@ -192,3 +195,12 @@ export type TriFrostRouter <
         handler: TriFrostRouteHandler<Env, State & PathParam<Path>>
     ) => TriFrostRouter<Env, State>;
 };
+
+/**
+ * Represents a match result when a route is found
+ */
+export type TriFrostRouteMatch <Env extends Record<string, any> = {}> = {
+    path: string;
+    route: TriFrostRoute<Env>;
+    params: Record<string, string>;
+}
