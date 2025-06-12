@@ -4,6 +4,60 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.30.0] - 2025-06-12
+This release brings new capabilities to TriFrost’s body parsing system, ensuring consistent, cross-runtime handling of JSON, text, form, and multipart payloads — **now with fine-grained control** and powerful normalization.
+
+### Added
+- **feat**: Internal bodyparser now supports custom options for `limit`, `json.limit`, `text.limit`, `form.limit` in **bytes** (default limit is `4 * 1024 * 1024`)
+- **feat**: Internal bodyparser now supports `files.maxCount` option for form, allowing you to limit the number of files per request (no default)
+- **feat**: Internal bodyparser now supports `files.maxSize` option for form, allowing you to limit the size of an individual file per request (no default)
+- **feat**: Internal bodyparser now supports `files.types` option for form, allowing you to pass the **allowed** mime types (eg: `['image/png', 'image/jpg']`)
+- **feat**: Internal bodyparser now supports `normalizeBool`, `normalizeNull`, `normalizeDate`, `normalizeNumber` and `normalizeRaw`. These options align with their respective counterparts for [toObject](https://github.com/valkyriestudios/utils/?tab=readme-ov-file#formdatatoobjectvalformdata-rawstringtruesinglestringnormalize_boolbooleannormalize_dateboolnormalize_numberbool--)
+- **feat**: `.bodyParser()` is now available on both `Router` and `Route`, allowing scoped overrides of the default body parsing behavior
+```typescript
+/* Global limits */
+app
+  .bodyParser({
+    limit: 4 * 1024 * 1024, /* 4 mb max body for text/form */
+    json: {limit: 1024 * 1204}, /* 1mb max json body override */
+  })
+  ...
+
+/* Restrict file uploads */
+router
+  .route('/profile', r => {
+    r
+      .bodyParser({
+        form: {
+          limit: 8 * 1024 * 1024, // 8MB total for form size
+          files: {
+            maxCount: 2,
+            maxSize: 5 * 1024 * 1024, // 5MB max per file
+            types: ['image/png', 'image/jpeg'],
+          },
+        },
+      })
+      .post(ctx => {
+        const {avatar} = ctx.body;
+        return ctx.text(`Got file: ${avatar?.name}`);
+      });
+  });
+```
+
+### Improved
+- **feat**: Options routes will now be named according to `OPTIONS_{PATH}` rather than `OPTIONS_{NAME_OF_FIRST_ROUTE}` improving introspection and telemetry
+- **feat**: All routes will now automatically return a `413 Payload Too Large` status if the incoming request body exceeds the configured `limit`, `json.limit`, `text.limit`, or `form.limit`. No need for manual checks, TriFrost catches it early and responds with a clear error.
+
+### Breaking
+- Default normalization of form data no longer includes `normalizeNumber: true`. This prevents accidental coercion of strings into numbers (`"123"` ➜ `123`), preserving form intent and avoiding subtle bugs. Set `normalizeNumber: true` manually if needed.
+
+### Removed
+- `Sym_TriFrostType` and `Sym_TriFrostMeta` have been removed — superseded by `kind` metadata and structural improvements to introspection. Existing routes will continue to function as expected.
+
+---
+
+As always, stay frosty ❄️
+
 ## [0.29.0] - 2025-06-10
 I've known the founders of [Aikido](https://aikido.dev/) for a long time, so when I was exploring ways to expand TriFrost’s automated security testing (we already used [GitHub CodeQL](https://codeql.github.com/), but there’s always room for more), I reached out to them. They got us set up quickly, and within minutes, Aikido flagged a single medium-severity issue, not in our code, but in our CI/CD setup, related to unpinned third-party modules. Resolved. ✅ Thanks [Aikido](https://aikido.dev/)!
 
