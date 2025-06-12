@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
 import {isIntGt} from '@valkyriestudios/utils/number';
-import {isFn} from '@valkyriestudios/utils/function';
-import {isNeString, isString} from '@valkyriestudios/utils/string';
 import {Lazy, type LazyInitFn} from '../../utils/Lazy';
 import {type TriFrostContext} from '../../types/context';
 import {type Store} from '../../storage/_Storage';
@@ -94,17 +92,17 @@ export class TriFrostRateLimit <Env extends Record<string, any> = Record<string,
     #window:number;
 
     constructor (opts:TriFrostRateLimitOptions<Env>) {
-        if (!isFn(opts?.store)) throw new Error('TriFrostRateLimit: Expected a store initializer');
+        if (typeof opts?.store !== 'function') throw new Error('TriFrostRateLimit: Expected a store initializer');
 
         /* Define keygen or fallback to ip_name_method */
-        this.#keygen = (isFn(opts?.keygen)
+        this.#keygen = (typeof opts?.keygen === 'function'
             ? opts.keygen
-            : isString(opts?.keygen)
+            : typeof opts?.keygen === 'string'
                 ? RateLimitKeyGeneratorRegistry[opts.keygen]
                 : RateLimitKeyGeneratorRegistry.ip_name_method) as TriFrostRateLimitKeyGeneratorFn;
 
         /* Define exceeded behavior */
-        this.#exceeded = isFn(opts?.exceeded)
+        this.#exceeded = typeof opts?.exceeded === 'function'
             ? opts.exceeded
             : (ctx:TriFrostContext) => ctx.status(429);
 
@@ -155,7 +153,7 @@ export class TriFrostRateLimit <Env extends Record<string, any> = Record<string,
         E extends Env = Env,
         S extends Record<string, unknown> = {},
     > (limit:number|TriFrostRateLimitLimitFunction<E, S>):TriFrostMiddleware<E, S> {
-        const limit_fn = (isFn(limit) ? limit : () => limit) as TriFrostRateLimitLimitFunction<E, S>;
+        const limit_fn = (typeof limit === 'function' ? limit : () => limit) as TriFrostRateLimitLimitFunction<E, S>;
 
         const mware = async function TriFrostRateLimitedMiddleware (
             this: TriFrostRateLimit<E>, ctx: TriFrostContext<E, S>
@@ -171,7 +169,7 @@ export class TriFrostRateLimit <Env extends Record<string, any> = Record<string,
 
             /* Consume */
             const key = this.#keygen(ctx);
-            const usage = await store.consume(isNeString(key) ? key : 'unknown', n_limit);
+            const usage = await store.consume(typeof key === 'string' && key.length ? key : 'unknown', n_limit);
             if (usage.amt > n_limit) {
                 if (this.#headers) {
                     ctx.setHeaders({

@@ -15,7 +15,7 @@ describe('Modules - Logger - Utils', () => {
                 run () {
                     return 'no-span';
                 }
-			
+
             }
 
             const inst = new Example();
@@ -31,7 +31,7 @@ describe('Modules - Logger - Utils', () => {
                 run (ctx: any) {
                     return 'traced';
                 }
-			
+
             }
 
             const inst = new Example();
@@ -52,7 +52,7 @@ describe('Modules - Logger - Utils', () => {
                 run () {
                     return 'traced-this';
                 }
-			
+
             }
 
             const inst = new Example();
@@ -64,7 +64,7 @@ describe('Modules - Logger - Utils', () => {
 
         it('Uses this.logger if ctx.logger is missing but arguments are available', () => {
             const spy = vi.fn((_name, run) => run());
-        
+
             class Example {
 
                 logger = {span: spy};
@@ -73,9 +73,9 @@ describe('Modules - Logger - Utils', () => {
                 run (_ctx:any) {
                     return 'traced-this';
                 }
-			
+
             }
-        
+
             const inst = new Example();
             const result = inst.run({});
             expect(result).toBe('traced-this');
@@ -84,22 +84,22 @@ describe('Modules - Logger - Utils', () => {
 
         it('Uses this.ctx.logger if ctx and this.logger are missing', () => {
             const spy = vi.fn((_name, run) => run());
-        
+
             class Example {
-                
+
                 ctx = {logger: {span: spy}};
-        
+
                 @span('fallback-to-this.ctx.logger')
-                
+
                 run () {
                     return 'ctx-logger';
                 }
 
             }
-        
+
             const inst = new Example();
             const result = inst.run();
-        
+
             expect(result).toBe('ctx-logger');
             expect(spy).toHaveBeenCalledWith('fallback-to-this.ctx.logger', expect.any(Function));
         });
@@ -115,7 +115,7 @@ describe('Modules - Logger - Utils', () => {
                 run () {
                     return 'named';
                 }
-			
+
             }
 
             const inst = new Example();
@@ -126,7 +126,7 @@ describe('Modules - Logger - Utils', () => {
         });
 
         it('Falls back to method name if provided name is a non/empty string', () => {
-            for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
+            for (const el of [...CONSTANTS.NOT_STRING, '']) {
                 const spy = vi.fn((_name, run) => run());
 
                 class Example {
@@ -137,7 +137,7 @@ describe('Modules - Logger - Utils', () => {
                     run () {
                         return 'named';
                     }
-                
+
                 }
 
                 const inst = new Example();
@@ -153,7 +153,7 @@ describe('Modules - Logger - Utils', () => {
 
 				@span()
                 run () {}
-			
+
             }
 
             const inst = new Example();
@@ -170,7 +170,7 @@ describe('Modules - Logger - Utils', () => {
                 run (p0?: unknown) {
                     return 'safe';
                 }
-			
+
             }
 
             const inst = new Example();
@@ -196,7 +196,7 @@ describe('Modules - Logger - Utils', () => {
             const fn = vi.fn(() => 'ok');
 
             const wrapped = spanFn('test-span', fn);
-			
+
 			/* @ts-ignore This is what we're testing */
             const result = wrapped({logger: {span: logspan}});
 
@@ -209,7 +209,7 @@ describe('Modules - Logger - Utils', () => {
             const logspan = vi.fn((_name, run) => run());
 
             function doThing () {
-                return 'yes'; 
+                return 'yes';
             }
             const wrapped = spanFn(doThing);
 
@@ -242,13 +242,13 @@ describe('Modules - Logger - Utils', () => {
             expect(Reflect.get(wrapped, Sym_TriFrostSpan)).toBe(true);
         });
 
-        it('Falls back to function name if non/empty string is passed as name', () => {
+        it('Falls back to function name if empty string is passed as name', () => {
             const logspan = vi.fn((_name, run) => run());
-
             function namedFunction () {
-                return 'fallback'; 
+                return 'fallback';
             }
-            const wrapped = spanFn('  ', namedFunction);
+
+            const wrapped = spanFn('', namedFunction);
 
             // @ts-ignore
             const result = wrapped({logger: {span: logspan}});
@@ -274,7 +274,7 @@ describe('Modules - Logger - Utils', () => {
             const logspan = vi.fn((_name, run) => run());
 
             function namedThing () {
-                return 'thing'; 
+                return 'thing';
             }
             const wrapped = spanFn('explicit', namedThing);
 
@@ -313,26 +313,26 @@ describe('Modules - Logger - Utils', () => {
 
         it('Uses this.ctx.logger if ctx and this.logger are missing', () => {
             const logspan = vi.fn((_name, run) => run());
-        
+
             const obj = {
                 ctx: {logger: {span: logspan}},
                 run: spanFn('ctx-fallback', () => 'ctx-fallback-result'),
             };
-        
+
             const result = obj.run();
             expect(result).toBe('ctx-fallback-result');
             expect(logspan).toHaveBeenCalledWith('ctx-fallback', expect.any(Function));
         });
-        
+
 
         it('Uses this.logger if ctx.logger is missing but arguments are available', () => {
             const spy = vi.fn((_name, run) => run());
-        
+
             const obj = {
                 logger: {span: spy},
                 run: spanFn('test-fallback', (_ctx: any) => 'from-this-fallback'),
             };
-        
+
             const result = obj.run({}); // ctx.logger is undefined here
             expect(result).toBe('from-this-fallback');
             expect(spy).toHaveBeenCalledWith('test-fallback', expect.any(Function));

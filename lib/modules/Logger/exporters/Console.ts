@@ -1,9 +1,6 @@
 /* eslint-disable no-console */
 
-import {isNeArray} from '@valkyriestudios/utils/array';
-import {isBoolean} from '@valkyriestudios/utils/boolean';
 import {deepFreeze} from '@valkyriestudios/utils/deep';
-import {isFn} from '@valkyriestudios/utils/function';
 import {isNeObject} from '@valkyriestudios/utils/object';
 import {
     type TriFrostLoggerLogPayload,
@@ -70,7 +67,7 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
         include?:ConsoleExporterIncludeField[];
     }) {
         /* Configure grouped if passed */
-        if (isBoolean(options?.grouped)) this.#grouped = options.grouped;
+        this.#grouped = options?.grouped === true;
 
         /* Configure scrambler */
         this.#scramble = createScrambler({
@@ -78,10 +75,10 @@ export class ConsoleExporter implements TriFrostLoggerExporter {
         });
 
         /* Configure format if passed */
-        if (isFn(options?.format)) this.#format = options.format;
+        if (typeof options?.format === 'function') this.#format = options.format;
 
         /* Configure include if passed */
-        this.#inclusions = normalizeInclusion(isNeArray(options?.include) ? options.include : []);
+        this.#inclusions = normalizeInclusion(Array.isArray(options?.include) ? options.include : []);
     }
 
     init (global_attrs:Record<string, unknown>) {

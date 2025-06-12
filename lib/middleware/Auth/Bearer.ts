@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
-import {isFn} from '@valkyriestudios/utils/function';
-import {isString} from '@valkyriestudios/utils/string';
 import {
     Sym_TriFrostDescription,
     Sym_TriFrostFingerPrint,
@@ -30,7 +28,7 @@ export type BearerAuthOptions <
 
 /**
  * HTTP Bearer Token Authentication middleware.
- * 
+ *
  * This middleware extracts the `Authorization` header using the Bearer scheme,
  * retrieves the token, and calls the provided validate() function. If valid,
  * the `$auth` state is set on the context.
@@ -47,13 +45,13 @@ export function BearerAuth <
     State extends Record<string, unknown> = {},
     Patch extends Record<string, unknown> = BearerAuthResult
 > (opts:BearerAuthOptions<Env, State, Patch>) {
-    if (!isFn(opts?.validate)) throw new Error('TriFrostMiddleware@BearerAuth: A validate function must be provided');
+    if (typeof opts?.validate !== 'function') throw new Error('TriFrostMiddleware@BearerAuth: A validate function must be provided');
 
     const mware = async function TriFrostBearerAuth (
         ctx:TriFrostContext<Env, State>
     ):Promise<void|TriFrostContext<Env, State & {$auth:Patch}>> {
         const raw = ctx.headers.authorization;
-        if (!isString(raw) || !raw.startsWith('Bearer ')) return ctx.status(401);
+        if (typeof raw !== 'string' || !raw.startsWith('Bearer ')) return ctx.status(401);
 
         const token = raw.slice(7).trim();
         const result = await opts.validate(ctx, token);

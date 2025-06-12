@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
-import {isFn} from '@valkyriestudios/utils/function';
-import {isNeString} from '@valkyriestudios/utils/string';
 import {
     Sym_TriFrostDescription,
     Sym_TriFrostFingerPrint,
@@ -11,6 +9,8 @@ import {type TriFrostContext} from '../../types/context';
 import {type SigningAlgorithm} from '../../modules/Cookies';
 import {Sym_TriFrostMiddlewareAuth} from './types';
 
+type SessionCookieAuthSecretFn <Env extends Record<string, unknown> = {}> = (opts:{env:Env}) => string;
+
 /* Specific symbol attached to auth mware to identify them by */
 export const Sym_TriFrostMiddlewareSessionCookieAuth = Symbol('TriFrost.Middleware.SessionCookieAuth');
 
@@ -20,7 +20,7 @@ export type SessionCookieAuthSecret <Env extends Record<string, unknown> = {}> =
     /**
      * Secret value, either directly or lazily resolved from env
      */
-    val: string | ((opts:{env:Env}) => string);
+    val: string | SessionCookieAuthSecretFn<Env>;
 
     /**
      * Optional HMAC algorithm (defaults to SHA-256)
@@ -51,7 +51,7 @@ export type SessionCookieAuthOptions <
 
 /**
  * Session Cookie Authentication middleware.
- * 
+ *
  * This middleware retrieves a named cookie from the request, typically holding
  * a session identifier, and calls the provided validate() function. If valid,
  * the `$auth` state is set on the context.
@@ -69,26 +69,35 @@ export function SessionCookieAuth <
     State extends Record<string, unknown> = {},
     Patch extends Record<string, unknown> = SessionCookieAuthResult
 > (opts:SessionCookieAuthOptions<Env, State, Patch>) {
-    if (!isNeString(opts?.cookie)) throw new Error('TriFrostMiddleware@SessionCookieAuth: A cookie name must be provided');
     if (
-        !isNeString(opts.secret?.val) &&
-        !isFn(opts.secret?.val)
-    ) throw new Error('TriFrostMiddleware@SessionCookieAuth: A secret must be provided');
+        typeof opts?.cookie !== 'string' ||
+        !opts.cookie.length
+    ) throw new Error('TriFrostMiddleware@SessionCookieAuth: A cookie name must be provided');
 
-    const secretFn = isFn(opts.secret.val) ? opts.secret.val : () => opts.secret.val;
-    const algorithm = isNeString(opts.secret.algorithm) ? opts.secret.algorithm : 'SHA-256';
-    const validateFn = isFn(opts.validate) ? opts.validate : null;
+    /* Define secret function */
+    let secretFn:SessionCookieAuthSecretFn<Env>;
+    const secretType = typeof opts.secret?.val;
+    if (secretType === 'function') {
+        secretFn = opts.secret.val as SessionCookieAuthSecretFn<Env>;
+    } else if (secretType === 'string' && opts.secret.val.length) {
+        secretFn = () => opts.secret.val as string;
+    } else {
+        throw new Error('TriFrostMiddleware@SessionCookieAuth: A secret must be provided');
+    }
+
+    const algorithm = typeof opts.secret.algorithm === 'string' ? opts.secret.algorithm : 'SHA-256';
+    const validateFn = typeof opts.validate === 'function' ? opts.validate : null;
 
     const mware = async function TriFrostSessionCookieAuth (
         ctx:TriFrostContext<Env, State>
     ):Promise<void|TriFrostContext<Env, State & {$auth:Patch}>> {
         /* Get cookie, if cookie is not found return 401 */
         const cookie = ctx.cookies.get(opts.cookie);
-        if (!isNeString(cookie)) return ctx.status(401);
+        if (typeof cookie !== 'string' || !cookie.length) return ctx.status(401);
 
         /* Get resolved secret */
         const secret = secretFn(ctx);
-        if (!isNeString(secret)) return ctx.status(401);
+        if (typeof secret !== 'string' || !secret.length) return ctx.status(401);
 
         /* Verify HMAC signature */
         const verified = await ctx.cookies.verify(cookie, secret, {algorithm});
@@ -96,7 +105,6 @@ export function SessionCookieAuth <
 
         /* If no validation function, set state and continue */
         if (!validateFn) return ctx.setState({$auth: {cookie: verified}} as unknown as {$auth:Patch});
-        
 
         /* Validate, if not valid return 401 */
         const result = await validateFn(ctx, verified);

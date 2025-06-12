@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
-import {isFn} from '@valkyriestudios/utils/function';
 import {isNeString} from '@valkyriestudios/utils/string';
 import {
     Sym_TriFrostDescription,
@@ -38,7 +37,7 @@ export type ApiKeyAuthOptions <
 
 /**
  * API Key Authentication middleware.
- * 
+ *
  * This middleware checks for an API key either in the request headers or
  * query parameters, using configurable names. It then calls the provided
  * validate() function. If valid, the `$auth` state is set on the context.
@@ -57,7 +56,7 @@ export function ApiKeyAuth <
     State extends Record<string, unknown> = {},
     Patch extends Record<string, unknown> = ApiKeyAuthResult
 > (opts:ApiKeyAuthOptions<Env, State, Patch>) {
-    if (!isFn(opts?.validate)) throw new Error('TriFrostMiddleware@ApiKeyAuth: A validate function must be provided');
+    if (typeof opts?.validate !== 'function') throw new Error('TriFrostMiddleware@ApiKeyAuth: A validate function must be provided');
 
     if (!isNeString(opts.apiKey?.header) && !isNeString(opts.apiKey?.query)) {
         throw new Error('TriFrostMiddleware@ApiKeyAuth: You must configure apiKey header or query');
@@ -80,14 +79,14 @@ export function ApiKeyAuth <
         if (apiClientEnabled) {
             if (apiClientHeader) apiClient = ctx.headers[apiClientHeader];
             if (!apiClient && apiClientQuery) apiClient = ctx.query.get(apiClientQuery);
-            if (!isNeString(apiClient)) return ctx.status(401);
+            if (typeof apiClient !== 'string' || !apiClient.length) return ctx.status(401);
         }
 
         /* Get value from header, falling back to query */
         let apiKey:string|null = null;
         if (apiKeyHeader) apiKey = ctx.headers[apiKeyHeader];
         if (!apiKey && apiKeyQuery) apiKey = ctx.query.get(apiKeyQuery);
-        if (!isNeString(apiKey)) return ctx.status(401);
+        if (typeof apiKey !== 'string' || !apiKey.length) return ctx.status(401);
 
         /* Validate, if not valid return 401 */
         const result = await opts.validate(ctx, {apiKey, apiClient});

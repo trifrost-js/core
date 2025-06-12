@@ -1,6 +1,5 @@
 /* eslint-disable no-underscore-dangle,no-use-before-define */
 
-import {isObject} from '@valkyriestudios/utils/object';
 import {type TriFrostContext} from '../../types/context';
 import {type JSXElement} from './types';
 import {Fragment} from './runtime';
@@ -80,8 +79,8 @@ function renderProps (props:Record<string, unknown>|null) {
         const val = props[key];
         switch (key) {
             case 'style':
-                if (isObject(val)) {
-                    const style = styleToString(val);
+                if (Object.prototype.toString.call(val) === '[object Object]') {
+                    const style = styleToString(val as Record<string, unknown>);
                     if (style) acc += ' style="' + escape(style) + '"';
                 }
                 break;

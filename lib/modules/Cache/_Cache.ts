@@ -1,5 +1,3 @@
-import {isFn} from '@valkyriestudios/utils/function';
-import {isObject} from '@valkyriestudios/utils/object';
 import {
     Lazy,
     type LazyInitFn,
@@ -20,9 +18,9 @@ export class TriFrostCache <Env extends Record<string, any> = Record<string, any
     #store: Lazy<Store, Env>;
 
     constructor (opts:{store: LazyInitFn<Store, Env>|Store}) {
-        if (isObject(opts?.store)) {
+        if (Object.prototype.toString.call(opts?.store) === '[object Object]') {
             this.#store = new Lazy(opts.store);
-        } else if (isFn(opts?.store)) {
+        } else if (typeof opts?.store === 'function') {
             this.#store = new Lazy(opts.store as LazyInitFn<Store, Env>);
         } else {
             throw new Error('TriFrostCache: Expected a store initializer');
@@ -40,7 +38,7 @@ export class TriFrostCache <Env extends Record<string, any> = Record<string, any
 
     /**
      * Retrieves a cached value by key.
-     * 
+     *
      * @note If value doesn't exist will return null
      * @param {string} key - Key of the value you wish to retrieve
      */
@@ -48,13 +46,13 @@ export class TriFrostCache <Env extends Record<string, any> = Record<string, any
         key: string
     ): Promise<TVal | null> {
         if (!this.#store.resolved) throw new Error('TriFrostCache@get: Cache needs to be initialized first');
-        const stored = await this.#store.resolved.get(key);
-        return isObject(stored) && 'v' in stored ? stored.v as TVal : null;
+        const stored = await this.#store.resolved.get(key) as {v:TriFrostStoreValue}|null;
+        return Object.prototype.toString.call(stored) === '[object Object]' && 'v' in stored! ? stored.v as TVal : null;
     }
 
     /**
      * Sets a value in cache
-     * 
+     *
      * @param {string} key - Key to set the value on in cache
      * @param {TVal} value - Value to set
      * @param {CacheOptions?} opts - Options for caching, eg: {ttl: 3600} means cache for 1 hour
@@ -71,7 +69,7 @@ export class TriFrostCache <Env extends Record<string, any> = Record<string, any
 
     /**
      * Deletes a cached value by key or prefix
-     * 
+     *
      * @param {string|{prefix:string}} val - Value or group you wish to delete
      */
     async del (val:string|{prefix:string}): Promise<void> {
@@ -81,7 +79,7 @@ export class TriFrostCache <Env extends Record<string, any> = Record<string, any
 
     /**
      * Wraps a get + set combined as a utility method.
-     * 
+     *
      * @param {string} key - Key the value is/will be cached on
      * @param {Function} compute - Function to wrap which computes the value to cache
      * @param {CacheOptions?} opts - Options for caching, eg: {ttl: 3600} means cache for 1 hour
@@ -120,16 +118,16 @@ export class TriFrostCache <Env extends Record<string, any> = Record<string, any
 
     /**
      * Returns a context-scoped clone of this cache
-     * 
+     *
      * @note This is an internal method
      */
     private spawn (ctx: TriFrostContext<Env>): TriFrostCache<Env> {
         const resolved = this.#store.resolved ?? this.#store.resolve({env: ctx.env as Env});
         const store_spawn = resolved.spawn(ctx);
-    
+
         return new TriFrostCache<Env>({
             store: store_spawn,
         });
-    }    
+    }
 
 }

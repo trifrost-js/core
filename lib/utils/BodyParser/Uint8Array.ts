@@ -1,7 +1,6 @@
 /* eslint-disable max-statements,complexity,no-labels */
 
 import {toObject} from '@valkyriestudios/utils/formdata';
-import {isString} from '@valkyriestudios/utils/string';
 import {type TriFrostContext} from '../../types/context';
 import {MimeTypes} from '../../types/constants';
 import {type ParsedBody} from './types';
@@ -86,7 +85,7 @@ export async function parseMultipart (
                     if (charset_match) {
                         const charset = charset_match[1].trim().toLowerCase();
                         if (decoders[charset]) {
-                            part_decoder = decoders[charset]; 
+                            part_decoder = decoders[charset];
                         } else {
                             part_decoder = new TextDecoder(charset, {ignoreBOM: true, fatal: true});
                             decoders[charset] = part_decoder;
@@ -152,8 +151,8 @@ export async function parseBody <T extends ParsedBody = ParsedBody> (
     buf:Uint8Array
 ):Promise<T> {
     if (!(buf instanceof Uint8Array)) return {} as T;
-    
-    const raw_type = isString(ctx.headers?.['content-type'])
+
+    const raw_type = typeof ctx.headers?.['content-type'] === 'string'
         ? ctx.headers['content-type']
         : '';
     const [mime, ...params] = raw_type.split(';');
@@ -168,7 +167,7 @@ export async function parseBody <T extends ParsedBody = ParsedBody> (
             break;
         }
     }
-    
+
     try {
         /* Get decoder */
         let strict_decoder:TextDecoder;
@@ -216,7 +215,7 @@ export async function parseBody <T extends ParsedBody = ParsedBody> (
             case MimeTypes.FORM_MULTIPART: {
                 const boundary = raw_type.match(RGX_BOUNDARY)?.[1];
                 if (!boundary) throw new Error('multipart: Missing boundary');
-            
+
                 const form = await parseMultipart(ctx, buf, boundary, strict_decoder);
                 return toObject(form) as T;
             }

@@ -1,4 +1,3 @@
-import {isNotEmptyString} from '@valkyriestudios/utils/string';
 import {MARKER} from './Style';
 import {hasActiveNonce, nonce} from '../nonce/use';
 
@@ -48,7 +47,15 @@ export class StyleEngine {
         name:string,
         opts:StyleEngineRegisterOptions
     ):void {
-        if (!isNotEmptyString(rule) || (opts.selector !== undefined && !isNotEmptyString(opts.selector) && opts.selector !== null)) return;
+        if (
+            typeof rule !== 'string' ||
+            !rule.length ||
+            (
+                opts.selector !== undefined &&
+                (typeof opts.selector !== 'string' || !opts.selector.length) &&
+                opts.selector !== null
+            )
+        ) return;
 
         const {query, selector} = opts;
         const normalized = selector !== null ? (selector ?? '.' + name) + '{' + rule.trim() + '}' : rule;
@@ -87,7 +94,7 @@ export class StyleEngine {
      */
     inject (html:string):string {
         const styles = this.flush();
-        if (!isNotEmptyString(html)) return styles;
+        if (typeof html !== 'string' || !html.length) return styles;
 
         const idx = html.indexOf(MARKER);
         if (idx < 0) return html;

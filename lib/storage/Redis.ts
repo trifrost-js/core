@@ -1,7 +1,6 @@
 /* eslint-disable max-classes-per-file */
 
 import {split} from '@valkyriestudios/utils/array';
-import {isFn} from '@valkyriestudios/utils/function';
 import {TriFrostCache} from '../modules/Cache/_Cache';
 import {
     TriFrostRateLimit,
@@ -78,7 +77,7 @@ export class RedisStore <T extends TriFrostStoreValue = TriFrostStoreValue> exte
 export class RedisCache <Env extends Record<string, any> = Record<string, any>> extends TriFrostCache<Env> {
 
     constructor (cfg: {store: LazyInitFn<TriFrostRedis, Env>}) {
-        if (!isFn(cfg?.store)) throw new Error('RedisCache: Expected a store initializer');
+        if (typeof cfg?.store !== 'function') throw new Error('RedisCache: Expected a store initializer');
         super({
             store: ({env}) => new Store('RedisCache', new RedisStoreAdapter(cfg.store({env}))),
         });
@@ -95,7 +94,7 @@ export class RedisRateLimit <Env extends Record<string, any> = Record<string, an
     constructor (cfg: Omit<TriFrostRateLimitOptions<Env>, 'store'> & {
         store: LazyInitFn<TriFrostRedis, Env>
     }) {
-        if (!isFn(cfg?.store)) throw new Error('RedisRateLimit: Expected a store initializer');
+        if (typeof cfg?.store !== 'function') throw new Error('RedisRateLimit: Expected a store initializer');
         super({
             ...cfg,
             store: ({env}) => new Store('RedisRateLimit', new RedisStoreAdapter(cfg.store({env}))),

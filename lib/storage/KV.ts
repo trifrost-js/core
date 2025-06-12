@@ -1,7 +1,6 @@
 /* eslint-disable max-classes-per-file */
 
 import {split} from '@valkyriestudios/utils/array';
-import {isFn} from '@valkyriestudios/utils/function';
 import {TriFrostCache} from '../modules/Cache/_Cache';
 import {TriFrostRateLimit, type TriFrostRateLimitOptions} from '../modules/RateLimit/_RateLimit';
 import {type TriFrostCFKVNamespace} from '../types/providers';
@@ -78,7 +77,7 @@ export class KVStore <T extends TriFrostStoreValue = TriFrostStoreValue> extends
 export class KVCache <Env extends Record<string, any> = Record<string, any>> extends TriFrostCache<Env> {
 
     constructor (cfg: {store: LazyInitFn<TriFrostCFKVNamespace, Env>}) {
-        if (!isFn(cfg?.store)) throw new Error('KVCache: Expected a store initializer');
+        if (typeof cfg?.store !== 'function') throw new Error('KVCache: Expected a store initializer');
         super({
             store: ({env}) => new Store('KVCache', new KVStoreAdapter(cfg.store({env}))),
         });
@@ -93,7 +92,7 @@ export class KVCache <Env extends Record<string, any> = Record<string, any>> ext
 export class KVRateLimit <Env extends Record<string, any> = Record<string, any>> extends TriFrostRateLimit<Env> {
 
     constructor (cfg: Omit<TriFrostRateLimitOptions<Env>, 'store'> & {store: LazyInitFn<TriFrostCFKVNamespace, Env>}) {
-        if (!isFn(cfg?.store)) throw new Error('KVRateLimit: Expected a store initializer');
+        if (typeof cfg?.store !== 'function') throw new Error('KVRateLimit: Expected a store initializer');
         super({
             ...cfg,
             store: ({env}) => new Store('KVRateLimit', new KVStoreAdapter(cfg.store({env}))),

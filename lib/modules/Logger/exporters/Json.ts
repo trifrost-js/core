@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 
-import {isFn} from '@valkyriestudios/utils/function';
 import {deepFreeze} from '@valkyriestudios/utils/deep';
 import {
     type TriFrostLoggerLogPayload,
@@ -50,7 +49,7 @@ export class JsonExporter implements TriFrostLoggerExporter {
         });
 
         /* Configure sink if passed */
-        if (isFn(options?.sink)) this.#sink = options.sink;
+        if (typeof options?.sink === 'function') this.#sink = options.sink;
     }
 
     init (global_attrs:Record<string, unknown>) {

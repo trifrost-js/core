@@ -1,9 +1,7 @@
 /* eslint-disable complexity, @typescript-eslint/no-empty-object-type */
 
-import {isBoolean} from '@valkyriestudios/utils/boolean';
 import {isIntBetween, isIntGt} from '@valkyriestudios/utils/number';
 import {isObject} from '@valkyriestudios/utils/object';
-import {isNeString} from '@valkyriestudios/utils/string';
 import {type TriFrostCache} from './modules/Cache';
 import {type TriFrostCookieOptions} from './modules/Cookies';
 import {
@@ -208,28 +206,21 @@ class App <
         if (options.runtime) this.#runtime = options.runtime;
 
         /* Configure debug */
-        if ('debug' in options) {
-            if (!isBoolean(options.debug)) throw new Error('TriFrost@ctor: Debug not a boolean');
-            this.#debug = options.debug;
-        }
+        if ('debug' in options) this.#debug = !!options.debug;
 
         /* Configure host */
-        if ('host' in options) {
-            if (!isNeString(options.host)) throw new Error('TriFrost@ctor: Host not a string with content');
+        if ('host' in options && typeof options.host === 'string' && options.host.length) {
             this.#host = options.host;
         }
 
         /* Configure trust proxy */
-        if ('trustProxy' in options) {
-            if (!isBoolean(options.trustProxy)) throw new Error('TriFrost@ctor: Trust Proxy not a boolean');
-            this.#trustProxy = options.trustProxy;
-        }
+        if ('trustProxy' in options) this.#trustProxy = !!options.trustProxy;
 
         /* Configure app name */
-        if (isNeString(options.name)) this.#name = options.name.trim();
+        if (typeof options.name === 'string') this.#name = options.name.trim();
 
         /* Configure app version */
-        if (isNeString(options.version)) this.#version = options.version.trim();
+        if (typeof options.version === 'string') this.#version = options.version.trim();
 
         /* Configure app meta */
         if (isObject(options.meta)) this.#meta = options.meta;
@@ -343,7 +334,7 @@ class App <
                             );
                         }
                     }
-                    
+
                     /* End it if still not locked */
                     if (!ctx.isLocked) return ctx.end();
                 } else if (ctx.statusCode >= 400) {
@@ -447,7 +438,7 @@ class App <
                         if (!ctx.isLocked) await runTriage(path, ctx);
                     } catch (err) {
                         ctx.logger.error(err);
-                        
+
                         /* Ensure status code is set as 500 if not >= 400, this ensures proper triaging */
                         if (!ctx.isAborted && ctx.statusCode < 400) ctx.setStatus(500);
 
@@ -600,8 +591,7 @@ class App <
     #extractDomainFromHost (val:string|null) {
         if (typeof val !== 'string' || val === 'localhost' || /^[\d.]+$/.test(val)) return null;
         const match = val.match(/^(?:www\d?\.)?(?<domain>[\w-]+\.(?:[\w-]+\.\w+|\w+))$/i);
-        if (isNeString(match?.groups?.domain)) return match.groups.domain;
-        return null;
+        return typeof match?.groups?.domain === 'string' && match.groups.domain.length ? match.groups.domain : null;
     }
 
 }

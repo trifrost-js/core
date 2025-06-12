@@ -103,7 +103,7 @@ describe('Modules – JSX – style – Engine', () => {
         });
 
         it('Ignores non/empty string', () => {
-            for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
+            for (const el of [...CONSTANTS.NOT_STRING, '']) {
                 engine.register(el as string, 'tf-empty', {});
             }
             expect(engine.flush()).toBe('');
@@ -239,7 +239,7 @@ describe('Modules – JSX – style – Engine', () => {
         });
 
         it('Does not fail if passed a non/empty-string html', () => {
-            for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
+            for (const el of [...CONSTANTS.NOT_STRING, '']) {
                 const cls = engine.hash('line-height:1.5');
                 engine.register('line-height:1.5', cls, {});
 

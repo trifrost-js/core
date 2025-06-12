@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
-import {isFn} from '@valkyriestudios/utils/function';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {type TriFrostRateLimitLimitFunction} from '../modules/RateLimit';
 import {
@@ -20,11 +19,11 @@ export function isValidHandler <
     Env extends Record<string, any>,
     State extends Record<string, unknown> = {}
 > (val:TriFrostRouteHandler<Env, State>):boolean {
-    if (isFn(val)) return true;
-    if (!isFn((val as TriFrostHandlerConfig<Env, State>)?.fn)) return false;
+    if (typeof val === 'function') return true;
+    if (typeof (val as TriFrostHandlerConfig<Env, State>)?.fn !== 'function') return false;
     if (
-        'timeout' in (val as TriFrostHandlerConfig<Env, State>) && 
-        !isIntGt((val as TriFrostHandlerConfig<Env, State>).timeout, 0) && 
+        'timeout' in (val as TriFrostHandlerConfig<Env, State>) &&
+        !isIntGt((val as TriFrostHandlerConfig<Env, State>).timeout, 0) &&
         (val as TriFrostHandlerConfig<Env, State>).timeout !== null
     ) return false;
     return true;
@@ -38,11 +37,11 @@ export function isValidGrouper <
     Env extends Record<string, any>,
     State extends Record<string, unknown> = {}
 > (val:TriFrostGrouperHandler<Env, State>):boolean {
-    if (isFn(val)) return true;
-    if (!isFn((val as TriFrostGrouperConfig<Env, State>)?.fn)) return false;
+    if (typeof val === 'function') return true;
+    if (typeof (val as TriFrostGrouperConfig<Env, State>)?.fn !== 'function') return false;
     if (
-        'timeout' in (val as TriFrostGrouperConfig<Env, State>) && 
-        !isIntGt((val as TriFrostGrouperConfig<Env, State>).timeout, 0) && 
+        'timeout' in (val as TriFrostGrouperConfig<Env, State>) &&
+        !isIntGt((val as TriFrostGrouperConfig<Env, State>).timeout, 0) &&
         (val as TriFrostGrouperConfig<Env, State>).timeout !== null
     ) return false;
     return true;
@@ -56,7 +55,7 @@ export function isValidMiddleware <
     Env extends Record<string, any>,
     State extends Record<string, unknown> = {}
 > (val:TriFrostMiddleware<Env, State>):boolean {
-    return isFn(val);
+    return typeof val === 'function';
 }
 
 /**
@@ -67,5 +66,5 @@ export function isValidLimit <
     Env extends Record<string, any>,
     State extends Record<string, unknown> = {}
 > (val:number|TriFrostRateLimitLimitFunction<Env, State>):boolean {
-    return isIntGt(val, 0) || isFn(val);
+    return isIntGt(val, 0) || typeof val === 'function';
 }

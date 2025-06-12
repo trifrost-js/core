@@ -1,7 +1,6 @@
 /* eslint-disable max-classes-per-file */
 
 import {isNeArray} from '@valkyriestudios/utils/array';
-import {isFunction} from '@valkyriestudios/utils/function';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {TriFrostCache} from '../modules/Cache/_Cache';
 import {TriFrostRateLimit, type TriFrostRateLimitOptions} from '../modules/RateLimit/_RateLimit';
@@ -36,7 +35,7 @@ export class MemoryStoreAdapter<T extends TriFrostStoreValue = TriFrostStoreValu
 
     constructor (opts?:MemoryStoreAdapterOptions<T>) {
         /* Configure garbage collection interval */
-        const filter = isFunction(opts?.gc_filter)
+        const filter = typeof opts?.gc_filter === 'function'
             ? opts.gc_filter
             : (_key:string, _v:T, _now:number, _exp:number) => _exp <= _now;
         if (isIntGt(opts?.gc_interval, 0)) {

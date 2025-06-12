@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
 import {noopresolve} from '@valkyriestudios/utils/function';
-import {isIntGt} from '@valkyriestudios/utils/number';
-import {isObject} from '@valkyriestudios/utils/object';
-import {isNeString} from '@valkyriestudios/utils/string';
 import {type TriFrostCache} from './modules/Cache';
 import {Cookies} from './modules/Cookies';
 import {type JSXElement} from './modules/JSX';
@@ -405,7 +402,7 @@ export abstract class Context <
      * Sets the timeout
      */
     setTimeout (val:number|null):void {
-        if (isIntGt(val, 0)) {
+        if (Number.isInteger(val) && (val as number) > 0) {
             this.clearTimeout();
             this.#timeout = val;
             this.#timeout_id = setTimeout(() => {
@@ -413,7 +410,7 @@ export abstract class Context <
                 this.#timeout_id = null;
                 this.#logger.error('Request timed out');
                 this.abort(408);
-            }, val);
+            }, val as number);
         } else if (val === null) {
             this.clearTimeout();
         } else {
@@ -676,10 +673,10 @@ export abstract class Context <
             /* Set Content-Disposition header depending on download option */
             if (opts?.download === true) {
                 this.res_headers['Content-Disposition'] = 'attachment';
-            } else if (isNeString(opts?.download)) {
+            } else if (typeof opts?.download === 'string') {
                 const {encoded, ascii} = encodeFilename(opts.download);
                 /* Take Note, as per RFC 6266 we make use of filename* with UTF-8 */
-                this.res_headers['Content-Disposition'] = isNeString(ascii)
+                this.res_headers['Content-Disposition'] = ascii.length
                     ? 'attachment; filename="' + ascii + '"; filename*=UTF-8\'\'' + encoded
                     : 'attachment; filename*=UTF-8\'\'' + encoded;
             }
@@ -728,7 +725,10 @@ export abstract class Context <
      */
     json (body:Record<string, unknown>|unknown[] = {}, opts?:TriFrostContextResponseOptions):void {
         try {
-            if (!isObject(body) && !Array.isArray(body)) throw new Error('Context@json: Invalid Payload');
+            if (
+                Object.prototype.toString.call(body) !== '[object Object]' ||
+                !Array.isArray(body)
+            ) throw new Error('Context@json: Invalid Payload');
 
             /* Ensure we dont double write */
             if (this.isLocked) throw new Error('Context@json: Cannot modify a finalized response');
@@ -815,7 +815,7 @@ export abstract class Context <
             /* If the url is not fully qualified prepend the protocol and host */
             if (!RGX_URL.test(normalized_to)) {
                 const host = this.host;
-                if (!isNeString(host)) throw new Error('Context@redirect: Not able to determine host for redirect');
+                if (typeof host !== 'string' || !host.length) throw new Error('Context@redirect: Not able to determine host for redirect');
 
                 const normalized_host = host.startsWith('http://') && !host.startsWith('https://') ? 'https://' + host : host;
                 normalized_to = normalized_host.trim() + normalized_to.trim();

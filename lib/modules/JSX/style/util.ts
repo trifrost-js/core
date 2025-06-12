@@ -1,5 +1,3 @@
-import {isObject} from '@valkyriestudios/utils/object';
-
 const KEBAB_REGEX = /[A-Z]/g;
 const KEBAB_VENDOR_REGEX = /^(webkit|moz|ms|o)([A-Z])/;
 
@@ -92,7 +90,7 @@ export const HTML_TAGS = {
 
 /**
  * Prebuilt camel to kebab lookup table of most-used props
- * 
+ *
  * @note This lookup table will be checked first, if not there we will use the regex replacer for this
  */
 export const CAMEL_TO_KEBAB_LUT: Record<string, string> = {
@@ -233,11 +231,11 @@ export function toKebab (key:string):string {
 
 /**
  * Casts a style object to a string
- * 
+ *
  * @param {Record<string, unknown>} obj - Props to render
  */
 export function styleToString (obj:Record<string, unknown>|null):string|null {
-    if (!isObject(obj)) return null;
+    if (Object.prototype.toString.call(obj) !== '[object Object]') return null;
 
     let style:string|null = '';
     for (const attr in obj) {
@@ -250,10 +248,10 @@ export function styleToString (obj:Record<string, unknown>|null):string|null {
 
             /* If wrapped in quotes and contains a CSS function, unwrap it */
             if (
-                (str[0] === '\'' || str[0] === '"') && 
+                (str[0] === '\'' || str[0] === '"') &&
                 RGX_FUNCTION.test(str)
             ) str = str.slice(1, -1);
-            
+
             if (str) style += toKebab(attr) + ':' + str + ';';
         }
     }

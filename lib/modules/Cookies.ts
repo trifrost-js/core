@@ -2,9 +2,7 @@
 
 import {LRU} from '@valkyriestudios/utils/caching';
 import {isDate, addUTC, diff} from '@valkyriestudios/utils/date';
-import {isInt, isNum} from '@valkyriestudios/utils/number';
-import {isObject} from '@valkyriestudios/utils/object';
-import {isNeString, isString} from '@valkyriestudios/utils/string';
+import {isNeString} from '@valkyriestudios/utils/string';
 import {type TriFrostContext} from '../types/context';
 
 export type TriFrostCookieOptions = {
@@ -63,10 +61,10 @@ export class Cookies {
 
     constructor (ctx:TriFrostContext, config:Partial<TriFrostCookieOptions> = {}) {
         this.#ctx = ctx;
-        this.#config = isObject(config) ? config : {};
+        this.#config = Object.prototype.toString.call(config) === '[object Object]' ? config : {};
 
         /* Process cookie header into map */
-        const cookies = isString(ctx.headers.cookie) ? ctx.headers.cookie.split(';') : [];
+        const cookies = typeof ctx.headers.cookie === 'string' ? ctx.headers.cookie.split(';') : [];
         const map:Record<string, string> = {};
         for (let i = 0; i < cookies.length; i++) {
             const raw = cookies[i];
@@ -100,7 +98,7 @@ export class Cookies {
      * @returns Cookie value or null if not found
      */
     get (name:string):string|null {
-        return isString(name) && name in this.#combined
+        return typeof name === 'string' && name in this.#combined
             ? this.#combined[name]
             : null;
     }
@@ -122,13 +120,13 @@ export class Cookies {
         const normalized = Number.isFinite(value) ? String(value) : value;
         const config = {
             ...this.#config,
-            ...isObject(options) && options,
+            ...Object.prototype.toString.call(options) === '[object Object]' && options,
         };
 
         /* Validate */
         if (
-            !isString(name) ||
-            !isString(normalized) ||
+            typeof name !== 'string' ||
+            typeof normalized !== 'string' ||
             !RGX_NAME.test(name) ||
             !RGX_VALUE.test(normalized)
         ) return this.#ctx.logger.error('TriFrostCookies@set: Invalid name or value', {name, value, options});
@@ -136,7 +134,7 @@ export class Cookies {
         /* Start cookie construction */
         let new_cookie = name + '=' + encodeURIComponent(normalized);
 
-        const maxage = isInt(config.maxage) ? config.maxage : null;
+        const maxage = Number.isInteger(config.maxage) ? config.maxage : null;
         const expires = isDate(config.expires) ? config.expires : null;
 
         /* Max Age */
@@ -153,10 +151,10 @@ export class Cookies {
         }
 
         /* Path */
-        if (isString(config.path)) new_cookie += '; Path=' + config.path;
+        if (typeof config.path === 'string') new_cookie += '; Path=' + config.path;
 
         /* Domain */
-        if (isString(config.domain)) new_cookie += '; Domain=' + config.domain;
+        if (typeof config.domain === 'string') new_cookie += '; Domain=' + config.domain;
 
         /* Secure */
         if (config.secure !== false) new_cookie += '; Secure';
@@ -165,7 +163,7 @@ export class Cookies {
         if (config.httponly === true) new_cookie += '; HttpOnly';
 
         /* SameSite */
-        if (isString(config.samesite)) {
+        if (typeof config.samesite === 'string') {
             new_cookie += '; SameSite=' + config.samesite;
 
             /* If samesite 'None', ensure ALWAYS secure */
@@ -184,24 +182,24 @@ export class Cookies {
 
     /**
      * Sign a value with an HMAC signature
-     * 
+     *
      * @param {string|number} val - Value to sign
      * @param {string} secret - Signing secret
      * @param {TriFrostCookieSigningOptions} options - Options for signing (defaults to {algorithm: 'SHA-256'})
      */
     async sign (val:string|number, secret: string, options:TriFrostCookieSigningOptions = {algorithm: 'SHA-256'}): Promise<string> {
         if (
-            !isNeString(secret) || 
-            (!isString(val) && !isNum(val))
+            !isNeString(secret) ||
+            (typeof val !== 'string' && !Number.isFinite(val))
         ) return '';
-        
+
         const sig = await this.generateHMAC(String(val), secret, options);
         return val + '.' + sig;
     }
 
     /**
      * Verifies a signed cookie has not been tampered with, returns the value if untampered
-     * 
+     *
      * @param {string} signed - Signed cookie value
      * @param {string|(string|(TriFrostCookieSigningOptions & {val:string}))[]} secrets - Secret or Secrets to check
      * @param {TriFrostCookieSigningOptions} options - Options for verifying (defaults to {algorithm: 'SHA-256'})
@@ -213,10 +211,10 @@ export class Cookies {
     ) {
         const idx = isNeString(signed) ? signed.lastIndexOf('.') : -1;
         if (idx === -1) return null;
-    
+
         const val = signed.slice(0, idx);
         const sig = signed.slice(idx + 1);
-    
+
         for (const secret of Array.isArray(secrets) ? secrets : [secrets]) {
             if (isNeString(secret)) {
                 const expected_sig = await this.generateHMAC(val, secret, options);
@@ -230,7 +228,7 @@ export class Cookies {
                 if (expected_sig === sig) return val;
             }
         }
-    
+
         this.#ctx.logger.warn('TriFrostCookies@verify: Signature mismatch');
         return null;
     }
@@ -253,7 +251,7 @@ export class Cookies {
                     delete this.#combined[key];
                 }
             }
-            
+
             /* 2. Expire any client-passed cookies */
             for (const key in this.#incoming) {
                 if (key.startsWith(val.prefix)) this.internalDel(key, normalized_options);
@@ -273,7 +271,7 @@ export class Cookies {
             delete this.#outgoing[key];
             delete this.#combined[key];
         }
-        
+
         /* 2. Expire any client-passed cookies */
         for (const key in this.#incoming) {
             this.internalDel(key, normalized_options);
@@ -295,7 +293,7 @@ export class Cookies {
      * @param {string|number} data - Value to generate HMAC for
      * @param {string} secret - Signing secret
      * @param {TriFrostCookieSigningOptions} options - HMAC Options
-     * @returns 
+     * @returns
      */
     private async generateHMAC (data:string, secret:string, options:TriFrostCookieSigningOptions) {
         const algo = options?.algorithm in HMACAlgos ? options.algorithm : 'SHA-256';
@@ -313,7 +311,7 @@ export class Cookies {
             );
             this.#keyCache.set(cacheKey, key);
         }
-    
+
         const sig_buf = await crypto.subtle.sign('HMAC', key, this.#encoder.encode(String(data)));
         const sig_arr = new Uint8Array(sig_buf);
         let hex = '';

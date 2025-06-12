@@ -14,7 +14,7 @@ const makeCtx = (cookieVal?: string|null) => {
 
 describe('Middleware - Auth - SessionCookie', () => {
     it('Throws if no cookie name provided', () => {
-        for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
+        for (const el of CONSTANTS.NOT_STRING) {
             expect(() => SessionCookieAuth({
                 cookie: el as any,
                 secret: {val: 'secret'},
@@ -23,7 +23,7 @@ describe('Middleware - Auth - SessionCookie', () => {
     });
 
     it('Throws if no secret provided', () => {
-        for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
+        for (const el of CONSTANTS.NOT_STRING) {
             if (typeof el === 'function') continue;
             expect(() => SessionCookieAuth({
                 cookie: 'session',
@@ -144,14 +144,14 @@ describe('Middleware - Auth - SessionCookie', () => {
 
     it('Passes ctx correctly to secret value function', async () => {
         const ctx = makeCtx('verifiedValue');
-    
+
         const secretFn = vi.fn(() => 'resolvedSecret');
-    
+
         const mw = SessionCookieAuth({
             cookie: 'session',
             secret: {val: secretFn},
         });
-    
+
         await mw(ctx);
         expect(secretFn).toHaveBeenCalledTimes(1);
         expect(secretFn).toHaveBeenCalledWith(ctx);

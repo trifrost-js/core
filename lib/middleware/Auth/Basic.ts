@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
-import {isFn} from '@valkyriestudios/utils/function';
-import {isNeString, isString} from '@valkyriestudios/utils/string';
+import {isNeString} from '@valkyriestudios/utils/string';
 import {
     Sym_TriFrostDescription,
     Sym_TriFrostFingerPrint,
@@ -35,7 +34,7 @@ export type BasicAuthOptions <
 
 /**
  * HTTP Basic Authentication middleware.
- * 
+ *
  * This middleware extracts the `Authorization` header using the Basic scheme,
  * decodes the base64-encoded username and password, and calls the provided
  * validate() function. If valid, the `$auth` state is set on the context.
@@ -52,7 +51,7 @@ export function BasicAuth <
     State extends Record<string, unknown> = {},
     Patch extends Record<string, unknown> = BasicAuthResult
 > (opts:BasicAuthOptions<Env, State, Patch>) {
-    if (!isFn(opts?.validate)) throw new Error('TriFrostMiddleware@BasicAuth: A validate function must be provided');
+    if (typeof opts?.validate !== 'function') throw new Error('TriFrostMiddleware@BasicAuth: A validate function must be provided');
     const realm = isNeString(opts.realm) ? opts.realm : 'Restricted Area';
     const NOT_AUTH = 'Basic realm="' + realm + '"';
 
@@ -60,7 +59,7 @@ export function BasicAuth <
         ctx:TriFrostContext<Env, State>
     ):Promise<void|TriFrostContext<Env, State & {$auth:Patch}>> {
         const authHeader = ctx.headers.authorization;
-        if (!isString(authHeader) || !authHeader.startsWith('Basic ')) {
+        if (typeof authHeader !== 'string' || !authHeader.startsWith('Basic ')) {
             ctx.setHeader('WWW-Authenticate', NOT_AUTH);
             return ctx.status(401);
         }

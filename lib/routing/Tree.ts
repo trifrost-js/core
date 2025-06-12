@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
 import {LRU} from '@valkyriestudios/utils/caching';
-import {isFn} from '@valkyriestudios/utils/function';
-import {isNeString} from '@valkyriestudios/utils/string';
 import {Sym_TriFrostMiddlewareCors} from '../middleware/Cors';
 import {TriFrostMiddleware, type TriFrostRoute} from '../types/routing';
 import {type TriFrostContext} from '../types/context';
@@ -41,6 +39,10 @@ type TrieNode <Env extends Record<string, any> = {}> = {
     methods: Record<HttpMethod, TriFrostRoute<Env>>;
 }
 
+function isValidPath (val:unknown):val is string {
+    return typeof val === 'string' && val.length > 0 && val[0] === '/';
+}
+
 /**
  * Factory for a blank trie node
  */
@@ -56,9 +58,9 @@ function blankTrieNode <Env extends Record<string, any> = {}> () {
 
 /**
  * Factory for an options route
- * 
+ *
  * @param {string} path - Path the options route is for
- * @param {HttpMethod[]} methods - Available methods array 
+ * @param {HttpMethod[]} methods - Available methods array
  */
 function createOptionsRoute <Env extends Record<string, any>> (
     path: string,
@@ -71,10 +73,10 @@ function createOptionsRoute <Env extends Record<string, any>> (
 
         /* Push into allowed methods array */
         if (route.method !== HttpMethods.OPTIONS) methods.push(route.method);
-        
+
         /* We extract the cors middleware from the chains of the routes on the same path */
         if (cors_mware) continue;
-        
+
         for (let y = 0; y < route.middleware.length; y++) {
             const mware = route.middleware[y];
             const is_cors = Reflect.get(mware, Sym_TriFrostFingerPrint) === Sym_TriFrostMiddlewareCors;
@@ -110,7 +112,7 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
 
     /**
      * Adds a route into the trie, segment by segment.
-     * 
+     *
      * @param {TriFrostRoute<Env>} route - Route to add
      * @param {boolean} no_options - Set to true to not add options route
      */
@@ -147,7 +149,7 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
 
     /**
      * Matches a path and method against the trie, collecting parameters.
-     * 
+     *
      * @param {HttpMethod} method - HTTP method to match
      * @param {string} path - Path to find the match for
      */
@@ -191,7 +193,7 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
 
     /**
      * Recursively searches the trie for a matching route and method
-     * 
+     *
      * @param {TrieNode<Env>} node - Node of the tree we're currently on
      * @param {string[]} segments - Segments of the path we're searching
      * @param {number} segment_idx - Index of the current segment we're on
@@ -286,12 +288,12 @@ export class RouteTree<Env extends Record<string, any> = {}> {
 
     /**
      * Adds a route to the tree
-     * 
+     *
      * @param {MethodRouteDefinition<Env>} route - Route to add
      */
     add (route:TriFrostRoute<Env>) {
-        if (!isNeString(route?.path) || route.path[0] !== '/') throw new Error('RouteTree@add: invalid path');
-        if (!isFn(route.fn)) throw new Error('RouteTree@add: route.fn must be a function');
+        if (!isValidPath(route?.path)) throw new Error('RouteTree@add: invalid path');
+        if (typeof route.fn !== 'function') throw new Error('RouteTree@add: route.fn must be a function');
         if (!HttpMethodsSet.has(route.method)) throw new Error('RouteTree@add: method is not valid');
 
         if (route.path.indexOf(':') < 0 && route.path.indexOf('*') < 0) {
@@ -305,7 +307,7 @@ export class RouteTree<Env extends Record<string, any> = {}> {
 
     /**
      * Attempts to match a route by method and path
-     * 
+     *
      * @param {HttpMethod} method - HTTP Verb (GET, DELETE, POST, ...)
      * @param {string} path - Path to look for
      */
@@ -329,11 +331,11 @@ export class RouteTree<Env extends Record<string, any> = {}> {
      */
 
     addNotFound (route:Omit<TriFrostRoute<Env>, 'method'>) {
-        if (!isNeString(route?.path) || route.path[0] !== '/') throw new Error('RouteTree@addNotFound: invalid path');
+        if (!isValidPath(route?.path)) throw new Error('RouteTree@addNotFound: invalid path');
         this.notfound.tree.add({...route, method: 'GET'}, true);
     }
 
-    matchNotFound (path: string): RouteMatch<Env>|null {
+    matchNotFound (path:string): RouteMatch<Env>|null {
         const cached = this.notfound.lru.get(path);
         if (cached) return cached.v;
 
@@ -347,7 +349,7 @@ export class RouteTree<Env extends Record<string, any> = {}> {
      */
 
     addError (route:Omit<TriFrostRoute<Env>, 'method'>) {
-        if (!isNeString(route?.path) || route.path[0] !== '/') throw new Error('RouteTree@addError: invalid path');
+        if (!isValidPath(route?.path)) throw new Error('RouteTree@addError: invalid path');
         this.error.tree.add({...route, method: 'GET'}, true);
     }
 

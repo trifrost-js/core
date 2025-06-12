@@ -1,10 +1,7 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
-import {isArray} from '@valkyriestudios/utils/array';
-import {isFn} from '@valkyriestudios/utils/function';
 import {isIntGt} from '@valkyriestudios/utils/number';
-import {isObject, isNeObject} from '@valkyriestudios/utils/object';
-import {isString, isNeString} from '@valkyriestudios/utils/string';
+import {isNeObject} from '@valkyriestudios/utils/object';
 import {
     type TriFrostRateLimit,
     type TriFrostRateLimitLimitFunction,
@@ -63,7 +60,7 @@ class Router <
 
     constructor (options:TriFrostRouterOptions<Env, State>) {
         /* Check path */
-        if (!isString(options?.path)) throw new Error('TriFrostRouter@ctor: Path is invalid');
+        if (typeof options?.path !== 'string') throw new Error('TriFrostRouter@ctor: Path is invalid');
 
         /* Check timeout */
         if (
@@ -73,8 +70,8 @@ class Router <
 
         /* Check rate limit instance */
         if (
-            options.rateLimit !== null && 
-            !isFn(options.rateLimit?.limit)
+            options.rateLimit !== null &&
+            typeof options.rateLimit?.limit !== 'function'
         ) throw new Error('TriFrostRouter@ctor: RateLimit is invalid');
 
         /* Check tree */
@@ -84,7 +81,7 @@ class Router <
 
         /* Check middleware */
         if (
-            !isArray(options.middleware)
+            !Array.isArray(options.middleware)
         ) throw new Error('TriFrostRouter@ctor: Middleware is invalid');
 
         /* Configure path */
@@ -137,7 +134,7 @@ class Router <
 
         /* Get name */
         let name = Reflect.get(fn, Sym_TriFrostName) ?? fn.name;
-        name = isNeString(name) ? name : 'anonymous';
+        name = typeof name === 'string' && name.length ? name : 'anonymous';
 
         /* Add symbols for introspection/use further down the line */
         Reflect.set(fn, Sym_TriFrostName, name);
@@ -165,12 +162,14 @@ class Router <
         path: Path,
         handler: TriFrostGrouperHandler<Env, State & PathParam<Path>>
     ) {
-        if (!isString(path)) throw new Error('TriFrostRouter@group: Invalid path');
+        if (typeof path !== 'string') throw new Error('TriFrostRouter@group: Invalid path');
         if (!isValidGrouper<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@group: Invalid handler');
 
         /* Create config */
-        const {fn, timeout = undefined} = (isFn(handler) ? {fn: handler} : handler) as TriFrostGrouperConfig<Env, State & PathParam<Path>>;
-        
+        const {fn, timeout = undefined} = (typeof handler === 'function'
+            ? {fn: handler}
+            : handler) as TriFrostGrouperConfig<Env, State & PathParam<Path>>;
+
         /* Run router */
         fn(new Router<Env, State & PathParam<Path>>({
             path: this.#path + path,
@@ -187,7 +186,7 @@ class Router <
      * Add a subroute with a builder approach
      */
     route <Path extends string = string> (path: Path, handler: TriFrostRouteBuilderHandler<Env, State & PathParam<Path>>) {
-        if (!isFn(handler)) throw new Error('TriFrostRouter@route: No handler provided for "' + path + '"');
+        if (typeof handler !== 'function') throw new Error('TriFrostRouter@route: No handler provided for "' + path + '"');
 
         /* Instantiate route builder */
         const route = new Route<Env, State & PathParam<Path>>({rateLimit: this.#rateLimit});
@@ -210,7 +209,9 @@ class Router <
      * @param {Handler} handler - Handler to run
      */
     onNotFound (handler:TriFrostHandler<Env, State>) {
-        if (!isFn(handler)) throw new Error('TriFrostRoute@onNotFound: Invalid handler provided for router on "' + this.#path + '"');
+        if (
+            typeof handler !== 'function'
+        ) throw new Error('TriFrostRoute@onNotFound: Invalid handler provided for router on "' + this.#path + '"');
 
         this.#tree.addNotFound({
             path: this.#path + '/*',
@@ -232,7 +233,9 @@ class Router <
      * @param {Handler} handler - Handler to run
      */
     onError (handler:TriFrostHandler<Env, State>) {
-        if (!isFn(handler)) throw new Error('TriFrostRoute@onError: Invalid handler provided for router on "' + this.#path + '"');
+        if (
+            typeof handler !== 'function'
+        ) throw new Error('TriFrostRoute@onError: Invalid handler provided for router on "' + this.#path + '"');
 
         this.#tree.addError({
             path: this.#path + '/*',
@@ -252,7 +255,7 @@ class Router <
      * Configure a HTTP Get route
      */
     get <Path extends string = string> (path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
-        if (!isString(path)) throw new Error('TriFrostRouter@get: Invalid path');
+        if (typeof path !== 'string') throw new Error('TriFrostRouter@get: Invalid path');
         if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@get: Invalid handler');
         return this.#register(path, [handler], [HttpMethods.GET, HttpMethods.HEAD]);
     }
@@ -261,7 +264,7 @@ class Router <
      * Configure a HTTP Post route
      */
     post <Path extends string = string> (path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
-        if (!isString(path)) throw new Error('TriFrostRouter@post: Invalid path');
+        if (typeof path !== 'string') throw new Error('TriFrostRouter@post: Invalid path');
         if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@post: Invalid handler');
         return this.#register(path, [handler], [HttpMethods.POST]);
     }
@@ -270,7 +273,7 @@ class Router <
      * Configure a HTTP Put route
      */
     put <Path extends string = string> (path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
-        if (!isString(path)) throw new Error('TriFrostRouter@put: Invalid path');
+        if (typeof path !== 'string') throw new Error('TriFrostRouter@put: Invalid path');
         if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@put: Invalid handler');
         return this.#register(path, [handler], [HttpMethods.PUT]);
     }
@@ -279,7 +282,7 @@ class Router <
      * Configure a HTTP Patch route
      */
     patch <Path extends string = string> (path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
-        if (!isString(path)) throw new Error('TriFrostRouter@patch: Invalid path');
+        if (typeof path !== 'string') throw new Error('TriFrostRouter@patch: Invalid path');
         if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@patch: Invalid handler');
         return this.#register(path, [handler], [HttpMethods.PATCH]);
     }
@@ -288,7 +291,7 @@ class Router <
      * Configure a HTTP Delete route
      */
     del <Path extends string = string> (path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
-        if (!isString(path)) throw new Error('TriFrostRouter@del: Invalid path');
+        if (typeof path !== 'string') throw new Error('TriFrostRouter@del: Invalid path');
         if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@del: Invalid handler');
         return this.#register(path, [handler], [HttpMethods.DELETE]);
     }
@@ -306,12 +309,33 @@ class Router <
         methods:HttpMethod[]
     ) {
         const fn = handlers[handlers.length - 1];
-        const config = (isObject(fn) ? fn : {fn}) as TriFrostHandlerConfig<Env, State>;
+        const config = (Object.prototype.toString.call(fn) === '[object Object]'
+            ? fn
+            : {fn}) as TriFrostHandlerConfig<Env, State>;
+
+        /* Path */
         const n_path = (this.#path + path.trim()).replace(RGX_SLASH, '/');
-        const n_kind = isNeString(config.kind) ? config.kind : 'std';
-        const n_name = isNeString(config.name) ? config.name : Reflect.get(config.fn, Sym_TriFrostName) || null;
-        const n_desc = isNeString(config.description) ? config.description : null;
-        const n_timeout = 'timeout' in config ? (config.timeout as number|null) : this.#timeout;
+
+        /* Kind */
+        const n_kind = typeof config.kind === 'string' && config.kind.length
+            ? config.kind
+            : 'std';
+
+        /* Name */
+        const n_name = typeof config.name === 'string' && config.name.length
+            ? config.name
+            : Reflect.get(config.fn, Sym_TriFrostName) || null;
+
+        /* Description */
+        const n_desc = typeof config.description === 'string' && config.description.length
+            ? config.description
+            : null;
+
+        /* Timeout */
+        const n_timeout = 'timeout' in config
+            ? (config.timeout as number|null)
+            : this.#timeout;
+
         const n_middleware = [
             /* Inherit router mware */
             ...this.#middleware,

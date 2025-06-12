@@ -1,7 +1,6 @@
 import {deepFreeze} from '@valkyriestudios/utils/deep';
 import {sleep} from '@valkyriestudios/utils/function';
 import {isIntGt} from '@valkyriestudios/utils/number';
-import {isObject} from '@valkyriestudios/utils/object';
 import {
     type TriFrostLoggerSpanPayload,
     type TriFrostLogLevel,
@@ -41,7 +40,7 @@ function convertObjectToAttributes (obj:Record<string, unknown>, prefix:string =
                 acc.push({key: prefix + key, value: {boolValue: val as boolean}});
                 break;
             default:
-                if (isObject(val) || Array.isArray(val)) {
+                if (Object.prototype.toString.call(val) === '[object Object]' || Array.isArray(val)) {
                     acc.push({key: prefix + key, value: {stringValue: JSON.stringify(val)}});
                 }
                 break;

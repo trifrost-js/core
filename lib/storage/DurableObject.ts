@@ -1,6 +1,5 @@
 /* eslint-disable max-classes-per-file */
 
-import {isFn} from '@valkyriestudios/utils/function';
 import {TriFrostCache} from '../modules/Cache/_Cache';
 import {
     TriFrostRateLimit,
@@ -54,7 +53,7 @@ export class DurableObjectStoreAdapter <T extends TriFrostStoreValue = TriFrostS
     async del (key:string) {
         const res = await this.#ns.get(this.#id).fetch(this.keyUrl(key), {method: 'DELETE'});
         if (
-            !res?.ok && 
+            !res?.ok &&
             res?.status !== 404
         ) throw new Error(`TriFrostDurableObjectStore@del: Failed with status ${res.status}`);
     }
@@ -99,7 +98,7 @@ export class DurableObjectStore <T extends TriFrostStoreValue = TriFrostStoreVal
 export class DurableObjectCache <Env extends Record<string, any> = Record<string, any>> extends TriFrostCache<Env> {
 
     constructor (cfg: {store: LazyInitFn<TriFrostCFDurableObjectNamespace, Env>}) {
-        if (!isFn(cfg?.store)) throw new Error('DurableObjectCache: Expected a store initializer');
+        if (typeof cfg?.store !== 'function') throw new Error('DurableObjectCache: Expected a store initializer');
         super({
             store: ({env}) => new Store('DurableObjectCache', new DurableObjectStoreAdapter(cfg.store({env}), 'cache')),
         });
@@ -114,7 +113,7 @@ export class DurableObjectCache <Env extends Record<string, any> = Record<string
 export class DurableObjectRateLimit <Env extends Record<string, any> = Record<string, any>> extends TriFrostRateLimit<Env> {
 
     constructor (cfg: Omit<TriFrostRateLimitOptions<Env>, 'store'> & {store: LazyInitFn<TriFrostCFDurableObjectNamespace, Env>}) {
-        if (!isFn(cfg?.store)) throw new Error('DurableObjectRateLimit: Expected a store initializer');
+        if (typeof cfg?.store !== 'function') throw new Error('DurableObjectRateLimit: Expected a store initializer');
         super({
             ...cfg,
             store: ({env}) => new Store('DurableObjectRateLimit', new DurableObjectStoreAdapter(cfg.store({env}), 'ratelimit')),

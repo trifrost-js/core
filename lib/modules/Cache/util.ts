@@ -1,6 +1,3 @@
-import {isNeArray} from '@valkyriestudios/utils/array';
-import {isFn} from '@valkyriestudios/utils/function';
-import {isObject} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
 import {type TriFrostCache, type CacheOptions, type TriFrostCacheValue} from './_Cache';
 import {type TriFrostContext} from '../../types/context';
@@ -21,19 +18,19 @@ export function cache <This, Args extends any[], Ret> (
         if (Reflect.get(method, Sym_TriFrostCached)) return method;
 
         const wrapped = async function (this:This, ...args:Args):Promise<Ret> {
-            const ctx:TriFrostContext|undefined = isNeArray(args) ? args[0] : undefined;
+            const ctx:TriFrostContext|undefined = Array.isArray(args) && args.length ? args[0] : undefined;
 
             /* Get trifrost cache either from passed ctx, this.cache or this.ctx.cache */
             const trifrost_cache:TriFrostCache|undefined = ctx?.cache ?? (this as any)?.cache ?? (this as any)?.ctx?.cache;
 
             /* No viable cache found */
             if (
-                !isFn(trifrost_cache?.get) ||
-                !isFn(trifrost_cache?.set)
+                typeof trifrost_cache?.get !== 'function' ||
+                typeof trifrost_cache?.set !== 'function'
             ) return method.call(this, ...args);
 
             /* Determine cache key */
-            const ckey = isFn(key)
+            const ckey = typeof key === 'function'
                 ? (key as CacheKeyFn<unknown>)(ctx!)
                 : isNeString(key)
 				    ? key
@@ -47,8 +44,8 @@ export function cache <This, Args extends any[], Ret> (
             /* Run method */
             const result = await method.call(this, ...args);
             if (
-                isObject(result) &&
-                Reflect.get(result, Sym_TriFrostSkipCache)
+                Object.prototype.toString.call(result) === '[object Object]' &&
+                Reflect.get(result as Record<string, unknown>, Sym_TriFrostSkipCache)
             ) return (result as unknown as {value: Ret}).value;
 
             /* Cache */
@@ -76,7 +73,8 @@ export function cacheSkip <T> (value:T):T {
  * Returns whether or not a value is a cache skip value
  */
 export function cacheSkipped <T> (v:unknown):v is {value:T} {
-    return isObject(v) && Reflect.get(v, Sym_TriFrostSkipCache) === true;
+    return Object.prototype.toString.call(v) === '[object Object]' &&
+        Reflect.get(v as Record<string, unknown>, Sym_TriFrostSkipCache) === true;
 }
 
 export function cacheFn<T extends (...args: any[]) => any> (
@@ -88,18 +86,18 @@ export function cacheFn<T extends (...args: any[]) => any> (
         if (Reflect.get(fn, Sym_TriFrostCached)) return fn;
 
         const wrapped = async function (this:any, ...args:Parameters<T>):Promise<ReturnType<T>> {
-            const ctx:TriFrostContext|undefined = isNeArray(args) ? args[0] : undefined;
+            const ctx:TriFrostContext|undefined = Array.isArray(args) && args.length ? args[0] : undefined;
 
             const trifrost_cache = ctx?.cache ?? this?.cache ?? this?.ctx?.cache;
 
             /* No viable cache found */
             if (
-                !isFn(trifrost_cache?.get) ||
-                !isFn(trifrost_cache?.set)
+                typeof trifrost_cache?.get !== 'function' ||
+                typeof trifrost_cache?.set !== 'function'
             ) return fn.apply(this, args);
 
             /* Determine cache key */
-            const ckey = isFn(key)
+            const ckey = typeof key === 'function'
                 ? key(ctx!)
                 : isNeString(key)
                     ? key

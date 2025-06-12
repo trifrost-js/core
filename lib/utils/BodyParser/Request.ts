@@ -1,5 +1,4 @@
 import {toObject} from '@valkyriestudios/utils/formdata';
-import {isString} from '@valkyriestudios/utils/string';
 import {type TriFrostContext} from '../../types/context';
 import {MimeTypes} from '../../types/constants';
 import {type ParsedBody} from './types';
@@ -12,7 +11,7 @@ export async function parseBody <T extends ParsedBody = ParsedBody> (
     req:Request|null
 ):Promise<T> {
     if (!(req instanceof Request)) return {} as T;
-    const type = isString(ctx.headers?.['content-type'])
+    const type = typeof ctx.headers?.['content-type'] === 'string'
         ? ctx.headers['content-type'].split(';', 1)[0].trim().toLowerCase()
         : '';
 

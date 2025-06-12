@@ -1,5 +1,3 @@
-import {isArray} from '@valkyriestudios/utils/array';
-import {isObject} from '@valkyriestudios/utils/object';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {isNeString} from '@valkyriestudios/utils/string';
 import type {TriFrostContext} from '../types/context';
@@ -12,7 +10,7 @@ export class Store<T extends TriFrostStoreValue = TriFrostStoreValue> {
     protected adapter:TriFrostStoreAdapter<T>;
 
     readonly #ctx?:TriFrostContext|null = null;
-  
+
     constructor (name:string, adapter:TriFrostStoreAdapter<T>, ctx?:TriFrostContext) {
         this.#name = name;
         this.adapter = adapter;
@@ -28,7 +26,7 @@ export class Store<T extends TriFrostStoreValue = TriFrostStoreValue> {
 
         try {
             const val = await this.adapter.get(key);
-            return isObject(val) || isArray(val) ? val as T : null;
+            return Object.prototype.toString.call(val) === '[object Object]' || Array.isArray(val) ? val as T : null;
         } catch (err) {
             this.#ctx?.logger?.error?.(err, {key});
             return null;
@@ -37,7 +35,10 @@ export class Store<T extends TriFrostStoreValue = TriFrostStoreValue> {
 
     async set (key:string, value:T, opts?:{ttl?:number}): Promise<void> {
         if (!isNeString(key)) throw new Error(this.#name + '@set: Invalid key');
-        if (!isObject(value) && !isArray(value)) throw new Error(this.#name + '@set: Invalid value');
+        if (
+            Object.prototype.toString.call(value) !== '[object Object]' &&
+            !Array.isArray(value)
+        ) throw new Error(this.#name + '@set: Invalid value');
 
         const TTL = isIntGt(opts?.ttl, 0) ? opts.ttl : 60;
 

@@ -1,6 +1,5 @@
 /* eslint-disable complexity */
 import {deepFreeze} from '@valkyriestudios/utils/deep';
-import {isNeString} from '@valkyriestudios/utils/string';
 
 const RGX_MALICIOUS = /__proto__|constructor|prototype/;
 
@@ -69,7 +68,7 @@ export const OMIT_PRESETS = {
  * Create a reusable scrambler function with precompiled key + value pattern checks
  */
 function createScrambler <T extends Record<string, any> = Record<string, any>> (options:ScramblerOptions = {}):Scrambler<T> {
-    const repl = isNeString(options?.replacement) ? options.replacement : '***';
+    const repl = typeof options?.replacement === 'string' ? options.replacement : '***';
     const checks = Array.isArray(options?.checks) ? options.checks : [];
 
     let paths:Set<string>|null = new Set();
@@ -78,10 +77,10 @@ function createScrambler <T extends Record<string, any> = Record<string, any>> (
 
     for (let i = 0; i < checks.length; i++) {
         const raw = checks[i];
-        if (isNeString(raw)) {
+        if (typeof raw === 'string') {
             if (!RGX_MALICIOUS.test(raw)) paths.add(raw);
         } else if (Object.prototype.toString.call(raw) === '[object Object]') {
-            if ('global' in raw && isNeString(raw.global)) {
+            if ('global' in raw && typeof raw.global === 'string') {
                 if (!RGX_MALICIOUS.test(raw.global)) props.add(raw.global);
             } else if ('valuePattern' in raw && raw.valuePattern instanceof RegExp) {
                 valueRgx.push(raw.valuePattern);

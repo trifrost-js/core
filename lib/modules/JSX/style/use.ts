@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
 import {LRU} from '@valkyriestudios/utils/caching';
-import {isFn} from '@valkyriestudios/utils/function';
-import {isNeObject, isObject, merge} from '@valkyriestudios/utils/object';
-import {isNeString, isString} from '@valkyriestudios/utils/string';
+import {isNeObject, merge} from '@valkyriestudios/utils/object';
+import {isNeString} from '@valkyriestudios/utils/string';
 import {StyleEngine} from './Engine';
 import {HTML_TAGS, styleToString} from './util';
 import {hexId} from '../../../utils/String';
@@ -137,10 +136,10 @@ function flatten (
     const result:FlattenedRule[] = [];
     const base:Record<string, unknown> = {};
     let base_has:boolean = false;
-  
+
     for (const key in obj) {
         const val = obj[key];
-        if (isObject(val)) {
+        if (Object.prototype.toString.call(val) === '[object Object]') {
             if (key[0] === '@') {
                 result.push(...flatten(
                     val as Record<string, unknown>,
@@ -159,7 +158,7 @@ function flatten (
             base_has = true;
         }
     }
-  
+
     if (base_has) {
         result.push({
             query: parent_query || undefined,
@@ -167,13 +166,13 @@ function flatten (
             declarations: base,
         });
     }
-  
+
     return result;
 }
 
 /**
  * Factory which generates a CSS helper instance
- * 
+ *
  * @returns {CssGeneric}
  */
 function cssFactory <
@@ -192,7 +191,7 @@ function cssFactory <
     /**
      * CSS Helper which works with the active style engine and registers as well as returns a unique class name
      * for example:
-     * 
+     *
      * const className = css({
      *  color: 'white',
      *  backgroundColor: 'black',
@@ -201,12 +200,12 @@ function cssFactory <
      *      backgroundColor: 'white'
      *  }
      * });
-     * 
+     *
      * @param {Record<string, unknown>} style - Raw style object
      * @param {CSSOptions} opts - Options for css, eg: {inject:false} will simply return the unique classname rather than adding to engine
      */
     const mod = (style:Record<string, unknown>, opts?:CSSOptions) => {
-        if (!isObject(style)) return '';
+        if (Object.prototype.toString.call(style) !== '[object Object]') return '';
 
         const engine = active_engine || setActiveStyleEngine(new StyleEngine());
 
@@ -228,14 +227,14 @@ function cssFactory <
             }
             return replay.cname;
         }
-            
+
         /* Flatten */
         const flattened = flatten(style);
         if (!flattened.length) {
             engine.cache.set(raw, '');
             return '';
         }
-    
+
         /* Get class name and register on engine */
         const cname = engine.hash(raw);
         engine.cache.set(raw, cname);
@@ -252,10 +251,10 @@ function cssFactory <
                 lru_entries.push({rule, query, selector: normalized_selector});
             }
         }
-        
+
         /* Push to global lru */
         GLOBAL_LRU.set(raw, {cname, rules: lru_entries});
-    
+
         return cname;
     };
 
@@ -304,10 +303,10 @@ function cssFactory <
     /* Root injector */
     mod.root = (style: Record<string, unknown> = {}) => {
         if (!isNeObject(style) || !active_engine) return;
-    
+
         const flattened = flatten(style);
         if (!flattened.length) return;
-    
+
         for (let i = 0; i < flattened.length; i++) {
             const {declarations, query, selector} = flattened[i];
             const rule = styleToString(declarations);
@@ -333,7 +332,7 @@ function cssFactory <
 
         /* Inject or not */
         const inject = opts?.inject !== false;
-      
+
         /* Check global LRU */
         const replay = GLOBAL_KEYFRAMES_LRU.get(raw);
         if (replay) {
@@ -341,17 +340,17 @@ function cssFactory <
             engine.register(replay.rule, '', {selector: null});
             return replay.cname;
         }
-      
+
         const cname = `kf-${engine.hash(raw)}`;
         engine.cache.set(raw, cname);
-      
+
         let rule = '@keyframes ' + cname + ' {';
         for (const point in frames) {
             const style = styleToString(frames[point]);
             if (style) rule += point + '{' + style + '}';
         }
         rule += '}';
-      
+
         if (inject) engine.register(rule, '', {selector: null});
         GLOBAL_KEYFRAMES_LRU.set(raw, {cname, rule});
         return cname;
@@ -404,7 +403,7 @@ type CssInstance <
 	theme: {[K in keyof T]: ThemeVal<K & string>};
     /**
      * Merges one or more registered definitions and/or raw style objects into a single style object.
-     * 
+     *
      * This does not inject styles or generate a class — it's useful for composing styles inside nested or media-query contexts.
      *
      * @example
@@ -419,7 +418,7 @@ type CssInstance <
 	mix: (...args: (keyof R | Record<string, unknown>)[]) => Record<string, unknown>;
     /**
      * Applies one or more registered definitions (plus optional inline overrides) and returns a class name.
-     * 
+     *
      * Internally merges the provided style objects and tokens using `.mix(...)`, then generates and registers an atomic class.
      *
      * @example
@@ -570,8 +569,9 @@ export function createCss <
      */
     definitions?: (mod:CssInstance<V, T, {}, Breakpoints>) => R;
 } = {}): CssInstance<V, T, R, Breakpoints> {
-    const mod = cssFactory(
-        isObject(config.breakpoints) ? config.breakpoints : DEFAULT_BREAKPOINTS
+    const mod = cssFactory(Object.prototype.toString.call(config.breakpoints) === '[object Object]'
+        ? config.breakpoints as Breakpoints
+        : DEFAULT_BREAKPOINTS
     ) as CssInstance<V, T, R, Breakpoints>;
 
     /* Specific symbol for this css instance */
@@ -587,7 +587,7 @@ export function createCss <
 
 	/* Attach var tokens */
     mod.var = {} as any;
-    if (isObject(config.var)) {
+    if (Object.prototype.toString.call(config.var) === '[object Object]') {
         for (const key in config.var) {
             const v_key = normalizeVariable(key, '--v-');
             mod.var[key] = 'var(' + v_key + ')' as VarVal<typeof key>;
@@ -598,7 +598,7 @@ export function createCss <
 
 	/* Attach theme tokens */
     mod.theme = {} as any;
-    if (isObject(config.theme)) {
+    if (Object.prototype.toString.call(config.theme) === '[object Object]') {
         for (const key in config.theme) {
             const entry = config.theme[key];
             if (isNeString(entry)) {
@@ -606,7 +606,7 @@ export function createCss <
                 root_vars[t_key] = entry;
                 mod.theme[key] = 'var(' + t_key + ')' as ThemeVal<typeof key>;
             } else if (
-                isNeString(entry?.light) && 
+                isNeString(entry?.light) &&
                 isNeString(entry?.dark)
             ) {
                 const t_key = normalizeVariable(key, '--t-');
@@ -621,7 +621,7 @@ export function createCss <
     mod.$t = mod.theme;
 
     /* Attach definitions */
-    if (isFn(config.definitions)) {
+    if (typeof config.definitions === 'function') {
         const def = config.definitions(mod);
         for (const key in def) (definitions as any)[key] = def[key];
     }
@@ -638,7 +638,7 @@ export function createCss <
              * a string we will use that as attribute
              */
             ...config.themeAttribute && {
-                [`:root[${isString(config.themeAttribute) ? config.themeAttribute : 'data-theme'}="dark"]`]: theme_dark,
+                [`:root[${typeof config.themeAttribute === 'string' ? config.themeAttribute : 'data-theme'}="dark"]`]: theme_dark,
             },
         },
         [mod.media.dark]: {
@@ -649,7 +649,7 @@ export function createCss <
              * a string we will use that as attribute
              */
             ...config.themeAttribute && {
-                [`:root[${isString(config.themeAttribute) ? config.themeAttribute : 'data-theme'}="light"]`]: theme_light,
+                [`:root[${typeof config.themeAttribute === 'string' ? config.themeAttribute : 'data-theme'}="light"]`]: theme_light,
             },
         },
     };
@@ -675,8 +675,8 @@ export function createCss <
             const val = args[i];
             if (typeof val === 'string' && val in definitions) {
                 acc.push(definitions[val]);
-            } else if (isObject(val)) {
-                acc.push(val);
+            } else if (Object.prototype.toString.call(val) === '[object Object]') {
+                acc.push(val as Record<string, unknown>);
             }
         }
         switch (acc.length) {
@@ -688,7 +688,7 @@ export function createCss <
                 return merge(acc.shift()!, acc, {union: true});
         }
     };
-    
+
     /* Use a definition or set of definitions and register them with a classname*/
     mod.use = (...args: (keyof R | Record<string, unknown>)[]) => mod(mod.mix(...args));
 
