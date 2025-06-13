@@ -261,7 +261,7 @@ export class UWSContext extends Context {
             switch (this.method) {
                 case HttpMethods.HEAD:
                     this.#uws_res
-                        .writeHeader('content-length', typeof this.res_body === 'string' ? this.res_body.length.toString() : '0')
+                        .writeHeader('content-length', typeof this.res_body === 'string' ? '' + this.res_body.length : '0')
                         .endWithoutBody();
                     break;
                 default:

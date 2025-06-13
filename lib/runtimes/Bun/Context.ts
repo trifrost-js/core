@@ -15,6 +15,8 @@ import {parseBody} from '../../utils/BodyParser/Request';
 import {extractPartsFromUrl} from '../../utils/Http';
 import {DEFAULT_BODY_PARSER_OPTIONS} from '../../utils/BodyParser/types';
 
+const encoder = new TextEncoder();
+
 export class BunContext extends Context {
 
     /* Bun Apis */
@@ -107,7 +109,7 @@ export class BunContext extends Context {
         this.is_done = true;
 
         /* Set content-length if provided */
-        if (isIntGt(size, 0)) this.res_headers['content-length'] = size.toString();
+        if (isIntGt(size, 0)) this.res_headers['content-length'] = '' + size;
 
         /* Set response with stream */
         this.#response = new Response(stream, {
@@ -150,7 +152,7 @@ export class BunContext extends Context {
         switch (this.method) {
             case HttpMethods.HEAD: {
                 this.res_headers['Content-Length'] = typeof this.res_body === 'string'
-                    ? new TextEncoder().encode(this.res_body).length.toString()
+                    ? '' + encoder.encode(this.res_body).length
                     : '0';
 
                 this.#response = new Response(null, {
