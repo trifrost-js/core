@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.31.0] - 2025-06-13
+### Improved
+- **perf**: Improved performance for exporter init behavior, ensuring global attribute init for exporters only happens once
+- **perf**: Node/Bun/Workerd contexts will now reuse a TextEncoder instance rather than create a new one for head calls
+- **qol**: Rather than warn RootLogger will now log an error if exporter initialization fails
+- **deps**: Upgrade bun-types to 1.2.16
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250610.0
+
 ## [0.30.0] - 2025-06-12
 This release brings new capabilities to TriFrost’s body parsing system, ensuring consistent, cross-runtime handling of JSON, text, form, and multipart payloads — **now with fine-grained control** and powerful normalization.
 
