@@ -587,7 +587,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'notfound',
                 description: '404 Not Found Handler',
-                meta: {name: 'notfound', kind: 'notfound'},
+                meta: null,
             }]);
         });
 
@@ -620,7 +620,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'notfound',
                 description: '404 Not Found Handler',
-                meta: {name: 'notfound', kind: 'notfound'},
+                meta: null,
             }]);
         });
 
@@ -666,7 +666,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'error',
                 description: 'Error Handler',
-                meta: {name: 'error', kind: 'error'},
+                meta: null,
             }]);
         });
 
@@ -699,7 +699,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'error',
                 description: 'Error Handler',
-                meta: {name: 'error', kind: 'error'},
+                meta: null,
             }]);
         });
 
@@ -749,7 +749,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'GET_/api/users',
                 description: null,
-                meta: {name: 'GET_/api/users', kind: 'std'},
+                meta: null,
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/api/users',
@@ -760,7 +760,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/api/users',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
             expect(stack[2]).toEqual({
                 path: '/api/users',
@@ -772,7 +772,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'HEAD_/api/users',
                 description: null,
-                meta: {name: 'HEAD_/api/users', kind: 'std'},
+                meta: null,
             });
             expect(stack[3]).toEqual({
                 path: '/api/users',
@@ -784,7 +784,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'POST_/api/users',
                 description: null,
-                meta: {name: 'POST_/api/users', kind: 'std'},
+                meta: null,
             });
         });
 
@@ -826,7 +826,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'GET_/api/secure',
                 description: null,
-                meta: {name: 'GET_/api/secure', kind: 'std'},
+                meta: null,
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/api/secure',
@@ -837,7 +837,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/api/secure',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
             expect(stack[2]).toEqual({
                 path: '/api/secure',
@@ -852,7 +852,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'HEAD_/api/secure',
                 description: null,
-                meta: {name: 'HEAD_/api/secure', kind: 'std'},
+                meta: null,
             });
             expect(stack[3]).toEqual({
                 path: '/api/secure',
@@ -868,7 +868,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'POST_/api/secure',
                 description: null,
-                meta: {name: 'POST_/api/secure', kind: 'std'},
+                meta: null,
             });
         });
 
@@ -921,7 +921,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'metaRoute',
                 description: 'With meta',
-                meta: {name: 'metaRoute', kind: 'std', tag: 'test'},
+                meta: {tag: 'test'},
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/api/meta',
@@ -932,7 +932,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/api/meta',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
             expect(stack[2]).toEqual({
                 path: '/api/meta',
@@ -944,7 +944,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'HEAD_metaRoute',
                 description: 'With meta',
-                meta: {name: 'HEAD_metaRoute', kind: 'std', tag: 'test'},
+                meta: {tag: 'test'},
             });
         });
     });
@@ -981,7 +981,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'GET_/hello/test',
                 description: null,
-                meta: {name: 'GET_/hello/test', kind: 'std'},
+                meta: null,
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/hello/test',
@@ -992,7 +992,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/hello/test',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
             expect(stack[2]).toEqual({
                 path: '/hello/test',
@@ -1004,7 +1004,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'HEAD_/hello/test',
                 description: null,
-                meta: {name: 'HEAD_/hello/test', kind: 'std'},
+                meta: null,
             });
         });
 
@@ -1040,7 +1040,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'GET_/with-mware',
                 description: null,
-                meta: {name: 'GET_/with-mware', kind: 'std'},
+                meta: null,
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/with-mware',
@@ -1051,7 +1051,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/with-mware',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
             expect(stack[2]).toEqual({
                 path: '/with-mware',
@@ -1066,7 +1066,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'HEAD_/with-mware',
                 description: null,
-                meta: {name: 'HEAD_/with-mware', kind: 'std'},
+                meta: null,
             });
         });
 
@@ -1109,7 +1109,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'namedRoute',
                 description: 'A test GET route',
-                meta: {name: 'namedRoute', kind: 'std', tag: 'test'},
+                meta: {tag: 'test'},
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/hello/meta',
@@ -1120,7 +1120,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/hello/meta',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
             expect(stack[2]).toEqual({
                 path: '/hello/meta',
@@ -1132,7 +1132,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'HEAD_namedRoute',
                 description: 'A test GET route',
-                meta: {name: 'HEAD_namedRoute', kind: 'std', tag: 'test'},
+                meta: {tag: 'test'},
             });
         });
 
@@ -1158,7 +1158,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'GET_/hello/chained',
                 description: null,
-                meta: {name: 'GET_/hello/chained', kind: 'std'},
+                meta: null,
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/hello/chained',
@@ -1169,7 +1169,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/hello/chained',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
             expect(stack[2]).toEqual({
                 path: '/hello/chained',
@@ -1184,7 +1184,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'HEAD_/hello/chained',
                 description: null,
-                meta: {name: 'HEAD_/hello/chained', kind: 'std'},
+                meta: null,
             });
         });
 
@@ -1229,7 +1229,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'POST_/hello/test',
                 description: null,
-                meta: {name: 'POST_/hello/test', kind: 'std'},
+                meta: null,
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/hello/test',
@@ -1240,7 +1240,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/hello/test',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
         });
 
@@ -1276,7 +1276,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'POST_/with-mware',
                 description: null,
-                meta: {name: 'POST_/with-mware', kind: 'std'},
+                meta: null,
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/with-mware',
@@ -1287,7 +1287,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/with-mware',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
         });
 
@@ -1330,7 +1330,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'namedRoute',
                 description: 'A test POST route',
-                meta: {name: 'namedRoute', kind: 'std', tag: 'test'},
+                meta: {tag: 'test'},
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/hello/meta',
@@ -1341,7 +1341,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/hello/meta',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
         });
 
@@ -1367,7 +1367,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'POST_/hello/chained',
                 description: null,
-                meta: {name: 'POST_/hello/chained', kind: 'std'},
+                meta: null,
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/hello/chained',
@@ -1378,7 +1378,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/hello/chained',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
         });
 
@@ -1424,7 +1424,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'PUT_/hello/test',
                 description: null,
-                meta: {name: 'PUT_/hello/test', kind: 'std'},
+                meta: null,
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/hello/test',
@@ -1435,7 +1435,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/hello/test',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
         });
 
@@ -1471,7 +1471,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'PUT_/with-mware',
                 description: null,
-                meta: {name: 'PUT_/with-mware', kind: 'std'},
+                meta: null,
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/with-mware',
@@ -1482,7 +1482,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/with-mware',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
         });
 
@@ -1525,7 +1525,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'namedRoute',
                 description: 'A test PUT route',
-                meta: {name: 'namedRoute', kind: 'std', tag: 'test'},
+                meta: {tag: 'test'},
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/hello/meta',
@@ -1536,7 +1536,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/hello/meta',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
         });
 
@@ -1562,7 +1562,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'PUT_/hello/chained',
                 description: null,
-                meta: {name: 'PUT_/hello/chained', kind: 'std'},
+                meta: null,
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/hello/chained',
@@ -1573,7 +1573,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/hello/chained',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
         });
 
@@ -1619,7 +1619,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'PATCH_/hello/test',
                 description: null,
-                meta: {name: 'PATCH_/hello/test', kind: 'std'},
+                meta: null,
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/hello/test',
@@ -1630,7 +1630,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/hello/test',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
         });
 
@@ -1666,7 +1666,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'PATCH_/with-mware',
                 description: null,
-                meta: {name: 'PATCH_/with-mware', kind: 'std'},
+                meta: null,
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/with-mware',
@@ -1677,7 +1677,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/with-mware',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
         });
 
@@ -1720,7 +1720,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'namedRoute',
                 description: 'A test PATCH route',
-                meta: {name: 'namedRoute', kind: 'std', tag: 'test'},
+                meta: {tag: 'test'},
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/hello/meta',
@@ -1731,7 +1731,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/hello/meta',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
         });
 
@@ -1757,7 +1757,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'PATCH_/hello/chained',
                 description: null,
-                meta: {name: 'PATCH_/hello/chained', kind: 'std'},
+                meta: null,
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/hello/chained',
@@ -1768,7 +1768,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/hello/chained',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
         });
 
@@ -1814,7 +1814,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'DELETE_/hello/test',
                 description: null,
-                meta: {name: 'DELETE_/hello/test', kind: 'std'},
+                meta: null,
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/hello/test',
@@ -1825,7 +1825,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/hello/test',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
         });
 
@@ -1861,7 +1861,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'DELETE_/with-mware',
                 description: null,
-                meta: {name: 'DELETE_/with-mware', kind: 'std'},
+                meta: null,
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/with-mware',
@@ -1872,7 +1872,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/with-mware',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
         });
 
@@ -1915,7 +1915,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'namedRoute',
                 description: 'A test DELETE route',
-                meta: {name: 'namedRoute', kind: 'std', tag: 'test'},
+                meta: {tag: 'test'},
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/hello/meta',
@@ -1926,7 +1926,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/hello/meta',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
         });
 
@@ -1952,7 +1952,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'DELETE_/hello/chained',
                 description: null,
-                meta: {name: 'DELETE_/hello/chained', kind: 'std'},
+                meta: null,
             });
             expect(stack[1]).toEqual(expect.objectContaining({
                 path: '/hello/chained',
@@ -1963,7 +1963,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
                 name: 'OPTIONS_/hello/chained',
                 description: 'Auto-generated OPTIONS handler',
-                meta: {},
+                meta: null,
             }));
         });
 

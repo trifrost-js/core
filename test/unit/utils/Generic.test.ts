@@ -1,5 +1,11 @@
 import {describe, it, expect} from 'vitest';
-import {hexId, isDevMode} from '../../../lib/utils/Generic';
+import {
+    hexId,
+    isDevMode,
+    determineDebug,
+    determineName,
+    determineVersion,
+} from '../../../lib/utils/Generic';
 import CONSTANTS from '../../constants';
 
 describe('Utils - Generic', () => {
@@ -86,6 +92,102 @@ describe('Utils - Generic', () => {
 
         it('Defaults to false if neither TRIFROST_DEV nor NODE_ENV is set', () => {
             expect(isDevMode({})).toBe(false);
+        });
+    });
+
+    describe('determineName', () => {
+        it('Returns TRIFROST_NAME if present and non-empty', () => {
+            expect(determineName({TRIFROST_NAME: 'frosty'})).toBe('frosty');
+        });
+
+        it('Falls back to SERVICE_NAME if TRIFROST_NAME is missing', () => {
+            expect(determineName({SERVICE_NAME: 'fallback-service'})).toBe('fallback-service');
+        });
+
+        it('Falls back to default if none present', () => {
+            expect(determineName({})).toBe('trifrost');
+        });
+
+        it('Falls back to default if values are non/empty strings', () => {
+            for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
+                expect(determineName({TRIFROST_NAME: el, SERVICE_NAME: el})).toBe('trifrost');
+            }
+        });
+
+        it('Returns default if coerced value is too long', () => {
+            expect(determineName({TRIFROST_NAME: 'a'.repeat(500)})).toBe('trifrost');
+        });
+
+        it('Trims whitespace from value before validation', () => {
+            expect(determineName({TRIFROST_NAME: '  foo-service  '})).toBe('foo-service');
+        });
+    });
+
+    describe('determineVersion', () => {
+        it('Returns TRIFROST_VERSION if present and valid', () => {
+            expect(determineVersion({TRIFROST_VERSION: '2.3.4'})).toBe('2.3.4');
+        });
+
+        it('Uses SERVICE_VERSION if TRIFROST_VERSION is not present', () => {
+            expect(determineVersion({SERVICE_VERSION: '0.9.1'})).toBe('0.9.1');
+        });
+
+        it('Uses VERSION if others are not present', () => {
+            expect(determineVersion({VERSION: '1.2.3'})).toBe('1.2.3');
+        });
+
+        it('Falls back to default if all are missing or non/empty strings', () => {
+            expect(determineVersion({})).toBe('1.0.0');
+            for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
+                expect(determineVersion({VERSION: el})).toBe('1.0.0');
+            }
+        });
+
+        it('Trims whitespace from value before validation', () => {
+            expect(determineVersion({TRIFROST_VERSION: '  1.0.0  '})).toBe('1.0.0');
+        });
+    });
+
+    describe('determineDebug', () => {
+        it('Returns true for TRIFROST_DEBUG true/1', () => {
+            expect(determineDebug({TRIFROST_DEBUG: true})).toBe(true);
+            expect(determineDebug({TRIFROST_DEBUG: 'true'})).toBe(true);
+            expect(determineDebug({TRIFROST_DEBUG: '1'})).toBe(true);
+        });
+
+        it('Returns false for TRIFROST_DEBUG false/0', () => {
+            expect(determineDebug({TRIFROST_DEBUG: false})).toBe(false);
+            expect(determineDebug({TRIFROST_DEBUG: 'false'})).toBe(false);
+            expect(determineDebug({TRIFROST_DEBUG: '0'})).toBe(false);
+        });
+
+        it('Returns false for TRIFROST_DEBUG "production"', () => {
+            expect(determineDebug({TRIFROST_DEBUG: 'production'})).toBe(false);
+        });
+
+        it('Returns true for DEBUG true/1', () => {
+            expect(determineDebug({DEBUG: 'true'})).toBe(true);
+            expect(determineDebug({DEBUG: '1'})).toBe(true);
+        });
+
+        it('Returns false for DEBUG false/0/production', () => {
+            expect(determineDebug({DEBUG: 'false'})).toBe(false);
+            expect(determineDebug({DEBUG: '0'})).toBe(false);
+            expect(determineDebug({DEBUG: 'production'})).toBe(false);
+        });
+
+        it('Uses NODE_ENV fallback only if no TRIFROST_DEBUG or DEBUG', () => {
+            expect(determineDebug({NODE_ENV: 'development'})).toBe(false);
+            expect(determineDebug({NODE_ENV: 'production'})).toBe(false);
+        });
+
+        it('Defaults to false for unrecognized or missing values', () => {
+            expect(determineDebug({})).toBe(false);
+            expect(determineDebug({TRIFROST_DEBUG: 'nope'})).toBe(false);
+            for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
+                if (el === true) continue;
+                expect(determineDebug({TRIFROST_DEBUG: el})).toBe(false);
+            }
         });
     });
 });

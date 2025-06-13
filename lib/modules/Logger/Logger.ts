@@ -74,6 +74,10 @@ export class Logger implements TriFrostLogger {
         return this.#traceId;
     }
 
+    setDebug (val:boolean) {
+        this.#debug = !!val;
+    }
+
     setAttribute (key:string, value:unknown):this {
         this.#attributes[key] = value;
         return this;

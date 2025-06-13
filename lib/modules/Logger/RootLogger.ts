@@ -8,46 +8,51 @@ import {
     type TriFrostLoggerExporter,
 } from './types';
 import {Logger} from './Logger';
+import {
+    determineDebug,
+    determineName,
+    determineVersion,
+} from '../../utils/Generic';
+import {type TriFrostRuntime} from '../../runtimes/types';
+import {ConsoleExporter} from './exporters';
 
 export class TriFrostRootLogger <Env extends Record<string, any> = Record<string, any>> {
 
-    #debug:boolean;
+    #debug:boolean = false;
 
     #exporters:Lazy<TriFrostLoggerExporter[], Env>;
 
     #spanAwareExporters:TriFrostLoggerSpanAwareExporter[] = [];
 
-    #trifrost:Record<string, unknown>;
-
     #logger:Logger;
 
+    #runtime:Record<string, unknown>;
+
     constructor (cfg:{
-        name: string;
-        version: string;
-        debug: boolean;
-        rootExporter: TriFrostLoggerExporter;
+        runtime: TriFrostRuntime;
         exporters: LazyInitFn<TriFrostLoggerExporter[], Env>;
-        trifrost?: Record<string, unknown>;
     }) {
-        this.#debug = cfg.debug;
         this.#exporters = new Lazy(cfg.exporters) as Lazy<TriFrostLoggerExporter[], Env>;
-        this.#trifrost = {
-            'service.name': cfg.name,
-            'service.version': cfg.version,
-            'telemetry.sdk.name': 'trifrost',
-            'telemetry.sdk.language': 'javascript',
-            ...cfg.trifrost || {},
+        this.#runtime = {
+            ...typeof cfg.runtime.name === 'string' && {'runtime.name': cfg.runtime.name},
+            ...typeof cfg.runtime.version === 'string' && {'runtime.version': cfg.runtime.version},
         };
 
+        const rootExporter = new ConsoleExporter();
+
         this.#logger = new Logger({
-            debug: this.#debug,
-            exporters: [cfg.rootExporter],
-            spanAwareExporters: (typeof cfg.rootExporter.pushSpan === 'function'
-                ? [cfg.rootExporter]
-                : []) as TriFrostLoggerSpanAwareExporter[],
+            debug: false,
+            exporters: [rootExporter],
+            spanAwareExporters: [],
         });
 
-        cfg.rootExporter.init(this.#trifrost);
+        rootExporter.init({
+            'service.name': 'trifrost-root',
+            'service.version': '1.0.0',
+            'telemetry.sdk.name': 'trifrost',
+            'telemetry.sdk.language': 'javascript',
+            ...this.#runtime,
+        });
     }
 
     debug (msg:string, data?:Record<string, unknown>) {
@@ -79,6 +84,21 @@ export class TriFrostRootLogger <Env extends Record<string, any> = Record<string
             if (!this.#exporters.resolved) {
                 this.#exporters.resolve(ctx);
 
+                /* Determine debug */
+                this.#debug = determineDebug(ctx.env);
+
+                /* Determine trifrost */
+                const attributes = {
+                    'service.name': determineName(ctx.env),
+                    'service.version': determineVersion(ctx.env),
+                    'telemetry.sdk.name': 'trifrost',
+                    'telemetry.sdk.language': 'javascript',
+                    ...this.#runtime,
+                };
+
+                /* Set global logger debug state */
+                this.#logger.setDebug(this.#debug);
+
                 /* Add a spanAware flag on exporters */
                 const exporters:TriFrostLoggerExporter[] = this.#exporters.resolved!;
                 const spanAware:TriFrostLoggerSpanAwareExporter[] = [];
@@ -86,7 +106,7 @@ export class TriFrostRootLogger <Env extends Record<string, any> = Record<string
                     const exp = exporters[i];
 
                     /* Initialize exporter */
-                    exp.init(this.#trifrost);
+                    exp.init(attributes);
 
                     /* If span aware, push exporter into span aware exporters */
                     if (typeof exp.pushSpan === 'function') spanAware.push(exp as TriFrostLoggerSpanAwareExporter);
@@ -95,7 +115,7 @@ export class TriFrostRootLogger <Env extends Record<string, any> = Record<string
             }
 
             return new Logger({
-                debug: this.#debug,
+                debug: this.#debug!,
                 traceId: ctx.traceId,
                 context: ctx.context,
                 exporters: this.#exporters.resolved!,

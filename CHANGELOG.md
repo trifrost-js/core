@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Improved
+- **dx**: `TRIFROST_NAME` and `TRIFROST_VERSION` are now the canonical way to version/name for telemetry, set them in `.env`, `.dev.vars`, GitHub Actions, or Docker builds for seamless introspection across all runtimes.
+- **qol**: Debug mode (`debug`) is now automatically derived from `TRIFROST_DEBUG` (truthy string, e.g., `"1"`, `"true"`, `true`), no need to pass a flag manually.
+- **qol**: Add App.bodyParser alias as well, this ensures proper App typing for fluent chaining.
+
+### Breaking
+- Removed `name`, `version`, and `debug` from AppOptions — TriFrost now reads these from the environment via: `TRIFROST_NAME`, `TRIFROST_VERSION` and `TRIFROST_DEBUG`
+
 ## [0.31.0] - 2025-06-13
 ### Improved
 - **perf**: Improved performance for exporter init behavior, ensuring global attribute init for exporters only happens once

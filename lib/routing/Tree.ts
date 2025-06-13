@@ -83,7 +83,7 @@ function createOptionsRoute <Env extends Record<string, any>> (
         bodyParser: null,
         name: `OPTIONS_${path}`,
         description: 'Auto-generated OPTIONS handler',
-        meta: {},
+        meta: null,
     };
 }
 

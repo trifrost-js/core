@@ -1,4 +1,4 @@
-/* eslint-disable complexity, @typescript-eslint/no-empty-object-type */
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 
 import {isIntBetween, isIntGt} from '@valkyriestudios/utils/number';
 import {isObject} from '@valkyriestudios/utils/object';
@@ -9,7 +9,6 @@ import {
     type TriFrostRateLimitLimitFunction,
 } from './modules/RateLimit/_RateLimit';
 import {
-    ConsoleExporter,
     TriFrostRootLogger,
     type TriFrostLoggerExporter,
 } from './modules/Logger';
@@ -33,6 +32,7 @@ import {
     type TriFrostContext,
     type TriFrostContextIdOptions,
 } from './types/context';
+import {type TriFrostBodyParserOptions} from './utils/BodyParser/types';
 import {type LazyInitFn} from './utils/Lazy';
 import {RouteTree} from './routing/Tree';
 import {extractDomainFromHost} from './utils/Http';
@@ -40,21 +40,6 @@ import {extractDomainFromHost} from './utils/Http';
 const RGX_RID = /^[a-z0-9-]{8,100}$/i;
 
 type AppOptions <Env extends Record<string, any>> = {
-    /**
-     * Name of the application
-     * @note This gets included in trace information under service.name
-     */
-    name?:string;
-    /**
-     * Version of the application
-     * @note This gets included in trace information under service.version
-     */
-    version?:string;
-    /**
-     * Meta of the application
-     * @note This gets included in trace information
-     */
-    meta?:Record<string, unknown>|null;
     cookies?:{
         /**
          * Global cookie defaults
@@ -90,10 +75,6 @@ type AppOptions <Env extends Record<string, any>> = {
          */
         requestId?: TriFrostContextIdOptions;
     };
-    /**
-     * Whether or not debug is enabled
-     */
-    debug?:boolean;
     /**
      * Global environment for the app
      */
@@ -132,15 +113,6 @@ class App <
     /* Runtime instance */
     #runtime:TriFrostRuntime|null = null;
 
-    /* App Name */
-    #name:string = 'TriFrost';
-
-    /* App Version */
-    #version:string = '1.0.0';
-
-    /* App Meta (for use in tracing) */
-    #meta:Record<string, unknown> = {};
-
     /* Logger instance */
     #logger:TriFrostRootLogger<Env>|null = null;
 
@@ -162,9 +134,6 @@ class App <
 
     /* Global cache */
     #cache:TriFrostCache<Env>;
-
-    /* Whether or not we should debug */
-    #debug:boolean = false;
 
     /* Provided host */
     #host:string|null = null;
@@ -203,9 +172,6 @@ class App <
         /* Set runtime if provided */
         if (options.runtime) this.#runtime = options.runtime;
 
-        /* Configure debug */
-        if ('debug' in options) this.#debug = !!options.debug;
-
         /* Configure host */
         if ('host' in options && typeof options.host === 'string' && options.host.length) {
             this.#host = options.host;
@@ -214,24 +180,11 @@ class App <
         /* Configure trust proxy */
         if ('trustProxy' in options) this.#trustProxy = !!options.trustProxy;
 
-        /* Configure app name */
-        if (typeof options.name === 'string') this.#name = options.name.trim();
-
-        /* Configure app version */
-        if (typeof options.version === 'string') this.#version = options.version.trim();
-
-        /* Configure app meta */
-        if (isObject(options.meta)) this.#meta = options.meta;
-
-        /* Configure env */
-        const globalEnv = (typeof (globalThis as any).env === 'object' ? (globalThis as any).env : {}) as Env;
-        this.#env = {
-            ...globalEnv,
-            ...options.env || {},
-        } as Env;
+        /* Configure provided env, take note runtime-specifics will be added by runtime */
+        this.#env = (isObject(options.env) ? options.env : {}) as Env;
 
         /* Extract domain and configure cookie options */
-        const domain:string|null =  extractDomainFromHost(this.#host);
+        const domain:string|null = extractDomainFromHost(this.#host);
         this.#cookies = {
             config: {
                 ...domain !== null && {domain},
@@ -268,13 +221,6 @@ class App <
     }
 
     /**
-     * Whether or not debug is enabled
-     */
-    get isDebugEnabled ():boolean {
-        return this.#debug;
-    }
-
-    /**
      * Returns the configured host or null
      */
     get host ():string|null {
@@ -296,20 +242,12 @@ class App <
             if (!this.#runtime) this.#runtime = await getRuntime();
 
             this.#logger = new TriFrostRootLogger<Env>({
-                name: this.#name,
-                version: this.#version,
-                debug: this.isDebugEnabled,
-                rootExporter: new ConsoleExporter(),
+                runtime: this.#runtime,
                 exporters: (opts:{env:Env}) => [
                     ...this.#exporters
                         ? this.#exporters(opts) /* Use provided exporters */
                         : [this.#runtime!.defaultExporter(opts.env)] /* Fallback to default exporter if none provided */,
                 ],
-                trifrost: {
-                    'runtime.name': this.#runtime.name,
-                    ...this.#runtime.version !== null && {'runtime.version': this.#runtime.version},
-                    ...this.#meta,
-                },
             });
 
             this.#running = true;
@@ -383,9 +321,11 @@ class App <
                         /* Generic 404 response if we still dont have anything */
                         if (!match) return ctx.status(404);
 
+                        /* Add route meta */
+                        if (match.route.meta) ctx.logger.setAttributes(match.route.meta);
+
                         /* Add attributes to tracer */
                         ctx.logger.setAttributes({
-                            ...match.route.meta || {},
                             'http.method': method,
                             'http.target': path,
                             'http.route': match.route.path,
@@ -399,7 +339,7 @@ class App <
 
                         /* Initialize context with matched route data, check if triage is necessary (eg payload too large) */
                         await ctx.init(match);
-                        if (!ctx.isAborted && ctx.statusCode >= 400) return await runTriage(path, ctx);
+                        if (ctx.statusCode >= 400) return await runTriage(path, ctx);
 
                         /* Run chain */
                         for (let i = 0; i < match.route.middleware.length; i++) {
@@ -414,7 +354,7 @@ class App <
                             if (ctx.isLocked) return;
 
                             /* Check if triage is necessary */
-                            if (!ctx.isAborted && ctx.statusCode >= 400) return await runTriage(path, ctx);
+                            if (ctx.statusCode >= 400) return await runTriage(path, ctx);
                         }
 
                         /* Run handler */
@@ -495,6 +435,14 @@ class App <
      */
     limit (limit:number|TriFrostRateLimitLimitFunction<Env, State>) {
         super.limit(limit);
+        return this;
+    }
+
+    /**
+     * Configure body parser options
+     */
+    bodyParser (options:TriFrostBodyParserOptions|null) {
+        super.bodyParser(options);
         return this;
     }
 

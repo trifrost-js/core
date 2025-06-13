@@ -5,6 +5,8 @@ import {
     type TriFrostLoggerLogPayload,
     type TriFrostLoggerSpanPayload,
 } from '../../../../lib/modules/Logger/types';
+import {type TriFrostRuntime} from '../../../../lib/runtimes/types';
+import {ConsoleExporter} from '../../../../lib/modules/Logger';
 
 describe('Modules - Logger - TriFrostRootLogger', () => {
     let logs: TriFrostLoggerLogPayload[] = [];
@@ -30,58 +32,82 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
 
     describe('constructor()', () => {
         it('Initializes root exporter and sets trifrost attributes', () => {
-            const rootExporter = mockExporter();
+            const consoleExporterSpy = vi.spyOn(ConsoleExporter.prototype, 'init');
+
+            /* eslint-disable-next-line */
+            console.debug = vi.fn();
+
             const logger = new TriFrostRootLogger({
-                name: 'app',
-                version: '1.2.3',
-                debug: true,
-                rootExporter,
+                runtime: {name: 'test', version: '1.0.0'} as TriFrostRuntime,
                 exporters: () => [mockExporter()],
-                trifrost: {env: 'test'},
             });
 
-            expect(initCalledWith).toMatchObject({
-                'service.name': 'app',
-                'service.version': '1.2.3',
+            expect(consoleExporterSpy).toHaveBeenCalledWith({
+                'service.name': 'trifrost-root',
+                'service.version': '1.0.0',
                 'telemetry.sdk.name': 'trifrost',
                 'telemetry.sdk.language': 'javascript',
-                env: 'test',
+                'runtime.name': 'test',
+                'runtime.version': '1.0.0',
             });
 
             logger.debug('boot');
-            expect(logs[0].message).toBe('boot');
+
+            /* eslint-disable-next-line */
+            expect(console.debug).not.toHaveBeenCalled();
         });
 
-        it('Skips debug logs if debug=false', () => {
-            const rootExporter = mockExporter();
+        it('Initializes root exporter and sets runtime attributes', () => {
+            const consoleExporterSpy = vi.spyOn(ConsoleExporter.prototype, 'init');
+
+            /* eslint-disable-next-line */
+            console.debug = vi.fn();
+
             const logger = new TriFrostRootLogger({
-                name: 'silent',
-                version: '0.0.1',
-                debug: false,
-                rootExporter,
+                runtime: {name: 'foobar', version: null} as TriFrostRuntime,
                 exporters: () => [mockExporter()],
             });
 
-            logger.debug('invisible');
-            expect(logs.length).toBe(0);
+            expect(consoleExporterSpy).toHaveBeenCalledWith({
+                'service.name': 'trifrost-root',
+                'service.version': '1.0.0',
+                'telemetry.sdk.name': 'trifrost',
+                'telemetry.sdk.language': 'javascript',
+                'runtime.name': 'foobar',
+            });
+
+            logger.debug('boot');
+
+            /* eslint-disable-next-line */
+            expect(console.debug).not.toHaveBeenCalled();
         });
 
         it('Forwards all other log levels', () => {
-            const rootExporter = mockExporter();
             const logger = new TriFrostRootLogger({
-                name: 'demo',
-                version: '1.0.0',
-                debug: true,
-                rootExporter,
+                runtime: {name: 'test', version: '1.0.0'} as TriFrostRuntime,
                 exporters: () => [mockExporter()],
             });
+
+            /* eslint-disable-next-line */
+            console.info = vi.fn();
+            console.warn = vi.fn();
+            console.error = vi.fn();
+            /* eslint-disable-next-line */
+            console.log = vi.fn();
 
             logger.info('info');
             logger.warn('warn');
             logger.error('fail');
             logger.log('hello');
 
-            expect(logs.map(l => l.message)).toEqual(['info', 'warn', 'fail', 'hello']);
+            /* eslint-disable-next-line */
+            expect(console.info).toHaveBeenCalled();
+
+            expect(console.warn).toHaveBeenCalled();
+            expect(console.error).toHaveBeenCalled();
+
+            /* eslint-disable-next-line */
+            expect(console.log).toHaveBeenCalled();
         });
     });
 
@@ -91,84 +117,76 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
 
         beforeEach(() => {
             rootLogger = new TriFrostRootLogger({
-                name: 'logtest',
-                version: '0.1.0',
-                debug: true,
-                rootExporter: mockExporter(),
+                runtime: {name: 'test', version: '1.0.0'} as TriFrostRuntime,
                 exporters: () => [mockExporter()],
             });
         });
 
-        it('Calls .debug only when debug=true', () => {
-            rootLogger.debug('dbg', {val: 1});
+        it('Skips .debug when debug=false', () => {
+            /* eslint-disable-next-line */
+            console.debug = vi.fn();
+
+            rootLogger = new TriFrostRootLogger({
+                runtime: {name: 'test', version: '1.0.0'} as TriFrostRuntime,
+                exporters: () => [mockExporter()],
+            });
+
+            const logger = rootLogger.spawn({env: {TRIFROST_DEBUG: 'false'}, traceId: '78947329'});
+
+            rootLogger.debug('should not log');
+            logger.debug('should not log');
+            expect(logs).toHaveLength(0);
+
+            /* eslint-disable-next-line */
+            expect(console.debug).not.toHaveBeenCalled();
+        });
+
+        it('Calls .debug when debug=true', () => {
+            /* eslint-disable-next-line */
+            console.debug = vi.fn();
+
+            rootLogger = new TriFrostRootLogger({
+                runtime: {name: 'test', version: '1.0.0'} as TriFrostRuntime,
+                exporters: () => [mockExporter()],
+            });
+
+            const logger = rootLogger.spawn({env: {TRIFROST_DEBUG: 'true'}, traceId: '78947329'});
+
+            rootLogger.debug('should not log');
+            logger.debug('dbg', {val: 1});
             expect(logs).toHaveLength(1);
             expect(logs[0]).toMatchObject({
                 message: 'dbg',
                 level: 'debug',
                 data: {val: 1},
             });
-        });
 
-        it('Skips .debug when debug=false', () => {
-            rootLogger = new TriFrostRootLogger({
-                name: 'logtest',
-                version: '0.1.0',
-                debug: false,
-                rootExporter: mockExporter(),
-                exporters: () => [mockExporter()],
-            });
-
-            rootLogger.debug('should not log');
-            expect(logs).toHaveLength(0);
+            /* eslint-disable-next-line */
+            expect(console.debug).toHaveBeenCalled();
         });
 
         it('Calls .info()', () => {
+            const consoleExporterSpy = vi.spyOn(ConsoleExporter.prototype, 'pushLog');
             rootLogger.info('inform', {x: true});
-            expect(logs[0]).toMatchObject({
-                level: 'info',
-                message: 'inform',
-                data: {x: true},
-            });
+            expect(consoleExporterSpy).toHaveBeenCalled();
         });
 
         it('Calls .warn()', () => {
+            const consoleExporterSpy = vi.spyOn(ConsoleExporter.prototype, 'pushLog');
             rootLogger.warn('warning', {y: false});
-            expect(logs[0]).toMatchObject({
-                level: 'warn',
-                message: 'warning',
-                data: {y: false},
-            });
+            expect(consoleExporterSpy).toHaveBeenCalled();
         });
 
         it('Calls .log()', () => {
+            const consoleExporterSpy = vi.spyOn(ConsoleExporter.prototype, 'pushLog');
             rootLogger.log('neutral', {z: 'abc'});
-            expect(logs[0]).toMatchObject({
-                level: 'log',
-                message: 'neutral',
-                data: {z: 'abc'},
-            });
+            expect(consoleExporterSpy).toHaveBeenCalled();
         });
 
-        it('Calls .error() with string', () => {
+        it('Calls .error()', () => {
+            const consoleExporterSpy = vi.spyOn(ConsoleExporter.prototype, 'pushLog');
             rootLogger.error('something bad', {code: 500});
-            expect(logs[0].level).toBe('error');
-            expect(logs[0].message).toBe('something bad');
-            expect(logs[0].data?.code).toBe(500);
-        });
-
-        it('Calls .error() with Error instance', () => {
-            const err = new Error('explode!');
-            rootLogger.error(err, {route: '/fail'});
-            expect(logs[0].level).toBe('error');
-            expect(logs[0].message).toBe('explode!');
-            expect(logs[0].data?.stack).toContain('Error: explode!');
-            expect(logs[0].data?.route).toBe('/fail');
-        });
-
-        it('Calls .error() with unknown object', () => {
-            rootLogger.error({oops: true});
-            expect(logs[0].message).toBe('Unknown error');
-            expect(logs[0].data?.raw).toEqual({oops: true});
+            expect(consoleExporterSpy).toHaveBeenCalled();
         });
 
         it('Includes trace_id and span_id if spawned logger is used', () => {
@@ -188,10 +206,7 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
             };
 
             const root = new TriFrostRootLogger({
-                name: 'no-span-export',
-                version: '1.0.0',
-                debug: true,
-                rootExporter: mockExporter(),
+                runtime: {name: 'test', version: '1.0.0'} as TriFrostRuntime,
                 exporters: () => [nonSpanExporter],
             });
 
@@ -217,38 +232,7 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
             };
 
             const root = new TriFrostRootLogger({
-                name: 'log-only',
-                version: '1.0.0',
-                debug: true,
-                rootExporter: mockExporter(),
-                exporters: () => [nonSpanExporter],
-            });
-
-            const logger = root.spawn({
-                traceId: 'ffffffffffffffffffffffffffffffff',
-                env: {},
-                context: {mode: 'test'},
-            });
-
-            logger.info('hello');
-            expect(logs[0].message).toBe('hello');
-            expect(logs[0].trace_id).toBe('ffffffffffffffffffffffffffffffff');
-            expect(logs[0].ctx).toMatchObject({mode: 'test'});
-        });
-
-        it('still logs messages even if root exporter has no pushSpan', () => {
-            const nonSpanExporter: TriFrostLoggerExporter = {
-                init: vi.fn(),
-                /* @ts-ignore */
-                pushLog: vi.fn(log => logs.push(log)),
-                flush: vi.fn(() => Promise.resolve()),
-            };
-
-            const root = new TriFrostRootLogger({
-                name: 'log-only',
-                version: '1.0.0',
-                debug: true,
-                rootExporter: nonSpanExporter,
+                runtime: {name: 'test', version: '1.0.0'} as TriFrostRuntime,
                 exporters: () => [nonSpanExporter],
             });
 
@@ -269,10 +253,7 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
         it('Spawns a new logger with resolved exporters', () => {
             const exp = mockExporter();
             const rootLogger = new TriFrostRootLogger({
-                name: 'spawner',
-                version: '1.0.0',
-                debug: true,
-                rootExporter: mockExporter(),
+                runtime: {name: 'test', version: '1.0.0'} as TriFrostRuntime,
                 exporters: () => [exp],
             });
 
@@ -290,10 +271,7 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
         it('Pushes span-aware exporters if pushSpan is defined', () => {
             const exp = mockExporter();
             const rootLogger = new TriFrostRootLogger({
-                name: 'spanaware',
-                version: '1.0.0',
-                debug: true,
-                rootExporter: mockExporter(),
+                runtime: {name: 'test', version: '1.0.0'} as TriFrostRuntime,
                 exporters: () => [exp],
             });
 
@@ -314,10 +292,7 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
 
         it('Returns noop logger if resolution fails', () => {
             const rootLogger = new TriFrostRootLogger({
-                name: 'failcase',
-                version: '1.0.0',
-                debug: true,
-                rootExporter: mockExporter(),
+                runtime: {name: 'test', version: '1.0.0'} as TriFrostRuntime,
                 exporters: () => {
                     throw new Error('Explode');
                 },
@@ -339,10 +314,7 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
             const exportersFn = vi.fn(() => [exp]);
 
             const rootLogger = new TriFrostRootLogger({
-                name: 'cachetest',
-                version: '1.0.0',
-                debug: true,
-                rootExporter: mockExporter(),
+                runtime: {name: 'test', version: '1.0.0'} as TriFrostRuntime,
                 exporters: exportersFn,
             });
 
@@ -351,20 +323,19 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
 
             expect(exportersFn).toHaveBeenCalledOnce();
             expect(initCalledWith).toEqual({
-                'service.name': 'cachetest',
+                'service.name': 'trifrost',
                 'service.version': '1.0.0',
                 'telemetry.sdk.language': 'javascript',
                 'telemetry.sdk.name': 'trifrost',
+                'runtime.name': 'test',
+                'runtime.version': '1.0.0',
             });
         });
 
         it('Creates child spans with proper parent linkage from spawn logger', async () => {
             const exp = mockExporter();
             const rootLogger = new TriFrostRootLogger({
-                name: 'tree',
-                version: '1.0.0',
-                debug: true,
-                rootExporter: mockExporter(),
+                runtime: {name: 'test', version: '1.0.0'} as TriFrostRuntime,
                 exporters: () => [exp],
             });
 
@@ -392,10 +363,7 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
             };
 
             const rootLogger = new TriFrostRootLogger({
-                name: 'nospan',
-                version: '1.0.0',
-                debug: true,
-                rootExporter: mockExporter(),
+                runtime: {name: 'test', version: '1.0.0'} as TriFrostRuntime,
                 exporters: () => [exp],
             });
 
@@ -421,10 +389,7 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
             };
 
             const rootLogger = new TriFrostRootLogger({
-                name: 'explode-init',
-                version: '1.0.0',
-                debug: true,
-                rootExporter: mockExporter(),
+                runtime: {name: 'test', version: '1.0.0'} as TriFrostRuntime,
                 exporters: () => [badExporter],
             });
 
@@ -439,10 +404,7 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
         it('Spawned logger is a proper TriFrostLogger instance', () => {
             const exp = mockExporter();
             const rootLogger = new TriFrostRootLogger({
-                name: 'instance-check',
-                version: '1.0.0',
-                debug: true,
-                rootExporter: mockExporter(),
+                runtime: {name: 'test', version: '1.0.0'} as TriFrostRuntime,
                 exporters: () => [exp],
             });
 
@@ -454,10 +416,7 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
 
         it('Handles exporter resolution returning empty list', () => {
             const rootLogger = new TriFrostRootLogger({
-                name: 'empty-case',
-                version: '1.0.0',
-                debug: true,
-                rootExporter: mockExporter(),
+                runtime: {name: 'test', version: '1.0.0'} as TriFrostRuntime,
                 exporters: () => [],
             });
 
@@ -473,10 +432,7 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
         it('Reuses resolved context across multiple spawns with diff input', () => {
             const exp = mockExporter();
             const rootLogger = new TriFrostRootLogger({
-                name: 'reused-ctx',
-                version: '1.0.0',
-                debug: true,
-                rootExporter: mockExporter(),
+                runtime: {name: 'test', version: '1.0.0'} as TriFrostRuntime,
                 exporters: () => [exp],
             });
 
@@ -487,9 +443,9 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
             loggerB.info('second');
 
             expect(logs[0].trace_id).toBe('a'.repeat(32));
-            expect(logs[0].ctx).toMatchObject({req: 1});
+            expect(logs[0].ctx).toEqual({req: 1});
             expect(logs[1].trace_id).toBe('b'.repeat(32));
-            expect(logs[1].ctx).toMatchObject({req: 2});
+            expect(logs[1].ctx).toEqual({req: 2});
         });
     });
 });

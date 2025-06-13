@@ -83,7 +83,7 @@ export type TriFrostRoute <
     bodyParser  : TriFrostBodyParserOptions|null;
     name        : string;
     description : string | null;
-    meta        : Record<string, unknown>;
+    meta        : Record<string, unknown>|null;
 };
 
 export type TriFrostGrouper<

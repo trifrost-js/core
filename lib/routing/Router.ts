@@ -245,7 +245,7 @@ class Router <
             bodyParser: this.#bodyParser,
             name: 'notfound',
             description: '404 Not Found Handler',
-            meta: {name: 'notfound', kind: 'notfound'},
+            meta: null,
         });
         return this;
     }
@@ -269,7 +269,7 @@ class Router <
             bodyParser: this.#bodyParser,
             name: 'error',
             description: 'Error Handler',
-            meta: {name: 'error', kind: 'error'},
+            meta: null,
         });
         return this;
     }
@@ -375,15 +375,13 @@ class Router <
             ...normalizeMiddleware<Env, State>((config.middleware || []) as TriFrostMiddleware<Env, State>[]),
         ];
 
-        for (const method of methods) {
-            const n_route_name = n_name
-                ? (method === 'HEAD' ? 'HEAD_' : '') + n_name
-                : method + '_' + n_path;
+        for (let i = 0; i < methods.length; i++) {
+            const method = methods[i];
 
-            const routeObj:TriFrostRoute<Env, State> = {
-                name: n_route_name,
+            this.#tree.add({
+                name: n_name ? (method === 'HEAD' ? 'HEAD_' : '') + n_name : method + '_' + n_path,
                 description: n_desc,
-                meta: {name: n_route_name, kind: n_kind, ...isNeObject(config.meta) && config.meta},
+                meta: isNeObject(config.meta) ? config.meta : null,
                 method,
                 kind: n_kind,
                 path: n_path,
@@ -391,10 +389,7 @@ class Router <
                 middleware: n_middleware,
                 timeout: n_timeout,
                 bodyParser: n_bodyparser,
-            };
-
-            // Directly add the full route object to the tree
-            this.#tree.add(routeObj as TriFrostRoute<Env>);
+            } as TriFrostRoute<Env, State>);
         }
 
         return this;

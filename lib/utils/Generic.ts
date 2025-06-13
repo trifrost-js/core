@@ -1,6 +1,7 @@
 /* eslint-disable array-element-newline */
 
 import {isIntGt} from '@valkyriestudios/utils/number';
+import {isNeString} from '@valkyriestudios/utils/string';
 
 const HEX_LUT = [
     '00', '01', '02', '03', '04', '05', '06', '07', '08', '09',
@@ -105,6 +106,54 @@ export function isDevMode (env:Record<string, unknown>):boolean {
     if ('NODE_ENV' in env) {
         const node_env = String(env.NODE_ENV || '').toLowerCase();
         if (node_env !== 'production') return true;
+    }
+
+    return false;
+}
+
+/**
+ * Determine name for telemetry
+ * @note Otel specification requires name to be between 1 and 255 characters
+ *
+ * @param {Record<string, unknown>} env - Environment to check on
+ */
+export function determineName (env:Record<string, unknown>):string {
+    const val = env.TRIFROST_NAME ?? env.SERVICE_NAME;
+    return isNeString(val) && val.length <= 255 ? val.trim() : 'trifrost';
+}
+
+/**
+ * Determine version for telemetry
+ *
+ * @param {Record<string, unknown>} env - Environment to check on
+ */
+export function determineVersion (env:Record<string, unknown>):string {
+    const val = env.TRIFROST_VERSION ?? env.SERVICE_VERSION ?? env.VERSION;
+    return isNeString(val) ? val.trim() : '1.0.0';
+}
+
+/**
+ * Determine debug mode
+ *
+ * @param {Record<string, unknown>} env - Environment to check on
+ */
+export function determineDebug (env:Record<string, unknown>):boolean {
+    const val = env.TRIFROST_DEBUG ?? env.DEBUG ?? env.NODE_ENV;
+    if (typeof val === 'string') {
+        switch (val.toLowerCase()) {
+            case 'true':
+            case '1':
+                return true;
+            case 'false':
+            case '0':
+                return false;
+            case 'production':
+                return false;
+            default:
+                break;
+        }
+    } else if (val === true) {
+        return true;
     }
 
     return false;
