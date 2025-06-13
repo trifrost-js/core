@@ -4,14 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.32.0] - 2025-06-13
+This release further streamlines how app identity and debug state are defined across all runtimes, moving away from config-based declarations to **standardized environment-driven metadata**.
+
 ### Improved
-- **dx**: `TRIFROST_NAME` and `TRIFROST_VERSION` are now the canonical way to version/name for telemetry, set them in `.env`, `.dev.vars`, GitHub Actions, or Docker builds for seamless introspection across all runtimes.
-- **qol**: Debug mode (`debug`) is now automatically derived from `TRIFROST_DEBUG` (truthy string, e.g., `"1"`, `"true"`, `true`), no need to pass a flag manually.
-- **qol**: Add App.bodyParser alias as well, this ensures proper App typing for fluent chaining.
+- **dx**: `TRIFROST_NAME` and `TRIFROST_VERSION` are now the canonical source of app identity for telemetry — set them via `.env`, `.dev.vars`, GitHub Actions, or Docker builds for seamless introspection across all runtimes.
+- **qol**: Debug mode (`debug`) is now automatically derived from `TRIFROST_DEBUG` (truthy values like `"1"`, `"true"`, or `true`), no manual flag needed.
+- **qol**: Added `App.bodyParser()` alias to improve fluent chaining and TypeScript inference.
 
 ### Breaking
-- Removed `name`, `version`, and `debug` from AppOptions — TriFrost now reads these from the environment via: `TRIFROST_NAME`, `TRIFROST_VERSION` and `TRIFROST_DEBUG`
+- Removed `name`, `version`, and `debug` from `AppOptions` — these are now sourced exclusively from environment variables: `TRIFROST_NAME`, `TRIFROST_VERSION`, and `TRIFROST_DEBUG`.
+
+---
+
+These changes make TriFrost's runtime behavior cleaner, more predictable, and easier to integrate with CI/CD pipelines and observability tools — with zero config bloat.
+
+Stay frosty ❄️
 
 ## [0.31.0] - 2025-06-13
 ### Improved
