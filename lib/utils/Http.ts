@@ -1,3 +1,4 @@
+/* eslint-disable array-element-newline */
 export const TRANSLITERATOR: Record<string, string> = {
     /* German */
     Ä: 'A', Ö: 'O', Ü: 'U', ö: 'o', ß: 'ss',
@@ -34,7 +35,7 @@ export const TRANSLITERATOR: Record<string, string> = {
  *   ascii: 'Strasse_(draft)*v1.0.pdf',
  *   encoded: 'Stra%C3%9Fe_%28draft%29%2Av1.0.pdf'
  * }
- * 
+ *
  * @param {string} val - Name to encode
  */
 export function encodeFilename (val:string):{ascii:string; encoded:string} {
@@ -84,7 +85,7 @@ export function encodeFilename (val:string):{ascii:string; encoded:string} {
 
 /**
  * Extracts path and query from a provided url
- * 
+ *
  * @param {string} url - URL to extract path and query from
  */
 export function extractPartsFromUrl (url:string):{path:string; query:string} {
@@ -108,4 +109,73 @@ export function extractPartsFromUrl (url:string):{path:string; query:string} {
             ? {path: url.slice(path_idx), query: ''}
             : {path: url.slice(path_idx, query_idx), query: url.slice(query_idx + 1)};
     }
+}
+
+const MULTI_SEGMENT_TLDS = new Set([
+    /* United Kingdom */
+    'co.uk', 'ac.uk', 'gov.uk', 'org.uk', 'net.uk', 'ltd.uk', 'plc.uk',
+    'me.uk', 'nhs.uk', 'sch.uk',
+    /* Australia */
+    'com.au', 'net.au', 'org.au', 'edu.au', 'gov.au', 'id.au', 'asn.au',
+    /* Brazil */
+    'com.br', 'net.br', 'org.br', 'gov.br', 'mil.br', 'edu.br',
+    /* China */
+    'com.cn', 'net.cn', 'gov.cn', 'org.cn', 'edu.cn',
+    /* Hong Kong */
+    'com.hk', 'edu.hk', 'gov.hk', 'idv.hk', 'net.hk', 'org.hk',
+    /* Japan */
+    'co.jp', 'ne.jp', 'or.jp', 'go.jp', 'ac.jp', 'ad.jp', 'ed.jp',
+    /* South Korea */
+    'co.kr', 'ne.kr', 'or.kr', 're.kr', 'go.kr', 'mil.kr', 'ac.kr',
+    /* Taiwan */
+    'com.tw', 'net.tw', 'org.tw', 'edu.tw', 'gov.tw', 'mil.tw',
+    /* India */
+    'co.in', 'net.in', 'org.in', 'firm.in', 'gen.in', 'ind.in',
+    /* New Zealand */
+    'co.nz', 'net.nz', 'org.nz', 'govt.nz', 'ac.nz', 'geek.nz', 'maori.nz', 'iwi.nz',
+    /* Singapore */
+    'com.sg', 'net.sg', 'org.sg', 'edu.sg', 'gov.sg', 'per.sg',
+    /* South Africa */
+    'co.za', 'net.za', 'org.za', 'gov.za',
+    /* Canada */
+    'gc.ca',
+    /* US Federal */
+    'ci.us', 'lib.tx.us', 'k12.tx.us', 'cc.ca.us', 'state.ca.us', 'pvt.k12.ma.us', 'cog.va.us',
+]);
+
+const RGX_DOMAIN = /^(?:https?:\/\/)?(?:www\d?\.)?((?:[\w-]+\.)+[\w-]+)(?::\d+)?(?:\/|$)/i;
+const RGX_DOMAIN_IP = /^[\d.:]+$/;
+
+/**
+ * Attempts to extract the effective domain from a given host.
+ *
+ * Strips common subdomains like www or numerical prefixes (e.g., www2.),
+ * and skips IPs or localhost.
+ *
+ * Examples:
+ * - "www.example.com" → "example.com"
+ * - "api.dev.example.co.uk" → "example.co.uk"
+ * - "localhost" → null
+ * - "192.168.0.1" → null
+ */
+export function extractDomainFromHost (raw:string|null):string|null {
+    if (
+        typeof raw !== 'string' ||
+        !raw.length ||
+        raw === 'localhost' ||
+        RGX_DOMAIN_IP.test(raw) ||
+        raw[0] === '['
+    ) return null;
+
+    /* Verify domain */
+    const match = (raw[raw.length - 1] === '.' ? raw.slice(0, -1) : raw).match(RGX_DOMAIN);
+    if (!match || typeof match[1] !== 'string') return null;
+
+    const parts = match[1].toLowerCase().split('.');
+    const len = parts.length;
+    const last_two = parts[len - 2] + '.' + parts[len - 1];
+
+    return MULTI_SEGMENT_TLDS.has(last_two) && len > 2
+        ? parts[len - 3] + '.' + last_two
+        : last_two;
 }

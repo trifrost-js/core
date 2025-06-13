@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {encodeFilename, extractPartsFromUrl, TRANSLITERATOR} from '../../../lib/utils/Http';
+import {encodeFilename, extractDomainFromHost, extractPartsFromUrl, TRANSLITERATOR} from '../../../lib/utils/Http';
 import CONSTANTS from '../../constants';
 
 describe('Utils - Http', () => {
@@ -48,7 +48,7 @@ describe('Utils - Http', () => {
             const result = encodeFilename("O'Reilly's Guide.pdf");
             expect(result.ascii).toBe('OReillys Guide.pdf');
             expect(result.encoded).toBe('O%27Reilly%27s%20Guide.pdf');
-        });        
+        });
 
         it('Skips control characters and forbidden characters', () => {
             const input = 'my\nfi\0le.pdf';
@@ -86,55 +86,55 @@ describe('Utils - Http', () => {
                     encoded: encodeURIComponent(key),
                 });
             }
-        });        
+        });
 
         it('Transliterates German characters correctly', () => {
             const input = 'ÄÖÜöß';
             const result = encodeFilename(input);
             expect(result.ascii).toBe('AOUoss');
         });
-        
+
         it('Transliterates FrenchLatin characters correctly', () => {
             const input = 'àáâäæçéèêëîïôœùûüÿñ';
             const result = encodeFilename(input);
             expect(result.ascii).toBe('aaaaaeceeeeiiooeuuuyn');
         });
-        
+
         it('Transliterates Nordic characters correctly', () => {
             const input = 'ÅåØøÆ';
             const result = encodeFilename(input);
             expect(result.ascii).toBe('AaOoAe');
         });
-        
+
         it('Transliterates CEE characters correctly', () => {
             const input = 'ąćęłńśźżĆŁŚŹŻ';
             const result = encodeFilename(input);
             expect(result.ascii).toBe('acelnszzCLSZZ');
         });
-        
+
         it('Transliterates Cyrillic characters correctly', () => {
             const input = 'ЖжХхЦцЧчШшЩщЮюЯя';
             const result = encodeFilename(input);
             expect(result.ascii).toBe('ZhzhKhkhTstsChchShshShchshchYuyuYaya');
         });
-        
+
         it('Transliterates Greek characters correctly', () => {
             const input = 'ΘθΧχΨψΩω';
             const result = encodeFilename(input);
             expect(result.ascii).toBe('ThthChchPspsOo');
         });
-        
+
         it('Transliterates Turkish characters correctly', () => {
             const input = 'ğĞşŞİı';
             const result = encodeFilename(input);
             expect(result.ascii).toBe('gGsSIi');
         });
-        
+
         it('Transliterates Symbols characters correctly', () => {
             const input = '©®™℠';
             const result = encodeFilename(input);
             expect(result.ascii).toBe('(c)(r)(tm)(sm)');
-        });        
+        });
     });
 
     describe('extractPartsFromUrl', () => {
@@ -143,7 +143,7 @@ describe('Utils - Http', () => {
                 expect(extractPartsFromUrl(el as string)).toEqual({path: '', query: ''});
             }
         });
-    
+
         it('Extracts path and query from basic URL', () => {
             const result = extractPartsFromUrl('https://example.com/foo/bar?x=1&y=2');
             expect(result).toEqual({
@@ -151,7 +151,7 @@ describe('Utils - Http', () => {
                 query: 'x=1&y=2',
             });
         });
-    
+
         it('Extracts path with no query', () => {
             const result = extractPartsFromUrl('https://example.com/path/only');
             expect(result).toEqual({
@@ -159,7 +159,7 @@ describe('Utils - Http', () => {
                 query: '',
             });
         });
-    
+
         it('Returns root path when no path is present', () => {
             const result = extractPartsFromUrl('https://example.com');
             expect(result).toEqual({
@@ -167,7 +167,7 @@ describe('Utils - Http', () => {
                 query: '',
             });
         });
-    
+
         it('Handles query string without path', () => {
             const result = extractPartsFromUrl('https://example.com/?q=search');
             expect(result).toEqual({
@@ -175,7 +175,7 @@ describe('Utils - Http', () => {
                 query: 'q=search',
             });
         });
-    
+
         it('Handles URLs with port and subdomain', () => {
             const result = extractPartsFromUrl('https://api.example.com:8080/v1/data?limit=10');
             expect(result).toEqual({
@@ -183,7 +183,7 @@ describe('Utils - Http', () => {
                 query: 'limit=10',
             });
         });
-    
+
         it('Returns empty path/query on malformed URL structure', () => {
             const result = extractPartsFromUrl('not-a-url');
             expect(result).toEqual({
@@ -191,7 +191,7 @@ describe('Utils - Http', () => {
                 query: '',
             });
         });
-    
+
         it('Returns correct path/query even with multiple "?" in query string', () => {
             const result = extractPartsFromUrl('https://example.com/resource?debug=true&url=https://x.com?a=b');
             expect(result).toEqual({
@@ -199,7 +199,7 @@ describe('Utils - Http', () => {
                 query: 'debug=true&url=https://x.com?a=b',
             });
         });
-    
+
         it('Handles paths with encoded characters', () => {
             const result = extractPartsFromUrl('https://example.com/foo%20bar/baz?x=1');
             expect(result).toEqual({
@@ -212,48 +212,131 @@ describe('Utils - Http', () => {
             const result = extractPartsFromUrl('https://example.com/path#section?x=1');
             expect(result).toEqual({path: '/path', query: ''});
         });
-        
+
         it('Handles URLs with query but no path (just domain)', () => {
             const result = extractPartsFromUrl('https://example.com?query=1');
             expect(result).toEqual({path: '/', query: 'query=1'});
         });
-        
+
         it('Handles double slashes in path', () => {
             const result = extractPartsFromUrl('https://example.com//weird//path?x=1');
             expect(result).toEqual({path: '//weird//path', query: 'x=1'});
         });
-        
+
         it('Handles trailing slashes and no query', () => {
             const result = extractPartsFromUrl('https://example.com/path/');
             expect(result).toEqual({path: '/path/', query: ''});
         });
-        
+
         it('Handles query-only URLs with "?" right after domain', () => {
             const result = extractPartsFromUrl('https://example.com?x=1');
             expect(result).toEqual({path: '/', query: 'x=1'});
         });
-        
+
         it('Handles URLs with empty query string', () => {
             const result = extractPartsFromUrl('https://example.com/path?');
             expect(result).toEqual({path: '/path', query: ''});
         });
-        
+
         it('Handles protocol-relative URLs (e.g. //example.com/path)', () => {
             const result = extractPartsFromUrl('//example.com/path?debug=true');
             expect(result).toEqual({path: '/path', query: 'debug=true'});
         });
-        
+
         it('Handles URLs with uncommon but valid protocols', () => {
             const result = extractPartsFromUrl('ftp://my.server.com/folder/file.txt?download=true');
             expect(result).toEqual({path: '/folder/file.txt', query: 'download=true'});
         });
-        
+
         it('Handles deeply nested paths with long queries', () => {
             const result = extractPartsFromUrl('https://example.com/a/b/c/d/e?token=abc123&verbose=true');
             expect(result).toEqual({
                 path: '/a/b/c/d/e',
                 query: 'token=abc123&verbose=true',
             });
-        });        
+        });
+    });
+
+    describe('extractDomainFromHost', () => {
+        it('Returns null for non-string input', () => {
+            for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
+                expect(extractDomainFromHost(el as any)).toBeNull();
+            }
+        });
+
+        it('Returns null for localhost and loopback addresses', () => {
+            expect(extractDomainFromHost('localhost')).toBeNull();
+            expect(extractDomainFromHost('localhost:3000')).toBeNull();
+            expect(extractDomainFromHost('127.0.0.1')).toBeNull();
+            expect(extractDomainFromHost('192.168.1.1')).toBeNull();
+            expect(extractDomainFromHost('10.0.0.1')).toBeNull();
+            expect(extractDomainFromHost('::1')).toBeNull();
+            expect(extractDomainFromHost('[::1]')).toBeNull();
+        });
+
+        it('Handles plain and www-prefixed domains', () => {
+            expect(extractDomainFromHost('example.com')).toBe('example.com');
+            expect(extractDomainFromHost('www.example.com')).toBe('example.com');
+            expect(extractDomainFromHost('www2.example.com')).toBe('example.com');
+        });
+
+        it('Handles domains with ports', () => {
+            expect(extractDomainFromHost('sub.example.com:8080')).toBe('example.com');
+            expect(extractDomainFromHost('www.example.co.uk:443')).toBe('example.co.uk');
+            expect(extractDomainFromHost('https://example.com:1234')).toBe('example.com');
+        });
+
+        it('Handles multi-level subdomains', () => {
+            expect(extractDomainFromHost('a.b.c.example.com')).toBe('example.com');
+            expect(extractDomainFromHost('api.a.b.c.d.example.co.uk')).toBe('example.co.uk');
+        });
+
+        it('Handles internationalized domains (IDN)', () => {
+            expect(extractDomainFromHost('www.xn--bcher-kva.example')).toBe('xn--bcher-kva.example');
+            expect(extractDomainFromHost('xn--exmple-cua.com')).toBe('xn--exmple-cua.com');
+        });
+
+        it('Handles uppercase domains', () => {
+            expect(extractDomainFromHost('WWW.Example.COM')).toBe('example.com');
+            expect(extractDomainFromHost('API.EXAMPLE.CO.UK')).toBe('example.co.uk');
+        });
+
+        it('Handles full URLs', () => {
+            expect(extractDomainFromHost('https://www.example.com')).toBe('example.com');
+            expect(extractDomainFromHost('http://a.b.example.co.uk/foo/bar')).toBe('example.co.uk');
+            expect(extractDomainFromHost('https://api.example.org/path?query=1')).toBe('example.org');
+        });
+
+        it('Handles trailing dot in domain', () => {
+            expect(extractDomainFromHost('www.example.com.')).toBe('example.com');
+            expect(extractDomainFromHost('a.b.example.co.uk.')).toBe('example.co.uk');
+        });
+
+        it('Handles domains with numbers and hyphens', () => {
+            expect(extractDomainFromHost('api-1.example.com')).toBe('example.com');
+            expect(extractDomainFromHost('www3.app-2.example.gov.uk')).toBe('example.gov.uk');
+        });
+
+        it('Returns null for malformed input', () => {
+            expect(extractDomainFromHost('not a domain')).toBeNull();
+            expect(extractDomainFromHost('.com')).toBeNull();
+            expect(extractDomainFromHost('..example..com')).toBeNull();
+            expect(extractDomainFromHost('http:///example.com')).toBeNull();
+            expect(extractDomainFromHost('http://')).toBeNull();
+            expect(extractDomainFromHost('ftp://example.com')).toBeNull();
+        });
+
+        it('Handles public suffix and exotic TLDs', () => {
+            expect(extractDomainFromHost('sub.example.co.uk')).toBe('example.co.uk');
+            expect(extractDomainFromHost('api.shop.example.com.au')).toBe('example.com.au');
+            expect(extractDomainFromHost('www.corporate.example.edu.hk')).toBe('example.edu.hk');
+            expect(extractDomainFromHost('foo.bar.example.com.cn')).toBe('example.com.cn');
+        });
+
+        it('Returns expected root domains for tricky nesting', () => {
+            expect(extractDomainFromHost('a.b.c.d.e.f.g.example.net.br')).toBe('example.net.br');
+            expect(extractDomainFromHost('a.b.c.d.e.example.com')).toBe('example.com');
+            expect(extractDomainFromHost('a.b.c.d.e.example.org')).toBe('example.org');
+        });
     });
 });

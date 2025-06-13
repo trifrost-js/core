@@ -35,6 +35,7 @@ import {
 } from './types/context';
 import {type LazyInitFn} from './utils/Lazy';
 import {RouteTree} from './routing/Tree';
+import {extractDomainFromHost} from './utils/Http';
 
 const RGX_RID = /^[a-z0-9-]{8,100}$/i;
 
@@ -230,7 +231,7 @@ class App <
         } as Env;
 
         /* Extract domain and configure cookie options */
-        const domain:string|null = this.#extractDomainFromHost(this.#host);
+        const domain:string|null =  extractDomainFromHost(this.#host);
         this.#cookies = {
             config: {
                 ...domain !== null && {domain},
@@ -571,19 +572,6 @@ class App <
     del <Path extends string = string> (path:Path, handler:TriFrostRouteHandler<Env, State & PathParam<Path>>) {
         super.del(path, handler);
         return this;
-    }
-
-/**
- * MARK: Private Fn
- */
-
-    /**
-     * Utility method to extract a domain from the host
-     */
-    #extractDomainFromHost (val:string|null) {
-        if (typeof val !== 'string' || val === 'localhost' || /^[\d.]+$/.test(val)) return null;
-        const match = val.match(/^(?:www\d?\.)?(?<domain>[\w-]+\.(?:[\w-]+\.\w+|\w+))$/i);
-        return typeof match?.groups?.domain === 'string' && match.groups.domain.length ? match.groups.domain : null;
     }
 
 }
