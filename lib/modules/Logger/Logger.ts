@@ -5,6 +5,7 @@ import {
     type TriFrostLogLevel,
     type TriFrostLoggerLogPayload,
     type TriFrostLoggerSpanPayload,
+    type TriFrostLoggerSpanAwareExporter,
 } from './types';
 import {hexId} from '../../utils/Generic';
 
@@ -50,15 +51,14 @@ export class Logger implements TriFrostLogger {
 
     #exporters:TriFrostLoggerExporter[];
 
-    #spanAwareExporters:TriFrostLoggerExporter[] = [];
+    #spanAwareExporters:TriFrostLoggerSpanAwareExporter[] = [];
 
     constructor (cfg:{
         debug:boolean;
         traceId?:string;
-        trifrost?:Record<string, unknown>;
         context?:Record<string, unknown>;
         exporters:TriFrostLoggerExporter[];
-        spanAwareExporters:TriFrostLoggerExporter[];
+        spanAwareExporters:TriFrostLoggerSpanAwareExporter[];
     }) {
         this.#debug = cfg.debug;
         this.#attributes = {...cfg.context ?? {}};
@@ -66,11 +66,6 @@ export class Logger implements TriFrostLogger {
         /* Set trace id */
         if (cfg.traceId) this.#traceId = isValidTraceId(cfg.traceId) ? cfg.traceId : hexId(16);
 
-        /* Set exporters */
-        if (cfg.trifrost) {
-            /* Initialize */
-            for (let i = 0; i < cfg.exporters.length; i++) cfg.exporters[i].init(cfg.trifrost);
-        }
         this.#exporters = cfg.exporters;
         this.#spanAwareExporters = cfg.spanAwareExporters;
     }
@@ -164,7 +159,7 @@ export class Logger implements TriFrostLogger {
                     }
 
                     for (let i = 0; i < this.#spanAwareExporters.length; i++) {
-                        this.#spanAwareExporters[i].pushSpan?.(span);
+                        this.#spanAwareExporters[i].pushSpan(span);
                     }
                 }
 

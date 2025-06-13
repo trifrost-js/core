@@ -3,6 +3,7 @@ import {
     type LazyInitFn,
 } from '../../utils/Lazy';
 import {
+    type TriFrostLoggerSpanAwareExporter,
     type TriFrostLogger,
     type TriFrostLoggerExporter,
 } from './types';
@@ -14,7 +15,7 @@ export class TriFrostRootLogger <Env extends Record<string, any> = Record<string
 
     #exporters:Lazy<TriFrostLoggerExporter[], Env>;
 
-    #spanAwareExporters:TriFrostLoggerExporter[] = [];
+    #spanAwareExporters:TriFrostLoggerSpanAwareExporter[] = [];
 
     #trifrost:Record<string, unknown>;
 
@@ -40,10 +41,13 @@ export class TriFrostRootLogger <Env extends Record<string, any> = Record<string
 
         this.#logger = new Logger({
             debug: this.#debug,
-            trifrost: this.#trifrost,
             exporters: [cfg.rootExporter],
-            spanAwareExporters: typeof cfg.rootExporter.pushSpan === 'function' ? [cfg.rootExporter] : [],
+            spanAwareExporters: (typeof cfg.rootExporter.pushSpan === 'function'
+                ? [cfg.rootExporter]
+                : []) as TriFrostLoggerSpanAwareExporter[],
         });
+
+        cfg.rootExporter.init(this.#trifrost);
     }
 
     debug (msg:string, data?:Record<string, unknown>) {
@@ -74,14 +78,18 @@ export class TriFrostRootLogger <Env extends Record<string, any> = Record<string
         try {
             if (!this.#exporters.resolved) {
                 this.#exporters.resolve(ctx);
-                if (!this.#exporters.resolved) throw new Error('TriFrostLogger: Failed to resolve exporters');
 
                 /* Add a spanAware flag on exporters */
-                const exporters:TriFrostLoggerExporter[] = this.#exporters.resolved;
-                const spanAware:TriFrostLoggerExporter[] = [];
+                const exporters:TriFrostLoggerExporter[] = this.#exporters.resolved!;
+                const spanAware:TriFrostLoggerSpanAwareExporter[] = [];
                 for (let i = 0; i < exporters.length; i++) {
                     const exp = exporters[i];
-                    if (typeof exp.pushSpan === 'function') spanAware.push(exp);
+
+                    /* Initialize exporter */
+                    exp.init(this.#trifrost);
+
+                    /* If span aware, push exporter into span aware exporters */
+                    if (typeof exp.pushSpan === 'function') spanAware.push(exp as TriFrostLoggerSpanAwareExporter);
                 }
                 this.#spanAwareExporters = spanAware;
             }
@@ -89,13 +97,12 @@ export class TriFrostRootLogger <Env extends Record<string, any> = Record<string
             return new Logger({
                 debug: this.#debug,
                 traceId: ctx.traceId,
-                trifrost: this.#trifrost,
                 context: ctx.context,
-                exporters: this.#exporters.resolved,
+                exporters: this.#exporters.resolved!,
                 spanAwareExporters: this.#spanAwareExporters,
             });
         } catch (err) {
-            console.warn('[TriFrost] Failed to spawn logger, falling back to noop logger', err);
+            console.error(err);
             return new Logger({debug: false, exporters: [], spanAwareExporters: []});
         }
     }

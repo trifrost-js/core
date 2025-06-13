@@ -28,6 +28,10 @@ export interface TriFrostLoggerExporter {
     flush: () => Promise<void>;
 }
 
+export type TriFrostLoggerSpanAwareExporter = TriFrostLoggerExporter & {
+    pushSpan: (span:TriFrostLoggerSpanPayload) => void;
+};
+
 export interface TriFrostLoggerSpan {
     uid: () => string;
 
