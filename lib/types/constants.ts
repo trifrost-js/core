@@ -367,27 +367,10 @@ export const HttpCodeToStatus = {
 
 export type HttpStatus = `${HttpStatuses}`;
 export type HttpStatusCode = keyof typeof HttpCodeToStatus;
-export const HttpStatusToCode:Map<HttpStatus, HttpStatusCode> = Object.keys(HttpCodeToStatus).reduce((acc, el) => {
-    /* @ts-expect-error Should be good */
-    acc.set(HttpCodeToStatus[el] as HttpStatus, el);
-    return acc;
-}, new Map());
-
-export const httpStatuses:Set<HttpStatus> = new Set([...Object.values(HttpStatuses)]);
 
 /**
  * MARK: Redirect
  */
-
-export enum HttpRedirectStatuses {
-    MultipleChoide = HttpStatuses.MultipleChoice,
-    MovedPermanently = HttpStatuses.MovedPermanently,
-    Found = HttpStatuses.Found,
-    SeeOther = HttpStatuses.SeeOther,
-    NotModified = HttpStatuses.NotModified,
-    TemporaryRedirect = HttpStatuses.TemporaryRedirect,
-    PermanentRedirect = HttpStatuses.PermanentRedirect,
-}
 
 export const HttpRedirectStatusesToCode = {
     300: HttpStatuses.MultipleChoice,
@@ -399,6 +382,4 @@ export const HttpRedirectStatusesToCode = {
     308: HttpStatuses.PermanentRedirect,
 } as const;
 
-export type HttpRedirectStatus = `${HttpRedirectStatuses}`;
 export type HttpRedirectStatusCode = keyof typeof HttpRedirectStatusesToCode;
-export const httpRedirectStatuses:Set<HttpRedirectStatus> = new Set([...Object.values(HttpRedirectStatuses)]);

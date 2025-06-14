@@ -5,7 +5,6 @@ import {type TriFrostContextConfig} from '../../types/context';
 import {
     HttpMethods,
     HttpMethodToNormal,
-    type HttpStatus,
     type HttpStatusCode,
 } from '../../types/constants';
 import {type TriFrostCFFetcher} from '../../types/providers';
@@ -137,9 +136,9 @@ export class WorkerdContext extends Context {
     /**
      * Abort the request
      *
-     * @param {HttpStatus|HttpStatusCode?} status - Status to abort with (defaults to 503)
+     * @param {HttpStatusCode?} status - Status to abort with (defaults to 503)
      */
-    abort (status?:HttpStatus|HttpStatusCode) {
+    abort (status?:HttpStatusCode) {
         if (this.isLocked) return;
 
         super.abort(status);

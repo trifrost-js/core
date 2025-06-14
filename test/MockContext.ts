@@ -2,9 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {type TriFrostRateLimitLimitFunction} from '../lib/modules/RateLimit';
 import {
-    HttpStatusToCode,
     type HttpMethod,
-    type HttpStatus,
     type HttpStatusCode,
     type MimeType,
 } from '../lib/types/constants';
@@ -31,7 +29,7 @@ export class MockContext<
 > implements TriFrostContext<any, State> {
     #headers:Record<string, string>;
     #method: HttpMethod;
-    #status: HttpStatus | HttpStatusCode = 200;
+    #status: HttpStatusCode = 200;
     #body: string | null = null;
     #state:State;
     #env:Record<string, any>;
@@ -137,8 +135,8 @@ export class MockContext<
         this.setHeader('Content-Type', val);
     };
 
-    setStatus = (status: HttpStatus | HttpStatusCode): void => {
-        this.#status = (typeof status === 'string' ? HttpStatusToCode.get(status) : status) as HttpStatusCode;
+    setStatus = (status: HttpStatusCode): void => {
+        this.#status = status;
     };
 
     setBody = (value: string | null): void => {
@@ -150,13 +148,13 @@ export class MockContext<
 
     init = async (_: TriFrostRouteMatch<any>, _handler?: (options:TriFrostBodyParserOptions|null) => Promise<ParsedBody|null>) => {};
 
-    abort = (_?: HttpStatus | HttpStatusCode): void => {};
+    abort = (_?: HttpStatusCode): void => {};
 
     async fetch (input: string | URL | globalThis.Request, init?: RequestInit) {
         return new Response();
     }
 
-    status = (status: HttpStatus | HttpStatusCode): void => {
+    status = (status: HttpStatusCode): void => {
         this.#status = status;
     };
 

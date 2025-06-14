@@ -10,7 +10,7 @@ This release brings an upgrade to TriFrost’s SSR and client-side scripting exp
 Designed for security, ergonomics, and dynamic control, combined with new support for `__TRIFROST_ENV__` and `__TRIFROST_STATE__` interpolation, this opens the door to cleaner SSR logic, secure script injection, and fully dynamic per-request behavior.
 
 ### Added
-- **feat**: `<Script>` JSX component for safe and ergonomic inline or external script injection. Automatic nonce injection (for CSP), inline function-style scripts via `() => { ... }` (or `{...}`), external scripts via `src`, `async`, `defer`, and `type` attributes and built-in minification of inline content.
+- **feat**: `<Script>` JSX component for safe and ergonomic inline or external script injection. **Automatically injects a nonce for CSP compatibility, no manual handling required**. Supports inline function-style scripts via `() => { ... }` (or `{...}`), external scripts via `src`, `async`, `defer`, and `type` attributes, as well as built-in minification of inline content.
 ```tsx
 import {Script} from '@trifrost/core';
 ...
@@ -20,7 +20,7 @@ import {Script} from '@trifrost/core';
   console.log("Hello from TriFrost");
 }}</Script>
 ```
-- **feat**: Support for `__TRIFROST_ENV__.<key>` and `__TRIFROST_STATE__.<key>` replacements in both inline scripts and styles. This allows environment config and request-specific state to influence SSR-rendered behavior/theming/etc.
+- **feat**: Support for `__TRIFROST_ENV__.<key>` and `__TRIFROST_STATE__.<key>` replacements in both inline scripts and styles. These are automatically substituted **server-side at render-time**, allowing environment config and request-specific state to influence SSR-rendered behavior, theming, or hydration logic.
 ```tsx
 <Script>{() => {
   const settings = "__TRIFROST_STATE__.settings";
@@ -56,6 +56,11 @@ Example from the TriFrost website:
 ```typescript
 const cls = css.use('button', isActive && 'active', isDisabled ? {opacity: 0.5} : null);
 ```
+- **dx**: Context status is now aligned around numerical codes rather than both numerical and full string codes, previously both were accepted but only the uWS runtime uses the full string code variant.
+
+### Fixed
+- Fixed an issue where `ctx.redirect` with `http://` to `https://` protocol upgrade was broken, producing invalid `https://http://...` URLs
+- Fixed an issue where `ctx.json` responses had a broken conditional internally
 
 ---
 

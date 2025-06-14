@@ -22,7 +22,6 @@ export {
     MimeTypes,
     HttpMethods,
     HttpStatuses,
-    HttpRedirectStatuses,
     Sym_TriFrostName,
     Sym_TriFrostDescription,
     Sym_TriFrostFingerPrint

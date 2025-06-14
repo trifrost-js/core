@@ -14,15 +14,9 @@ import {
 import {
     ExtensionToMimeType,
     type HttpMethod,
-    type HttpStatus,
     type HttpStatusCode,
     HttpCodeToStatus,
-    type HttpRedirectStatus,
-    httpRedirectStatuses,
     HttpRedirectStatusesToCode,
-    httpStatuses,
-    HttpStatuses,
-    HttpStatusToCode,
     type MimeType,
     MimeTypes,
     MimeTypesSet,
@@ -57,7 +51,7 @@ const RGX_URL = /^(https?:\/\/)[^\s/$.?#].[^\s]*$/i;
  * Used to get ip from headers under a trusted proxy, take note that this array will
  * be re-ordered automatically.
  */
-const IP_HEADER_CANDIDATES:string[] = [
+export const IP_HEADER_CANDIDATES:string[] = [
     'x-client-ip',
     'x-forwarded-for',
     'cf-connecting-ip',
@@ -137,9 +131,6 @@ export abstract class Context <
 
     /* Response Headers */
     protected res_headers:Record<string, string> = {};
-
-    /* Response Status (for usage in runtimes working with full http status code) */
-    protected res_status:HttpStatus = '200 OK';
 
     /* Response Code (for usage in runtimes working with numerical response codes) */
     protected res_code:HttpStatusCode = 200;
@@ -266,7 +257,7 @@ export abstract class Context <
      */
     get ip ():string|null {
         if (this.#ip !== undefined) return this.#ip;
-        let val = this.#getIPFromHeaders();
+        let val = this.getIPFromHeaders();
         if (!val) {
             val = this.getIP();
             if (val && !RGX_IP.test(val)) val = null;
@@ -440,8 +431,7 @@ export abstract class Context <
      *  ctx.setHeader('Content-Type', 'application/json');
      */
     setHeader (key:string, val:string|number):void {
-        if (typeof key !== 'string') return;
-        this.res_headers[key] = String(val);
+        this.res_headers[String(key)] = String(val);
     }
 
     /**
@@ -451,7 +441,7 @@ export abstract class Context <
      *  ctx.setHeader('Content-Type', 'application/json');
      */
     setHeaders (obj: Record<string, string|number>):void {
-        for (const key in obj) this.res_headers[key] = String(obj[key]);
+        for (const key in obj) this.res_headers[String(key)] = String(obj[key]);
     }
 
     /**
@@ -461,8 +451,7 @@ export abstract class Context <
      *  ctx.delHeader('Content-Type');
      */
     delHeader (key:string):void {
-        if (typeof key !== 'string' || !(key in this.res_headers)) return;
-        delete this.res_headers[key];
+        delete this.res_headers[String(key)];
     }
 
     /**
@@ -483,26 +472,18 @@ export abstract class Context <
     /**
      * Sets the response status code to a known HTTP status code
      */
-    setStatus (status:HttpStatus|HttpStatusCode):void {
-        const og_code = this.res_code;
-
-        if (status in HttpCodeToStatus) {
-            this.res_code = status as HttpStatusCode;
-            this.res_status = HttpCodeToStatus[status as HttpStatusCode];
-        } else if (httpStatuses.has(status as HttpStatus)) {
-            this.res_status = status as HttpStatus;
-            this.res_code = HttpStatusToCode.get(status as HttpStatus)!;
-        } else {
-            throw new Error('Context@setStatus: Invalid status code ' + status);
-        }
+    setStatus (status:HttpStatusCode):void {
+        if (!(status in HttpCodeToStatus)) throw new Error('Context@setStatus: Invalid status code ' + status);
 
         /* Patch logger attributes to reflect status for observability */
-        if (og_code !== this.res_code) {
+        if (status !== this.res_code) {
             this.#logger.setAttributes({
-                'http.status_code': this.res_code,
-                'otel.status_code': this.res_code >= 500 ? 'ERROR' : 'OK',
+                'http.status_code': status,
+                'otel.status_code': status >= 500 ? 'ERROR' : 'OK',
             });
         }
+
+        this.res_code = status as HttpStatusCode;
     }
 
 /**
@@ -566,7 +547,7 @@ export abstract class Context <
             }
         } catch (err) {
             this.#logger.error(err);
-            this.status(HttpStatuses.BadRequest);
+            this.status(400);
         }
     }
 
@@ -615,9 +596,9 @@ export abstract class Context <
     /**
      * Abort the request
      *
-     * @param {HttpStatus|HttpStatusCode?} status - Status to abort with (defaults to 503)
+     * @param {HttpStatusCode?} status - Status to abort with (defaults to 503)
      */
-    abort (status?:HttpStatus|HttpStatusCode):void {
+    abort (status?:HttpStatusCode):void {
         if (this.is_aborted) return;
 
         this.#logger.debug('Context@abort: Aborting request');
@@ -626,7 +607,7 @@ export abstract class Context <
         this.is_aborted = true;
 
         /* Set status, fallback to service-unavailable if not provided */
-        this.setStatus(status || HttpStatuses.ServiceUnavailable);
+        this.setStatus(status || 503);
 
         /* Clear timeout */
         this.clearTimeout();
@@ -670,7 +651,7 @@ export abstract class Context <
 
             /* Get a streamable */
             const streamer = await this.getStream(path);
-            if (!streamer) return this.status(HttpStatuses.NotFound);
+            if (!streamer) return this.status(404);
 
             /* Try determining the mime type from the path if no mime type was set already */
             if (!this.res_headers['Content-Type']) {
@@ -733,13 +714,14 @@ export abstract class Context <
      */
     json (body:Record<string, unknown>|unknown[] = {}, opts?:TriFrostContextResponseOptions):void {
         try {
-            if (
-                Object.prototype.toString.call(body) !== '[object Object]' ||
-                !Array.isArray(body)
-            ) throw new Error('Context@json: Invalid Payload');
-
             /* Ensure we dont double write */
             if (this.isLocked) throw new Error('Context@json: Cannot modify a finalized response');
+
+            /* Run sanity check on body payload */
+            if (
+                Object.prototype.toString.call(body) !== '[object Object]' &&
+                !Array.isArray(body)
+            ) throw new Error('Context@json: Invalid Payload');
 
             /* Cache Control */
             if (opts?.cacheControl) ParseAndApplyCacheControl(this, opts.cacheControl);
@@ -761,7 +743,7 @@ export abstract class Context <
     /**
      * Respond with a status and no body
      */
-    status (status:HttpStatus|HttpStatusCode):void {
+    status (status:HttpStatusCode):void {
         try {
             /* Ensure we dont double write */
             if (this.isLocked) throw new Error('Context@status: Cannot modify a finalized response');
@@ -810,10 +792,7 @@ export abstract class Context <
         try {
             if (
                 typeof to !== 'string' ||
-                (
-                    opts?.status &&
-                    (!(opts.status in HttpRedirectStatusesToCode) && !httpRedirectStatuses.has(opts.status as HttpRedirectStatus))
-                )
+                (opts?.status && !(opts.status in HttpRedirectStatusesToCode))
             ) throw new Error('Context@redirect: Invalid Payload');
 
             /* Ensure we dont double write */
@@ -825,7 +804,7 @@ export abstract class Context <
                 const host = this.host;
                 if (typeof host !== 'string' || !host.length) throw new Error('Context@redirect: Not able to determine host for redirect');
 
-                const normalized_host = host.startsWith('http://') && !host.startsWith('https://') ? 'https://' + host : host;
+                const normalized_host = host.startsWith('http://') ? 'https://' + host.slice(7) : host;
                 normalized_to = normalized_host.trim() + normalized_to.trim();
             }
 
@@ -840,7 +819,7 @@ export abstract class Context <
             /* This is a redirect, as such a body should not be present */
             this.res_body = '';
             this.res_headers.Location = normalized_to;
-            this.setStatus(opts?.status ?? HttpStatuses.TemporaryRedirect);
+            this.setStatus(opts?.status ?? 307);
             this.end();
         } catch (err) {
             this.#logger.error(err, {to, opts});
@@ -854,7 +833,7 @@ export abstract class Context <
     /**
      * If trustProxy is true tries to compute the IP from well-known headers
      */
-    #getIPFromHeaders ():string|null {
+    private getIPFromHeaders ():string|null {
         if (this.ctx_config.trustProxy !== true) return null;
 
         const headers = this.headers;
@@ -867,7 +846,7 @@ export abstract class Context <
             if (!val.length) continue;
 
             const candidate:string|null = name === 'x-forwarded-for'
-                ? val.split(',', 1)[0]?.trim() ?? null
+                ? val.split(',', 1)[0]?.trim()
                 : val;
             if (!candidate || !RGX_IP.test(candidate)) continue;
 

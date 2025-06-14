@@ -16,9 +16,7 @@ import {
     type ParsedBody,
 } from '../utils/BodyParser/types';
 import {
-    type HttpRedirectStatus,
     type HttpRedirectStatusCode,
-    type HttpStatus,
     type HttpStatusCode,
     type MimeType,
     type HttpMethod,
@@ -68,12 +66,12 @@ export type TriFrostContextFileOptions = {
 };
 
 export type TriFrostContextResponseOptions = {
-    status?: HttpStatus|HttpStatusCode;
+    status?: HttpStatusCode;
     cacheControl?: TriFrostCacheControlOptions;
 };
 
 export type TriFrostContextRedirectOptions = {
-    status?: HttpRedirectStatus|HttpRedirectStatusCode;
+    status?: HttpRedirectStatusCode;
     /**
      * Whether or not to keep the query string (defaults to true), example:
      * redirect(ctx, '/one') -> '/two?hello=three' -> '/one?hello=three'
@@ -119,16 +117,16 @@ export type TriFrostContext<
     delHeader: (key:string) => void;
 
     setType: (val:MimeType) => void;
-    setStatus: (status:HttpStatus|HttpStatusCode) => void;
+    setStatus: (status:HttpStatusCode) => void;
     setBody: (value:string|null) => void;
 
     setTimeout: (val:number|null) => void;
     clearTimeout: () => void;
 
     init: (match:TriFrostRouteMatch<Env>, handler?:(config:TriFrostBodyParserOptions|null)=>Promise<ParsedBody|null>) => Promise<void>;
-    abort: (status?:HttpStatus|HttpStatusCode) => void;
+    abort: (status?:HttpStatusCode) => void;
     fetch: (input: string | URL | globalThis.Request, init?: RequestInit) => Promise<Response>;
-    status: (status:HttpStatus|HttpStatusCode) => void;
+    status: (status:HttpStatusCode) => void;
     end: () => void|Response;
     addAfter: (fn: () => Promise<void>) => void;
     runAfter: () => void;

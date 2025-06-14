@@ -6,9 +6,9 @@ import {
 }  from '../../modules/Logger';
 import {type TriFrostContextConfig} from '../../types/context';
 import {
+    HttpCodeToStatus,
     HttpMethods,
     HttpMethodToNormal,
-    type HttpStatus,
     type HttpStatusCode,
 } from '../../types/constants';
 import {type TriFrostRouteMatch} from '../../types/routing';
@@ -219,9 +219,9 @@ export class UWSContext extends Context {
     /**
      * Abort the request
      *
-     * @param {HttpStatus|HttpStatusCode?} status - Status to abort with (defaults to 503)
+     * @param {HttpStatusCode?} status - Status to abort with (defaults to 503)
      */
-    abort (status?:HttpStatus|HttpStatusCode) {
+    abort (status?:HttpStatusCode) {
         if (this.isLocked) return;
 
         super.abort(status);
@@ -232,7 +232,7 @@ export class UWSContext extends Context {
 
             /* Write Response */
             this.#uws_res
-                .writeStatus(this.res_status)
+                .writeStatus(HttpCodeToStatus[this.res_code as HttpStatusCode])
                 .end();
         });
     }
@@ -247,7 +247,7 @@ export class UWSContext extends Context {
 
         this.#uws_res.cork(() => {
             /* Write status */
-            this.#uws_res.writeStatus(this.res_status);
+            this.#uws_res.writeStatus(HttpCodeToStatus[this.res_code as HttpStatusCode]);
 
             /* Write cookies */
             this.#writeCookies();

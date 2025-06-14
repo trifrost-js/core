@@ -6,7 +6,6 @@ export {
     Sym_TriFrostDescription,
     Sym_TriFrostFingerPrint,
     HttpStatuses,
-    HttpRedirectStatuses,
     MimeTypes
 } from './types/constants';
 

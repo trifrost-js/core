@@ -24,7 +24,6 @@ import {
     Sym_TriFrostFingerPrint,
     MimeTypes,
     HttpStatuses,
-    HttpRedirectStatuses,
 } from '../../lib/types/constants';
 import {App} from '../../lib/App';
 import {isDevMode} from '../../lib/utils/Generic';
@@ -39,10 +38,6 @@ describe('index', () => {
     describe('Constants', () => {
         it('HttpStatuses ', () => {
             expect(Index.HttpStatuses).toEqual(HttpStatuses);
-        });
-
-        it('HttpRedirectStatuses ', () => {
-            expect(Index.HttpRedirectStatuses).toEqual(HttpRedirectStatuses);
         });
 
         it('MimeTypes ', () => {
