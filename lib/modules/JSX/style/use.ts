@@ -384,7 +384,7 @@ type CssInstance <
      * Each value resolves to `var(--v-key)`.
      * @note this is an alias of var
      */
-	$v: {[K in keyof V]: VarVal<K & string>};
+    $v: {[K in keyof V]: VarVal<K & string>};
     /**
      * Token references for global design variables.
      * Each value resolves to `var(--v-key)`.
@@ -400,7 +400,7 @@ type CssInstance <
      * Token references for theme-adaptive values.
      * Each resolves to `var(--t-key)`, adapting to light/dark modes.
      */
-	theme: {[K in keyof T]: ThemeVal<K & string>};
+    theme: {[K in keyof T]: ThemeVal<K & string>};
     /**
      * Merges one or more registered definitions and/or raw style objects into a single style object.
      *
@@ -415,7 +415,7 @@ type CssInstance <
      * });
      * ```
      */
-	mix: (...args: (keyof R | Record<string, unknown>)[]) => Record<string, unknown>;
+    mix: (...args: (keyof R | Record<string, unknown> | null | undefined | false)[]) => Record<string, unknown>;
     /**
      * Applies one or more registered definitions (plus optional inline overrides) and returns a class name.
      *
@@ -427,7 +427,7 @@ type CssInstance <
      * return <div className={cls}>Card</div>;
      * ```
      */
-	use: (...args: (keyof R | Record<string, unknown>)[]) => string;
+    use: (...args: (keyof R | Record<string, unknown> | null | undefined | false)[]) => string;
     /**
      * Generates a unique, scoped class name with a `tf-` prefix. Useful for DOM targeting, etc
      *
@@ -669,14 +669,16 @@ export function createCss <
     };
 
     /* Use a definition or set of definitions and combine into single style object */
-    mod.mix = (...args: (keyof R | Record<string, unknown>)[]) => {
+    mod.mix = (...args: (keyof R | Record<string, unknown> | null | undefined | false)[]) => {
         const acc = [] as unknown as [Record<string, unknown>, ...Record<string, unknown>[]];
         for (let i = 0; i < args.length; i++) {
             const val = args[i];
-            if (typeof val === 'string' && val in definitions) {
-                acc.push(definitions[val]);
-            } else if (Object.prototype.toString.call(val) === '[object Object]') {
-                acc.push(val as Record<string, unknown>);
+            if (val) {
+                if (typeof val === 'string' && val in definitions) {
+                    acc.push(definitions[val]);
+                } else if (Object.prototype.toString.call(val) === '[object Object]') {
+                    acc.push(val as Record<string, unknown>);
+                }
             }
         }
         switch (acc.length) {
@@ -690,7 +692,7 @@ export function createCss <
     };
 
     /* Use a definition or set of definitions and register them with a classname*/
-    mod.use = (...args: (keyof R | Record<string, unknown>)[]) => mod(mod.mix(...args));
+    mod.use = (...args: (keyof R | Record<string, unknown> | null | undefined | false)[]) => mod(mod.mix(...args));
 
     /* Generates a unique classname */
     mod.cid = () => 'tf-' + hexId(8);

@@ -50,7 +50,7 @@ describe('Modules - JSX - style - use', () => {
                 border: undefined,
                 padding: '1rem',
             });
-        
+
             const html = engine.inject(`${MARKER}<div class="${cls}">Sanitized</div>`);
             expect(html).toBe(`<style>.${cls}{color:black;padding:1rem}</style><div class="${cls}">Sanitized</div>`);
         });
@@ -128,7 +128,7 @@ describe('Modules - JSX - style - use', () => {
                     ' span': {fontWeight: 'bold'},
                 },
             });
-        
+
             const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
             expect(html).toBe([
                 '<style>',
@@ -206,43 +206,43 @@ describe('Modules - JSX - style - use', () => {
             const html = engine.inject(`${MARKER}<div class="${cls}">BG</div>`);
             expect(html).toBe(`<style>.${cls}{background-image:url(/foo.png)}</style><div class="${cls}">BG</div>`);
         });
-        
+
         it('Preserves quotes for valid string literals like content', () => {
             const cls = css({content: '"TriFrost"'});
             const html = engine.inject(`${MARKER}<div class="${cls}">Quoted</div>`);
             expect(html).toBe(`<style>.${cls}{content:"TriFrost"}</style><div class="${cls}">Quoted</div>`);
         });
-        
+
         it('Strips quotes around url() if present', () => {
             const cls = css({backgroundImage: '\'url(/bg.png)\''});
             const html = engine.inject(`${MARKER}<div class="${cls}">BG</div>`);
             expect(html).toBe(`<style>.${cls}{background-image:url(/bg.png)}</style><div class="${cls}">BG</div>`);
         });
-        
+
         it('Strips quotes around calc(...) expressions', () => {
             const cls = css({width: '"calc(100% - 2rem)"'});
             const html = engine.inject(`${MARKER}<div class="${cls}">Layout</div>`);
             expect(html).toBe(`<style>.${cls}{width:calc(100% - 2rem)}</style><div class="${cls}">Layout</div>`);
         });
-        
+
         it('Strips quotes around var(...) tokens', () => {
             const cls = css({margin: '\'var(--space-md)\''});
             const html = engine.inject(`${MARKER}<div class="${cls}">Token</div>`);
             expect(html).toBe(`<style>.${cls}{margin:var(--space-md)}</style><div class="${cls}">Token</div>`);
         });
-        
+
         it('Strips quotes around nested functions like filter()', () => {
             const cls = css({filter: '\'blur(5px)\''});
             const html = engine.inject(`${MARKER}<div class="${cls}">Filter</div>`);
             expect(html).toBe(`<style>.${cls}{filter:blur(5px)}</style><div class="${cls}">Filter</div>`);
         });
-        
+
         it('Leaves other string literals untouched', () => {
             const cls = css({fontFamily: '"Helvetica, sans-serif"'});
             const html = engine.inject(`${MARKER}<div class="${cls}">Font</div>`);
             expect(html).toBe(`<style>.${cls}{font-family:"Helvetica, sans-serif"}</style><div class="${cls}">Font</div>`);
         });
-        
+
         it('Returns the same class for identical rule strings', () => {
             const cls1 = css({fontWeight: 'bold'});
             const cls2 = css({fontWeight: 'bold'});
@@ -262,7 +262,7 @@ describe('Modules - JSX - style - use', () => {
                 const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
                 expect(html).toBe(`<style>.${cls}:nth-child(2){font-weight:bold}</style><div class="${cls}">Test</div>`);
             });
-        
+
             it('Supports :nth-last-child(n)', () => {
                 const cls = css({
                     [css.nthLastChild(1)]: {
@@ -272,7 +272,7 @@ describe('Modules - JSX - style - use', () => {
                 const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
                 expect(html).toBe(`<style>.${cls}:nth-last-child(1){color:blue}</style><div class="${cls}">Test</div>`);
             });
-        
+
             it('Supports :nth-of-type(n)', () => {
                 const cls = css({
                     [css.nthOfType('3n+1')]: {
@@ -282,18 +282,18 @@ describe('Modules - JSX - style - use', () => {
                 const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
                 expect(html).toBe(`<style>.${cls}:nth-of-type(3n+1){font-style:italic}</style><div class="${cls}">Test</div>`);
             });
-        
+
             it('Supports :nth-last-of-type', () => {
                 const cls = css({
                     [css.nthLastOfType(2)]: {
                         borderBottom: '1px solid gray',
                     },
                 });
-            
+
                 const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
                 expect(html).toBe(`<style>.${cls}:nth-last-of-type(2){border-bottom:1px solid gray}</style><div class="${cls}">Test</div>`);
             });
-        
+
             it('Supports :not(selector)', () => {
                 const cls = css({
                     [css.not(':last-child')]: {
@@ -303,7 +303,7 @@ describe('Modules - JSX - style - use', () => {
                 const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
                 expect(html).toBe(`<style>.${cls}:not(:last-child){margin-bottom:1rem}</style><div class="${cls}">Test</div>`);
             });
-        
+
             it('Supports :is(selector)', () => {
                 const cls = css({
                     [css.is('a, button')]: {
@@ -313,18 +313,18 @@ describe('Modules - JSX - style - use', () => {
                 const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
                 expect(html).toBe(`<style>.${cls}:is(a, button){cursor:pointer}</style><div class="${cls}">Test</div>`);
             });
-        
+
             it('Supports :where(...)', () => {
                 const cls = css({
                     [css.where('section, article')]: {
                         lineHeight: 1.5,
                     },
                 });
-            
+
                 const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
                 expect(html).toBe(`<style>.${cls}:where(section, article){line-height:1.5}</style><div class="${cls}">Test</div>`);
             });
-        
+
             it('Supports :has(selector)', () => {
                 const cls = css({
                     [css.has('img')]: {
@@ -334,7 +334,7 @@ describe('Modules - JSX - style - use', () => {
                 const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
                 expect(html).toBe(`<style>.${cls}:has(img){display:flex}</style><div class="${cls}">Test</div>`);
             });
-        
+
             it('Supports :dir(ltr)', () => {
                 const cls = css({
                     [css.dir('ltr')]: {
@@ -344,7 +344,7 @@ describe('Modules - JSX - style - use', () => {
                 const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
                 expect(html).toBe(`<style>.${cls}:dir(ltr){padding-left:1rem}</style><div class="${cls}">Test</div>`);
             });
-        
+
             it('Works inside media queries', () => {
                 const cls = css({
                     fontSize: '1rem',
@@ -357,7 +357,7 @@ describe('Modules - JSX - style - use', () => {
                         },
                     },
                 });
-        
+
                 const html = engine.inject(`${MARKER}<div class="${cls}">Media</div>`);
                 expect(html).toBe([
                     '<style>',
@@ -370,7 +370,7 @@ describe('Modules - JSX - style - use', () => {
                     '<div class="tf-tipekr">Media</div>',
                 ].join(''));
             });
-        
+
             it('Works inside media queries with deeper nesting', () => {
                 const cls = css({
                     fontSize: '1rem',
@@ -382,7 +382,7 @@ describe('Modules - JSX - style - use', () => {
                         },
                     },
                 });
-            
+
                 const html = engine.inject(`${MARKER}<div class="${cls}">Nested</div>`);
                 expect(html).toBe([
                     '<style>',
@@ -399,7 +399,7 @@ describe('Modules - JSX - style - use', () => {
                 it('Injects nada if passed a non/empty object', () => {
                     for (const el of CONSTANTS.NOT_OBJECT_WITH_EMPTY) {
                         css.root(el as Record<string, unknown>);
-                
+
                         const html = engine.inject(`${MARKER}<div>Root Vars</div>`);
                         expect(html).toBe('<div>Root Vars</div>');
                     }
@@ -411,7 +411,7 @@ describe('Modules - JSX - style - use', () => {
                         '--color-primary': 'blue',
                         '--spacing': '1rem',
                     });
-                
+
                     const html = getActiveStyleEngine()!.inject(`${MARKER}<div>Root Vars</div>`);
                     expect(html).toBe('<style>:root{--color-primary:blue;--spacing:1rem}</style><div>Root Vars</div>');
                 });
@@ -421,7 +421,7 @@ describe('Modules - JSX - style - use', () => {
                         '--color-primary': 'blue',
                         '--spacing': '1rem',
                     });
-            
+
                     const html = engine.inject(`${MARKER}<div>Root Vars</div>`);
                     expect(html).toBe([
                         '<style>',
@@ -430,7 +430,7 @@ describe('Modules - JSX - style - use', () => {
                         '<div>Root Vars</div>',
                     ].join(''));
                 });
-            
+
                 it('Supports media queries with root-level variables', () => {
                     css.root({
                         '--color': 'black',
@@ -438,7 +438,7 @@ describe('Modules - JSX - style - use', () => {
                             '--color': 'white',
                         },
                     });
-            
+
                     const html = engine.inject(`${MARKER}<div>Media Root</div>`);
                     expect(html).toBe([
                         '<style>',
@@ -458,7 +458,7 @@ describe('Modules - JSX - style - use', () => {
                             '[data-enabled]': {opacity: '.5'},
                         },
                     });
-            
+
                     const html = engine.inject(`${MARKER}<div>Media Root</div>`);
                     expect(html).toBe([
                         '<style>',
@@ -472,7 +472,7 @@ describe('Modules - JSX - style - use', () => {
                         '<div>Media Root</div>',
                     ].join(''));
                 });
-            
+
                 it('can nest tag styles alongside root and media', () => {
                     css.root({
                         '--font-size': '14px',
@@ -489,7 +489,7 @@ describe('Modules - JSX - style - use', () => {
                             },
                         },
                     });
-            
+
                     const html = engine.inject(`${MARKER}<div>Nested Root</div>`);
                     expect(html).toBe([
                         '<style>',
@@ -507,7 +507,7 @@ describe('Modules - JSX - style - use', () => {
                     ].join(''));
                 });
             });
-        
+
             describe('combinations', () => {
                 it(':not() and :nth-child()', () => {
                     const cls = css({
@@ -516,7 +516,7 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div class="${cls}">List</div>`);
                     expect(html).toBe(`<style>.${cls}:not(:nth-child(1)){opacity:0.75}</style><div class="${cls}">List</div>`);
                 });
-                
+
                 it('Uses :is() inside :not()', () => {
                     const cls = css({
                         [css.not(css.is('a, button'))]: {color: 'gray'},
@@ -524,7 +524,7 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div class="${cls}">Filtered</div>`);
                     expect(html).toBe(`<style>.${cls}:not(:is(a, button)){color:gray}</style><div class="${cls}">Filtered</div>`);
                 });
-                
+
                 it('Uses :where() with :nth-last-child()', () => {
                     const cls = css({
                         [css.where(css.nthLastChild(2))]: {paddingBottom: '0.5rem'},
@@ -552,7 +552,7 @@ describe('Modules - JSX - style - use', () => {
                         `<div class="${cls}">Scoped</div>`,
                     ].join(''));
                 });
-                
+
                 it('Uses :dir() with media query', () => {
                     const cls = css({
                         [css.media.tabletOnly]: {
@@ -569,7 +569,7 @@ describe('Modules - JSX - style - use', () => {
                         `<div class="${cls}">RTL</div>`,
                     ].join(''));
                 });
-                
+
                 it(':nth-child() with :dir()', () => {
                     const cls = css({
                         [css.nthChild(3)]: {
@@ -579,7 +579,7 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div class="${cls}">Nested</div>`);
                     expect(html).toBe(`<style>.${cls}:nth-child(3):dir(ltr){margin-left:1rem}</style><div class="${cls}">Nested</div>`);
                 });
-                
+
                 it('Multiple combinators inside a media query', () => {
                     const cls = css({
                         [css.media.mobile]: {
@@ -598,7 +598,7 @@ describe('Modules - JSX - style - use', () => {
                         `<div class="${cls}">Combo</div>`,
                     ].join(''));
                 });
-        
+
                 it('Supports pseudo-classes and pseudo-elements', () => {
                     const cls = css({
                         color: 'black',
@@ -607,7 +607,7 @@ describe('Modules - JSX - style - use', () => {
                         [css.before]: {content: '">>"'},
                         [css.after]: {content: '"<<"'},
                     });
-        
+
                     const html = engine.inject(`${MARKER}<div class="${cls}">Fancy</div>`);
                     expect(html).toBe([
                         '<style>',
@@ -620,7 +620,7 @@ describe('Modules - JSX - style - use', () => {
                         `<div class="${cls}">Fancy</div>`,
                     ].join(''));
                 });
-        
+
                 it('Supports pseudo-classes inside media queries', () => {
                     const cls = css({
                         color: 'black',
@@ -629,7 +629,7 @@ describe('Modules - JSX - style - use', () => {
                             [css.focus]: {color: 'blue'},
                         },
                     });
-        
+
                     const html = engine.inject(`${MARKER}<div class="${cls}">Responsive</div>`);
                     expect(html).toBe([
                         '<style>',
@@ -642,7 +642,7 @@ describe('Modules - JSX - style - use', () => {
                         `<div class="${cls}">Responsive</div>`,
                     ].join(''));
                 });
-        
+
                 it('Combines attribute selectors with pseudo and media', () => {
                     const cls = css({
                         '[data-theme="light"]': {color: 'black'},
@@ -652,7 +652,7 @@ describe('Modules - JSX - style - use', () => {
                             },
                         },
                     });
-        
+
                     const html = engine.inject(`${MARKER}<div class="${cls}">Theme</div>`);
                     expect(html).toBe([
                         '<style>',
@@ -664,7 +664,7 @@ describe('Modules - JSX - style - use', () => {
                         `<div class="${cls}">Theme</div>`,
                     ].join(''));
                 });
-        
+
                 it('Supports multiple media queries with distinct style scopes', () => {
                     const cls = css({
                         fontSize: '1rem',
@@ -687,7 +687,7 @@ describe('Modules - JSX - style - use', () => {
                             padding: '1.5rem',
                         },
                     });
-            
+
                     const html = engine.inject(`${MARKER}<div class="${cls}">Multimedia</div>`);
                     expect(html).toBe([
                         '<style>',
@@ -711,9 +711,9 @@ describe('Modules - JSX - style - use', () => {
                 theme: {},
                 reset: false,
             });
-    
+
             css.root();
-    
+
             const html = engine.inject(`${MARKER}<div>Vars</div>`);
             expect(html).toBe([
                 '<style>',
@@ -734,9 +734,9 @@ describe('Modules - JSX - style - use', () => {
                 theme: {},
                 reset: false,
             });
-    
+
             css.root();
-    
+
             const html = engine.inject(`${MARKER}<div>Vars</div>`);
             expect(html).toBe([
                 '<style>',
@@ -757,7 +757,7 @@ describe('Modules - JSX - style - use', () => {
                 reset: false,
             })).toThrowError(/Theme token 'bg' is invalid, must either be a string or define both 'light' and 'dark' values/);
         });
-    
+
         it('Injects theme vars using media queries by default', () => {
             const css = createCss({
                 var: {},
@@ -767,9 +767,9 @@ describe('Modules - JSX - style - use', () => {
                 },
                 reset: false,
             });
-    
+
             css.root();
-    
+
             const html = engine.inject(`${MARKER}<div>Theme</div>`);
             expect(html).toBe([
                 '<style>',
@@ -779,7 +779,7 @@ describe('Modules - JSX - style - use', () => {
                 '<div>Theme</div>',
             ].join(''));
         });
-    
+
         it('Injects theme vars using data-theme attribute when themeAttribute is true', () => {
             const css = createCss({
                 var: {},
@@ -789,9 +789,9 @@ describe('Modules - JSX - style - use', () => {
                 reset: false,
                 themeAttribute: true,
             });
-    
+
             css.root();
-    
+
             const html = engine.inject(`${MARKER}<div>Attr Theme</div>`);
             expect(html).toBe([
                 '<style>',
@@ -818,9 +818,9 @@ describe('Modules - JSX - style - use', () => {
                 reset: false,
                 themeAttribute: true,
             });
-    
+
             css.root();
-    
+
             const html = engine.inject(`${MARKER}<div>Attr Theme</div>`);
             expect(html).toBe([
                 '<style>',
@@ -836,7 +836,7 @@ describe('Modules - JSX - style - use', () => {
                 '<div>Attr Theme</div>',
             ].join(''));
         });
-    
+
         it('Supports custom theme attribute names', () => {
             const css = createCss({
                 var: {},
@@ -844,12 +844,12 @@ describe('Modules - JSX - style - use', () => {
                 reset: false,
                 themeAttribute: 'data-mode',
             });
-    
+
             css.root();
-    
+
             const html = engine.inject(`${MARKER}<div>Mode Theme</div>`);
             expect(html).toBe([
-                '<style>',                
+                '<style>',
                 '@media (prefers-color-scheme: light){',
                 ':root[data-mode="dark"]{--t-border:white}',
                 ':root{--t-border:gray}',
@@ -862,16 +862,16 @@ describe('Modules - JSX - style - use', () => {
                 '<div>Mode Theme</div>',
             ].join(''));
         });
-    
+
         it('Injects reset styles when reset is true', () => {
             const css = createCss({
                 var: {},
                 theme: {},
                 reset: true,
             });
-    
+
             css.root();
-    
+
             expect(engine.inject(`${MARKER}<div>Reset</div>`)).toBe([
                 '<style>',
                 '*, *::before, *::after{box-sizing:border-box}',
@@ -886,19 +886,19 @@ describe('Modules - JSX - style - use', () => {
                 '<div>Reset</div>',
             ].join(''));
         });
-    
+
         it('Does not inject reset styles when reset is false', () => {
             const css = createCss({
                 var: {},
                 theme: {},
                 reset: false,
             });
-    
+
             css.root();
-    
+
             expect(engine.inject(`${MARKER}<div>No Reset</div>`)).toBe('<div>No Reset</div>');
         });
-    
+
         it('Deduplicates root injection per engine', () => {
             const css = createCss({
                 var: {spacing: '1rem'},
@@ -906,12 +906,12 @@ describe('Modules - JSX - style - use', () => {
                 reset: true,
                 themeAttribute: true,
             });
-    
+
             // Call root multiple times
             css.root();
             css.root();
             css.root();
-    
+
             expect(engine.inject(`${MARKER}<div>Once</div>`)).toBe([
                 '<style>',
                 '*, *::before, *::after{box-sizing:border-box}',
@@ -935,7 +935,7 @@ describe('Modules - JSX - style - use', () => {
                 '<div>Once</div>',
             ].join(''));
         });
-    
+
         it('Multiple configured instances coexist correctly', () => {
             const cssA = createCss({
                 var: {radius: '4px'},
@@ -947,10 +947,10 @@ describe('Modules - JSX - style - use', () => {
                 theme: {fg: {light: '#000', dark: '#fff'}},
                 reset: false,
             });
-    
+
             cssA.root();
             cssB.root();
-    
+
             expect(engine.inject(`${MARKER}<div>Multiple</div>`)).toBe([
                 '<style>',
                 ':root{--v-radius:4px}',
@@ -967,25 +967,25 @@ describe('Modules - JSX - style - use', () => {
                 '<div>Multiple</div>',
             ].join(''));
         });
-    
+
         it('Produces same class name for identical style objects across instances', () => {
             const style = {color: 'red', padding: '1rem'};
-    
+
             const css1 = createCss({var: {}, theme: {}, reset: false});
             const css2 = createCss({var: {}, theme: {}, reset: false});
-    
+
             const cls1 = css1(style);
             const cls2 = css2(style);
-    
+
             expect(cls1).toBe(cls2);
-    
+
             const html = engine.inject(`${MARKER}<div class="${cls1}">Test</div>`);
             expect(html).toBe(`<style>.${cls1}{color:red;padding:1rem}</style><div class="${cls1}">Test</div>`);
         });
 
         it('Supports deeply nested attribute selectors inside media queries', () => {
             const css = createCss({var: {}, theme: {}, reset: false});
-        
+
             const cls = css({
                 color: 'black',
                 ' [data-role="admin"]': {
@@ -995,7 +995,7 @@ describe('Modules - JSX - style - use', () => {
                     },
                 },
             });
-        
+
             expect(engine.inject(`${MARKER}<div class="${cls}">Deep</div>`)).toBe([
                 '<style>',
                 `.${cls} [data-role="admin"]{background-color:gray}`,
@@ -1007,14 +1007,14 @@ describe('Modules - JSX - style - use', () => {
                 `<div class="${cls}">Deep</div>`,
             ].join(''));
         });
-        
+
         it('Handles top-level attribute-only selectors', () => {
             const css = createCss({var: {}, theme: {}, reset: false});
-        
+
             const cls = css({
                 '[data-active="true"]': {backgroundColor: 'red'},
             });
-        
+
             expect(engine.inject(`${MARKER}<div class="${cls}">OnlyAttr</div>`)).toBe([
                 '<style>',
                 `.${cls}[data-active="true"]{background-color:red}`,
@@ -1030,11 +1030,11 @@ describe('Modules - JSX - style - use', () => {
                 reset: false,
                 themeAttribute: true,
             });
-        
+
             css.root({
                 html: {fontSize: '16px'},
             });
-        
+
             expect(engine.inject(`${MARKER}<div>Global</div>`)).toBe([
                 '<style>',
                 'html{font-size:16px}',
@@ -1051,8 +1051,8 @@ describe('Modules - JSX - style - use', () => {
                 '<div>Global</div>',
             ].join(''));
         });
-        
-        it('applies defined var() and theme() references inside css styles', () => {
+
+        it('Applies defined var() and theme() references inside css styles', () => {
             const css = createCss({
                 var: {
                     spacing_m: '1rem',
@@ -1065,18 +1065,18 @@ describe('Modules - JSX - style - use', () => {
                 reset: false,
                 themeAttribute: true,
             });
-        
+
             const cls = css({
                 backgroundColor: css.theme.bg,
                 color: css.theme.fg,
                 padding: css.var.spacing_m,
                 borderRadius: css.var.radius_s,
             });
-        
+
             css.root();
-        
+
             const html = engine.inject(`${MARKER}<div class="${cls}">Vars in Use</div>`);
-        
+
             expect(html).toBe([
                 '<style>',
                 '.tf-xlk7jb{background-color:var(--t-bg);color:var(--t-fg);padding:var(--v-spacing_m);border-radius:var(--v-radius_s)}',
@@ -1094,7 +1094,7 @@ describe('Modules - JSX - style - use', () => {
             ].join(''));
         });
 
-        it('has $t and $v aliases for theme and var', () => {
+        it('Has $t and $v aliases for theme and var', () => {
             const css = createCss({
                 var: {
                     spacing_m: '1rem',
@@ -1107,18 +1107,18 @@ describe('Modules - JSX - style - use', () => {
                 reset: false,
                 themeAttribute: true,
             });
-        
+
             const cls = css({
                 backgroundColor: css.$t.bg,
                 color: css.$t.fg,
                 padding: css.$v.spacing_m,
                 borderRadius: css.$v.radius_s,
             });
-        
+
             css.root();
-        
+
             const html = engine.inject(`${MARKER}<div class="${cls}">Vars in Use</div>`);
-        
+
             expect(html).toBe([
                 '<style>',
                 '.tf-xlk7jb{background-color:var(--t-bg);color:var(--t-fg);padding:var(--v-spacing_m);border-radius:var(--v-radius_s)}',
@@ -1186,7 +1186,7 @@ describe('Modules - JSX - style - use', () => {
                 }),
             });
             css.root();
-    
+
             const cls = css.use('base', 'padded');
             expect(engine.inject(`${MARKER}<div class="${cls}">Defined</div>`)).toBe([
                 '<style>',
@@ -1209,7 +1209,7 @@ describe('Modules - JSX - style - use', () => {
                     center: {justifyContent: 'center', alignItems: 'center'},
                 }),
             });
-    
+
             const mixed = css.mix('row', 'center', {gap: css.var.x});
             expect(mixed).toEqual({
                 display: 'flex',
@@ -1240,13 +1240,13 @@ describe('Modules - JSX - style - use', () => {
                     },
                 }),
             });
-        
+
             const mixed = css.mix('base', {
                 [css.media.mobile]: {
                     color: 'red',
                 },
             });
-        
+
             expect(mixed).toEqual({
                 padding: '1rem',
                 [css.media.mobile]: {
@@ -1255,7 +1255,7 @@ describe('Modules - JSX - style - use', () => {
                 },
             });
         });
-        
+
         it('mix() merges inline styles and registered definitions correctly', () => {
             const css = createCss({
                 var: {pad: '2rem'},
@@ -1266,42 +1266,42 @@ describe('Modules - JSX - style - use', () => {
                     },
                 }),
             });
-        
+
             const mixed = css.mix('card', {
                 padding: css.var.pad,
                 borderRadius: '12px',
             });
-        
+
             expect(mixed).toEqual({
                 background: 'white',
                 borderRadius: '12px',
                 padding: 'var(--v-pad)',
             });
         });
-        
+
         it('mix() union-merges multiple objects without losing any keys', () => {
             const css = createCss();
-        
+
             const mixed = css.mix(
                 {color: 'blue', fontSize: '1rem'},
                 {background: 'red'},
                 {color: 'green'}
             );
-        
+
             expect(mixed).toEqual({
                 color: 'green',
                 fontSize: '1rem',
                 background: 'red',
             });
         });
-        
+
         it('mix() skips string keys not found in definitions', () => {
             const css = createCss({
                 definitions: () => ({
                     good: {display: 'block'},
                 }),
             });
-        
+
             /* @ts-ignore */
             const mixed = css.mix('good', 'bad', {opacity: 0.5});
             expect(mixed).toEqual({
@@ -1309,7 +1309,22 @@ describe('Modules - JSX - style - use', () => {
                 opacity: 0.5,
             });
         });
-    
+
+        it('mix() skips falsy values like null, undefined, false', () => {
+            const css = createCss({
+                definitions: () => ({
+                    base: {padding: '1rem'},
+                    hidden: {display: 'none'},
+                }),
+            });
+
+            const mixed = css.mix('base', null, undefined, false, 'hidden');
+            expect(mixed).toEqual({
+                padding: '1rem',
+                display: 'none',
+            });
+        });
+
         it('use() returns class name for merged definitions', () => {
             const css = createCss({
                 var: {x: '1rem'},
@@ -1318,7 +1333,7 @@ describe('Modules - JSX - style - use', () => {
                     center: {justifyContent: 'center', alignItems: 'center'},
                 }),
             });
-    
+
             const cls = css.use('row', 'center', {gap: css.var.x});
             expect(cls).toMatch(/^tf-/);
             expect(engine.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe([
@@ -1326,6 +1341,26 @@ describe('Modules - JSX - style - use', () => {
                 '.tf-1v7zb4h{display:flex;flex-direction:row;justify-content:center;align-items:center;gap:var(--v-x)}',
                 '</style>',
                 '<div class="tf-1v7zb4h">Mix</div>',
+            ].join(''));
+        });
+
+        it('use() skips falsy values like null, undefined, false', () => {
+            const css = createCss({
+                definitions: () => ({
+                    base: {display: 'block'},
+                    active: {color: 'blue'},
+                }),
+            });
+
+            const cls = css.use('base', null, undefined, false, 'active');
+            expect(cls).toMatch(/^tf-/);
+
+            const html = engine.inject(`${MARKER}<div class="${cls}">Falsy</div>`);
+            expect(html).toBe([
+                '<style>',
+                `.${cls}{display:block;color:blue}`,
+                '</style>',
+                `<div class="${cls}">Falsy</div>`,
             ].join(''));
         });
 
@@ -1339,7 +1374,7 @@ describe('Modules - JSX - style - use', () => {
                 },
                 theme: {
                     bg: '#000',
-                    fg: '#fff',  
+                    fg: '#fff',
                 },
                 definitions: mod => ({
                     f: {display: 'flex'},
@@ -1369,7 +1404,7 @@ describe('Modules - JSX - style - use', () => {
                 }),
                 [css.media.tablet]: css.mix('sp_l', 'fj_sa', {' > span': css.mix('hide')}),
             });
-        
+
             expect(cls).toMatch(/^tf-/);
             expect(engine.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe([
                 '<style>',
@@ -1397,7 +1432,7 @@ describe('Modules - JSX - style - use', () => {
                 },
                 theme: {
                     bg: '#000',
-                    fg: '#fff',  
+                    fg: '#fff',
                 },
                 definitions: mod => ({
                     f: {display: 'flex'},
@@ -1428,7 +1463,7 @@ describe('Modules - JSX - style - use', () => {
                 /* @ts-ignore this is what we're testing */
                 [css.media.tablet]: css.mix('sp_l', 'fj_sa', {' > span': css.mix('hode')}),
             });
-        
+
             expect(cls).toMatch(/^tf-/);
             expect(engine.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe([
                 '<style>',
@@ -1458,7 +1493,7 @@ describe('Modules - JSX - style - use', () => {
                 },
                 theme: {
                     bg: '#000',
-                    fg: '#fff',  
+                    fg: '#fff',
                 },
                 definitions: mod => ({
                     f: {display: 'flex'},
@@ -1488,7 +1523,7 @@ describe('Modules - JSX - style - use', () => {
                 }),
                 [css.media.tablet]: css.mix('sp_l', 'fj_sa'),
             });
-        
+
             expect(cls).toMatch(/^tf-/);
             expect(getActiveStyleEngine()!.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe([
                 '<style>',
@@ -1515,7 +1550,7 @@ describe('Modules - JSX - style - use', () => {
                 },
                 theme: {
                     bg: '#000',
-                    fg: '#fff',  
+                    fg: '#fff',
                 },
                 definitions: mod => ({
                     f: {display: 'flex'},
@@ -1580,7 +1615,7 @@ describe('Modules - JSX - style - use', () => {
                 },
                 theme: {
                     bg: '#000',
-                    fg: '#fff',  
+                    fg: '#fff',
                 },
                 definitions: mod => ({
                     f: {display: 'flex'},
@@ -1621,7 +1656,7 @@ describe('Modules - JSX - style - use', () => {
                 expect(el).toBe(['<div class="tf-oupfrh">Mix</div>'].join(''));
             }
         });
-    
+
         it('cid() returns unique prefixed class', () => {
             const css = createCss();
             const id1 = css.cid();
@@ -1648,12 +1683,12 @@ describe('Modules - JSX - style - use', () => {
                         xl: '@media (max-width: 1280px)',
                     },
                 });
-            
+
                 expect(css.media.sm).toBe('@media (max-width: 640px)');
                 expect(css.media.md).toBe('@media (max-width: 768px)');
                 expect(css.media.lg).toBe('@media (max-width: 1024px)');
                 expect(css.media.xl).toBe('@media (max-width: 1280px)');
-            
+
                 /* Ensure fixed queries are still present */
                 expect(css.media.dark).toBe('@media (prefers-color-scheme: dark)');
                 expect(css.media.light).toBe('@media (prefers-color-scheme: light)');
@@ -1669,7 +1704,7 @@ describe('Modules - JSX - style - use', () => {
                         md: '@media (max-width: 768px)',
                     },
                 });
-            
+
                 const cls = css({
                     color: 'black',
                     [css.media.sm]: {
@@ -1679,7 +1714,7 @@ describe('Modules - JSX - style - use', () => {
                         color: 'blue',
                     },
                 });
-            
+
                 const html = engine.inject(`${MARKER}<div class="${cls}">Custom Breakpoints</div>`);
                 expect(html).toBe([
                     '<style>',
@@ -1694,15 +1729,15 @@ describe('Modules - JSX - style - use', () => {
                     `<div class="${cls}">Custom Breakpoints</div>`,
                 ].join(''));
             });
-            
+
             it('Keeps default breakpoints when no custom breakpoints are provided', () => {
                 const css = createCss();
-            
+
                 expect(css.media.mobile).toBe('@media (max-width: 600px)');
                 expect(css.media.tablet).toBe('@media (max-width: 1199px)');
                 expect(css.media.tabletOnly).toBe('@media (min-width: 601px) and (max-width: 1199px)');
                 expect(css.media.desktop).toBe('@media (min-width: 1200px)');
-            
+
                 /* Fixed ones still present */
                 expect(css.media.dark).toBe('@media (prefers-color-scheme: dark)');
             });
@@ -1710,18 +1745,18 @@ describe('Modules - JSX - style - use', () => {
 
         describe('selector normalization', () => {
             let css: ReturnType<typeof createCss>;
-        
+
             beforeEach(() => {
                 css = createCss();
             });
-            
+
             it('handles simple tag selectors', () => {
                 const cls = css({
                     h1: {fontSize: '2rem'},
                     section: {padding: '1rem'},
                     footer: {marginTop: '2rem'},
                 });
-        
+
                 const html = engine.inject(`${MARKER}<div class="${cls}">Tags</div>`);
                 expect(html).toBe([
                     '<style>',
@@ -1732,7 +1767,7 @@ describe('Modules - JSX - style - use', () => {
                     `<div class="${cls}">Tags</div>`,
                 ].join(''));
             });
-        
+
             it('handles nested tag selectors', () => {
                 const cls = css({
                     section: {
@@ -1740,7 +1775,7 @@ describe('Modules - JSX - style - use', () => {
                         p: {lineHeight: 1.4},
                     },
                 });
-        
+
                 const html = engine.inject(`${MARKER}<div class="${cls}">Nested Tags</div>`);
                 expect(html).toBe([
                     '<style>',
@@ -1750,14 +1785,14 @@ describe('Modules - JSX - style - use', () => {
                     `<div class="${cls}">Nested Tags</div>`,
                 ].join(''));
             });
-        
+
             it('handles combinators with tag selectors', () => {
                 const cls = css({
                     '> h1': {fontSize: '3rem'},
                     '+ p': {marginTop: '1rem'},
                     '~ ul': {listStyle: 'circle'},
                 });
-        
+
                 const html = engine.inject(`${MARKER}<div class="${cls}">Combinators</div>`);
                 expect(html).toBe([
                     '<style>',
@@ -1778,7 +1813,7 @@ describe('Modules - JSX - style - use', () => {
                         },
                     },
                 });
-        
+
                 const html = engine.inject(`${MARKER}<div class="${cls}">Nested Tags</div>`);
                 expect(html).toBe([
                     '<style>',
@@ -1788,7 +1823,7 @@ describe('Modules - JSX - style - use', () => {
                     `<div class="${cls}">Nested Tags</div>`,
                 ].join(''));
             });
-        
+
             it('combines known tags with pseudo classes', () => {
                 const cls = css({
                     a: {
@@ -1798,7 +1833,7 @@ describe('Modules - JSX - style - use', () => {
                         },
                     },
                 });
-        
+
                 const html = engine.inject(`${MARKER}<div class="${cls}">Pseudo Tags</div>`);
                 expect(html).toBe([
                     '<style>',
@@ -1808,7 +1843,7 @@ describe('Modules - JSX - style - use', () => {
                     `<div class="${cls}">Pseudo Tags</div>`,
                 ].join(''));
             });
-            
+
             it('auto-spaces HTML tag + pseudo class selectors', () => {
                 const cls = css({'div:hover': {opacity: 0.5}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">Hover</div>`);
@@ -1819,7 +1854,7 @@ describe('Modules - JSX - style - use', () => {
                     `<div class="${cls}">Hover</div>`,
                 ].join(''));
             });
-            
+
             it('auto-spaces HTML tag + class selector', () => {
                 const cls = css({'ul.list': {listStyle: 'disc'}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">List</div>`);
@@ -1830,7 +1865,7 @@ describe('Modules - JSX - style - use', () => {
                     `<div class="${cls}">List</div>`,
                 ].join(''));
             });
-            
+
             it('auto-spaces HTML tag + attribute selector', () => {
                 const cls = css({'a[href]': {textDecoration: 'underline'}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">Attr</div>`);
@@ -1841,7 +1876,7 @@ describe('Modules - JSX - style - use', () => {
                     `<div class="${cls}">Attr</div>`,
                 ].join(''));
             });
-            
+
             it('auto-spaces HTML tag + space selector', () => {
                 const cls = css({'nav a': {color: 'blue'}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">Nested</div>`);
@@ -1852,7 +1887,7 @@ describe('Modules - JSX - style - use', () => {
                     `<div class="${cls}">Nested</div>`,
                 ].join(''));
             });
-            
+
             it('does NOT auto-space #id when used alone', () => {
                 const cls = css({'#main': {display: 'grid'}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">ID</div>`);
@@ -1864,7 +1899,7 @@ describe('Modules - JSX - style - use', () => {
                     `<div class="${cls}">ID</div>`,
                 ].join(''));
             });
-            
+
             it('does NOT auto-space .class when used alone', () => {
                 const cls = css({'.box': {border: '1px solid'}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">Class</div>`);
@@ -1875,7 +1910,7 @@ describe('Modules - JSX - style - use', () => {
                     `<div class="${cls}">Class</div>`,
                 ].join(''));
             });
-            
+
             it('does NOT falsely match similar-looking non-tag selectors', () => {
                 const cls = css({inputy: {border: 'none'}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">Not Tag</div>`);
@@ -1886,7 +1921,7 @@ describe('Modules - JSX - style - use', () => {
                     `<div class="${cls}">Not Tag</div>`,
                 ].join(''));
             });
-            
+
             it('auto-spaces combinator >', () => {
                 const cls = css({'> p': {lineHeight: 1.2}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">Combinator</div>`);
@@ -1897,7 +1932,7 @@ describe('Modules - JSX - style - use', () => {
                     `<div class="${cls}">Combinator</div>`,
                 ].join(''));
             });
-            
+
             it('auto-spaces combinator +', () => {
                 const cls = css({'+ p': {marginTop: '1rem'}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">Combinator</div>`);
@@ -1908,7 +1943,7 @@ describe('Modules - JSX - style - use', () => {
                     `<div class="${cls}">Combinator</div>`,
                 ].join(''));
             });
-            
+
             it('auto-spaces combinator ~', () => {
                 const cls = css({'~ ul': {marginTop: '2rem'}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">Combinator</div>`);
@@ -1923,26 +1958,26 @@ describe('Modules - JSX - style - use', () => {
 
         describe('css.is', () => {
             let css: ReturnType<typeof createCss>;
-        
+
             beforeEach(() => {
                 css = createCss();
             });
-        
+
             it('handles multiple arguments cleanly', () => {
                 const selector = css.is('h1', 'h2', 'h3');
                 expect(selector).toBe(':is(h1, h2, h3)');
             });
-        
+
             it('trims and splits comma-joined strings', () => {
                 const selector = css.is('h1, h2', 'h3');
                 expect(selector).toBe(':is(h1, h2, h3)');
             });
-        
+
             it('allows single selector', () => {
                 const selector = css.is('h1');
                 expect(selector).toBe(':is(h1)');
             });
-        
+
             it('works in actual style declaration', () => {
                 const cls = css({
                     [` *${css.is('h1', 'h2', 'h3')}`]: {
@@ -1956,7 +1991,7 @@ describe('Modules - JSX - style - use', () => {
                     '<div class="tf-1b6zzds">Headers</div>',
                 ].join(''));
             });
-        
+
             it('works combined with combinators', () => {
                 const cls = css({
                     [`> ${css.is('h1', 'h2')}`]: {
@@ -1974,16 +2009,16 @@ describe('Modules - JSX - style - use', () => {
 
         describe('css.attr', () => {
             let css: ReturnType<typeof createCss>;
-        
+
             beforeEach(() => {
                 css = createCss();
             });
-        
+
             it('generates attribute equals selector with attr()', () => {
                 const cls = css({
                     [css.attr('data-active', true)]: {color: 'red'},
                 });
-        
+
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Equals</div>`)).toBe([
                     '<style>',
                     '.tf-1prf8nr[data-active="true"]{color:red}',
@@ -1991,12 +2026,12 @@ describe('Modules - JSX - style - use', () => {
                     '<div class="tf-1prf8nr">Attr Equals</div>',
                 ].join(''));
             });
-        
+
             it('generates attribute presence selector with attr()', () => {
                 const cls = css({
                     [css.attr('disabled')]: {opacity: 0.5},
                 });
-        
+
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Presence</div>`)).toBe([
                     '<style>',
                     '.tf-10d7b0h[disabled]{opacity:0.5}',
@@ -2004,12 +2039,12 @@ describe('Modules - JSX - style - use', () => {
                     '<div class="tf-10d7b0h">Attr Presence</div>',
                 ].join(''));
             });
-        
+
             it('generates starts-with attribute selector with attrStartsWith()', () => {
                 const cls = css({
                     [css.attrStartsWith('data-role', 'adm')]: {fontWeight: 'bold'},
                 });
-        
+
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Starts With</div>`)).toBe([
                     '<style>',
                     '.tf-1i3yt6f[data-role^="adm"]{font-weight:bold}',
@@ -2017,12 +2052,12 @@ describe('Modules - JSX - style - use', () => {
                     '<div class="tf-1i3yt6f">Attr Starts With</div>',
                 ].join(''));
             });
-        
+
             it('generates ends-with attribute selector with attrEndsWith()', () => {
                 const cls = css({
                     [css.attrEndsWith('data-id', '42')]: {opacity: 0.5},
                 });
-        
+
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Ends With</div>`)).toBe([
                     '<style>',
                     '.tf-qboq1q[data-id$="42"]{opacity:0.5}',
@@ -2030,12 +2065,12 @@ describe('Modules - JSX - style - use', () => {
                     '<div class="tf-qboq1q">Attr Ends With</div>',
                 ].join(''));
             });
-        
+
             it('generates contains attribute selector with attrContains()', () => {
                 const cls = css({
                     [css.attrContains('data-label', 'part')]: {textDecoration: 'underline'},
                 });
-        
+
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Contains</div>`)).toBe([
                     '<style>',
                     '.tf-9ofipt[data-label*="part"]{text-decoration:underline}',
@@ -2043,7 +2078,7 @@ describe('Modules - JSX - style - use', () => {
                     '<div class="tf-9ofipt">Attr Contains</div>',
                 ].join(''));
             });
-        
+
             it('allows combining multiple attr selectors', () => {
                 const cls = css({
                     [css.attr('data-active', true)]: {color: 'green'},
@@ -2051,7 +2086,7 @@ describe('Modules - JSX - style - use', () => {
                     [css.attrEndsWith('data-id', '42')]: {opacity: 0.5},
                     [css.attrContains('data-label', 'part')]: {textDecoration: 'underline'},
                 });
-        
+
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Combo</div>`)).toBe([
                     '<style>',
                     '.tf-ijybug[data-active="true"]{color:green}',
@@ -2067,22 +2102,22 @@ describe('Modules - JSX - style - use', () => {
 
     describe('keyframes', () => {
         let css: ReturnType<typeof createCss>;
-    
+
         beforeEach(() => {
             css = createCss();
         });
-    
+
         it('Registers a keyframe animation and injects it', () => {
             const drop = css.keyframes({
                 '0%': {top: '-50%', opacity: 1},
                 '60%': {top: '110%', opacity: 0},
                 '100%': {top: '110%', opacity: 0},
             });
-    
+
             const cls = css({
                 animation: `${drop} 10s infinite`,
             });
-    
+
             expect(engine.inject(`${MARKER}<div class="${cls}">Drop</div>`)).toBe([
                 '<style>',
                 '@keyframes kf-tf-i13zsv {',
@@ -2095,30 +2130,30 @@ describe('Modules - JSX - style - use', () => {
                 '<div class="tf-mr7948">Drop</div>',
             ].join(''));
         });
-    
+
         it('Reuses identical keyframe definitions', () => {
             const def = {
                 '0%': {opacity: 1},
                 '100%': {opacity: 0},
             };
-    
+
             const fade1 = css.keyframes(def);
             const fade2 = css.keyframes(def);
-    
+
             expect(fade1).toBe(fade2);
         });
-    
+
         it('Supports complex transforms in keyframes', () => {
             const slide = css.keyframes({
                 '0%': {transform: 'translateX(-100%)'},
                 '50%': {transform: 'translateX(0%)'},
                 '100%': {transform: 'translateX(100%)'},
             });
-    
+
             const cls = css({
                 animation: `${slide} 5s linear infinite`,
             });
-    
+
             expect(engine.inject(`${MARKER}<div class="${cls}">Slide</div>`)).toBe([
                 '<style>',
                 '@keyframes kf-tf-18k37kf {',
@@ -2131,18 +2166,18 @@ describe('Modules - JSX - style - use', () => {
                 '<div class="tf-1sstk66">Slide</div>',
             ].join(''));
         });
-    
+
         it('Supports multiple transform properties in keyframes', () => {
             const bounce = css.keyframes({
                 '0%': {transform: 'translateY(0px) scale(1)'},
                 '50%': {transform: 'translateY(-10px) scale(1.1)'},
                 '100%': {transform: 'translateY(0px) scale(1)'},
             });
-    
+
             const cls = css({
                 animation: `${bounce} 2s ease-in-out infinite`,
             });
-    
+
             expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe([
                 '<style>',
                 '@keyframes kf-tf-9boemd {',
@@ -2156,7 +2191,7 @@ describe('Modules - JSX - style - use', () => {
             ].join(''));
         });
 
-        it('Allows for nice curry blending', () => {    
+        it('Allows for nice curry blending', () => {
             const cls = css({
                 animation: `${css.keyframes({
                     '0%': {transform: 'translateY(0px) scale(1)'},
@@ -2164,7 +2199,7 @@ describe('Modules - JSX - style - use', () => {
                     '100%': {transform: 'translateY(0px) scale(1)'},
                 })} 2s ease-in-out infinite`,
             });
-    
+
             expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe([
                 '<style>',
                 '@keyframes kf-tf-9boemd {',
@@ -2178,7 +2213,7 @@ describe('Modules - JSX - style - use', () => {
             ].join(''));
         });
 
-        it('Plays nice with media queries', () => {    
+        it('Plays nice with media queries', () => {
             const cls = css({
                 [css.media.desktop]: {
                     animation: `${css.keyframes({
@@ -2195,7 +2230,7 @@ describe('Modules - JSX - style - use', () => {
                     })} 1s ease-in-out infinite`,
                 },
             });
-    
+
             expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe([
                 '<style>',
                 '@keyframes kf-tf-9boemd {',
@@ -2219,7 +2254,7 @@ describe('Modules - JSX - style - use', () => {
             ].join(''));
         });
 
-        it('Plays nice with media queries and does not inject the same keyframe twice', () => {    
+        it('Plays nice with media queries and does not inject the same keyframe twice', () => {
             const cls = css({
                 [css.media.desktop]: {
                     animation: `${css.keyframes({
@@ -2236,7 +2271,7 @@ describe('Modules - JSX - style - use', () => {
                     })} 1s ease-in-out infinite`,
                 },
             });
-    
+
             expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe([
                 '<style>',
                 '@keyframes kf-tf-9boemd {',
@@ -2254,18 +2289,18 @@ describe('Modules - JSX - style - use', () => {
                 '<div class="tf-728429">Bounce</div>',
             ].join(''));
         });
-    
+
         it('Does not inject when inject: false', () => {
             const pulse = css.keyframes({
                 '0%': {transform: 'scale(1)'},
                 '50%': {transform: 'scale(1.1)'},
                 '100%': {transform: 'scale(1)'},
             }, {inject: false});
-    
+
             const cls = css({
                 animation: `${pulse} 3s ease-in-out`,
             }, {inject: false});
-    
+
             expect(engine.inject(`${MARKER}<div class="${cls}">Pulse</div>`)).toBe(`<div class="${cls}">Pulse</div>`);
         });
 
@@ -2279,7 +2314,7 @@ describe('Modules - JSX - style - use', () => {
                 },
                 theme: {
                     bg: '#000',
-                    fg: '#fff',  
+                    fg: '#fff',
                 },
                 definitions: mod => ({
                     f: {display: 'flex'},
