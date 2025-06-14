@@ -58,6 +58,8 @@ const ESCAPE_LOOKUP = {
 } as const;
 
 const RGX_ESCAPE = /(?:&(?![a-z#0-9]+;))|[<>"']/gi;
+const RGX_TRIFROST_ENV = /["']__TRIFROST_ENV__\.([a-zA-Z0-9_]+)["']/g;
+const RGX_TRIFROST_STATE = /["']__TRIFROST_STATE__\.([a-zA-Z0-9_]+)("|')/g;
 
 /**
  * Escape HTML entities in strings to prevent XSS attacks.
@@ -178,11 +180,27 @@ export function rootRender <
     setActiveNonce(ctx.nonce);
 
     /* Render jsx to html */
-    const html = style_engine.inject(render(tree));
+    let html = style_engine.inject(render(tree));
 
     /* Cleanup globals */
     setActiveNonce(null);
     setActiveStyleEngine(null);
+
+    /* Run env marker replacements */
+    if (html.indexOf('__TRIFROST_ENV__.') >= 0) {
+        html = html.replace(RGX_TRIFROST_ENV, (_, key:keyof Env) => {
+            if (!(key in ctx.env)) return '""';
+            return JSON.stringify(ctx.env[key]);
+        });
+    }
+
+    /* Run state marker replacements */
+    if (html.indexOf('__TRIFROST_STATE__.') >= 0) {
+        html = html.replace(RGX_TRIFROST_STATE, (_, key:keyof State) => {
+            if (!(key in ctx.state)) return '""';
+            return JSON.stringify(ctx.state[key]);
+        });
+    }
 
     return html;
 }

@@ -16,6 +16,20 @@ import {Script} from '@trifrost/core';
   console.log("Hello from TriFrost");
 }}</Script>
 ```
+- **feat**: Support for `__TRIFROST_ENV__.<key>` and `__TRIFROST_STATE__.<key>` replacements in both inline scripts and styles. This allows environment config and request-specific state to influence SSR-rendered behavior/theming/etc.
+```tsx
+<Script>{() => {
+  console.log("env:", "__TRIFROST_ENV__.APP_ENV");
+  console.log("locale:", "__TRIFROST_STATE__.locale");
+}}</Script>
+
+/* Renders as */
+<script>
+  console.log("env:", "production");
+  console.log("locale:", "en");
+</script>
+```
+
 ### Improved
 - **dx**: `css.use` and `css.mix` now gracefully ignore `null`, `undefined`, and `false` values for cleaner conditional composition.
 ```typescript

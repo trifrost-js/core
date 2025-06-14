@@ -406,5 +406,118 @@ describe('Modules - JSX - Renderer', () => {
             // after render, calling nonce again should throw
             expect(() => nonce()).toThrowError('No active nonce is set');
         });
+
+        it('Replaces TRIFROST_ENV markers inside inline script', () => {
+            const Component = () => ({
+                type: 'script',
+                props: {
+                    dangerouslySetInnerHTML: {
+                        __html: 'console.log("env:", "__TRIFROST_ENV__.APP_NAME");',
+                    },
+                },
+            });
+
+            const ctx = new MockContext({
+                env: {APP_NAME: 'TriFrost'},
+            });
+
+            const html = rootRender(ctx, {type: Component, props: {}});
+            expect(html).toBe('<script>console.log("env:", "TriFrost");</script>');
+        });
+
+        it('Replaces TRIFROST_STATE markers inside inline script', () => {
+            const Component = () => ({
+                type: 'script',
+                props: {
+                    dangerouslySetInnerHTML: {
+                        __html: 'console.log("locale:", "__TRIFROST_STATE__.locale");',
+                    },
+                },
+            });
+
+            const ctx = new MockContext({
+                state: {locale: 'en'},
+            });
+
+            const html = rootRender(ctx, {type: Component, props: {}});
+            expect(html).toBe('<script>console.log("locale:", "en");</script>');
+        });
+
+        it('Handles both ENV and STATE replacements in one go', () => {
+            const Component = () => ({
+                type: 'script',
+                props: {
+                    dangerouslySetInnerHTML: {
+                        __html: 'console.log("env:", "__TRIFROST_ENV__.APP_NAME");console.log("locale:", "__TRIFROST_STATE__.locale");',
+                    },
+                },
+            });
+
+            const ctx = new MockContext({
+                env: {APP_NAME: 'TriFrost'},
+                state: {locale: 'en-US'},
+            });
+
+            const html = rootRender(ctx, {type: Component, props: {}});
+            expect(html).toBe('<script>console.log("env:", "TriFrost");console.log("locale:", "en-US");</script>');
+        });
+
+        it('Defaults missing env/state values to empty strings', () => {
+            const Component = () => ({
+                type: 'script',
+                props: {
+                    dangerouslySetInnerHTML: {
+                        __html: 'console.log("__TRIFROST_ENV__.MISSING", "__TRIFROST_STATE__.missing");',
+                    },
+                },
+            });
+
+            const ctx = new MockContext();
+
+            const html = rootRender(ctx, {type: Component, props: {}});
+            expect(html).toBe('<script>console.log("", "");</script>');
+        });
+
+        it('Replaces env/state values with correct JSON types', () => {
+            const Component = () => ({
+                type: 'script',
+                props: {
+                    dangerouslySetInnerHTML: {
+                        __html: 'console.log("__TRIFROST_ENV__.ENABLED","__TRIFROST_STATE__.count");',
+                    },
+                },
+            });
+
+            const ctx = new MockContext({
+                env: {ENABLED: true},
+                state: {count: 42},
+            });
+
+            const html = rootRender(ctx, {type: Component, props: {}});
+            expect(html).toBe('<script>console.log(true,42);</script>');
+        });
+
+        it('Replaces env/state values with correct JSON types even if they are rich', () => {
+            const Component = () => ({
+                type: 'script',
+                props: {
+                    dangerouslySetInnerHTML: {
+                        __html: `
+                            console.log("__TRIFROST_ENV__.ENABLED", "__TRIFROST_STATE__.list");
+                            const globalSettings = "__TRIFROST_STATE__.settings";
+                        `.trim(),
+                    },
+                },
+            });
+
+            const ctx = new MockContext({
+                env: {ENABLED: true},
+                state: {list: [{name: 'Peter'}, {name: 'Bob'}], settings: {something: true, somethingElse: false}},
+            });
+
+            const html = rootRender(ctx, {type: Component, props: {}});
+            expect(html).toBe(`<script>console.log(true, [{"name":"Peter"},{"name":"Bob"}]);
+                            const globalSettings = {"something":true,"somethingElse":false};</script>`);
+        });
     });
 });
