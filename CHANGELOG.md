@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **feat**: `<Script>` JSX component for safe and ergonomic inline or external script injection. Supports automatic nonce injection, inline function-style scripts via `() => { ... }` (or `{...}`), external scripts via `src`, `async`, `defer`, and `type` attributes and built-in minification of inline content.
+```tsx
+import {Script} from '@trifrost/core';
+...
+
+<Script async src="https://example.com/analytics.js" />
+<Script>{() => {
+  console.log("Hello from TriFrost");
+}}</Script>
+```
 ### Improved
 - **dx**: `css.use` and `css.mix` now gracefully ignore `null`, `undefined`, and `false` values for cleaner conditional composition.
 ```typescript

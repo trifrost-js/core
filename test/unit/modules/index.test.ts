@@ -4,6 +4,8 @@ import {ConsoleExporter, JsonExporter, OtelHttpExporter} from '../../../lib/modu
 import {RateLimitKeyGeneratorRegistry} from '../../../lib/modules/RateLimit/_RateLimit';
 import {createCss} from '../../../lib/modules/JSX/style/use';
 import {Style} from '../../../lib/modules/JSX/style/Style';
+import {Script} from '../../../lib/modules/JSX/script/Script';
+import {nonce} from '../../../lib/modules/JSX/nonce/index';
 import * as Modules from '../../../lib/modules';
 
 describe('Modules - Index', () => {
@@ -30,6 +32,18 @@ describe('Modules - Index', () => {
     describe('Style', () => {
         it('Should link to the correct module', () => {
             expect(Modules.Style).toEqual(Style);
+        });
+    });
+
+    describe('Script', () => {
+        it('Should link to the correct module', () => {
+            expect(Modules.Script).toEqual(Script);
+        });
+    });
+
+    describe('nonce', () => {
+        it('Should link to the correct module', () => {
+            expect(Modules.nonce).toEqual(nonce);
         });
     });
 

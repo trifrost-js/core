@@ -57,7 +57,7 @@ const ESCAPE_LOOKUP = {
     '\'': '&#39;',
 } as const;
 
-const ESCAPE_REGEX = /(?:&(?![a-z#0-9]+;))|[<>"']/gi;
+const RGX_ESCAPE = /(?:&(?![a-z#0-9]+;))|[<>"']/gi;
 
 /**
  * Escape HTML entities in strings to prevent XSS attacks.
@@ -65,7 +65,7 @@ const ESCAPE_REGEX = /(?:&(?![a-z#0-9]+;))|[<>"']/gi;
  * @param {string} str - Input string to escape.
  */
 export function escape (str:string):string {
-    return str.replace(ESCAPE_REGEX, (ch:string) => ESCAPE_LOOKUP[ch as keyof typeof ESCAPE_LOOKUP]);
+    return str.replace(RGX_ESCAPE, (ch:string) => ESCAPE_LOOKUP[ch as keyof typeof ESCAPE_LOOKUP]);
 }
 
 /**
@@ -169,7 +169,10 @@ export function render (node: JSXElement | string | number | boolean | null): st
 /**
  * Starts the render process for a JSX element
  */
-export function rootRender (ctx:TriFrostContext, tree:JSXElement):string {
+export function rootRender <
+    Env extends Record<string, any>,
+    State extends Record<string, unknown>
+> (ctx:TriFrostContext<Env, State>, tree:JSXElement):string {
     /* Instantiate globals */
     const style_engine = getActiveStyleEngine() || setActiveStyleEngine(new StyleEngine());
     setActiveNonce(ctx.nonce);

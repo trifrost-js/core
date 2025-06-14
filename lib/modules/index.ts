@@ -7,3 +7,5 @@ export {
     OtelHttpExporter
 } from './Logger';
 export * from './JSX/style';
+export * from './JSX/script';
+export * from './JSX/nonce';

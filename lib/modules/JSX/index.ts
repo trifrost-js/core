@@ -4,6 +4,10 @@ export {
 } from './types';
 
 export {
+    Script
+} from './script';
+
+export {
     Style,
     createCss
 } from './style';

@@ -711,7 +711,7 @@ export abstract class Context <
             if (!this.res_headers['Content-Type']) this.res_headers['Content-Type'] = MimeTypes.HTML;
 
             /* Render html */
-            let html = typeof body === 'string' ? body : rootRender(this, body);
+            let html = typeof body === 'string' ? body : rootRender<Env, State>(this, body);
 
             /* Auto-prepend <!DOCTYPE html> if starts with <html */
             html = html.trimStart();

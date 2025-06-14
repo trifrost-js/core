@@ -36,6 +36,7 @@ export {
 export {
     createCss,
     Style,
+    Script,
     nonce,
     type JSXElement
 } from './modules/JSX';
