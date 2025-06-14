@@ -5,8 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+This release brings an upgrade to TriFrost’s SSR and client-side scripting experience with a powerful new `<Script>` component. 
+
+Designed for security, ergonomics, and dynamic control, combined with new support for `__TRIFROST_ENV__` and `__TRIFROST_STATE__` interpolation, this opens the door to cleaner SSR logic, secure script injection, and fully dynamic per-request behavior.
+
 ### Added
-- **feat**: `<Script>` JSX component for safe and ergonomic inline or external script injection. Supports automatic nonce injection, inline function-style scripts via `() => { ... }` (or `{...}`), external scripts via `src`, `async`, `defer`, and `type` attributes and built-in minification of inline content.
+- **feat**: `<Script>` JSX component for safe and ergonomic inline or external script injection. Automatic nonce injection (for CSP), inline function-style scripts via `() => { ... }` (or `{...}`), external scripts via `src`, `async`, `defer`, and `type` attributes and built-in minification of inline content.
 ```tsx
 import {Script} from '@trifrost/core';
 ...
@@ -19,15 +23,32 @@ import {Script} from '@trifrost/core';
 - **feat**: Support for `__TRIFROST_ENV__.<key>` and `__TRIFROST_STATE__.<key>` replacements in both inline scripts and styles. This allows environment config and request-specific state to influence SSR-rendered behavior/theming/etc.
 ```tsx
 <Script>{() => {
+  const settings = "__TRIFROST_STATE__.settings";
   console.log("env:", "__TRIFROST_ENV__.APP_ENV");
-  console.log("locale:", "__TRIFROST_STATE__.locale");
 }}</Script>
 
 /* Renders as */
 <script>
+  const settings = {locale: "en", active: true, count: 42};
   console.log("env:", "production");
-  console.log("locale:", "en");
 </script>
+```
+
+Example from the TriFrost website:
+```tsx
+/* Before */
+<script nonce={nonce()} dangerouslySetInnerHTML={{__html: `(function () {
+  const saved = localStorage.getItem('trifrost-theme');
+  const preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', saved || preferred);
+})()`}} />
+
+/* Now */
+<Script>{() => {
+  const saved = localStorage.getItem('trifrost-theme');
+  const preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', saved || preferred);
+}}</Script>
 ```
 
 ### Improved
@@ -35,6 +56,12 @@ import {Script} from '@trifrost/core';
 ```typescript
 const cls = css.use('button', isActive && 'active', isDisabled ? {opacity: 0.5} : null);
 ```
+
+---
+
+TriFrost’s new `<Script>` component and environment-aware replacements provide a clean, safe way to handle scripts in SSR with minimal boilerplate and maximum clarity. A small addition, but one that smooths out a very real part of building dynamic apps.
+
+Stay frosty ❄️
 
 ## [0.32.0] - 2025-06-13
 This release further streamlines how app identity and debug state are defined across all runtimes, moving away from config-based declarations to **standardized environment-driven metadata**.
