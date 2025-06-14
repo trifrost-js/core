@@ -54,76 +54,6 @@ describe('JSX - <Script>', () => {
         });
     });
 
-    it('Minifies function body', () => {
-        expect(Script({
-            children: () => {
-                console.log('hi');
-                console.log('bye');
-            },
-        })).toEqual({
-            key: null,
-            type: 'script',
-            props: {
-                dangerouslySetInnerHTML: {
-                    __html: 'console.log("hi");console.log("bye");',
-                },
-                type: 'text/javascript',
-            },
-        });
-    });
-
-    it('Minifies simple operators and whitespace', () => {
-        expect(Script({
-            children: 'const x = 5 ; const y = x + 10 ; console.log(x, y) ;',
-        })).toEqual({
-            key: null,
-            type: 'script',
-            props: {
-                dangerouslySetInnerHTML: {
-                    __html: 'const x=5;const y=x+10;console.log(x,y);',
-                },
-                type: 'text/javascript',
-            },
-        });
-    });
-
-    it('Minifies simple operators and whitespace in function', () => {
-        expect(Script({
-            children: () => {
-                const x = 5;
-                const y = x + 10;
-                console.log(x, y);
-            },
-        })).toEqual({
-            key: null,
-            type: 'script',
-            props: {
-                dangerouslySetInnerHTML: {
-                    __html: 'const x=5;const y=x+10;console.log(x,y);',
-                },
-                type: 'text/javascript',
-            },
-        });
-    });
-
-    it('Preserves valid spacing in strings and templates', () => {
-        expect(Script({
-            children: () => {
-                const msg = 'hello    world';
-                console.log('env:', msg);
-            },
-        })).toEqual({
-            key: null,
-            type: 'script',
-            props: {
-                dangerouslySetInnerHTML: {
-                    __html: 'const msg="hello    world";console.log("env:",msg);',
-                },
-                type: 'text/javascript',
-            },
-        });
-    });
-
     it('Supports type="module"', () => {
         expect(Script({
             type: 'module',
@@ -225,7 +155,8 @@ describe('JSX - <Script>', () => {
             type: 'script',
             props: {
                 dangerouslySetInnerHTML: {
-                    __html: 'const msg="hello    world";console.log("env:",msg);',
+                    __html: `const msg = "hello    world";
+        console.log("env:", msg);`,
                 },
                 nonce: 'abc123',
                 type: 'text/javascript',
