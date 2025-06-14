@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.33.1] - 2025-06-14
+### Improved
+- **feat**: Removed the minification behavior in the new `<Script>` component, flagged by CodeQL as a potential performance hog and in hindsight could have side effects as well.
+
 ## [0.33.0] - 2025-06-14
 This release brings an upgrade to TriFrost’s SSR and client-side scripting experience with a powerful new `<Script>` component. 
 
