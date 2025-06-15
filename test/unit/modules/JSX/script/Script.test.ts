@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable no-console */
 
 import {describe, it, expect, afterEach} from 'vitest';
@@ -32,7 +33,7 @@ describe('JSX - <Script>', () => {
             type: 'script',
             props: {
                 dangerouslySetInnerHTML: {
-                    __html: 'console.log("Hello TriFrost");',
+                    __html: '(function(node){console.log("Hello TriFrost");})(document.currentScript.parentElement);',
                 },
                 type: 'text/javascript',
             },
@@ -47,7 +48,7 @@ describe('JSX - <Script>', () => {
             type: 'script',
             props: {
                 dangerouslySetInnerHTML: {
-                    __html: 'console.log("inline raw")',
+                    __html: '(function(node){console.log("inline raw")})(document.currentScript.parentElement);',
                 },
                 type: 'text/javascript',
             },
@@ -63,7 +64,7 @@ describe('JSX - <Script>', () => {
             type: 'script',
             props: {
                 dangerouslySetInnerHTML: {
-                    __html: 'console.log("module");',
+                    __html: '(function(node){console.log("module");})(document.currentScript.parentElement);',
                 },
                 type: 'module',
             },
@@ -135,7 +136,7 @@ describe('JSX - <Script>', () => {
             type: 'script',
             props: {
                 dangerouslySetInnerHTML: {
-                    __html: 'console.log("inline raw")',
+                    __html: '(function(node){console.log("inline raw")})(document.currentScript.parentElement);',
                 },
                 nonce: 'abc123',
                 type: 'text/javascript',
@@ -155,8 +156,27 @@ describe('JSX - <Script>', () => {
             type: 'script',
             props: {
                 dangerouslySetInnerHTML: {
-                    __html: `const msg = "hello    world";
-        console.log("env:", msg);`,
+                    __html: `(function(node){const msg = "hello    world";
+        console.log("env:", msg);})(document.currentScript.parentElement);`,
+                },
+                nonce: 'abc123',
+                type: 'text/javascript',
+            },
+        });
+    });
+
+    it('Make use of the name we gave our element', () => {
+        setActiveNonce('abc123');
+        expect(Script({
+            children: (rootEntry:HTMLElement) => {
+                rootEntry.addEventListener('click', () => console.log('hello world'));
+            },
+        })).toEqual({
+            key: null,
+            type: 'script',
+            props: {
+                dangerouslySetInnerHTML: {
+                    __html: '(function(rootEntry){rootEntry.addEventListener("click", () => console.log("hello world"));})(document.currentScript.parentElement);',
                 },
                 nonce: 'abc123',
                 type: 'text/javascript',

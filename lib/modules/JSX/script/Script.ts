@@ -10,6 +10,8 @@ type ScriptProps = {
   type?: string;
 };
 
+const RGX_PARAM = /^\(?\s*([a-zA-Z_$][\w$]*)\s*\)?\s*=>/;
+
 export function Script (options:ScriptProps):JSXElement {
     if (Object.prototype.toString.call(options) !== '[object Object]') return null as unknown as JSXElement;
 
@@ -42,16 +44,29 @@ export function Script (options:ScriptProps):JSXElement {
     if (src) return {type: 'script', props, key: null};
 
 	/* Determine body */
+    let body:string;
+    let param = 'node';
     if (typeof options.children === 'function') {
         const raw = options.children.toString();
+
+        /* Our closure looks like (something) => { ... }, as such we get name the end-user gave the first param */
+        const match = raw.match(RGX_PARAM);
+        if (match) param = match[1];
+
+        /* Our closure looks like (node) => { ... }, as such we get the first index of { and then slice and dice */
         const start = raw.indexOf('{');
-		/* Our closure looks like () => { ... }, as such we get the first index of { and then slice and dice */
-        props.dangerouslySetInnerHTML = {__html: raw.slice(start + 1, -1).trim()};
+        body = raw.slice(start + 1, -1).trim();
     } else if (typeof options.children === 'string') {
-        props.dangerouslySetInnerHTML = {__html: options.children.trim()};
+        body = options.children.trim();
     } else {
         return null as unknown as JSXElement;
     }
+
+    props.dangerouslySetInnerHTML = {__html: [
+        '(function(' + param + '){',
+        body,
+        '})(document.currentScript.parentElement);',
+    ].join('')};
 
     return {type: 'script', props, key: null};
 }
