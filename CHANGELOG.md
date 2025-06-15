@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.33.3] - 2025-06-15
+This release brings additional polish to the new `<Script>` component introduced in `0.33.0`, focused on ergonomic inlining and dynamic parent binding.
+
+### Improved
+- **feat**: `<Script>` now strips out `__name(...)` tooling artifact wrapper.
+
+Build tools like `SWC`, `Terser`, or `esbuild` (especially with React Fast Refresh or dev mode optimizations) may inject metadata helpers like:
+```typescript
+const load = /* @__PURE__ */ __name(async () => {
+  // your logic
+}, "load");
+```
+
+These wrappers are **not defined in the browser** and will throw `ReferenceError: __name is not defined` if not removed.
+
+The `<Script>` component now automatically sanitizes them from inline function bodies to ensure clean, executable output:
+<Script>{(el: HTMLElement) => {
+  const load = async () => {
+    // safe even if tooling added __name()
+    console.log('loading...');
+  };
+  el.addEventListener('click', load);
+}}</Script>
+
+
 ## [0.33.2] - 2025-06-15
 This release brings additional polish to the new `<Script>` component introduced in `0.33.0`, focused on ergonomic inlining and dynamic parent binding.
 
