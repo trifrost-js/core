@@ -12,6 +12,8 @@ type ScriptProps = {
 
 const RGX_PARAM_CLEANER = /[()]/g;
 const RGX_PARAM_VALID = /^[a-zA-Z_$][\w$]*$/;
+const RGX_ASYNC_FATARROW = /__name\((async\s*\([^)]*\)\s*=>\s*{[\s\S]*?})\s*,\s*"[^"]*"\)/g;
+const RGX_ASYNC_FUNCTION = /^\s*__name\([^)]*\);\s*$/gm;
 
 export function Script (options:ScriptProps):JSXElement {
     if (Object.prototype.toString.call(options) !== '[object Object]') return null as unknown as JSXElement;
@@ -60,9 +62,14 @@ export function Script (options:ScriptProps):JSXElement {
 
         /* Our closure looks like (node) => { ... }, as such we get the first index of { and then slice and dice */
         const start = raw.indexOf('{');
-        body = raw.slice(start + 1, -1).trim();
+        body = raw
+            .slice(start + 1, -1)
+            .replace(RGX_ASYNC_FATARROW, '$1')
+            .replace(RGX_ASYNC_FUNCTION, '')
+            .trim();
     } else if (typeof options.children === 'string') {
-        body = options.children.trim();
+        body = options.children
+            .trim();
     } else {
         return null as unknown as JSXElement;
     }

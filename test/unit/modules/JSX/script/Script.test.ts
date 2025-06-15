@@ -1,5 +1,4 @@
-/* eslint-disable max-len */
-/* eslint-disable no-console */
+/* eslint-disable max-len, no-console */
 
 import {describe, it, expect, afterEach} from 'vitest';
 import {Script} from '../../../../../lib/modules/JSX/script/Script';
@@ -229,5 +228,144 @@ describe('JSX - <Script>', () => {
                 },
             });
         }
+    });
+
+    describe('<Script> - function body serialization', () => {
+        it('Extracts single parameter name from fat arrow', () => {
+            expect(Script({
+                children: (foo: HTMLElement) => {
+                    console.log(foo);
+                },
+            })).toEqual({
+                key: null,
+                props: {
+                    dangerouslySetInnerHTML: {
+                        __html: '(function(foo){console.log(foo);}).call(document.currentScript.parentElement, document.currentScript.parentElement);',
+                    },
+                    type: 'text/javascript',
+                },
+                type: 'script',
+            });
+        });
+
+        it('Falls back to "node" if invalid param format', () => {
+            const fn = Object.assign(() => {}, {toString: () => '() => { console.log("no param") }'});
+            expect(Script({children: fn})).toEqual({
+                key: null,
+                props: {
+                    dangerouslySetInnerHTML: {
+                        __html: '(function(node){console.log("no param")}).call(document.currentScript.parentElement, document.currentScript.parentElement);',
+                    },
+                    type: 'text/javascript',
+                },
+                type: 'script',
+            });
+        });
+
+        it('Strips __name() wrapper for async fat arrow', () => {
+            expect(Script({
+                children: (el: HTMLElement) => {
+                    const load = async () => {
+                        console.log(el);
+                    };
+                    el.addEventListener('click', load);
+                },
+            })).toEqual({
+                key: null,
+                props: {
+                    dangerouslySetInnerHTML: {
+                        __html: `(function(el){const load = async () => {
+            console.log(el);
+          };
+          el.addEventListener("click", load);}).call(document.currentScript.parentElement, document.currentScript.parentElement);`,
+                    },
+                    type: 'text/javascript',
+                },
+                type: 'script',
+            });
+        });
+
+        it('Strips __name() wrapper for async function declaration', () => {
+            const fn = Object.assign(() => {}, {
+                toString: () => `
+                    (el) => {
+                        async function load () {
+                            console.log(el);
+                        };
+                        __name(load, "load");
+                        el.addEventListener('click', load);
+                    }
+                `,
+            });
+            expect(Script({children: fn})).toEqual({
+                key: null,
+                props: {
+                    dangerouslySetInnerHTML: {
+                        __html: `(function(el){async function load () {
+                            console.log(el);
+                        };
+
+                        el.addEventListener('click', load);
+                    }}).call(document.currentScript.parentElement, document.currentScript.parentElement);`,
+                    },
+                    type: 'text/javascript',
+                },
+                type: 'script',
+            });
+        });
+
+        it('Skips if children is not string or function', () => {
+            expect(Script({children: 42 as any})).toBe(null);
+        });
+
+        it('Skips extraction if no arrow function present', () => {
+            const fn = Object.assign(() => {}, {toString: () => '{ console.log("manual fn") }'});
+            expect(Script({children: fn})).toEqual({
+                key: null,
+                props: {
+                    dangerouslySetInnerHTML: {
+                        __html: '(function(node){console.log("manual fn")}).call(document.currentScript.parentElement, document.currentScript.parentElement);',
+                    },
+                    type: 'text/javascript',
+                },
+                type: 'script',
+            });
+        });
+
+        it('Accepts and preserves raw string body', () => {
+            expect(Script({children: 'console.log("hi")'})).toEqual({
+                key: null,
+                props: {
+                    dangerouslySetInnerHTML: {
+                        __html: '(function(node){console.log("hi")}).call(document.currentScript.parentElement, document.currentScript.parentElement);',
+                    },
+                    type: 'text/javascript',
+                },
+                type: 'script',
+            });
+        });
+
+        it('Preserves formatting if no __name or async is present', () => {
+            expect(Script({
+                children: (node: HTMLElement) => {
+                    function greet () {
+                        console.log('hi');
+                    }
+                    node.addEventListener('click', greet);
+                },
+            })).toEqual({
+                key: null,
+                props: {
+                    dangerouslySetInnerHTML: {
+                        __html: `(function(node){function greet() {
+            console.log("hi");
+          }
+          node.addEventListener("click", greet);}).call(document.currentScript.parentElement, document.currentScript.parentElement);`,
+                    },
+                    type: 'text/javascript',
+                },
+                type: 'script',
+            });
+        });
     });
 });
