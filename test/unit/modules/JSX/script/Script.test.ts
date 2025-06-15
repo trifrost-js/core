@@ -184,6 +184,27 @@ describe('JSX - <Script>', () => {
         });
     });
 
+    it('Falls back to default param when arrow function is malformed', () => {
+        const fn = function badFormat () {
+            console.log('non-arrow function');
+        };
+
+        expect(Script({children: fn})).toEqual({
+            key: null,
+            type: 'script',
+            props: {
+                dangerouslySetInnerHTML: {
+                    __html: [
+                        '(function(node){',
+                        'console.log("non-arrow function");',
+                        '}).call(document.currentScript.parentElement, document.currentScript.parentElement);',
+                    ].join(''),
+                },
+                type: 'text/javascript',
+            },
+        });
+    });
+
     it('Returns null when given a non/empty-object input', () => {
         for (const el of CONSTANTS.NOT_OBJECT_WITH_EMPTY) {
             expect(Script(el as any)).toBe(null);

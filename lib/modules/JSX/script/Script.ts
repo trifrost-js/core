@@ -10,7 +10,8 @@ type ScriptProps = {
   type?: string;
 };
 
-const RGX_PARAM = /^\(?\s*([a-zA-Z_$][\w$]*)\s*\)?\s*=>/;
+const RGX_PARAM_CLEANER = /[()]/g;
+const RGX_PARAM_VALID = /^[a-zA-Z_$][\w$]*$/;
 
 export function Script (options:ScriptProps):JSXElement {
     if (Object.prototype.toString.call(options) !== '[object Object]') return null as unknown as JSXElement;
@@ -50,8 +51,12 @@ export function Script (options:ScriptProps):JSXElement {
         const raw = options.children.toString();
 
         /* Our closure looks like (something) => { ... }, as such we get name the end-user gave the first param */
-        const match = raw.match(RGX_PARAM);
-        if (match) param = match[1];
+        const arrow_idx = raw.indexOf('=>');
+        if (arrow_idx > -1) {
+            const paramStr = raw.slice(0, arrow_idx).trim();
+            const cleaned = paramStr.replace(RGX_PARAM_CLEANER, '').trim();
+            if (cleaned.length && RGX_PARAM_VALID.test(cleaned)) param = cleaned;
+        }
 
         /* Our closure looks like (node) => { ... }, as such we get the first index of { and then slice and dice */
         const start = raw.indexOf('{');
