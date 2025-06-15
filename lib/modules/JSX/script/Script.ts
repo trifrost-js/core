@@ -65,7 +65,7 @@ export function Script (options:ScriptProps):JSXElement {
     props.dangerouslySetInnerHTML = {__html: [
         '(function(' + param + '){',
         body,
-        '})(document.currentScript.parentElement);',
+        '}).call(document.currentScript.parentElement, document.currentScript.parentElement);',
     ].join('')};
 
     return {type: 'script', props, key: null};

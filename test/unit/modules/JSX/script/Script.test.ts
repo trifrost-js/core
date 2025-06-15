@@ -33,7 +33,7 @@ describe('JSX - <Script>', () => {
             type: 'script',
             props: {
                 dangerouslySetInnerHTML: {
-                    __html: '(function(node){console.log("Hello TriFrost");})(document.currentScript.parentElement);',
+                    __html: '(function(node){console.log("Hello TriFrost");}).call(document.currentScript.parentElement, document.currentScript.parentElement);',
                 },
                 type: 'text/javascript',
             },
@@ -48,7 +48,7 @@ describe('JSX - <Script>', () => {
             type: 'script',
             props: {
                 dangerouslySetInnerHTML: {
-                    __html: '(function(node){console.log("inline raw")})(document.currentScript.parentElement);',
+                    __html: '(function(node){console.log("inline raw")}).call(document.currentScript.parentElement, document.currentScript.parentElement);',
                 },
                 type: 'text/javascript',
             },
@@ -64,7 +64,7 @@ describe('JSX - <Script>', () => {
             type: 'script',
             props: {
                 dangerouslySetInnerHTML: {
-                    __html: '(function(node){console.log("module");})(document.currentScript.parentElement);',
+                    __html: '(function(node){console.log("module");}).call(document.currentScript.parentElement, document.currentScript.parentElement);',
                 },
                 type: 'module',
             },
@@ -136,7 +136,7 @@ describe('JSX - <Script>', () => {
             type: 'script',
             props: {
                 dangerouslySetInnerHTML: {
-                    __html: '(function(node){console.log("inline raw")})(document.currentScript.parentElement);',
+                    __html: '(function(node){console.log("inline raw")}).call(document.currentScript.parentElement, document.currentScript.parentElement);',
                 },
                 nonce: 'abc123',
                 type: 'text/javascript',
@@ -157,7 +157,7 @@ describe('JSX - <Script>', () => {
             props: {
                 dangerouslySetInnerHTML: {
                     __html: `(function(node){const msg = "hello    world";
-        console.log("env:", msg);})(document.currentScript.parentElement);`,
+        console.log("env:", msg);}).call(document.currentScript.parentElement, document.currentScript.parentElement);`,
                 },
                 nonce: 'abc123',
                 type: 'text/javascript',
@@ -176,7 +176,7 @@ describe('JSX - <Script>', () => {
             type: 'script',
             props: {
                 dangerouslySetInnerHTML: {
-                    __html: '(function(rootEntry){rootEntry.addEventListener("click", () => console.log("hello world"));})(document.currentScript.parentElement);',
+                    __html: '(function(rootEntry){rootEntry.addEventListener("click", () => console.log("hello world"));}).call(document.currentScript.parentElement, document.currentScript.parentElement);',
                 },
                 nonce: 'abc123',
                 type: 'text/javascript',
