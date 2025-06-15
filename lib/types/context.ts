@@ -125,7 +125,7 @@ export type TriFrostContext<
 
     init: (match:TriFrostRouteMatch<Env>, handler?:(config:TriFrostBodyParserOptions|null)=>Promise<ParsedBody|null>) => Promise<void>;
     abort: (status?:HttpStatusCode) => void;
-    fetch: (input: string | URL | globalThis.Request, init?: RequestInit) => Promise<Response>;
+    fetch: (input: string | URL, init?: RequestInit) => Promise<Response>;
     status: (status:HttpStatusCode) => void;
     end: () => void|Response;
     addAfter: (fn: () => Promise<void>) => void;

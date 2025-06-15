@@ -552,12 +552,12 @@ export abstract class Context <
     }
 
     /**
-     * Runs a fetch request and automatically appends the request id
+     * Runs a fetch request and automatically appends the request id as well as spans.
      *
-     * @param {RequestInfo} input
+     * @param {string|URL} input
      * @param {RequestInit} init
      */
-    async fetch (input: string | URL | globalThis.Request, init: RequestInit = {}): Promise<Response> {
+    async fetch (input: string | URL, init: RequestInit = {}): Promise<Response> {
         const url = typeof input === 'string' ? input : input.toString();
         const method = init?.method || 'GET';
 

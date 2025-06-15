@@ -1,8 +1,9 @@
+/* eslint-disable max-statements */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-useless-constructor */
 /* eslint-disable class-methods-use-this */
 
-import {describe, it, expect, vi, beforeEach} from 'vitest';
+import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {HttpMethods} from '../../lib/types/constants';
 import {hexId} from '../../lib/utils/Generic';
 import {Context, IP_HEADER_CANDIDATES} from '../../lib/Context';
@@ -184,6 +185,274 @@ describe('Context', () => {
             });
             expect(c2.query.get('foo')).toBe('bar');
             expect(c2.query.get('baz')).toBe('1');
+        });
+    });
+
+    describe('isInitialized', () => {
+        it('Returns false by default', () => {
+            expect(ctx.isInitialized).toBe(false);
+        });
+
+        it('Returns true after init()', async () => {
+            await ctx.init({
+                /* @ts-ignore */
+                route: {name: 'test', kind: 'std', bodyParser: null},
+                params: {},
+            }, async () => ({}));
+            expect(ctx.isInitialized).toBe(true);
+        });
+    });
+
+    describe('isDone', () => {
+        it('Returns false initially', () => {
+            expect(ctx.isDone).toBe(false);
+        });
+
+        it('Returns true after end()', () => {
+            ctx.end();
+            expect(ctx.isDone).toBe(true);
+        });
+    });
+
+    describe('isAborted', () => {
+        it('Returns false initially', () => {
+            expect(ctx.isAborted).toBe(false);
+        });
+
+        it('Returns true after abort()', () => {
+            ctx.abort(500);
+            expect(ctx.isAborted).toBe(true);
+        });
+    });
+
+    describe('isLocked', () => {
+        it('Is false by default', () => {
+            expect(ctx.isLocked).toBe(false);
+        });
+
+        it('Is true if aborted', () => {
+            ctx.abort();
+            expect(ctx.isLocked).toBe(true);
+        });
+
+        it('Is true if done', () => {
+            ctx.end();
+            expect(ctx.isLocked).toBe(true);
+        });
+    });
+
+    describe('env', () => {
+        it('Returns the config environment', () => {
+            expect(ctx.env).toBe(baseEnv);
+        });
+    });
+
+    describe('method', () => {
+        it('Returns the request method', () => {
+            expect(ctx.method).toBe(baseRequest.method);
+        });
+    });
+
+    describe('name', () => {
+        it('Defaults to "unknown"', () => {
+            expect(ctx.name).toBe('unknown');
+        });
+
+        it('Reflects value set in init()', async () => {
+            await ctx.init({
+                /* @ts-ignore */
+                route: {name: 'cool', kind: 'std', bodyParser: null},
+                params: {},
+            }, async () => ({}));
+            expect(ctx.name).toBe('cool');
+        });
+    });
+
+    describe('kind', () => {
+        it('Defaults to "std"', () => {
+            expect(ctx.kind).toBe('std');
+        });
+
+        it('Reflects kind set in init()', async () => {
+            await ctx.init({
+                /* @ts-ignore */
+                route: {name: 'x', kind: 'health', bodyParser: null},
+                params: {},
+            }, async () => ({}));
+            expect(ctx.kind).toBe('health');
+        });
+    });
+
+    describe('path', () => {
+        it('Returns the request path', () => {
+            expect(ctx.path).toBe(baseRequest.path);
+        });
+    });
+
+    describe('nonce', () => {
+        it('Returns nonce from state if defined', () => {
+            ctx.setState({nonce: 'state-level-nonce'});
+            expect(ctx.nonce).toBe('state-level-nonce');
+        });
+
+        it('Falls back to requestId-based btoa encoding', () => {
+            ctx.setState({});
+            const expected = btoa(ctx.requestId);
+            expect(ctx.nonce).toBe(expected);
+        });
+
+        it('Caches fallback nonce after computing', () => {
+            ctx.setState({});
+            const nonce1 = ctx.nonce;
+            const nonce2 = ctx.nonce;
+            expect(nonce2).toBe(nonce1);
+        });
+    });
+
+    describe('host', () => {
+        it('Prefers request.headers.host', () => {
+            expect(ctx.host).toBe('localhost');
+        });
+
+        it('Falls back to config host if missing in headers', () => {
+            const cfgWithFallbackHost = {...baseConfig, host: 'fallback.example'};
+            const reqWithoutHost = {...baseRequest, headers: {}};
+            const ctx2 = new TestContext(mockLogger as any, cfgWithFallbackHost as any, reqWithoutHost);
+            expect(ctx2.host).toBe('fallback.example');
+        });
+
+        it('Returns null if both header and config host are missing', () => {
+            const ctx3 = new TestContext(mockLogger as any, {...baseConfig, host: undefined} as any, {
+                ...baseRequest,
+                headers: {},
+            });
+            expect(ctx3.host).toBe(null);
+        });
+    });
+
+    describe('fetch()', () => {
+        const originalFetch = globalThis.fetch;
+
+        beforeEach(() => {
+            globalThis.fetch = vi.fn();
+            ctx.logger.setAttributes = vi.fn();
+            ctx.logger.span = vi.fn((_, fn) => fn());
+        });
+
+        afterEach(() => {
+            globalThis.fetch = originalFetch;
+        });
+
+        it('Performs a basic fetch with default method', async () => {
+            const mockResponse = new Response('ok', {status: 200});
+            (globalThis.fetch as any).mockResolvedValue(mockResponse);
+
+            const res = await ctx.fetch('https://api.example.com/data');
+
+            expect(globalThis.fetch).toHaveBeenCalledWith('https://api.example.com/data', expect.any(Object));
+            expect(res.status).toBe(200);
+            expect(ctx.logger.setAttributes).toHaveBeenCalledWith(expect.objectContaining({
+                'http.method': 'GET',
+                'http.url': 'https://api.example.com/data',
+                'http.status_code': 200,
+                'otel.status_code': 'OK',
+                'span.kind': 'client',
+            }));
+        });
+
+        it('Injects requestId into outbound headers if configured', async () => {
+            const configWithOutbound = {
+                ...baseConfig,
+                requestId: {
+                    inbound: ['x-request-id'],
+                    outbound: 'x-request-id',
+                },
+            };
+
+            const ctx2 = new TestContext(mockLogger as any, configWithOutbound as any, baseRequest);
+            const mockRes = new Response('yo', {status: 201});
+            (globalThis.fetch as any).mockResolvedValue(mockRes);
+
+            const res = await ctx2.fetch('https://test.io/data');
+            const [url, init] = (globalThis.fetch as any).mock.calls[0];
+
+            expect(url).toBe('https://test.io/data');
+            expect((init.headers as Headers).get('x-request-id')).toBe(ctx2.requestId);
+            expect(res.status).toBe(201);
+        });
+
+        it('Supports custom method and payload', async () => {
+            const resMock = new Response('ok', {status: 202});
+            (globalThis.fetch as any).mockResolvedValue(resMock);
+
+            await ctx.fetch('https://api.example.com/post', {
+                method: 'POST',
+                body: JSON.stringify({a: 1}),
+            });
+
+            const [, init] = (globalThis.fetch as any).mock.calls[0];
+            expect(init.method).toBe('POST');
+            expect(init.body).toBe(JSON.stringify({a: 1}));
+        });
+
+        it('Logs and rethrows fetch errors', async () => {
+            const err = new Error('network fail');
+            (globalThis.fetch as any).mockRejectedValue(err);
+            ctx.logger.error = vi.fn();
+
+            await expect(ctx.fetch('https://broken')).rejects.toThrow('network fail');
+
+            expect(ctx.logger.error).toHaveBeenCalledWith(err);
+            expect(ctx.logger.setAttributes).toHaveBeenCalledWith(expect.objectContaining({
+                'http.method': 'GET',
+                'http.url': 'https://broken',
+                'otel.status_code': 'ERROR',
+            }));
+        });
+
+        it('Uses logger.span to wrap fetch', async () => {
+            const mockResponse = new Response('span-ok', {status: 200});
+            (globalThis.fetch as any).mockResolvedValue(mockResponse);
+
+            ctx.logger.span = vi.fn((label, fn) => {
+                expect(label).toMatch(/fetch GET https:\/\/api.example.com/);
+                return fn();
+            });
+
+            const res = await ctx.fetch('https://api.example.com/data');
+            expect(res.status).toBe(200);
+        });
+
+        it('Handles non-string Request inputs via toString()', async () => {
+            const mockRes = new Response('done', {status: 201});
+            (globalThis.fetch as any).mockResolvedValue(mockRes);
+
+            const url = new URL('https://api.example.com/alt');
+            const res = await ctx.fetch(url, {method: 'PUT'});
+
+            expect(globalThis.fetch).toHaveBeenCalledWith(url, {
+                method: 'PUT',
+            });
+            expect(res.status).toBe(201);
+            expect(ctx.logger.setAttributes).toHaveBeenCalledWith(expect.objectContaining({
+                'http.url': 'https://api.example.com/alt',
+                'http.method': 'PUT',
+                'http.status_code': 201,
+                'otel.status_code': 'OK',
+                'span.kind': 'client',
+            }));
+        });
+
+        it('Sets otel.status_code to ERROR for 500+ responses', async () => {
+            const mockRes = new Response('fail', {status: 503});
+            (globalThis.fetch as any).mockResolvedValue(mockRes);
+
+            await ctx.fetch('https://api.example.com/fail');
+
+            expect(ctx.logger.setAttributes).toHaveBeenCalledWith(expect.objectContaining({
+                'http.status_code': 503,
+                'otel.status_code': 'ERROR',
+            }));
         });
     });
 
