@@ -4,6 +4,40 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.33.2] - 2025-06-15
+This release brings additional polish to the new `<Script>` component introduced in `0.33.0`, focused on ergonomic inlining and dynamic parent binding.
+
+### Improved
+- **feat**: Inline `<Script>` content is now scoped via a **bound IIFE** — [learn what an IIFE is](https://developer.mozilla.org/en-US/docs/Glossary/IIFE). This ensures safe execution and prevents global leaks.
+- **feat**: `document.currentScript.parentElement` is passed as the first argument, allowing your inline scripts to access their container element naturally.
+- **dx**: The function parameter name (e.g., `el` or `node`) is **automatically extracted** and reused inside the wrapper, no awkward destructuring or magic strings required.
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250614.0
+- **deps**: Upgrade @valkyriestudios/utils to 12.42.0
+- **deps**: Upgrade eslint to 9.29.0
+
+This means your inline scripts can reference their surrounding DOM element with zero boilerplate:
+```tsx
+<button type="button">
+  Toggle Theme
+  <Script>{(el:HTMLElement) => {
+    /* el here is the button */
+    el.addEventListener('click', () => {
+      ...
+    });
+  }}</Script>
+</button>
+```
+
+---
+
+**Some Notes**:
+- Scripts are wrapped in an **IIFE (Immediately Invoked Function Expression)** to isolate scope and prevent global leaks.
+- `nonce` is still **automatically injected** via the `nonce()` utility when omitted, ensuring full compatibility with **CSP** (`script-src 'nonce-...'`) policies. **No manual steps required.**
+
+Ergonomic, scoped, and secure, TriFrost’s `<Script>` now lets you express dynamic behavior without context juggling or CSP headaches.
+
+As always, stay frosty ❄️
+
 ## [0.33.1] - 2025-06-14
 ### Improved
 - **feat**: Removed the minification behavior in the new `<Script>` component, flagged by CodeQL as a potential performance hog and in hindsight could have side effects as well.
