@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.34.0] - 2025-06-16
 This release continues on the `<Script>` foundation introduced in TriFrost `0.33.0` and brings a powerful under-the-hood upgrade. A **Script Engine**, focused on ergonomic interactivity, seamless deduplication, and zero-config data inlining as well as some new utils for easier dx.
 
 ### Added
@@ -34,7 +34,7 @@ export function DebugBar () {
 }
 ```
 
-Example combining `data/env()/state()`: 
+Example combining `data/env()/state()`:
 ```tsx
 import {env, state} from '@trifrost/core/modules/JSX';
 
@@ -134,7 +134,7 @@ As always, stay frosty ❄️
 - **feat**: Removed the minification behavior in the new `<Script>` component, flagged by CodeQL as a potential performance hog and in hindsight could have side effects as well.
 
 ## [0.33.0] - 2025-06-14
-This release brings an upgrade to TriFrost’s SSR and client-side scripting experience with a powerful new `<Script>` component. 
+This release brings an upgrade to TriFrost’s SSR and client-side scripting experience with a powerful new `<Script>` component.
 
 Designed for security, ergonomics, and dynamic control, combined with new support for `__TRIFROST_ENV__` and `__TRIFROST_STATE__` interpolation, this opens the door to cleaner SSR logic, secure script injection, and fully dynamic per-request behavior.
 
