@@ -1,5 +1,4 @@
 export {
-    type JSXElement,
     type JSXProps,
     type JSXFragment
 } from './types';

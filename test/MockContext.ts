@@ -19,7 +19,6 @@ import {
 import {Cookies} from '../lib/modules/Cookies';
 import {type TriFrostCache} from '../lib/modules/Cache';
 import {Logger, type TriFrostLogger} from '../lib/modules/Logger';
-import {type JSXElement} from '../lib/modules/JSX';
 import {MemoryCache} from '../lib/storage/Memory';
 import {hexId} from '../lib/utils/Generic';
 import {TriFrostBodyParserOptions, type ParsedBody} from '../lib/utils/BodyParser/types';
@@ -167,7 +166,7 @@ export class MockContext<
     runAfter: () => void;
 
     json = (_body?: Record<string, unknown>|unknown[], _opts?:TriFrostContextResponseOptions): void => {};
-    html = (_body?: string|JSXElement, _opts?:TriFrostContextResponseOptions): void => {};
+    html = (_body?: string|any, _opts?:TriFrostContextResponseOptions): void => {};
     text = (_body: string, _opts?:TriFrostContextResponseOptions): void => {};
     redirect = (_to: string, _opts?:TriFrostContextRedirectOptions): void => {};
     file = async (_path: string, _opts?:TriFrostContextFileOptions): Promise<void> => {};

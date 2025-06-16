@@ -2,7 +2,6 @@
 
 import {type TriFrostCache} from './modules/Cache';
 import {Cookies} from './modules/Cookies';
-import {type JSXElement} from './modules/JSX';
 import {rootRender} from './modules/JSX/render';
 import {
     type TriFrostLogger,
@@ -680,7 +679,7 @@ export abstract class Context <
     /**
      * Respond with HTML
      */
-    html (body:string|JSXElement = '', opts?:TriFrostContextResponseOptions):void {
+    html (body:string|JSX.Element = '', opts?:TriFrostContextResponseOptions):void {
         try {
             /* Ensure we dont double write */
             if (this.isLocked) throw new Error('Context@html: Cannot modify a finalized response');

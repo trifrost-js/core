@@ -1,7 +1,7 @@
 /* eslint-disable no-underscore-dangle,no-use-before-define */
 
 import {type TriFrostContext} from '../../types/context';
-import {type JSXProps, type JSXElement} from './types';
+import {type JSXProps} from './types';
 import {Fragment} from './runtime';
 import {StyleEngine} from './style/Engine';
 import {setActiveStyleEngine, getActiveStyleEngine} from './style/use';
@@ -123,7 +123,7 @@ function renderChildren (
  * Renders a JSXElement or primitive to a string.
  * @param node - JSX tree or primitive.
  */
-export function render (node:JSXElement|string|number|boolean|null, parentProps:JSXProps = {}):string {
+export function render (node:JSX.Element|string|number|boolean|null, parentProps:JSXProps = {}):string {
     switch (typeof node) {
         case 'string': return node ? escape(node) : '';
         case 'number': return node + '';
@@ -131,19 +131,19 @@ export function render (node:JSXElement|string|number|boolean|null, parentProps:
         default: {
             switch (typeof node?.type) {
                 case 'string': {
-                    const tag = (node as JSXElement).type;
+                    const tag = (node as JSX.Element).type;
                     if (tag === SCRIPT_MARKER) {
-                        if (node.props.fn_id) {
-                            parentProps['data-tfhf'] = node.props.fn_id;
-                            if (node.props.data_id) parentProps['data-tfhd'] = node.props.data_id;
+                        if (node.props!.fn_id) {
+                            parentProps['data-tfhf'] = node.props!.fn_id;
+                            if (node.props!.data_id) parentProps['data-tfhd'] = node.props!.data_id;
                         }
                         return ''; /* Dont render the marker */
                     }
 
                     /* Render children */
-                    const innerHTML = typeof node.props.dangerouslySetInnerHTML?.__html === 'string'
-                        ? node.props.dangerouslySetInnerHTML!.__html
-                        : renderChildren(node.props.children, node.props);
+                    const innerHTML = typeof node.props!.dangerouslySetInnerHTML?.__html === 'string'
+                        ? node.props!.dangerouslySetInnerHTML!.__html
+                        : renderChildren(node.props!.children, node.props!);
 
                     const out = VOID_TAGS[tag as keyof typeof VOID_TAGS]
                         ? '<' + tag + renderProps(node.props) + ' />'
@@ -152,8 +152,8 @@ export function render (node:JSXElement|string|number|boolean|null, parentProps:
                     return out;
                 }
                 case 'function':
-                    return (node as JSXElement).type === Fragment
-                        ? renderChildren(node.props.children as JSXElement|string|number|boolean|null, parentProps)
+                    return (node as JSX.Element).type === Fragment
+                        ? renderChildren(node.props!.children as JSX.Element|string|number|boolean|null, parentProps)
                         : render((node.type as any)(node.props), parentProps);
                 default: {
                     if (!node) {
@@ -177,7 +177,7 @@ export function render (node:JSXElement|string|number|boolean|null, parentProps:
 export function rootRender <
     Env extends Record<string, any>,
     State extends Record<string, unknown>
-> (ctx:TriFrostContext<Env, State>, tree:JSXElement):string {
+> (ctx:TriFrostContext<Env, State>, tree:JSX.Element):string {
     /* Instantiate globals */
     const style_engine = getActiveStyleEngine() || setActiveStyleEngine(new StyleEngine());
     const script_engine = getActiveScriptEngine() || setActiveScriptEngine(new ScriptEngine());

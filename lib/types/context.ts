@@ -6,7 +6,6 @@ import {
     type Cookies,
     type TriFrostCookieOptions,
 } from '../modules/Cookies';
-import {type JSXElement} from '../modules/JSX';
 import {
     type TriFrostLogger,
 } from '../modules/Logger';
@@ -132,7 +131,7 @@ export type TriFrostContext<
     runAfter: () => void;
 
     json: (body?:Record<string, unknown>|unknown[], opts?:TriFrostContextResponseOptions) => void;
-    html: (body?:string|JSXElement, opts?:TriFrostContextResponseOptions) => void;
+    html: (body?:string|JSX.Element, opts?:TriFrostContextResponseOptions) => void;
     text: (body:string, opts?:TriFrostContextResponseOptions) => void;
     redirect: (to:string, opts?:TriFrostContextRedirectOptions) => void;
     file: (path:string, opts?:TriFrostContextFileOptions) => Promise<void>;

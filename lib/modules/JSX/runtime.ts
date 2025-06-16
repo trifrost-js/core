@@ -2,7 +2,6 @@ import {
     type JSXType,
     type JSXProps,
     type JSXKey,
-    type JSXElement,
     type JSXFragment,
 } from './types';
 
@@ -14,7 +13,7 @@ import {
  * @param {JSXProps} props - The properties/attributes for the element.
  * @param {JSXKey} key - An optional key for element identity in a list.
  */
-export function jsx (type:JSXType, props:JSXProps, key?:JSXKey):JSXElement {
+export function jsx (type:JSXType, props:JSXProps, key?:JSXKey):JSX.Element {
     return {type, props: props || {}, key};
 }
 
@@ -26,7 +25,7 @@ export function jsx (type:JSXType, props:JSXProps, key?:JSXKey):JSXElement {
  * @param {JSXProps} props - The properties/attributes for the element.
  * @param {JSXKey} key - An optional key for element identity in a list.
  */
-export function jsxs (type:JSXType, props:JSXProps, key?:JSXKey):JSXElement {
+export function jsxs (type:JSXType, props:JSXProps, key?:JSXKey):JSX.Element {
     return jsx(type, props, key);
 }
 
