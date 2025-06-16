@@ -1,8 +1,9 @@
 import {describe, it, expect, beforeEach, afterEach} from 'vitest';
 import {StyleEngine} from '../../../../../lib/modules/JSX/style/Engine';
 import {MARKER} from '../../../../../lib/modules/JSX/style/Style';
-import {setActiveNonce} from '../../../../../lib/modules/JSX/nonce/use';
+import {setActiveCtx} from '../../../../../lib/modules/JSX/ctx/use';
 import CONSTANTS from '../../../../constants';
+import {MockContext} from '../../../../MockContext';
 
 describe('Modules – JSX – style – Engine', () => {
     let engine: StyleEngine;
@@ -12,7 +13,7 @@ describe('Modules – JSX – style – Engine', () => {
     });
 
     afterEach(() => {
-        setActiveNonce(null);
+        setActiveCtx(null);
     });
 
     describe('hash()', () => {
@@ -195,7 +196,7 @@ describe('Modules – JSX – style – Engine', () => {
         it('Includes nonce attribute when active', () => {
             const cls = engine.hash('display:grid');
             engine.register('display:grid', cls, {});
-            setActiveNonce('abc123');
+            setActiveCtx(new MockContext({nonce: 'abc123'}));
             expect(engine.flush()).toBe('<style nonce="abc123">.tf-18n9a1p{display:grid}</style>');
         });
     });
@@ -211,7 +212,7 @@ describe('Modules – JSX – style – Engine', () => {
 
         it('Includes nonce attribute when active', () => {
             const cls = engine.hash('color:red');
-            setActiveNonce('abc123');
+            setActiveCtx(new MockContext({nonce: 'abc123'}));
             engine.register('color:red', cls, {});
             expect(
                 engine.inject(`<div>${MARKER}Hello there</div>`)

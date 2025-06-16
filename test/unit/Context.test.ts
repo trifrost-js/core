@@ -10,6 +10,7 @@ import {Context, IP_HEADER_CANDIDATES} from '../../lib/Context';
 import {type TriFrostRootLogger} from '../../lib/modules/Logger/RootLogger';
 import {type TriFrostContextConfig} from '../../lib/types/context';
 import CONSTANTS from '../constants';
+import {Cookies} from '../../lib/modules';
 
 class TestContext extends Context {
 
@@ -247,6 +248,189 @@ describe('Context', () => {
         });
     });
 
+    describe('ip', () => {
+        it('Uses getIPFromHeaders when available and valid', () => {
+            const ctx2 = new TestContext(mockLogger as any, baseConfig as any, {
+                ...baseRequest,
+                headers: {
+                    'x-forwarded-for': '8.8.8.8',
+                },
+            });
+
+            expect(ctx2.ip).toBe('8.8.8.8');
+        });
+
+        it('Falls back to getIP() if headers do not provide valid IP', () => {
+            const ctx2 = new TestContext(mockLogger as any, baseConfig as any, {
+                ...baseRequest,
+                headers: {
+                    'x-forwarded-for': 'invalid-ip',
+                },
+            });
+
+            expect(ctx2.ip).toBe('127.0.0.1');
+        });
+
+        it('Returns null if no valid IP found', () => {
+            /* @ts-ignore */
+            TestContext.prototype.getIP = vi.fn().mockReturnValue(null);
+
+            /* @ts-ignore */
+            const ctx2 = new TestContext(mockLogger as any, {
+                ...baseConfig,
+                trustProxy: false,
+            }, {
+                ...baseRequest,
+                headers: {},
+            });
+
+            expect(ctx2.ip).toBe(null);
+        });
+
+        it('Caches computed IP after first access with trustProxy=false', () => {
+            /* @ts-ignore */
+            TestContext.prototype.getIP = vi.fn().mockReturnValue('127.12.12.12');
+            const spy = vi.spyOn(ctx, 'call_getIPFromHeaders');
+            const val1 = ctx.ip;
+            const val2 = ctx.ip;
+            expect(val1).toBe('127.12.12.12');
+            expect(val1).toBe(val2);
+            expect(spy).not.toHaveBeenCalled();
+
+            /* @ts-ignore */
+            expect(TestContext.prototype.getIP).toHaveBeenCalledTimes(1);
+        });
+
+        it('Caches computed IP after first access with trustProxy=true', () => {
+            const ctx2 = new TestContext(mockLogger as any, baseConfig as any, {
+                ...baseRequest,
+                trustProxy: true,
+                headers: {
+                    'x-forwarded-for': '8.8.8.8',
+                },
+            });
+
+            /* @ts-ignore */
+            TestContext.prototype.getIP = vi.fn().mockReturnValue('127.12.12.12');
+            const val1 = ctx2.ip;
+            const val2 = ctx2.ip;
+            expect(val1).toBe('8.8.8.8');
+            expect(val1).toBe(val2);
+
+            /* @ts-ignore */
+            expect(TestContext.prototype.getIP).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('cache', () => {
+        it('Returns the same instance on repeat access', () => {
+            const c1 = ctx.cache;
+            const c2 = ctx.cache;
+            expect(c1).toBe(c2);
+        });
+
+        it('Spawns cache from ctx_config if available', () => {
+            const spawnMock = vi.fn().mockReturnValue({
+                get: vi.fn(),
+                set: vi.fn(),
+                del: vi.fn(),
+            });
+
+            const cfg = {
+                ...baseConfig,
+                cache: {spawn: spawnMock},
+            };
+
+            const ctx2 = new TestContext(mockLogger as any, cfg as any, baseRequest);
+            const result = ctx2.cache;
+            expect(spawnMock).toHaveBeenCalledWith(ctx2);
+            expect(result).toBeDefined();
+        });
+    });
+
+    describe('cookies', () => {
+        it('Returns same Cookies instance across calls', () => {
+            const first = ctx.cookies;
+            const second = ctx.cookies;
+            expect(first).toBe(second);
+        });
+
+        it('Initializes Cookies with ctx and config', () => {
+            const cookiesInstance = ctx.cookies;
+            expect(cookiesInstance).toBeInstanceOf(Cookies);
+        });
+
+        it('Parses incoming cookies from headers', () => {
+            const c = new TestContext(mockLogger as any, baseConfig as any, {
+                ...baseRequest,
+                headers: {
+                    ...baseRequest.headers,
+                    cookie: 'foo=bar; session=abc123',
+                },
+            });
+
+            expect(c.cookies.all()).toEqual({
+                foo: 'bar',
+                session: 'abc123',
+            });
+            expect(c.cookies.get('foo')).toBe('bar');
+            expect(c.cookies.get('session')).toBe('abc123');
+            expect(c.cookies.get('nonexistent')).toBeNull();
+        });
+
+        it('Returns the same Cookies instance across calls', () => {
+            expect(ctx.cookies).toBe(ctx.cookies);
+        });
+
+        it('Reflects newly set cookies in .all()', () => {
+            ctx.cookies.set('newkey', 'newval');
+            expect(ctx.cookies.all()).toMatchObject({newkey: 'newval'});
+        });
+
+        it('Adds a new Set-Cookie string on set()', () => {
+            ctx.cookies.set('token', 'xyz', {
+                path: '/',
+                maxage: 3600,
+                samesite: 'Lax',
+                secure: true,
+            });
+
+            const out = ctx.cookies.outgoing;
+            expect(Array.isArray(out)).toBe(true);
+            expect(out[0]).toMatch(/^token=xyz;/);
+            expect(out[0]).toContain('Secure');
+            expect(out[0]).toContain('SameSite=Lax');
+        });
+
+        it('Enforces secure when SameSite=None', () => {
+            const warn = vi.fn();
+            ctx.logger.warn = warn;
+
+            ctx.cookies.set('x', '1', {
+                path: '/',
+                samesite: 'None',
+                secure: false,
+            });
+
+            const out = ctx.cookies.outgoing;
+            expect(out[0]).toContain('Secure');
+            expect(warn).toHaveBeenCalledWith(
+                'TriFrostCookies@set: SameSite=None requires Secure=true; overriding to ensure security'
+            );
+        });
+
+        it('Does not set cookie on invalid name or value', () => {
+            const err = vi.fn();
+            ctx.logger.error = err;
+
+            ctx.cookies.set('foo;', 'bar');
+            ctx.cookies.set('foo', 'bar\n');
+
+            expect(err).toHaveBeenCalledTimes(2);
+            expect(ctx.cookies.outgoing).toHaveLength(0);
+        });
+    });
+
     describe('method', () => {
         it('Returns the request method', () => {
             expect(ctx.method).toBe(baseRequest.method);
@@ -330,10 +514,120 @@ describe('Context', () => {
         });
     });
 
+    describe('init()', () => {
+        it('Sets isInitialized to true', async () => {
+            await ctx.init({
+                /* @ts-ignore */
+                route: {name: 'foo', kind: 'std', bodyParser: null},
+                params: {id: '123'},
+            }, async () => ({}));
+            expect(ctx.isInitialized).toBe(true);
+        });
+
+        it('Sets name, kind and initial state', async () => {
+            await ctx.init({
+                /* @ts-ignore */
+                route: {name: 'foo', kind: 'health', bodyParser: null},
+                params: {x: '1', y: '2'},
+            }, async () => ({}));
+
+            expect(ctx.name).toBe('foo');
+            expect(ctx.kind).toBe('health');
+            expect(ctx.state).toEqual({x: '1', y: '2'});
+        });
+
+        it('Parses body if method allows it and handler is provided', async () => {
+            const postCtx = new TestContext(mockLogger as any, baseConfig as any, {
+                ...baseRequest,
+                method: HttpMethods.POST,
+            });
+
+            const bodyHandler = vi.fn().mockResolvedValue({a: 'b'});
+
+            await postCtx.init({
+                /* @ts-ignore */
+                route: {name: 'test', kind: 'std', bodyParser: null},
+                params: {},
+            }, bodyHandler);
+
+            expect(bodyHandler).toHaveBeenCalled();
+            expect(postCtx.body).toEqual({a: 'b'});
+        });
+
+        it('Sets status to 413 if body parser returns null', async () => {
+            const putCtx = new TestContext(mockLogger as any, baseConfig as any, {
+                ...baseRequest,
+                method: HttpMethods.PUT,
+            });
+
+            const logSpy = vi.spyOn(putCtx.logger, 'error');
+
+            await putCtx.init({
+                /* @ts-ignore */
+                route: {name: 'fail', kind: 'std', bodyParser: null},
+                params: {},
+            }, async () => null);
+
+            expect(putCtx.statusCode).toBe(413);
+            expect(logSpy).not.toHaveBeenCalled();
+        });
+
+        it('Catches and logs unexpected errors', async () => {
+            const ctx2 = new TestContext(mockLogger as any, baseConfig as any, {...baseRequest, method: 'POST'});
+            const err = new Error('explode');
+            const loggerSpy = vi.spyOn(ctx2.logger, 'error');
+
+            await ctx2.init({
+                /* @ts-ignore */
+                route: {name: 'explode', kind: 'std', bodyParser: null, method: 'POST'},
+                params: {},
+            }, async () => {
+                throw err;
+            });
+
+            expect(ctx2.statusCode).toBe(400);
+            expect(loggerSpy).toHaveBeenCalledWith(err);
+        });
+
+        it('Is a no-op if already initialized', async () => {
+            const ctx2 = new TestContext(mockLogger as any, baseConfig as any, {...baseRequest, method: 'POST'});
+            const spy = vi.fn().mockResolvedValue({});
+            await ctx2.init({
+                /* @ts-ignore */
+                route: {name: 'once', kind: 'std', bodyParser: null},
+                params: {},
+            }, spy);
+
+            await ctx2.init({
+                /* @ts-ignore */
+                route: {name: 'twice', kind: 'health', bodyParser: null},
+                params: {x: '2'},
+            }, spy);
+
+            expect(ctx2.name).toBe('once');
+            expect(ctx2.kind).toBe('std');
+            expect(spy).toHaveBeenCalledTimes(1);
+        });
+
+        it('Is a no-op if a GET', async () => {
+            const spy = vi.fn().mockResolvedValue({});
+            await ctx.init({
+                /* @ts-ignore */
+                route: {name: 'once', kind: 'std', bodyParser: null},
+                params: {},
+            }, spy);
+
+            expect(ctx.name).toBe('once');
+            expect(ctx.kind).toBe('std');
+            expect(spy).not.toHaveBeenCalled();
+        });
+    });
+
     describe('fetch()', () => {
         const originalFetch = globalThis.fetch;
 
         beforeEach(() => {
+            /* @ts-ignore */
             globalThis.fetch = vi.fn();
             ctx.logger.setAttributes = vi.fn();
             ctx.logger.span = vi.fn((_, fn) => fn());
