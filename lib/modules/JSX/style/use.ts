@@ -91,7 +91,7 @@ type CssGeneric <Breakpoints extends Record<string, string> = typeof DEFAULT_BRE
  * MARK: Active Engine
  */
 
-let active_engine: StyleEngine | null = null;
+let active_engine:StyleEngine|null = null;
 
 export function setActiveStyleEngine <T extends StyleEngine|null> (engine:T):T {
     active_engine = engine;

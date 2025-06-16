@@ -1,5 +1,5 @@
 import {MARKER} from './Style';
-import {hasActiveNonce, nonce} from '../nonce/use';
+import {nonce} from '../ctx/nonce';
 
 type StyleEngineRegisterOptions = {
     /**
@@ -82,8 +82,9 @@ export class StyleEngine {
         let out = this.base.out;
         for (const query in this.media) out += query + '{' + this.media[query].out + '}';
         if (!out) return '';
-        return hasActiveNonce()
-            ? '<style nonce="' + nonce() + '">' + out + '</style>'
+        const n_nonce = nonce();
+        return n_nonce
+            ? '<style nonce="' + n_nonce + '">' + out + '</style>'
             : '<style>' + out + '</style>';
     }
 

@@ -41,7 +41,7 @@ export class MockContext<
     #ip:string|null;
     #limit:TriFrostRateLimitLimitFunction|null;
     #name:string;
-    #nonce:string;
+    #nonce:string|null;
     #requestId:string = '123456789';
     #cache:TriFrostCache;
     #after:(() => Promise<void>)[];
@@ -58,7 +58,7 @@ export class MockContext<
         limit?: TriFrostRateLimitLimitFunction|null;
         cache?: TriFrostCache|null;
         name?: string;
-        nonce?: string;
+        nonce?: string|null;
         logger?: Logger;
     } = {}) {
         this.#method = (opts.method ?? 'get') as HttpMethod;
@@ -73,7 +73,7 @@ export class MockContext<
         this.#ip = 'ip' in opts ? opts.ip || null : '127.0.0.1';
         this.#limit = opts.limit ?? null;
         this.#name = opts.name ?? 'mock-handler';
-        this.#nonce = opts.nonce ?? btoa(hexId(8));
+        this.#nonce = 'nonce' in opts ? opts.nonce || null : btoa(hexId(8));
         this.#cache = opts.cache ?? new MemoryCache();
         this.#requestId = '123456789';
         this.#cache?.stop?.();

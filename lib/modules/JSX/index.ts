@@ -1,5 +1,6 @@
 export {
     type JSXElement,
+    type JSXProps,
     type JSXFragment
 } from './types';
 
@@ -13,5 +14,7 @@ export {
 } from './style';
 
 export {
-    nonce
-} from './nonce';
+    nonce,
+    env,
+    state
+} from './ctx';

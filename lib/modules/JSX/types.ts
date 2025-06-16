@@ -1,5 +1,5 @@
 export type JSXType = string|((props:JSXProps) => JSXElement);
-export type JSXProps = {dangerouslySetInnerHTML?: {__html: string;}} & Record<string, unknown> | null;
+export type JSXProps = {dangerouslySetInnerHTML?: {__html: string;}} & Record<string, unknown>;
 export type JSXKey = string|number|null;
 export type JSXFragment = {children: JSXElement | string | number | boolean | null};
 export type JSXElement = {

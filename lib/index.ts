@@ -34,10 +34,8 @@ export {
 /* Modules - JSX */
 export {
     createCss,
-    Style,
-    Script,
-    nonce,
-    type JSXElement
+    type JSXElement,
+    type JSXProps
 } from './modules/JSX';
 
 /* Modules - Rate Limit */
