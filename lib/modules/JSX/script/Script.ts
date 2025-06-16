@@ -6,7 +6,7 @@ import {getActiveScriptEngine} from './use';
 
 export const SCRIPT_MARKER = '__TRIFROST_HYDRATED_SCRIPT__';
 
-type ScriptProps <TData = undefined> = {
+type ScriptProps <TData = undefined> = JSXProps & {
   children?: (el:HTMLElement, data:TData) => void;
   nonce?: string;
   src?: string;
@@ -20,8 +20,8 @@ const RGX_ASYNC_FATARROW = /__name\((async\s*\([^)]*\)\s*=>\s*{[\s\S]*?})\s*,\s*
 const RGX_ASYNC_FUNCTION = /^\s*__name\([^)]*\);\s*$/gm;
 const RGX_DATA_SCRIPT = /<\/script>/gi;
 
-export function Script <TData = undefined> (options:ScriptProps<TData>):JSXElement {
-    if (Object.prototype.toString.call(options) !== '[object Object]') return null as unknown as JSXElement;
+export function Script <T = undefined> (options:JSXProps & ScriptProps<T> | null):JSXElement {
+    if (!options || Object.prototype.toString.call(options) !== '[object Object]') return null as unknown as JSXElement;
 
     /* Source */
     if (typeof options.src === 'string' && options.src.length) {
