@@ -3,6 +3,8 @@ import {Cookies} from '../../../lib/modules/Cookies';
 import {ConsoleExporter, JsonExporter, OtelHttpExporter} from '../../../lib/modules/Logger';
 import {RateLimitKeyGeneratorRegistry} from '../../../lib/modules/RateLimit/_RateLimit';
 import {createCss} from '../../../lib/modules/JSX/style/use';
+import {Style} from '../../../lib/modules/JSX/style/Style';
+import {Script} from '../../../lib/modules/JSX/script/Script';
 import * as Modules from '../../../lib/modules';
 
 describe('Modules - Index', () => {
@@ -20,9 +22,17 @@ describe('Modules - Index', () => {
      * MARK: JSX
      */
 
-    describe('createCss', () => {
-        it('Should link to the correct module', () => {
+    describe('JSX', () => {
+        it('createCss should link to the correct module', () => {
             expect(Modules.createCss).toEqual(createCss);
+        });
+
+        it('Script should link to the correct module', () => {
+            expect(Modules.Script).toEqual(Script);
+        });
+
+        it('Style should link to the correct module', () => {
+            expect(Modules.Style).toEqual(Style);
         });
     });
 

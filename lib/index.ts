@@ -34,6 +34,8 @@ export {
 /* Modules - JSX */
 export {
     createCss,
+    Script,
+    Style,
     type JSXElement,
     type JSXProps
 } from './modules/JSX';

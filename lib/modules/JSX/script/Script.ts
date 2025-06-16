@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
 import {nonce} from '../ctx/nonce';
-import {type JSXElement, type JSXProps} from '../types';
+import {type JSXProps} from '../types';
 import {getActiveScriptEngine} from './use';
 
 export const SCRIPT_MARKER = '__TRIFROST_HYDRATED_SCRIPT__';
@@ -20,8 +20,8 @@ const RGX_ASYNC_FATARROW = /__name\((async\s*\([^)]*\)\s*=>\s*{[\s\S]*?})\s*,\s*
 const RGX_ASYNC_FUNCTION = /^\s*__name\([^)]*\);\s*$/gm;
 const RGX_DATA_SCRIPT = /<\/script>/gi;
 
-export function Script <T = undefined> (options:JSXProps & ScriptProps<T> | null):JSXElement {
-    if (!options || Object.prototype.toString.call(options) !== '[object Object]') return null as unknown as JSXElement;
+export function Script <T = undefined> (options:JSXProps & ScriptProps<T> | null):JSX.Element {
+    if (!options || Object.prototype.toString.call(options) !== '[object Object]') return null as unknown as JSX.Element;
 
     /* Source */
     if (typeof options.src === 'string' && options.src.length) {
@@ -47,10 +47,10 @@ export function Script <T = undefined> (options:JSXProps & ScriptProps<T> | null
     }
 
     /* If at this point we dont have a function, do nothing */
-    if (typeof options.children !== 'function') return null as unknown as JSXElement;
+    if (typeof options.children !== 'function') return null as unknown as JSX.Element;
 
     const engine = getActiveScriptEngine();
-    if (!engine) return null as unknown as JSXElement;
+    if (!engine) return null as unknown as JSX.Element;
 
     const raw = options.children.toString();
 
