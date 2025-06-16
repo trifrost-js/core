@@ -37,6 +37,8 @@ export class WorkerdContext extends Context {
 
         /* Hydrate headers */
         const headers:Record<string, string> = {};
+        /* eslint-disable-next-line */
+        /* @ts-ignore */
         for (const [key, value] of req.headers.entries()) {
             headers[key] = value;
         }

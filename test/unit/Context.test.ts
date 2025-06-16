@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /* eslint-disable max-statements */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-useless-constructor */

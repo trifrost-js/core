@@ -4,6 +4,71 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+This release continues on the `<Script>` foundation introduced in TriFrost `0.33.0` and brings a powerful under-the-hood upgrade. A **Script Engine**, focused on ergonomic interactivity, seamless deduplication, and zero-config data inlining as well as some new utils for easier dx.
+
+### Added
+- **feat**: `<Script>` now supports a `data` prop to pass structured data alongside code. The function receives `(el, data)` making dynamic behavior cleaner and more declarative.
+```tsx
+<button type="button">
+  Toggle
+  <Script data={{toggleClass: 'active'}}>{(el, data) => {
+    el.addEventListener('click', () => el.classList.toggle(data.toggleClass));
+  }}</Script>
+</button>
+```
+- **feat**: New `env()` and `state()` utils are now available within JSX, enabling per request logic without having to pass ctx around.
+
+Example:
+```tsx
+import {env, state} from '@trifrost/core/modules/JSX';
+
+export function DebugBar () {
+  if (env('TRIFROST_DEBUG') !== 'true') return null;
+
+  return (
+    <div className="debug">
+      Request ID: {state('request_id')}
+    </div>
+  );
+}
+```
+
+Example combining `data/env()/state()`: 
+```tsx
+import {env, state} from '@trifrost/core/modules/JSX';
+
+export function AnalyticsBeacon () {
+  const beaconUrl = env('ANALYTICS_URL');
+  const userId = state('user_id');
+  const pageId = state('page_id');
+
+  return (
+    <Script data={{beaconUrl, userId, pageId}}>{(el, data) => {
+      navigator.sendBeacon(data.beaconUrl, JSON.stringify({
+        user: data.userId,
+        page: data.pageId,
+        ts: Date.now(),
+      }));
+    }}</Script>
+  );
+}
+```
+
+### Improved
+- **feat**: Introduced an internal **Script Engine** that **deduplicates repeated scripts and shared data nodes across the tree**. This engine hooks directly into the TriFrost JSX renderer, ensuring only unique scripts are emitted regardless of how many times a component renders.
+
+### Removed
+- Removed usage of `__TRIFROST_ENV__` and `__TRIFROST_STATE__` markers (introduced in `0.33.0`). These have been fully replaced with runtime-bound utilities (`env()` and `state()`), honoring the zero-cost abstraction principle of TriFrost.
+
+---
+
+TriFrost's scripting system now achieves a rare balance: expressive, secure, and zero-maintenance.
+
+It's important to remember that `<Script>` is **client-side** logic, not **server-side**, as such these utils as well as the new Scripting engine are there to make it more seamless and fun.
+
+As always, stay frosty ❄️
+
 ## [0.33.3] - 2025-06-15
 This release brings additional polish to the new `<Script>` component introduced in `0.33.0`, focused on ergonomic inlining and dynamic parent binding.
 
