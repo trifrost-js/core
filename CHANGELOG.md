@@ -20,6 +20,7 @@ const load = /* @__PURE__ */ __name(async () => {
 These wrappers are **not defined in the browser** and will throw `ReferenceError: __name is not defined` if not removed.
 
 The `<Script>` component now automatically sanitizes them from inline function bodies to ensure clean, executable output:
+```tsx
 <Script>{(el: HTMLElement) => {
   const load = async () => {
     // safe even if tooling added __name()
@@ -27,7 +28,7 @@ The `<Script>` component now automatically sanitizes them from inline function b
   };
   el.addEventListener('click', load);
 }}</Script>
-
+```
 
 ## [0.33.2] - 2025-06-15
 This release brings additional polish to the new `<Script>` component introduced in `0.33.0`, focused on ergonomic inlining and dynamic parent binding.
