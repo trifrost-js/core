@@ -1,9 +1,15 @@
-import {describe, it, expect, beforeEach} from 'vitest';
+/* eslint-disable max-len */
+/* eslint-disable no-console */
+import {describe, it, expect, beforeEach, vi, afterEach} from 'vitest';
 import {render, escape, rootRender} from '../../../../lib/modules/JSX/render';
 import {Fragment} from '../../../../lib/modules/JSX/runtime';
 import {createCss} from '../../../../lib/modules/JSX/style/use';
-import {nonce} from '../../../../lib/modules/JSX/nonce/use';
+import {nonce} from '../../../../lib/modules/JSX/ctx/nonce';
+import {env} from '../../../../lib/modules/JSX/ctx/env';
+import {state} from '../../../../lib/modules/JSX/ctx/state';
 import {Style} from '../../../../lib/modules/JSX/style/Style';
+import {Script} from '../../../../lib/modules/JSX/script/Script';
+import * as Generic from '../../../../lib/utils/Generic';
 import {MockContext} from '../../../MockContext';
 
 describe('Modules - JSX - Renderer', () => {
@@ -118,9 +124,8 @@ describe('Modules - JSX - Renderer', () => {
             expect(out).toBe('<span>one</span><span>two</span>');
         });
 
-        it('should handle element with no props', () => {
-            /* @ts-ignore this is what we're testing */
-            const out = render({type: 'div'});
+        it('should handle element with empty props', () => {
+            const out = render({type: 'div', props: {}});
             expect(out).toBe('<div></div>');
         });
 
@@ -387,137 +392,645 @@ describe('Modules - JSX - Renderer', () => {
         it('Exposes nonce via active context during render', () => {
             const Component = () => ({type: 'script', props: {nonce: nonce(), children: 'Nonce-bound'}});
 
-            // @ts-ignore
+            /* @ts-ignore */
             const html = rootRender(new MockContext({nonce: 'abc-123'}), {type: Component, props: {}});
             expect(html).toBe('<script nonce="abc-123">Nonce-bound</script>');
         });
 
-        it('Throws if nonce is accessed outside render lifecycle', () => {
-            expect(() => nonce()).toThrowError('No active nonce is set');
-        });
-
-        it('Resets nonce after render completes', () => {
+        it('Resets active ctx after render completes', () => {
             const Component = () => ({type: 'div', props: {children: nonce()}});
 
-            // @ts-ignore
+            /* @ts-ignore */
             const html = rootRender(new MockContext({nonce: 'abc123'}), {type: Component, props: {}});
             expect(html).toContain('abc123');
 
-            // after render, calling nonce again should throw
-            expect(() => nonce()).toThrowError('No active nonce is set');
+            const html2 = rootRender(new MockContext({nonce: null}), {type: Component, props: {}});
+            expect(html2).not.toContain('abc123');
         });
 
-        it('Replaces TRIFROST_ENV markers inside inline script', () => {
-            const Component = () => ({
-                type: 'script',
-                props: {
-                    dangerouslySetInnerHTML: {
-                        __html: 'console.log("env:", "__TRIFROST_ENV__.APP_NAME");',
+        describe('JSX - render - ctx access (env/state/nonce)', () => {
+            it('accesses env variables using env()', () => {
+                const Component = () => ({
+                    type: 'div',
+                    props: {
+                        children: env<string>('HELLO'),
                     },
-                },
+                });
+
+                const ctx = new MockContext({env: {HELLO: 'from-env'}});
+                const html = rootRender(ctx, {type: Component, props: {}});
+                expect(html).toBe('<div>from-env</div>');
             });
 
-            const ctx = new MockContext({
-                env: {APP_NAME: 'TriFrost'},
+            it('accesses state variables using state()', () => {
+                const Component = () => ({
+                    type: 'div',
+                    props: {
+                        children: state<number>('count')?.toString(),
+                    },
+                });
+
+                const ctx = new MockContext({state: {count: 42}});
+                const html = rootRender(ctx, {type: Component, props: {}});
+                expect(html).toBe('<div>42</div>');
             });
 
-            const html = rootRender(ctx, {type: Component, props: {}});
-            expect(html).toBe('<script>console.log("env:", "TriFrost");</script>');
+            it('returns undefined/null for missing env/state/nonce', () => {
+                const Component = () => ({
+                    type: 'div',
+                    props: {
+                        children: [String(env('missing')), String(state('nope')), String(nonce())],
+                    },
+                });
+
+                const ctx = new MockContext({env: {}, state: {}, nonce: null});
+                const html = rootRender(ctx, {type: Component, props: {}});
+                expect(html).toBe('<div>undefinedundefinednull</div>');
+            });
+
+            it('env/state/nonce reset after render ends', () => {
+                const ctx = new MockContext({env: {key: 'val'}, state: {n: 123}, nonce: 'abc123'});
+
+                const html = rootRender(ctx, {
+                    type: () => ({
+                        type: 'span',
+                        props: {children: [env('key'), String(state('n')), nonce()]},
+                    }),
+                    props: {},
+                });
+
+                expect(html).toBe('<span>val123abc123</span>');
+
+              // after render completes
+                expect(env('key')).toBeUndefined();
+                expect(state('n')).toBeUndefined();
+                expect(nonce()).toBeNull();
+            });
         });
 
-        it('Replaces TRIFROST_STATE markers inside inline script', () => {
-            const Component = () => ({
-                type: 'script',
-                props: {
-                    dangerouslySetInnerHTML: {
-                        __html: 'console.log("locale:", "__TRIFROST_STATE__.locale");',
+        describe('Script', () => {
+            let idCounter = 0;
+
+            beforeEach(() => {
+                idCounter = 0;
+                vi.spyOn(Generic, 'hexId').mockImplementation(() => `id-${++idCounter}`);
+            });
+
+            afterEach(() => {
+                vi.restoreAllMocks();
+            });
+
+            it('Injects data-tfhf and data-tfhd into parent', () => {
+                const ctx = new MockContext();
+                const html = rootRender(ctx, {
+                    type: () => ({
+                        type: 'button',
+                        props: {
+                            children: [
+                                'Click me',
+                                {
+                                    type: Script,
+                                    props: {
+                                        data: {foo: 'bar'},
+                                        children: (el, data) => {
+                                            console.log('Hydrated:', el, data);
+                                        },
+                                    },
+                                },
+                            ],
+                        },
+                    }),
+                    props: {},
+                });
+
+                expect(html).toBe([
+                    '<button data-tfhf="id-2" data-tfhd="id-3">Click me</button><script nonce="aWQtMQ==">(function(){const TFD = {"id-3":{"foo":"bar"}};',
+                    'const TFF = {"id-2":function(el,data){console.log("Hydrated:", el, data);}};',
+                    'for (const id in TFF) {',
+                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for (let i = 0; i < n.length; i++) {',
+                    'const d = n[i].getAttribute("data-tfhd");',
+                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '}',
+                    '}',
+                    '})();</script>',
+                ].join(''));
+            });
+
+            it('Deduplicates identical functions', () => {
+                const ctx = new MockContext();
+
+                const html = rootRender(ctx, {
+                    /* @ts-ignore */
+                    type: Fragment,
+                    props: {
+                        children: Array.from({length: 3}).map(() => ({
+                            type: 'span',
+                            props: {
+                                children: [
+                                    'Item',
+                                    {
+                                        type: Script,
+                                        props: {
+                                            data: {x: 1},
+                                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                                            children: (el, data) => {
+                                                el.dataset.bound = 'true';
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        })),
                     },
-                },
+                });
+
+                expect(html).toBe([
+                    '<span data-tfhf="id-2" data-tfhd="id-3">Item</span><span data-tfhf="id-2" data-tfhd="id-3">Item</span><span data-tfhf="id-2" data-tfhd="id-3">Item</span><script nonce="aWQtMQ==">(function(){const TFD = {"id-3":{"x":1}};',
+                    'const TFF = {"id-2":function(el,data){el.dataset.bound = "true";}};',
+                    'for (const id in TFF) {',
+                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for (let i = 0; i < n.length; i++) {',
+                    'const d = n[i].getAttribute("data-tfhd");',
+                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '}',
+                    '}',
+                    '})();</script>',
+                ].join(''));
             });
 
-            const ctx = new MockContext({
-                state: {locale: 'en'},
-            });
+            it('Handles no data payloads', () => {
+                const ctx = new MockContext();
 
-            const html = rootRender(ctx, {type: Component, props: {}});
-            expect(html).toBe('<script>console.log("locale:", "en");</script>');
-        });
-
-        it('Handles both ENV and STATE replacements in one go', () => {
-            const Component = () => ({
-                type: 'script',
-                props: {
-                    dangerouslySetInnerHTML: {
-                        __html: 'console.log("env:", "__TRIFROST_ENV__.APP_NAME");console.log("locale:", "__TRIFROST_STATE__.locale");',
+                const html = rootRender(ctx, {
+                    type: 'div',
+                    props: {
+                        children: [
+                            'No Data',
+                            {
+                                type: Script,
+                                props: {
+                                    children: el => {
+                                        el.id = 'injected';
+                                    },
+                                },
+                            },
+                        ],
                     },
-                },
+                });
+
+                expect(html).toBe([
+                    '<div data-tfhf="id-2">No Data</div><script nonce="aWQtMQ==">(function(){const TFD = {};',
+                    'const TFF = {"id-2":function(el,data){el.id = "injected";}};',
+                    'for (const id in TFF) {',
+                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for (let i = 0; i < n.length; i++) {',
+                    'const d = n[i].getAttribute("data-tfhd");',
+                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '}',
+                    '}',
+                    '})();</script>',
+                ].join(''));
             });
 
-            const ctx = new MockContext({
-                env: {APP_NAME: 'TriFrost'},
-                state: {locale: 'en-US'},
-            });
-
-            const html = rootRender(ctx, {type: Component, props: {}});
-            expect(html).toBe('<script>console.log("env:", "TriFrost");console.log("locale:", "en-US");</script>');
-        });
-
-        it('Defaults missing env/state values to empty strings', () => {
-            const Component = () => ({
-                type: 'script',
-                props: {
-                    dangerouslySetInnerHTML: {
-                        __html: 'console.log("__TRIFROST_ENV__.MISSING", "__TRIFROST_STATE__.missing");',
+            it('Works when nested inside components', () => {
+                const Inner = () => ({
+                    type: 'div',
+                    props: {
+                        children: [
+                            'Nested',
+                            {
+                                type: Script,
+                                props: {
+                                    data: {enabled: true},
+                                    children: (el, data) => {
+                                        el.setAttribute('data-enabled', data.enabled);
+                                    },
+                                },
+                            },
+                        ],
                     },
-                },
+                });
+
+                const ctx = new MockContext();
+
+                const html = rootRender(ctx, {
+                    type: () => ({type: Inner, props: {}}),
+                    props: {},
+                });
+
+                expect(html).toBe([
+                    '<div data-tfhf="id-2" data-tfhd="id-3">Nested</div><script nonce="aWQtMQ==">(function(){const TFD = {"id-3":{"enabled":true}};',
+                    'const TFF = {"id-2":function(el,data){el.setAttribute("data-enabled", data.enabled);}};',
+                    'for (const id in TFF) {',
+                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for (let i = 0; i < n.length; i++) {',
+                    'const d = n[i].getAttribute("data-tfhd");',
+                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '}',
+                    '}',
+                    '})();</script>',
+                ].join(''));
             });
 
-            const ctx = new MockContext();
+            it('Supports multiple distinct scripts with separate ids', () => {
+                const ctx = new MockContext();
 
-            const html = rootRender(ctx, {type: Component, props: {}});
-            expect(html).toBe('<script>console.log("", "");</script>');
-        });
-
-        it('Replaces env/state values with correct JSON types', () => {
-            const Component = () => ({
-                type: 'script',
-                props: {
-                    dangerouslySetInnerHTML: {
-                        __html: 'console.log("__TRIFROST_ENV__.ENABLED","__TRIFROST_STATE__.count");',
+                const html = rootRender(ctx, {
+                    /* @ts-ignore */
+                    type: Fragment,
+                    props: {
+                        children: [
+                            {
+                                type: 'div',
+                                props: {
+                                    children: [
+                                        'First',
+                                        {
+                                            type: Script,
+                                            props: {
+                                                data: {count: 1},
+                                                children: (el, data) => {
+                                                    el.textContent = `count:${data.count}`;
+                                                },
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                            {
+                                type: 'div',
+                                props: {
+                                    children: [
+                                        'Second',
+                                        {
+                                            type: Script,
+                                            props: {
+                                                data: {count: 2},
+                                                children: (el, data) => {
+                                                    el.textContent = `count is ${data.count}`;
+                                                },
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
                     },
-                },
+                });
+
+                expect(html).toBe([
+                    '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-4" data-tfhd="id-5">Second</div><script nonce="aWQtMQ==">(function(){const TFD = {"id-3":{"count":1},"id-5":{"count":2}};',
+                    'const TFF = {"id-2":function(el,data){el.textContent = `count:${data.count}`;},"id-4":function(el,data){el.textContent = `count is ${data.count}`;}};',
+                    'for (const id in TFF) {',
+                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for (let i = 0; i < n.length; i++) {',
+                    'const d = n[i].getAttribute("data-tfhd");',
+                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '}',
+                    '}',
+                    '})();</script>',
+                ].join(''));
             });
 
-            const ctx = new MockContext({
-                env: {ENABLED: true},
-                state: {count: 42},
-            });
+            it('Supports multiple distinct scripts with separate ids but same data', () => {
+                const ctx = new MockContext();
 
-            const html = rootRender(ctx, {type: Component, props: {}});
-            expect(html).toBe('<script>console.log(true,42);</script>');
-        });
-
-        it('Replaces env/state values with correct JSON types even if they are rich', () => {
-            const Component = () => ({
-                type: 'script',
-                props: {
-                    dangerouslySetInnerHTML: {
-                        __html: `
-                            console.log("__TRIFROST_ENV__.ENABLED", "__TRIFROST_STATE__.list");
-                            const globalSettings = "__TRIFROST_STATE__.settings";
-                        `.trim(),
+                const html = rootRender(ctx, {
+                    /* @ts-ignore */
+                    type: Fragment,
+                    props: {
+                        children: [
+                            {
+                                type: 'div',
+                                props: {
+                                    children: [
+                                        'First',
+                                        {
+                                            type: Script,
+                                            props: {
+                                                data: {count: 1},
+                                                children: (el, data) => {
+                                                    el.textContent = `count:${data.count}`;
+                                                },
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                            {
+                                type: 'div',
+                                props: {
+                                    children: [
+                                        'Second',
+                                        {
+                                            type: Script,
+                                            props: {
+                                                data: {count: 1},
+                                                children: (el, data) => {
+                                                    el.textContent = `count is ${data.count}`;
+                                                },
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
                     },
-                },
+                });
+
+                expect(html).toBe([
+                    '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-4" data-tfhd="id-3">Second</div><script nonce="aWQtMQ==">(function(){const TFD = {"id-3":{"count":1}};',
+                    'const TFF = {"id-2":function(el,data){el.textContent = `count:${data.count}`;},"id-4":function(el,data){el.textContent = `count is ${data.count}`;}};',
+                    'for (const id in TFF) {',
+                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for (let i = 0; i < n.length; i++) {',
+                    'const d = n[i].getAttribute("data-tfhd");',
+                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '}',
+                    '}',
+                    '})();</script>',
+                ].join(''));
             });
 
-            const ctx = new MockContext({
-                env: {ENABLED: true},
-                state: {list: [{name: 'Peter'}, {name: 'Bob'}], settings: {something: true, somethingElse: false}},
+            it('Supports same scripts with same data', () => {
+                const ctx = new MockContext();
+
+                const html = rootRender(ctx, {
+                    /* @ts-ignore */
+                    type: Fragment,
+                    props: {
+                        children: [
+                            {
+                                type: 'div',
+                                props: {
+                                    children: [
+                                        'First',
+                                        {
+                                            type: Script,
+                                            props: {
+                                                data: {count: 1},
+                                                children: (el, data) => {
+                                                    el.textContent = `count is ${data.count}`;
+                                                },
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                            {
+                                type: 'div',
+                                props: {
+                                    children: [
+                                        'Second',
+                                        {
+                                            type: Script,
+                                            props: {
+                                                data: {count: 1},
+                                                children: (el, data) => {
+                                                    el.textContent = `count is ${data.count}`;
+                                                },
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                });
+
+                expect(html).toBe([
+                    '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-2" data-tfhd="id-3">Second</div><script nonce="aWQtMQ==">(function(){const TFD = {"id-3":{"count":1}};',
+                    'const TFF = {"id-2":function(el,data){el.textContent = `count is ${data.count}`;}};',
+                    'for (const id in TFF) {',
+                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for (let i = 0; i < n.length; i++) {',
+                    'const d = n[i].getAttribute("data-tfhd");',
+                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '}',
+                    '}',
+                    '})();</script>',
+                ].join(''));
             });
 
-            const html = rootRender(ctx, {type: Component, props: {}});
-            expect(html).toBe(`<script>console.log(true, [{"name":"Peter"},{"name":"Bob"}]);
-                            const globalSettings = {"something":true,"somethingElse":false};</script>`);
+            it('Handles deep nested script markers correctly', () => {
+                const ctx = new MockContext();
+
+                const html = rootRender(ctx, {
+                    type: 'section',
+                    props: {
+                        children: [
+                            {
+                                type: 'article',
+                                props: {
+                                    children: [
+                                        {
+                                            type: 'header',
+                                            props: {
+                                                children: [
+                                                    'Header',
+                                                    {
+                                                        type: Script,
+                                                        props: {
+                                                            data: {active: true},
+                                                            children: (el, data) => {
+                                                                el.dataset.active = String(data.active);
+                                                            },
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                        {
+                                            type: 'footer',
+                                            props: {
+                                                children: [
+                                                    'Footer',
+                                                    {
+                                                        type: Script,
+                                                        props: {
+                                                            children: el => {
+                                                                el.dataset.foot = 'true';
+                                                            },
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                });
+
+                expect(html).toBe([
+                    '<section><article><header data-tfhf="id-2" data-tfhd="id-3">Header</header><footer data-tfhf="id-4">Footer</footer></article></section><script nonce="aWQtMQ==">(function(){const TFD = {"id-3":{"active":true}};',
+                    'const TFF = {"id-2":function(el,data){el.dataset.active = String(data.active);},"id-4":function(el,data){el.dataset.foot = "true";}};',
+                    'for (const id in TFF) {',
+                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for (let i = 0; i < n.length; i++) {',
+                    'const d = n[i].getAttribute("data-tfhd");',
+                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '}',
+                    '}',
+                    '})();</script>',
+                ].join(''));
+            });
+
+            it('Works with fragments as children and still injects on parent', () => {
+                const ctx = new MockContext();
+
+                const html = rootRender(ctx, {
+                    type: 'div',
+                    props: {
+                        children: {
+                            /* @ts-ignore */
+                            type: Fragment,
+                            props: {
+                                children: [
+                                    'Hello',
+                                    {
+                                        type: Script,
+                                        props: {
+                                            data: {x: 5},
+                                            children: (el, data) => {
+                                                el.setAttribute('data-value', data.x);
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                });
+
+                expect(html).toBe([
+                    '<div data-tfhf="id-2" data-tfhd="id-3">Hello</div><script nonce="aWQtMQ==">(function(){const TFD = {"id-3":{"x":5}};',
+                    'const TFF = {"id-2":function(el,data){el.setAttribute("data-value", data.x);}};',
+                    'for (const id in TFF) {',
+                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for (let i = 0; i < n.length; i++) {',
+                    'const d = n[i].getAttribute("data-tfhd");',
+                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '}',
+                    '}',
+                    '})();</script>',
+                ].join(''));
+            });
+
+            it('Skips script engine entirely if no Script is used', () => {
+                const ctx = new MockContext();
+
+                const html = rootRender(ctx, {
+                    type: 'main',
+                    props: {
+                        children: 'Just content',
+                    },
+                });
+
+                expect(html).toBe('<main>Just content</main>');
+            });
+
+            it('Normalizes and deduplicates equal JSON payloads', () => {
+                const ctx = new MockContext();
+
+                const html = rootRender(ctx, {
+                    type: 'ul',
+                    props: {
+                        children: [
+                            {
+                                type: 'li',
+                                props: {
+                                    children: [
+                                        'A',
+                                        {
+                                            type: Script,
+                                            props: {
+                                                data: {a: 1, b: 2},
+                                                children: (el, data) => {
+                                                    el.innerText = JSON.stringify(data);
+                                                },
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                            {
+                                type: 'li',
+                                props: {
+                                    children: [
+                                        'B',
+                                        {
+                                            type: Script,
+                                            props: {
+                                                data: {b: 2, a: 1},
+                                                children: (el, data) => {
+                                                    el.innerText = JSON.stringify(data);
+                                                },
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                });
+
+                /* Note: order in json stringification matters */
+                expect(html).toBe([
+                    '<ul><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==">(function(){const TFD = {"id-3":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
+                    'const TFF = {"id-2":function(el,data){el.innerText = JSON.stringify(data);}};',
+                    'for (const id in TFF) {',
+                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for (let i = 0; i < n.length; i++) {',
+                    'const d = n[i].getAttribute("data-tfhd");',
+                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '}',
+                    '}',
+                    '})();</script>',
+                ].join(''));
+            });
+
+            it('Flushes and resets between render calls', () => {
+                const ctx = new MockContext();
+                const html1 = rootRender(ctx, {
+                    type: 'div',
+                    props: {
+                        children: [
+                            'Reset me',
+                            {
+                                type: Script,
+                                props: {
+                                    children: el => {
+                                        el.id = 'reset';
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                });
+
+                expect(html1).toBe([
+                    '<div data-tfhf="id-2">Reset me</div><script nonce="aWQtMQ==">(function(){const TFD = {};',
+                    'const TFF = {"id-2":function(el,data){el.id = "reset";}};',
+                    'for (const id in TFF) {',
+                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for (let i = 0; i < n.length; i++) {',
+                    'const d = n[i].getAttribute("data-tfhd");',
+                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '}',
+                    '}',
+                    '})();</script>',
+                ].join(''));
+
+                const html2 = rootRender(new MockContext(), {
+                    type: 'div',
+                    props: {children: 'Fresh'},
+                });
+
+                expect(html2).toBe('<div>Fresh</div>');
+            });
         });
     });
 });

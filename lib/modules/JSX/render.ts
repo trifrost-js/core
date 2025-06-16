@@ -1,12 +1,15 @@
 /* eslint-disable no-underscore-dangle,no-use-before-define */
 
 import {type TriFrostContext} from '../../types/context';
-import {type JSXElement} from './types';
+import {type JSXProps, type JSXElement} from './types';
 import {Fragment} from './runtime';
 import {StyleEngine} from './style/Engine';
 import {setActiveStyleEngine, getActiveStyleEngine} from './style/use';
-import {setActiveNonce} from './nonce/use';
 import {styleToString} from './style/util';
+import {ScriptEngine} from './script/Engine';
+import {SCRIPT_MARKER} from './script/Script';
+import {setActiveScriptEngine, getActiveScriptEngine} from './script/use';
+import {setActiveCtx} from './ctx/use';
 
 const VOID_TAGS = {
     area: true,
@@ -58,8 +61,6 @@ const ESCAPE_LOOKUP = {
 } as const;
 
 const RGX_ESCAPE = /(?:&(?![a-z#0-9]+;))|[<>"']/gi;
-const RGX_TRIFROST_ENV = /["']__TRIFROST_ENV__\.([a-zA-Z0-9_]+)["']/g;
-const RGX_TRIFROST_STATE = /["']__TRIFROST_STATE__\.([a-zA-Z0-9_]+)("|')/g;
 
 /**
  * Escape HTML entities in strings to prevent XSS attacks.
@@ -107,11 +108,14 @@ function renderProps (props:Record<string, unknown>|null) {
 /**
  * Renders child elements
  */
-function renderChildren (children:JSXElement|string|number|boolean|null|JSXElement[]|string[]|number[]|boolean[]|null[]) {
-    if (!Array.isArray(children)) return children ? render(children) : '';
+function renderChildren (
+    children:any,
+    parentProps?:JSXProps
+):string {
+    if (!Array.isArray(children)) return children ? render(children, parentProps) : '';
 
     let output = '';
-    for (let i = 0; i < children.length; i++) output += render(children[i]);
+    for (let i = 0; i < children.length; i++) output += render(children[i], parentProps);
     return output;
 }
 
@@ -119,45 +123,44 @@ function renderChildren (children:JSXElement|string|number|boolean|null|JSXEleme
  * Renders a JSXElement or primitive to a string.
  * @param node - JSX tree or primitive.
  */
-export function render (node: JSXElement | string | number | boolean | null): string {
+export function render (node:JSXElement|string|number|boolean|null, parentProps:JSXProps = {}):string {
     switch (typeof node) {
-        case 'string':
-            return node ? escape(node) : '';
-        case 'number':
-            return node + '';
-        case 'boolean':
-            return '';
+        case 'string': return node ? escape(node) : '';
+        case 'number': return node + '';
+        case 'boolean': return '';
         default: {
             switch (typeof node?.type) {
                 case 'string': {
                     const tag = (node as JSXElement).type;
-                    let output = '<' + tag;
-
-                    /* Props */
-                    if ((node as JSXElement).props) output += renderProps((node as JSXElement).props);
-
-                    /* Void tags like br are self-closing <br /> */
-                    if (VOID_TAGS[tag as keyof typeof VOID_TAGS]) return output + ' />';
-
-                    output += '>';
-                    if (typeof (node as JSXElement).props?.dangerouslySetInnerHTML?.__html === 'string') {
-                        output += (node as JSXElement).props!.dangerouslySetInnerHTML!.__html;
-                    } else {
-                        output += renderChildren((node as JSXElement).props?.children as JSXElement | string | number | boolean | null);
+                    if (tag === SCRIPT_MARKER) {
+                        if (node.props.fn_id) {
+                            parentProps['data-tfhf'] = node.props.fn_id;
+                            if (node.props.data_id) parentProps['data-tfhd'] = node.props.data_id;
+                        }
+                        return ''; /* Dont render the marker */
                     }
 
-                    return output + '</' + tag + '>';
+                    /* Render children */
+                    const innerHTML = typeof node.props.dangerouslySetInnerHTML?.__html === 'string'
+                        ? node.props.dangerouslySetInnerHTML!.__html
+                        : renderChildren(node.props.children, node.props);
+
+                    const out = VOID_TAGS[tag as keyof typeof VOID_TAGS]
+                        ? '<' + tag + renderProps(node.props) + ' />'
+                        : '<' + tag + renderProps(node.props) + '>' + innerHTML + '</' + tag + '>';
+
+                    return out;
                 }
                 case 'function':
                     return (node as JSXElement).type === Fragment
-                        ? renderChildren((node as JSXElement).props?.children as JSXElement | string | number | boolean | null)
-                        : render(((node as JSXElement).type as any)((node as JSXElement).props));
+                        ? renderChildren(node.props.children as JSXElement|string|number|boolean|null, parentProps)
+                        : render((node.type as any)(node.props), parentProps);
                 default: {
                     if (!node) {
                         return '';
                     } else if (Array.isArray(node)) {
                         let output = '';
-                        for (let i = 0; i < node.length; i++) output += render(node[i]);
+                        for (let i = 0; i < node.length; i++) output += render(node[i], parentProps);
                         return output;
                     } else {
                         return '';
@@ -177,30 +180,20 @@ export function rootRender <
 > (ctx:TriFrostContext<Env, State>, tree:JSXElement):string {
     /* Instantiate globals */
     const style_engine = getActiveStyleEngine() || setActiveStyleEngine(new StyleEngine());
-    setActiveNonce(ctx.nonce);
+    const script_engine = getActiveScriptEngine() || setActiveScriptEngine(new ScriptEngine());
+    setActiveCtx(ctx);
 
     /* Render jsx to html */
-    let html = style_engine.inject(render(tree));
+    const html = script_engine.inject(
+        style_engine.inject(
+            render(tree)
+        )
+    );
 
     /* Cleanup globals */
-    setActiveNonce(null);
+    setActiveCtx(null);
     setActiveStyleEngine(null);
-
-    /* Run env marker replacements */
-    if (html.indexOf('__TRIFROST_ENV__.') >= 0) {
-        html = html.replace(RGX_TRIFROST_ENV, (_, key:keyof Env) => {
-            if (!(key in ctx.env)) return '""';
-            return JSON.stringify(ctx.env[key]);
-        });
-    }
-
-    /* Run state marker replacements */
-    if (html.indexOf('__TRIFROST_STATE__.') >= 0) {
-        html = html.replace(RGX_TRIFROST_STATE, (_, key:keyof State) => {
-            if (!(key in ctx.state)) return '""';
-            return JSON.stringify(ctx.state[key]);
-        });
-    }
+    setActiveScriptEngine(null);
 
     return html;
 }
