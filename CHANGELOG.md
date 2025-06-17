@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ## [Unreleased]
 ### Improved
 - **feat**: Add `*` to auto-spaced selectors in css engine
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250617.0
+- **deps**: Upgrade @types/node to 22.15.32
+- **deps**: Upgrade typescript-eslint to 8.34.1
 
 ## [0.34.2] - 2025-06-16
 ### Fixed
