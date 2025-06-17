@@ -111,6 +111,7 @@ function normalizeSelector (val:string) {
         case '>':
         case '+':
         case '~':
+        case '*':
             return ' ' + val;
         default: {
             /**

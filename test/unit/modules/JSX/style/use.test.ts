@@ -1954,6 +1954,17 @@ describe('Modules - JSX - style - use', () => {
                     `<div class="${cls}">Combinator</div>`,
                 ].join(''));
             });
+
+            it('auto-spaces wildcard *', () => {
+                const cls = css({div: {[`*${css.is('h1', 'h2')}`]: {marginTop: '2rem'}}});
+                const html = engine.inject(`${MARKER}<div class="${cls}">Combinator</div>`);
+                expect(html).toBe([
+                    '<style>',
+                    `.${cls} div *:is(h1, h2){margin-top:2rem}`,
+                    '</style>',
+                    `<div class="${cls}">Combinator</div>`,
+                ].join(''));
+            });
         });
 
         describe('css.is', () => {
