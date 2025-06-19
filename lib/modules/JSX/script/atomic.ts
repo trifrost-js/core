@@ -36,7 +36,7 @@ export type TriFrostAtomicVM <
         unsubscribe<T extends keyof Relay>(topic?: T): void;
         publish<T extends keyof Relay>(
             topic: T,
-            data: Relay[T]
+            data: Relay[T] | void
         ): void;
     };
     [VM_STORE_NAME]: {
