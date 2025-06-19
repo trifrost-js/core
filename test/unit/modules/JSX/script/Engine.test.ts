@@ -3,6 +3,7 @@ import {ScriptEngine} from '../../../../../lib/modules/JSX/script/Engine';
 import * as Generic from '../../../../../lib/utils/Generic';
 import * as Nonce from '../../../../../lib/modules/JSX/ctx/nonce';
 import CONSTANTS from '../../../../constants';
+import {ATOMIC_GLOBAL, ATOMIC_VM_AFTER, ATOMIC_VM_BEFORE} from '../../../../../lib/modules/JSX/script/atomic';
 
 describe('ScriptEngine', () => {
     let engine: ScriptEngine;
@@ -105,16 +106,19 @@ describe('ScriptEngine', () => {
             engine.register('function(el,data){el.textContent="x";}', '{"x":1}');
 
             const out = engine.flush();
-            expect(out).toBe(
-                '<script nonce="abc123">(function(){' +
-                'const TFD = {"id-2":{"x":1}};' +
-                'const TFF = {"id-1":function(el,data){el.textContent="x";}};' +
-                'for (const id in TFF) {const n = document.querySelectorAll(`[data-tfhf="${id}"]`);' +
-                'for (let i = 0; i < n.length; i++) {' +
-                'const d = n[i].getAttribute("data-tfhd");' +
-                'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}' +
-                '}}})();</script>'
-            );
+            expect(out).toBe([
+                '<script nonce="abc123">(function(d,w){',
+                'const TFD={"id-2":{"x":1}};',
+                'const TFF={"id-1":function(el,data){el.textContent="x";}};',
+                'for(const id in TFF){',
+                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                'for(let n of N){',
+                'const dId=n.getAttribute("data-tfhd");',
+                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
+                '}',
+                '}',
+                '})(document,window);</script>',
+            ].join(''));
         });
 
         it('Respects nonce being null', () => {
@@ -122,6 +126,72 @@ describe('ScriptEngine', () => {
             engine.register('function(){}', null);
             const result = engine.flush();
             expect(result.startsWith('<script>')).toBe(true);
+        });
+
+        it('Flushes atomic globals and vm hooks only when atomic + root are enabled', () => {
+            engine.setAtomic(true);
+            engine.setRoot(true);
+            engine.register('function(el,data){el.textContent="Hi"}', null);
+
+            expect(engine.flush()).toBe([
+                '<script nonce="abc123">',
+                '(function(d,w){',
+                ATOMIC_GLOBAL,
+                'const TFD={};',
+                'const TFF={"id-1":function(el,data){el.textContent="Hi"}};',
+                'for(const id in TFF){',
+                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                'for(let n of N){',
+                ATOMIC_VM_BEFORE,
+                'const dId=n.getAttribute("data-tfhd");',
+                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
+                ATOMIC_VM_AFTER,
+                '}',
+                '}',
+                '})(document,window);</script>',
+            ].join(''));
+        });
+
+        it('Flushes only atomic VM without globals when root is false', () => {
+            engine.setAtomic(true);
+            engine.setRoot(false);
+            engine.register('function(el,data){el.textContent="Hi"}', null);
+
+            expect(engine.flush()).toBe([
+                '<script nonce="abc123">',
+                '(function(d,w){',
+                'const TFD={};',
+                'const TFF={"id-1":function(el,data){el.textContent="Hi"}};',
+                'for(const id in TFF){',
+                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                'for(let n of N){',
+                ATOMIC_VM_BEFORE,
+                'const dId=n.getAttribute("data-tfhd");',
+                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
+                ATOMIC_VM_AFTER,
+                '}',
+                '}',
+                '})(document,window);</script>',
+            ].join(''));
+        });
+
+        it('Deduplicates both function and data payloads correctly', () => {
+            engine.register('function(el,data){el.id="a"}', '{"value":42}');
+            engine.register('function(el,data){el.id="a"}', '{"value":42}');
+            expect(engine.flush()).toBe([
+                '<script nonce="abc123">',
+                '(function(d,w){',
+                'const TFD={"id-2":{"value":42}};',
+                'const TFF={"id-1":function(el,data){el.id="a"}};',
+                'for(const id in TFF){',
+                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                'for(let n of N){',
+                'const dId=n.getAttribute("data-tfhd");',
+                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
+                '}',
+                '}',
+                '})(document,window);</script>',
+            ].join(''));
         });
 
         it('Returns empty script if only data is registered without any functions', () => {
@@ -143,17 +213,17 @@ describe('ScriptEngine', () => {
             expect(engine.inject('<html><main>Stuff</main></html>')).toBe([
                 '<html><main>Stuff</main></html>',
                 '<script nonce="abc123">',
-                '(function(){',
-                'const TFD = {};',
-                'const TFF = {"id-1":function(){}};',
-                'for (const id in TFF) {',
-                'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
-                'for (let i = 0; i < n.length; i++) {',
-                'const d = n[i].getAttribute("data-tfhd");',
-                'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                '(function(d,w){',
+                'const TFD={};',
+                'const TFF={"id-1":function(){}};',
+                'for(const id in TFF){',
+                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                'for(let n of N){',
+                'const dId=n.getAttribute("data-tfhd");',
+                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                 '}',
                 '}',
-                '})();</script>',
+                '})(document,window);</script>',
             ].join(''));
         });
 
@@ -164,18 +234,17 @@ describe('ScriptEngine', () => {
                 '<body>',
                 '<main>Content</main>',
                 '<script nonce="abc123">',
-                '(function(){',
-                'const TFD = {};',
-                'const TFF = {"id-1":function(){}};',
-                'for (const id in TFF) {',
-                'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
-                'for (let i = 0; i < n.length; i++) {',
-                'const d = n[i].getAttribute("data-tfhd");',
-                'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                '(function(d,w){',
+                'const TFD={};',
+                'const TFF={"id-1":function(){}};',
+                'for(const id in TFF){',
+                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                'for(let n of N){',
+                'const dId=n.getAttribute("data-tfhd");',
+                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                 '}',
                 '}',
-                '})();',
-                '</script>',
+                '})(document,window);</script>',
                 '</body>',
                 '</html>',
             ].join(''));
@@ -187,18 +256,17 @@ describe('ScriptEngine', () => {
             expect(engine.inject('<div>Partial content</div>')).toBe([
                 '<div>Partial content</div>',
                 '<script nonce="abc123">',
-                '(function(){',
-                'const TFD = {};',
-                'const TFF = {"id-1":function(el){el.dataset.x="1"}};',
-                'for (const id in TFF) {',
-                'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
-                'for (let i = 0; i < n.length; i++) {',
-                'const d = n[i].getAttribute("data-tfhd");',
-                'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                '(function(d,w){',
+                'const TFD={};',
+                'const TFF={"id-1":function(el){el.dataset.x="1"}};',
+                'for(const id in TFF){',
+                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                'for(let n of N){',
+                'const dId=n.getAttribute("data-tfhd");',
+                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                 '}',
                 '}',
-                '})();',
-                '</script>',
+                '})(document,window);</script>',
             ].join(''));
         });
 
@@ -207,6 +275,24 @@ describe('ScriptEngine', () => {
             for (const el of CONSTANTS.NOT_STRING) {
                 expect(engine.inject(el as string)).toBe('');
             }
+        });
+
+        it('Gracefully handles empty html in inject()', () => {
+            engine.register('function(){}', null);
+            expect(engine.inject('')).toBe([
+                '<script nonce="abc123">',
+                '(function(d,w){',
+                'const TFD={};',
+                'const TFF={"id-1":function(){}};',
+                'for(const id in TFF){',
+                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                'for(let n of N){',
+                'const dId=n.getAttribute("data-tfhd");',
+                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
+                '}',
+                '}',
+                '})(document,window);</script>',
+            ].join(''));
         });
     });
 

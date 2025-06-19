@@ -1,5 +1,6 @@
 import {hexId} from '../../../utils/Generic';
 import {nonce} from '../ctx/nonce';
+import {ATOMIC_GLOBAL, ATOMIC_VM_BEFORE, ATOMIC_VM_AFTER} from './atomic';
 
 export class ScriptEngine {
 
@@ -8,6 +9,20 @@ export class ScriptEngine {
 
     /* Map storing the data payloads with their id */
     protected map_data = new Map<string, string>();
+
+    /* Whether or not TriFrost atomic is enabled */
+    protected atomic_enabled:boolean = false;
+
+    /* Whether or not the Engine instance is in charge of root rendering */
+    protected root_renderer:boolean = false;
+
+    setAtomic (is_atomic:boolean) {
+        this.atomic_enabled = is_atomic === true;
+    }
+
+    setRoot (is_root:boolean) {
+        this.root_renderer = is_root === true;
+    }
 
     register (fn:string, data:string|null) {
         let fn_id = this.map_fn.get(fn);
@@ -28,31 +43,43 @@ export class ScriptEngine {
         return {fn_id, data_id};
     }
 
+    /**
+     * Flushes the script registry into a string
+     */
     flush ():string {
-        if (this.map_fn.size === 0) return '';
+        if (this.map_fn.size === 0 && !this.atomic_enabled) return '';
 
         /* Start script */
-        let out = '(function(){';
+        let out = '(function(d,w){';
 
-        /* Payloads */
-        const TFD:string[] = [];
-        for (const [d_val, d_id] of this.map_data) TFD.push('"' + d_id + '":' + d_val);
-        out += 'const TFD = {' + TFD.join(',') + '};';
+        if (this.atomic_enabled && this.root_renderer) out += ATOMIC_GLOBAL;
 
-        /* Handlers */
-        const TFF:string[] = [];
-        for (const [f_val, f_id] of this.map_fn) TFF.push('"' + f_id + '":' + f_val);
-        out += 'const TFF = {' + TFF.join(',') + '};';
+        if (this.map_fn.size) {
+            // --- Payloads (TFD) ---
+            const TFD = [...this.map_data].map(([v, k]) => '"' + k + '":' + v).join(',');
+            out += `const TFD={${TFD}};`;
 
-        /* Runner */
-        out += 'for (const id in TFF) {const n = document.querySelectorAll(`[data-tfhf="${id}"]`);';
-        out += 'for (let i = 0; i < n.length; i++) {';
-        out += 'const d = n[i].getAttribute("data-tfhd");';
-        out += 'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}';
-        out += '}}';
+            // --- Functions (TFF) ---
+            const TFF = [...this.map_fn].map(([v, k]) => '"' + k + '":' + v).join(',');
+            out += `const TFF={${TFF}};`;
 
-        /* Finalize script */
-        out += '})();';
+            // --- Runner ---
+            out += [
+                'for(const id in TFF){',
+                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                'for(let n of N){',
+                this.atomic_enabled ? ATOMIC_VM_BEFORE : '',
+                /* Run function and pass data */
+                'const dId=n.getAttribute("data-tfhd");',
+                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
+                this.atomic_enabled ? ATOMIC_VM_AFTER : '',
+                '}',
+                '}',
+            ].join('');
+        }
+
+        /* Finalize iife */
+        out += '})(document,window);';
 
         const n_nonce = nonce();
         return n_nonce
