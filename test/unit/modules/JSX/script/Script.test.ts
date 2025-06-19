@@ -11,7 +11,7 @@ import * as Generic from '../../../../../lib/utils/Generic';
 import {MockContext} from '../../../../MockContext';
 import {ATOMIC_GLOBAL, ATOMIC_VM_AFTER, ATOMIC_VM_BEFORE} from '../../../../../lib/modules/JSX/script/atomic';
 
-describe('JSX - <Script>', () => {
+describe('Modules - JSX - script - <Script>', () => {
     let engine:ScriptEngine;
     let idcount = 0;
     beforeEach(() => {

@@ -5,7 +5,7 @@ import * as Nonce from '../../../../../lib/modules/JSX/ctx/nonce';
 import CONSTANTS from '../../../../constants';
 import {ATOMIC_GLOBAL, ATOMIC_VM_AFTER, ATOMIC_VM_BEFORE} from '../../../../../lib/modules/JSX/script/atomic';
 
-describe('ScriptEngine', () => {
+describe('Modules - JSX - script - Engine', () => {
     let engine: ScriptEngine;
     let idcount = 0;
 
