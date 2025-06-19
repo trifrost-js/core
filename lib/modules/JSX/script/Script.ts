@@ -2,12 +2,16 @@
 
 import {nonce} from '../ctx/nonce';
 import {type JSXProps} from '../types';
+import {type TriFrostAtomicVM} from './atomic';
 import {getActiveScriptEngine} from './use';
 
 export const SCRIPT_MARKER = '__TRIFROST_HYDRATED_SCRIPT__';
 
-type ScriptProps <TData = undefined> = JSXProps & {
-  children?: (el:HTMLElement, data:TData) => void;
+export type ScriptProps<
+  TData = undefined,
+  TRelay extends Record<string, unknown> = Record<string, unknown>
+> = JSXProps & {
+  children?: (el: HTMLElement & TriFrostAtomicVM<TRelay>, data: TData) => void;
   nonce?: string;
   src?: string;
   async?: boolean;
@@ -20,7 +24,10 @@ const RGX_ASYNC_FATARROW = /__name\((async\s*\([^)]*\)\s*=>\s*{[\s\S]*?})\s*,\s*
 const RGX_ASYNC_FUNCTION = /^\s*__name\([^)]*\);\s*$/gm;
 const RGX_DATA_SCRIPT = /<\/script>/gi;
 
-export function Script <T = undefined> (options:JSXProps & ScriptProps<T> | null):JSX.Element {
+export function Script <
+    TData = undefined,
+    TRelay extends Record<string, unknown> = Record<string, unknown>
+> (options: JSXProps & ScriptProps<TData, TRelay> | null): JSX.Element {
     if (!options || Object.prototype.toString.call(options) !== '[object Object]') return null as unknown as JSX.Element;
 
     /* Source */
@@ -54,9 +61,23 @@ export function Script <T = undefined> (options:JSXProps & ScriptProps<T> | null
 
     const raw = options.children.toString();
 
-    /* Our closure looks like (node) => { ... }, as such we get the first index of { and then slice and dice */
-    const body = raw
-        .slice(raw.indexOf('{') + 1, -1)
+    /* Normalize Arrow vs function */
+    let body = raw;
+    if (raw.startsWith('(')) {
+        const arrow_idx = raw.indexOf('=>');
+        const body_start_idx = raw.indexOf('{', arrow_idx);
+        const body_end_idx = raw.lastIndexOf('}');
+        /* arrow with braces */
+        if (body_start_idx !== -1 && body_end_idx !== -1) {
+            body = raw.slice(body_start_idx + 1, body_end_idx);
+        } else {
+            /* One-liner arrow without braces */
+            body = raw.slice(arrow_idx + 2).trim();
+        }
+    }
+
+    /* At this point we're working with a normalized function */
+    body = body
         .replace(RGX_ASYNC_FATARROW, '$1')
         .replace(RGX_ASYNC_FUNCTION, '')
         .trim();
