@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+
 const RGX_COMMENT = /\/\/.*$/gm;
 const RGX_BREAK = /\n/g;
 const RGX_SPACE = /\s+/g;
@@ -22,23 +24,26 @@ function minify (raw:string):string {
 }
 
 export type TriFrostAtomicVM <
-    Events extends Record<string, unknown>
+    Relay extends Record<string, unknown> = {},
+    Store extends Record<string, unknown> = {}
 > = {
     [VM_ID_NAME]: string;
     [VM_RELAY_NAME]: {
-        subscribe<K extends keyof Events>(
-            topic: K,
-            fn: (data: Events[K]) => void
-        ): void;
-        unsubscribe(topic?:keyof Events):void;
-        publish<K extends keyof Events>(
-            topic: K,
-            data: Events[K]
+        subscribe<T extends keyof Relay>(
+            topic: T,
+            fn: (data: Relay[T]) => void
+          ): void;
+        unsubscribe<T extends keyof Relay>(topic?: T): void;
+        publish<T extends keyof Relay>(
+            topic: T,
+            data: Relay[T]
         ): void;
     };
     [VM_STORE_NAME]: {
-	    get: <T = unknown>(key: string) => T | undefined;
-	    set: (key: string, value: unknown) => void;
+	    get<K extends keyof Store>(key: K): Store[K];
+        get(key: string): unknown;
+        set<K extends keyof Store>(key: K, value: Store[K]): void;
+        set(key: string, value: unknown): void;
     };
     [VM_HOOK_MOUNT_NAME]?: () => void;
     [VM_HOOK_UNMOUNT_NAME]?: () => void;

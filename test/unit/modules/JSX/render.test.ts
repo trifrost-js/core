@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /* eslint-disable max-len */
 /* eslint-disable no-console */
 import {describe, it, expect, beforeEach, vi, afterEach} from 'vitest';
@@ -11,6 +12,8 @@ import {Style} from '../../../../lib/modules/JSX/style/Style';
 import {Script} from '../../../../lib/modules/JSX/script/Script';
 import * as Generic from '../../../../lib/utils/Generic';
 import {MockContext} from '../../../MockContext';
+import {createScript} from '../../../../lib/modules/JSX/script/use';
+import {ATOMIC_GLOBAL, ATOMIC_VM_AFTER, ATOMIC_VM_BEFORE} from '../../../../lib/modules/JSX/script/atomic';
 
 describe('Modules - JSX - Renderer', () => {
     describe('escape()', () => {
@@ -504,16 +507,16 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<button data-tfhf="id-2" data-tfhd="id-3">Click me</button><script nonce="aWQtMQ==">(function(){const TFD = {"id-3":{"foo":"bar"}};',
-                    'const TFF = {"id-2":function(el,data){console.log("Hydrated:", el, data);}};',
-                    'for (const id in TFF) {',
-                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for (let i = 0; i < n.length; i++) {',
-                    'const d = n[i].getAttribute("data-tfhd");',
-                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '<button data-tfhf="id-2" data-tfhd="id-3">Click me</button><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"foo":"bar"}};',
+                    'const TFF={"id-2":function(el,data){console.log("Hydrated:", el, data);}};',
+                    'for(const id in TFF){',
+                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for(let n of N){',
+                    'const dId=n.getAttribute("data-tfhd");',
+                    'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                     '}',
                     '}',
-                    '})();</script>',
+                    '})(document,window);</script>',
                 ].join(''));
             });
 
@@ -546,16 +549,16 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<span data-tfhf="id-2" data-tfhd="id-3">Item</span><span data-tfhf="id-2" data-tfhd="id-3">Item</span><span data-tfhf="id-2" data-tfhd="id-3">Item</span><script nonce="aWQtMQ==">(function(){const TFD = {"id-3":{"x":1}};',
-                    'const TFF = {"id-2":function(el,data){el.dataset.bound = "true";}};',
-                    'for (const id in TFF) {',
-                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for (let i = 0; i < n.length; i++) {',
-                    'const d = n[i].getAttribute("data-tfhd");',
-                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '<span data-tfhf="id-2" data-tfhd="id-3">Item</span><span data-tfhf="id-2" data-tfhd="id-3">Item</span><span data-tfhf="id-2" data-tfhd="id-3">Item</span><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"x":1}};',
+                    'const TFF={"id-2":function(el,data){el.dataset.bound = "true";}};',
+                    'for(const id in TFF){',
+                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for(let n of N){',
+                    'const dId=n.getAttribute("data-tfhd");',
+                    'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                     '}',
                     '}',
-                    '})();</script>',
+                    '})(document,window);</script>',
                 ].join(''));
             });
 
@@ -580,16 +583,16 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<div data-tfhf="id-2">No Data</div><script nonce="aWQtMQ==">(function(){const TFD = {};',
-                    'const TFF = {"id-2":function(el,data){el.id = "injected";}};',
-                    'for (const id in TFF) {',
-                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for (let i = 0; i < n.length; i++) {',
-                    'const d = n[i].getAttribute("data-tfhd");',
-                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '<div data-tfhf="id-2">No Data</div><script nonce="aWQtMQ==">(function(d,w){const TFD={};',
+                    'const TFF={"id-2":function(el,data){el.id = "injected";}};',
+                    'for(const id in TFF){',
+                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for(let n of N){',
+                    'const dId=n.getAttribute("data-tfhd");',
+                    'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                     '}',
                     '}',
-                    '})();</script>',
+                    '})(document,window);</script>',
                 ].join(''));
             });
 
@@ -620,16 +623,16 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<div data-tfhf="id-2" data-tfhd="id-3">Nested</div><script nonce="aWQtMQ==">(function(){const TFD = {"id-3":{"enabled":true}};',
-                    'const TFF = {"id-2":function(el,data){el.setAttribute("data-enabled", data.enabled);}};',
-                    'for (const id in TFF) {',
-                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for (let i = 0; i < n.length; i++) {',
-                    'const d = n[i].getAttribute("data-tfhd");',
-                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '<div data-tfhf="id-2" data-tfhd="id-3">Nested</div><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"enabled":true}};',
+                    'const TFF={"id-2":function(el,data){el.setAttribute("data-enabled", data.enabled);}};',
+                    'for(const id in TFF){',
+                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for(let n of N){',
+                    'const dId=n.getAttribute("data-tfhd");',
+                    'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                     '}',
                     '}',
-                    '})();</script>',
+                    '})(document,window);</script>',
                 ].join(''));
             });
 
@@ -680,16 +683,16 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-4" data-tfhd="id-5">Second</div><script nonce="aWQtMQ==">(function(){const TFD = {"id-3":{"count":1},"id-5":{"count":2}};',
-                    'const TFF = {"id-2":function(el,data){el.textContent = `count:${data.count}`;},"id-4":function(el,data){el.textContent = `count is ${data.count}`;}};',
-                    'for (const id in TFF) {',
-                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for (let i = 0; i < n.length; i++) {',
-                    'const d = n[i].getAttribute("data-tfhd");',
-                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-4" data-tfhd="id-5">Second</div><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"count":1},"id-5":{"count":2}};',
+                    'const TFF={"id-2":function(el,data){el.textContent = `count:${data.count}`;},"id-4":function(el,data){el.textContent = `count is ${data.count}`;}};',
+                    'for(const id in TFF){',
+                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for(let n of N){',
+                    'const dId=n.getAttribute("data-tfhd");',
+                    'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                     '}',
                     '}',
-                    '})();</script>',
+                    '})(document,window);</script>',
                 ].join(''));
             });
 
@@ -740,16 +743,16 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-4" data-tfhd="id-3">Second</div><script nonce="aWQtMQ==">(function(){const TFD = {"id-3":{"count":1}};',
-                    'const TFF = {"id-2":function(el,data){el.textContent = `count:${data.count}`;},"id-4":function(el,data){el.textContent = `count is ${data.count}`;}};',
-                    'for (const id in TFF) {',
-                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for (let i = 0; i < n.length; i++) {',
-                    'const d = n[i].getAttribute("data-tfhd");',
-                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-4" data-tfhd="id-3">Second</div><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"count":1}};',
+                    'const TFF={"id-2":function(el,data){el.textContent = `count:${data.count}`;},"id-4":function(el,data){el.textContent = `count is ${data.count}`;}};',
+                    'for(const id in TFF){',
+                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for(let n of N){',
+                    'const dId=n.getAttribute("data-tfhd");',
+                    'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                     '}',
                     '}',
-                    '})();</script>',
+                    '})(document,window);</script>',
                 ].join(''));
             });
 
@@ -800,16 +803,16 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-2" data-tfhd="id-3">Second</div><script nonce="aWQtMQ==">(function(){const TFD = {"id-3":{"count":1}};',
-                    'const TFF = {"id-2":function(el,data){el.textContent = `count is ${data.count}`;}};',
-                    'for (const id in TFF) {',
-                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for (let i = 0; i < n.length; i++) {',
-                    'const d = n[i].getAttribute("data-tfhd");',
-                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-2" data-tfhd="id-3">Second</div><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"count":1}};',
+                    'const TFF={"id-2":function(el,data){el.textContent = `count is ${data.count}`;}};',
+                    'for(const id in TFF){',
+                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for(let n of N){',
+                    'const dId=n.getAttribute("data-tfhd");',
+                    'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                     '}',
                     '}',
-                    '})();</script>',
+                    '})(document,window);</script>',
                 ].join(''));
             });
 
@@ -865,16 +868,16 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<section><article><header data-tfhf="id-2" data-tfhd="id-3">Header</header><footer data-tfhf="id-4">Footer</footer></article></section><script nonce="aWQtMQ==">(function(){const TFD = {"id-3":{"active":true}};',
-                    'const TFF = {"id-2":function(el,data){el.dataset.active = String(data.active);},"id-4":function(el,data){el.dataset.foot = "true";}};',
-                    'for (const id in TFF) {',
-                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for (let i = 0; i < n.length; i++) {',
-                    'const d = n[i].getAttribute("data-tfhd");',
-                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '<section><article><header data-tfhf="id-2" data-tfhd="id-3">Header</header><footer data-tfhf="id-4">Footer</footer></article></section><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"active":true}};',
+                    'const TFF={"id-2":function(el,data){el.dataset.active = String(data.active);},"id-4":function(el,data){el.dataset.foot = "true";}};',
+                    'for(const id in TFF){',
+                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for(let n of N){',
+                    'const dId=n.getAttribute("data-tfhd");',
+                    'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                     '}',
                     '}',
-                    '})();</script>',
+                    '})(document,window);</script>',
                 ].join(''));
             });
 
@@ -906,16 +909,16 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<div data-tfhf="id-2" data-tfhd="id-3">Hello</div><script nonce="aWQtMQ==">(function(){const TFD = {"id-3":{"x":5}};',
-                    'const TFF = {"id-2":function(el,data){el.setAttribute("data-value", data.x);}};',
-                    'for (const id in TFF) {',
-                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for (let i = 0; i < n.length; i++) {',
-                    'const d = n[i].getAttribute("data-tfhd");',
-                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '<div data-tfhf="id-2" data-tfhd="id-3">Hello</div><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"x":5}};',
+                    'const TFF={"id-2":function(el,data){el.setAttribute("data-value", data.x);}};',
+                    'for(const id in TFF){',
+                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for(let n of N){',
+                    'const dId=n.getAttribute("data-tfhd");',
+                    'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                     '}',
                     '}',
-                    '})();</script>',
+                    '})(document,window);</script>',
                 ].join(''));
             });
 
@@ -979,16 +982,91 @@ describe('Modules - JSX - Renderer', () => {
 
                 /* Note: order in json stringification matters */
                 expect(html).toBe([
-                    '<ul><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==">(function(){const TFD = {"id-3":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
-                    'const TFF = {"id-2":function(el,data){el.innerText = JSON.stringify(data);}};',
-                    'for (const id in TFF) {',
-                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for (let i = 0; i < n.length; i++) {',
-                    'const d = n[i].getAttribute("data-tfhd");',
-                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '<ul><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
+                    'const TFF={"id-2":function(el,data){el.innerText = JSON.stringify(data);}};',
+                    'for(const id in TFF){',
+                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for(let n of N){',
+                    'const dId=n.getAttribute("data-tfhd");',
+                    'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                     '}',
                     '}',
-                    '})();</script>',
+                    '})(document,window);</script>',
+                ].join(''));
+            });
+
+            it('Normalizes and deduplicates equal JSON payloads as well as embeds atomic', () => {
+                const ctx = new MockContext();
+
+                const client = createScript({atomic: true});
+
+                const Component = () => {
+                    client.script.root();
+                    const cls = css({margin: '2rem', color: 'black'});
+                    return {type: 'div', props: {className: cls, children: 'Styled'}};
+                };
+
+                const html = rootRender(ctx, {
+                    type: 'ul',
+                    props: {
+                        children: [
+                            {
+                                type: Component,
+                            },
+                            {
+                                type: 'li',
+                                props: {
+                                    children: [
+                                        'A',
+                                        {
+                                            type: client.Script,
+                                            props: {
+                                                data: {a: 1, b: 2},
+                                                children: (el, data) => {
+                                                    el.innerText = JSON.stringify(data);
+                                                },
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                            {
+                                type: 'li',
+                                props: {
+                                    children: [
+                                        'B',
+                                        {
+                                            type: client.Script,
+                                            props: {
+                                                data: {b: 2, a: 1},
+                                                children: (el, data) => {
+                                                    el.innerText = JSON.stringify(data);
+                                                },
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                });
+
+                /* Note: order in json stringification matters */
+                expect(html).toBe([
+                    '<ul><div class="tf-1ahm5s3">Styled</div><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==">(function(d,w){',
+                    ATOMIC_GLOBAL,
+                    'const TFD={"id-3":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
+                    'const TFF={"id-2":function(el,data){el.innerText = JSON.stringify(data);}};',
+                    'for(const id in TFF){',
+                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for(let n of N){',
+                    ATOMIC_VM_BEFORE,
+                    'const dId=n.getAttribute("data-tfhd");',
+                    'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
+                    ATOMIC_VM_AFTER,
+                    '}',
+                    '}',
+                    '})(document,window);</script>',
                 ].join(''));
             });
 
@@ -1012,16 +1090,16 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html1).toBe([
-                    '<div data-tfhf="id-2">Reset me</div><script nonce="aWQtMQ==">(function(){const TFD = {};',
-                    'const TFF = {"id-2":function(el,data){el.id = "reset";}};',
-                    'for (const id in TFF) {',
-                    'const n = document.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for (let i = 0; i < n.length; i++) {',
-                    'const d = n[i].getAttribute("data-tfhd");',
-                    'try{TFF[id](n[i], d ? TFD[d] : undefined);}catch(err){console.error(err);}',
+                    '<div data-tfhf="id-2">Reset me</div><script nonce="aWQtMQ==">(function(d,w){const TFD={};',
+                    'const TFF={"id-2":function(el,data){el.id = "reset";}};',
+                    'for(const id in TFF){',
+                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for(let n of N){',
+                    'const dId=n.getAttribute("data-tfhd");',
+                    'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                     '}',
                     '}',
-                    '})();</script>',
+                    '})(document,window);</script>',
                 ].join(''));
 
                 const html2 = rootRender(new MockContext(), {

@@ -4,7 +4,7 @@ import {ConsoleExporter, JsonExporter, OtelHttpExporter} from '../../../lib/modu
 import {RateLimitKeyGeneratorRegistry} from '../../../lib/modules/RateLimit/_RateLimit';
 import {createCss} from '../../../lib/modules/JSX/style/use';
 import {Style} from '../../../lib/modules/JSX/style/Style';
-import {Script} from '../../../lib/modules/JSX/script/Script';
+import {createScript} from '../../../lib/modules/JSX/script/use';
 import * as Modules from '../../../lib/modules';
 
 describe('Modules - Index', () => {
@@ -27,8 +27,8 @@ describe('Modules - Index', () => {
             expect(Modules.createCss).toEqual(createCss);
         });
 
-        it('Script should link to the correct module', () => {
-            expect(Modules.Script).toEqual(Script);
+        it('createScript should link to the correct module', () => {
+            expect(Modules.createScript).toEqual(createScript);
         });
 
         it('Style should link to the correct module', () => {

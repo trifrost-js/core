@@ -8,16 +8,17 @@ import {getActiveScriptEngine} from './use';
 export const SCRIPT_MARKER = '__TRIFROST_HYDRATED_SCRIPT__';
 
 export type ScriptProps<
-  TData = undefined,
-  TRelay extends Record<string, unknown> = Record<string, unknown>
+  TFData = undefined,
+  TFRelay extends Record<string, unknown> = Record<string, unknown>,
+  TFStore extends Record<string, unknown> = Record<string, unknown>
 > = JSXProps & {
-  children?: (el: HTMLElement & TriFrostAtomicVM<TRelay>, data: TData) => void;
+  children?: (el: HTMLElement & TriFrostAtomicVM<TFRelay, TFStore>, data: TFData) => void;
   nonce?: string;
   src?: string;
   async?: boolean;
   defer?: boolean;
   type?: string;
-  data?: TData;
+  data?: TFData;
 };
 
 const RGX_ASYNC_FATARROW = /__name\((async\s*\([^)]*\)\s*=>\s*{[\s\S]*?})\s*,\s*"[^"]*"\)/g;
@@ -25,9 +26,10 @@ const RGX_ASYNC_FUNCTION = /^\s*__name\([^)]*\);\s*$/gm;
 const RGX_DATA_SCRIPT = /<\/script>/gi;
 
 export function Script <
-    TData = undefined,
-    TRelay extends Record<string, unknown> = Record<string, unknown>
-> (options: JSXProps & ScriptProps<TData, TRelay> | null): JSX.Element {
+    TFData = undefined,
+    TFRelay extends Record<string, unknown> = Record<string, unknown>,
+    TFStore extends Record<string, unknown> = Record<string, unknown>
+> (options: JSXProps & ScriptProps<TFData, TFRelay, TFStore> | null): JSX.Element {
     if (!options || Object.prototype.toString.call(options) !== '[object Object]') return null as unknown as JSX.Element;
 
     /* Source */

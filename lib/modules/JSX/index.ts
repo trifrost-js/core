@@ -4,7 +4,7 @@ export {
 } from './types';
 
 export {
-    Script
+    createScript
 } from './script';
 
 export {
@@ -13,7 +13,5 @@ export {
 } from './style';
 
 export {
-    nonce,
-    env,
-    state
+    nonce
 } from './ctx';

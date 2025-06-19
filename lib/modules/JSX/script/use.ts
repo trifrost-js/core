@@ -25,7 +25,8 @@ type ScriptConfig = {
 
 export function createScript<
   Env extends Record<string, any> = Record<string, any>,
-  Relay extends Record<string, unknown> = Record<string, unknown>
+  TFRelay extends Record<string, unknown> = Record<string, unknown>,
+  TFStore extends Record<string, unknown> = Record<string, unknown>
 > (config:ScriptConfig = {}) {
     /* Env proxy */
     const env = <K extends keyof Env> (key:K) => ogEnv<Env[K]>(key as string);
@@ -34,9 +35,9 @@ export function createScript<
     const state = <T = unknown, K extends string = string> (key:K) => ogState<T>(key);
 
     /* Script proxy */
-    const Script = <TData = undefined> (props:ScriptProps<TData, Relay>) => {
+    const Script = <TFData = undefined> (props:ScriptProps<TFData, TFRelay, TFStore>) => {
         if ('atomic' in config) active_engine?.setAtomic(config.atomic!);
-        return ogScript<TData, Relay>(props);
+        return ogScript<TFData, TFRelay, TFStore>(props);
     };
 
     /* Tell the ecosystem this is the root render */

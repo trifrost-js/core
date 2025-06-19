@@ -8,8 +8,9 @@ export {
 } from './Logger';
 export {
     createCss,
-    Script,
     Style,
+    createScript,
+    nonce,
     type JSXProps,
     type JSXFragment
 } from './JSX';
