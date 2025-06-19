@@ -4,12 +4,155 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.35.0] - 2025-06-19
+> Introducing **TriFrost Atomic ⚛️**, where others ship megabyte bundles ... we go Atomic.
+
+Building on top of the `<Script>` foundation laid in `0.33.0` and subsequently `0.34.0`. This release marks the debut of **TriFrost Atomic**, a reactive, declarative, and zero-bundle interactivity model embedded directly within your HTML. No hydration APIs. No diffing. No VDOM. Just finely-scoped, component-local behavior with **runtime deduplication, CSP-safe execution, and lifecycle primitives**.
+
+### Added - Welcome to Atomic
+- **feat**: `createScript()` factory. A typed, per-tree interactivity engine that mirrors the ergonomics of `createCss()`. It returns `<Script>` and a `script` object with `env()`, `state()`, `nonce()`, and `root()` methods. Just like `css.root()` declares style root injection, `script.root()` marks the entry point for atomic injection.
+```typescript
+// script.ts
+import {createScript} from '@trifrost/core/modules/JSX/script';
+import {type Env} from './types';
+
+const {Script, script} = createScript<Env>({atomic: true});
+export {Script, script}; /* script.env will be typed according to the shape of Env */
+```
+```tsx
+// consumer.tsx
+import {Script, script} from '~/script';
+
+function ToggleButton () {
+  return (<button>
+    Toggle
+    <Script data={{className: 'active'}}>{(el, data) => {
+      el.addEventListener('click', () => {
+        el.classList.toggle(data.className);
+      });
+    }}</Script>
+  </button>);
+}
+
+function Layout () {
+  script.root(); /* This tells TriFrost to inject the atomic globals such as tfRelay, tfStore, ... */
+  return (<html>
+    <body>
+      <ToggleButton />
+    </body>
+  </html>)
+}
+```
+- **feat**: `tfRelay`, built-in reactive message bus for `<Script>`. Every `<Script>` in atomic mode gains access to a scoped relay (`el.tfRelay`) with `publish`, `subscribe`, and `unsubscribe`. Perfect for loose coupling and interactivity without a framework. **Subscriptions are automatically cleaned up when the element is removed**.
+
+Relay events are automatically typed via the second generic param in `createScript<Env, Relay>()`.
+
+You can define a central shape for all message types relevant to the script tree.
+
+Doing so, **types are inferred**, so `publish`/`subscribe` calls will give you type hints if misused.
+
+Example:
+```ts
+// script.ts
+import {createScript} from '@trifrost/core';
+import {type Env} from './types';
+
+type Relay = {
+  sidebar_visibility: boolean;
+  count_updated: number;
+};
+
+const {Script, script} = createScript<{}, Relay>({atomic: true});
+export {Script, script};
+```
+```tsx
+// Consumer.tsx
+<Script>{el => {
+  el.tfRelay.subscribe('sidebar_visibility', (open) => {
+    el.classList.toggle('open', open);
+  });
+
+  el.tfRelay.subscribe('count_updated', count => {
+    el.textContent = `Count: ${count}`;
+  });
+}}</Script>
+```
+```tsx
+// Publisher.tsx
+<Script>{el => {
+  el.addEventListener('click', () => {
+    el.tfRelay.publish('sidebar_visibility', true);
+    el.tfRelay.publish('count_updated', Math.floor(Math.random() * 100));
+  });
+}}</Script>
+```
+- **feat**: `tfStore`, shared memory across Atomic VMs, think global state, without global baggage. Atomic VMs share access to `el.tfStore.get()` and `el.tfStore.set()`, enabling decoupled cross-component coordination.
+
+You can define a central shape for storage keys and their types.
+
+Doing so, **types are inferred**, so `get`/`set` calls will give you type hints if misused.
+
+Example:
+```typescript
+// script.ts
+import {createScript} from '@trifrost/core';
+import {type Env} from './types';
+
+type MyEvents = {
+  openSidebar: boolean;
+  updateCount: number;
+};
+
+type MyStore = {
+  userId: string;
+};
+
+const {Script, script} = createScript<Env, MyEvents, MyStore>({atomic: true});
+export {Script, script};
+```
+
+Inside a script:
+```tsx
+<Script>{el => {
+el.tfRelay.publish('openSidebar', true);        // ✅
+el.tfRelay.subscribe('updateCount', n => {});   // ✅ Type is known as number
+el.tfRelay.unsubscribe('openSidebar');          // ✅
+
+el.tfRelay.publish('closeSidebar', true);       // ❌ TS error
+el.tfStore.get('userId');                       // ✅
+el.tfStore.set('userId', 'abc');                // ✅
+el.tfStore.set('foo', 'bar');                   // ✅ Accepted but type is unknown
+}}</Script>
+```
+- **feat**: `tfMount`/`tfUnmount`, your script function can register lifecycle callbacks on the element. TriFrost automatically invokes them on attach and detach:.
+```tsx
+<Script>{el => {
+  el.tfMount = () => console.log('mounted');
+  el.tfUnmount = () => console.log('unmounted');
+}}</Script>
+```
+- **feat**: Atomic runtime with mutation observer, automatically tracks DOM removal and cleans up subscriptions and lifecycle hooks. **Injected once per page**, and **only if Atomic mode is active**, and **only if script.root() is called**. No globals. No leaks. **This runtime is OPT-IN, meaning you need to pass** `{atomic:true}` to `createScript` to activate it.
+
 ### Improved
 - **feat**: Add `*` to auto-spaced selectors in css engine
-- **deps**: Upgrade @cloudflare/workers-types to 4.20250617.0
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250619.0
 - **deps**: Upgrade @types/node to 22.15.32
+- **deps**: Upgrade @vitest/coverage-v8 to 3.2.4
 - **deps**: Upgrade typescript-eslint to 8.34.1
+- **deps**: Upgrade vitest to 3.2.4
+
+### Breaking - One interface to rule the tree
+- **refactor**: Removed global `env()`, `state()`, and `<Script>` JSX exports. These are now accessed exclusively via `createScript()` to ensure proper typing, encapsulation, and per-request safety.
+
+---
+
+**TriFrost Atomic** reimagines client interactivity as something lightweight, composable, and state-aware, without the runtime overhead of hydration forests or megabyte payloads.
+
+Whether you’re toggling classes, syncing local state, or coordinating cross-component actions, you now have a full-fledged, runtime-deduplicated VM under every node.
+
+We're just getting started on this path, more to come, but for now, let's go atomic.
+
+And as always, stay frosty ❄️.
 
 ## [0.34.2] - 2025-06-16
 ### Fixed
