@@ -8,11 +8,14 @@ const GLOBAL_OBSERVER_NAME = '$tfo';
 const GLOBAL_RELAY_NAME = '$tfr';
 const GLOBAL_STORE_NAME = '$tfs';
 const VM_NAME = '$tfVM';
-const VM_ID_NAME = 'tfId';
-const VM_RELAY_NAME = 'tfRelay';
-const VM_STORE_NAME = 'tfStore';
-const VM_HOOK_UNMOUNT_NAME = 'tfUnmount';
-const VM_HOOK_MOUNT_NAME = 'tfMount';
+const VM_ID_NAME = '$uid';
+const VM_RELAY_SUBSCRIBE_NAME = '$subscribe';
+const VM_RELAY_UNSUBSCRIBE_NAME = '$unsubscribe';
+const VM_RELAY_PUBLISH_NAME = '$publish';
+const VM_STORE_GET_NAME = '$storeGet';
+const VM_STORE_SET_NAME = '$storeSet';
+const VM_HOOK_UNMOUNT_NAME = '$unmount';
+const VM_HOOK_MOUNT_NAME = '$mount';
 
 function minify (raw:string):string {
     return raw
@@ -28,23 +31,16 @@ export type TriFrostAtomicVM <
     Store extends Record<string, unknown> = {}
 > = {
     [VM_ID_NAME]: string;
-    [VM_RELAY_NAME]: {
-        subscribe<T extends keyof Relay>(
-            topic: T,
-            fn: (data: Relay[T]) => void
-          ): void;
-        unsubscribe<T extends keyof Relay>(topic?: T): void;
-        publish<T extends keyof Relay>(
-            topic: T,
-            data: Relay[T] | void
-        ): void;
-    };
-    [VM_STORE_NAME]: {
-	    get<K extends keyof Store>(key: K): Store[K];
-        get(key: string): unknown;
-        set<K extends keyof Store>(key: K, value: Store[K]): void;
-        set(key: string, value: unknown): void;
-    };
+    /* VM Relay */
+    [VM_RELAY_SUBSCRIBE_NAME] <T extends keyof Relay> (topic: T, fn: (data: Relay[T]) => void): void;
+    [VM_RELAY_UNSUBSCRIBE_NAME] <T extends keyof Relay> (topic?: T): void;
+    [VM_RELAY_PUBLISH_NAME] <T extends keyof Relay> (topic: T, data: Relay[T] | void): void;
+    /* VM Store */
+    [VM_STORE_GET_NAME] <K extends keyof Store> (key: K): Store[K];
+    [VM_STORE_GET_NAME] (key: string): unknown;
+    [VM_STORE_SET_NAME] <K extends keyof Store> (key: K, value: Store[K]): void;
+    [VM_STORE_SET_NAME] (key: string, value: unknown): void;
+    /* VM Hooks */
     [VM_HOOK_MOUNT_NAME]?: () => void;
     [VM_HOOK_UNMOUNT_NAME]?: () => void;
 };
@@ -121,18 +117,15 @@ export const ATOMIC_GLOBAL = minify(`
 export const ATOMIC_VM_BEFORE = minify(
     `if (!n.${VM_NAME}) {
         const i = crypto.randomUUID?.() || Math.random().toString(36).slice(2);
-        Object.defineProperty(n, "${VM_ID_NAME}",{get: () => i, configurable: !1});
-        Object.defineProperty(n, "${VM_RELAY_NAME}", {
-            value: Object.freeze({
-                subscribe: (msg, fn) => w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, msg, fn),
-                unsubscribe: msg => w.${GLOBAL_RELAY_NAME}.unsubscribe(n.${VM_ID_NAME}, msg),
-                publish: (msg, data) => w.${GLOBAL_RELAY_NAME}.publish(msg, data)
-            }),
-            writable: !1,
-            configurable: !1
+        Object.defineProperties(n, {
+            ${VM_ID_NAME}:{get: () => i, configurable: !1}),
+            ${VM_RELAY_SUBSCRIBE_NAME}:{value: (msg, fn) => w.${GLOBAL_RELAY_NAME}.subscribe(i, msg, fn), configurable: !1, writable: !1},
+            ${VM_RELAY_UNSUBSCRIBE_NAME}:{value: msg => w.${GLOBAL_RELAY_NAME}.unsubscribe(i, msg), configurable: !1, writable: !1},
+            ${VM_RELAY_PUBLISH_NAME}:{value: (msg, data) => w.${GLOBAL_RELAY_NAME}.publish(msg, data), configurable: !1, writable: !1},
+            ${VM_STORE_GET_NAME}:{value: w.${GLOBAL_STORE_NAME}.get, configurable: !1, writable: !1},
+            ${VM_STORE_SET_NAME}:{value: w.${GLOBAL_STORE_NAME}.set, configurable: !1, writable: !1},
+            ${VM_NAME}:{get: () => !0, configurable:!1},
         });
-        Object.defineProperty(n, "${VM_STORE_NAME}", {get: () => w.${GLOBAL_STORE_NAME}, configurable: !1});
-        Object.defineProperty(n, "${VM_NAME}", {get: () => !0, configurable:!1});
     }`
 );
 

@@ -45,8 +45,8 @@ describe('Modules - JSX - script - atomic', () => {
                 'for(let x of e){',
                 'for(let nRemoved of x.removedNodes){',
                 'if(nRemoved.$tfVM){',
-                'if(typeof nRemoved.tfUnmount==="function")try{nRemoved.tfUnmount()}catch{}',
-                'w.$tfr?.unsubscribe(nRemoved.tfId)',
+                'if(typeof nRemoved.$unmount==="function")try{nRemoved.$unmount()}catch{}',
+                'w.$tfr?.unsubscribe(nRemoved.$uid)',
                 '}',
                 '}',
                 '}',
@@ -80,18 +80,15 @@ describe('Modules - JSX - script - atomic', () => {
             expect(ATOMIC_VM_BEFORE).toBe([
                 'if(!n.$tfVM){',
                 'const i=crypto.randomUUID?.()|| Math.random().toString(36).slice(2);',
-                'Object.defineProperty(n,"tfId",{get:()=>i,configurable:!1});',
-                'Object.defineProperty(n,"tfRelay",{',
-                'value:Object.freeze({',
-                'subscribe:(msg,fn)=>w.$tfr.subscribe(n.tfId,msg,fn),',
-                'unsubscribe:msg=>w.$tfr.unsubscribe(n.tfId,msg),',
-                'publish:(msg,data)=>w.$tfr.publish(msg,data)',
-                '}),',
-                'writable:!1,',
-                'configurable:!1',
+                'Object.defineProperties(n,{',
+                '$uid:{get:()=>i,configurable:!1}),',
+                '$subscribe:{value:(msg,fn)=>w.$tfr.subscribe(i,msg,fn),configurable:!1,writable:!1},',
+                '$unsubscribe:{value:msg=>w.$tfr.unsubscribe(i,msg),configurable:!1,writable:!1},',
+                '$publish:{value:(msg,data)=>w.$tfr.publish(msg,data),configurable:!1,writable:!1},',
+                '$storeGet:{value:w.$tfs.get,configurable:!1,writable:!1},',
+                '$storeSet:{value:w.$tfs.set,configurable:!1,writable:!1},',
+                '$tfVM:{get:()=>!0,configurable:!1},',
                 '});',
-                'Object.defineProperty(n,"tfStore",{get:()=>w.$tfs,configurable:!1});',
-                'Object.defineProperty(n,"$tfVM",{get:()=>!0,configurable:!1});',
                 '}',
             ].join(''));
         });
@@ -100,7 +97,7 @@ describe('Modules - JSX - script - atomic', () => {
     describe('ATOMIC_VM_AFTER', () => {
         it('Should be minified correct', () => {
             expect(ATOMIC_VM_AFTER).toBe([
-                'if(typeof n.tfMount==="function")try{n.tfMount()}catch{}',
+                'if(typeof n.$mount==="function")try{n.$mount()}catch{}',
             ].join(''));
         });
     });
