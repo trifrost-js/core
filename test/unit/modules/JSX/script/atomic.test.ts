@@ -90,8 +90,8 @@ describe('Modules - JSX - script - atomic', () => {
                 'writable:!1,',
                 'configurable:!1',
                 '});',
-                'Object.defineProperty(n,"tfStore",{get:()=>w.$tfs,writable:!1,configurable:!1});',
-                'Object.defineProperty(n,"$tfVM",{value:1,configurable:!1});',
+                'Object.defineProperty(n,"tfStore",{get:()=>w.$tfs,configurable:!1});',
+                'Object.defineProperty(n,"$tfVM",{get:()=>!0,configurable:!1});',
                 '}',
             ].join(''));
         });

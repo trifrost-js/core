@@ -131,8 +131,8 @@ export const ATOMIC_VM_BEFORE = minify(
             writable: !1,
             configurable: !1
         });
-        Object.defineProperty(n, "${VM_STORE_NAME}", {get: () => w.${GLOBAL_STORE_NAME}, writable: !1, configurable: !1});
-        Object.defineProperty(n, "${VM_NAME}", {value: 1, configurable:!1});
+        Object.defineProperty(n, "${VM_STORE_NAME}", {get: () => w.${GLOBAL_STORE_NAME}, configurable: !1});
+        Object.defineProperty(n, "${VM_NAME}", {get: () => !0, configurable:!1});
     }`
 );
 
