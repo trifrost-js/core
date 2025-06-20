@@ -82,7 +82,7 @@ describe('Modules - JSX - script - atomic', () => {
                 'if(!n.$tfVM){',
                 'const i=crypto.randomUUID?.()|| Math.random().toString(36).slice(2);',
                 'Object.defineProperties(n,{',
-                '$uid:{get:()=>i,configurable:!1}),',
+                '$uid:{get:()=>i,configurable:!1},',
                 '$subscribe:{value:(msg,fn)=>w.$tfr.subscribe(i,msg,fn),configurable:!1,writable:!1},',
                 '$unsubscribe:{value:msg=>w.$tfr.unsubscribe(i,msg),configurable:!1,writable:!1},',
                 '$publish:{value:(msg,data)=>w.$tfr.publish(msg,data),configurable:!1,writable:!1},',

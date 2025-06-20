@@ -140,7 +140,7 @@ export const ATOMIC_VM_BEFORE = minify(
     `if (!n.${VM_NAME}) {
         const i = crypto.randomUUID?.() || Math.random().toString(36).slice(2);
         Object.defineProperties(n, {
-            ${VM_ID_NAME}:{get: () => i, configurable: !1}),
+            ${VM_ID_NAME}:{get: () => i, configurable: !1},
             ${VM_RELAY_SUBSCRIBE_NAME}:{value: (msg, fn) => w.${GLOBAL_RELAY_NAME}.subscribe(i, msg, fn), configurable: !1, writable: !1},
             ${VM_RELAY_UNSUBSCRIBE_NAME}:{value: msg => w.${GLOBAL_RELAY_NAME}.unsubscribe(i, msg), configurable: !1, writable: !1},
             ${VM_RELAY_PUBLISH_NAME}:{value: (msg, data) => w.${GLOBAL_RELAY_NAME}.publish(msg, data), configurable: !1, writable: !1},
