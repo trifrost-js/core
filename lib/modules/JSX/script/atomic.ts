@@ -48,7 +48,7 @@ export type TriFrostAtomicVM <
     [VM_RELAY_UNSUBSCRIBE_NAME]<T extends RelayKeys>(topic?: T):void;
     [VM_RELAY_PUBLISH_NAME]<T extends RelayKeys>(
         topic: T,
-        data: T extends keyof Relay
+        data?: T extends keyof Relay
             ? Relay[T]
             : T extends StoreTopics<infer K>
                 ? K extends keyof Store
