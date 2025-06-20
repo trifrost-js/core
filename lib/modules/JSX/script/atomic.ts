@@ -26,15 +26,36 @@ function minify (raw:string):string {
         .trim();
 }
 
+type StoreTopics<K extends string> = `$store:${K}`;
+
 export type TriFrostAtomicVM <
     Relay extends Record<string, unknown> = {},
-    Store extends Record<string, unknown> = {}
+    Store extends Record<string, unknown> = {},
+    RelayKeys extends keyof Relay | StoreTopics<keyof Store & string> = keyof Relay | StoreTopics<keyof Store & string>
 > = {
     [VM_ID_NAME]: string;
     /* VM Relay */
-    [VM_RELAY_SUBSCRIBE_NAME] <T extends keyof Relay> (topic: T, fn: (data: Relay[T]) => void): void;
-    [VM_RELAY_UNSUBSCRIBE_NAME] <T extends keyof Relay> (topic?: T): void;
-    [VM_RELAY_PUBLISH_NAME] <T extends keyof Relay> (topic: T, data: Relay[T] | void): void;
+    [VM_RELAY_SUBSCRIBE_NAME]<T extends RelayKeys>(
+        topic: T,
+        fn: T extends keyof Relay
+            ? (data: Relay[T]) => void
+            : T extends StoreTopics<infer K>
+                ? K extends keyof Store
+                    ? (data: Store[K]) => void
+                    : (data: unknown) => void
+                : (data: unknown) => void
+    ):void;
+    [VM_RELAY_UNSUBSCRIBE_NAME]<T extends RelayKeys>(topic?: T):void;
+    [VM_RELAY_PUBLISH_NAME]<T extends RelayKeys>(
+        topic: T,
+        data: T extends keyof Relay
+            ? Relay[T]
+            : T extends StoreTopics<infer K>
+                ? K extends keyof Store
+                    ? Store[K]
+                    : unknown
+                : unknown
+    ):void;
     /* VM Store */
     [VM_STORE_GET_NAME] <K extends keyof Store> (key: K): Store[K];
     [VM_STORE_GET_NAME] (key: string): unknown;
@@ -72,7 +93,7 @@ export const ATOMIC_GLOBAL = minify(`
                         topics[msg] = topics[msg].filter(el => el.id !== vmid);
                     } else {
                         for (const key of Object.keys(topics)) {
-                            topics[key] = topics[msg].filter(el => el.id !== vmid);
+                            topics[key] = topics[key].filter(el => el.id !== vmid);
                         }
                     }
                 }
@@ -105,7 +126,8 @@ export const ATOMIC_GLOBAL = minify(`
                 },
                 set: (key, val) => {
                     if (typeof key !== "string" || !key) return;
-                    store[key] = val
+                    store[key] = val;
+                    w.${GLOBAL_RELAY_NAME}.publish("$store:" + key, val);
                 },
             }),
             writable:!1,

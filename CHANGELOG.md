@@ -4,6 +4,55 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.35.3] - 2025-06-20
+### Improved
+- **feat**: Atomic `$storeSet` will now also **publish a** `$relay` **event** for the changed key. This allows components to reactively subscribe to store changes using the topic pattern `$store:<key>`.
+```tsx
+// Store update in some component
+el.$storeSet('count', 5);
+
+...
+
+// Reactive listener elsewhere
+el.$subscribe('$store:count', newCount => {
+  console.log('Count changed:', newCount);
+});
+```
+> ✅ Bonus: `$store:<key>` subscriptions are also **fully type-safe** as they are inferred from the declared `Store` type of the VM
+- **dx**: Renamed atomic accessor `tfRelay.publish` to `$publish`
+- **dx**: Renamed atomic accessor `tfRelay.subscribe` to `$subscribe`
+- **dx**: Renamed atomic accessor `tfRelay.unsubscribe` to `$unsubscribe`
+- **dx**: Renamed atomic accessor `tfStore.get` to `$storeGet`
+- **dx**: Renamed atomic accessor `tfStore.set` to `$storeSet`
+- **dx**: Renamed atomic accessor `tfId` to `$uid`
+- **dx**: Renamed atomic accessor `tfUnmount` to `$unmount`
+- **dx**: Renamed atomic accessor `tfMount` to `$mount`
+
+**Before:**
+```tsx
+el.tfRelay.subscribe('toggle', state => { ... });
+el.tfRelay.publish('toggle', true);
+el.tfStore.set('open', true);
+el.tfStore.get('open');
+el.tfMount = () => console.log('mounted');
+el.tfUnmount = () => console.log('unmounted');
+const id = el.tfId;
+```
+
+**After:**
+```tsx
+el.$subscribe('toggle', state => { ... });
+el.$publish('toggle', true);
+el.$storeSet('open', true);
+el.$storeGet('open');
+el.$mount = () => console.log('mounted');
+el.$unmount = () => console.log('unmounted');
+const id = el.$uid;
+```
+
+### Fixed
+- Fixed an issue where global `unsubscribe()` in the atomic relay could incorrectly dereference the wrong topic list when no topic was passed
+
 ## [0.35.2] - 2025-06-19
 ### Improved
 - **dx**: Allow for usage of void inside of `tfRelay.publish` to allow for eg: `el.tfRelay.publish('myevent')`
