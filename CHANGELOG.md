@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 ### Improved
+- **dx**: Adjust typing for AppOptions `client.css` to be of `CssInstance`
 - **feat**: Adjust atomic runtime to prevent race issues with defer loading
 
 ## [0.36.0] - 2025-06-21
