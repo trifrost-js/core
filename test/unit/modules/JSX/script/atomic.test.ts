@@ -73,6 +73,11 @@ describe('Modules - JSX - script - atomic', () => {
                 'configurable:!1',
                 '});',
                 '}',
+                'if(!window.__name){',
+                'window.__name=(fn,name)=>{',
+                'try{Object.defineProperty(fn,"name",{value:name});}catch{}',
+                'return fn;',
+                '};}',
                 'Object.defineProperty(window,"$tfhydra",{get:()=>!0,configurable:!1});',
                 '}',
             ].join(''));

@@ -137,6 +137,13 @@ export const ATOMIC_GLOBAL = minify(`
             });
         }
 
+        if (!window.__name) {
+            window.__name = (fn, name) => {
+                try {Object.defineProperty(fn, "name", {value: name});} catch {}
+                return fn;
+            };
+        }
+
         Object.defineProperty(window, "${GLOBAL_HYDRATED_NAME}", {get: () => !0, configurable: !1});
     }
 `);

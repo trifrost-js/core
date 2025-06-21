@@ -341,46 +341,6 @@ describe('Modules - JSX - script - <Script>', () => {
             expect(result).toMatch(/<\/script><\/body><\/html>$/);
         });
 
-        it('strips async fat arrow __name() wrappers', () => {
-            const fn = () => {
-                const load = async () => {
-                    /* @ts-ignore */
-                    console.log('loaded');
-                };
-                /* @ts-ignore */
-                __name(load, 'load');
-                document.addEventListener('click', load);
-            };
-
-            const out = Script({children: fn});
-            expect(out?.props?.fn_id).toBe('id-1');
-
-            const flushed = engine.flush();
-            expect(flushed).toContain('async () => {');
-            expect(flushed).not.toContain('__name');
-        });
-
-        it('strips __name for async function declarations', () => {
-            const fn = Object.assign(() => {}, {
-                toString: () => `
-                (el) => {
-                  async function hydrate () {
-                    console.log("hydrated");
-                  };
-                  __name(hydrate, "hydrate");
-                  el.addEventListener('click', hydrate);
-                }
-              `,
-            });
-
-            const out = Script({children: fn});
-            expect(out?.props?.fn_id).toBe('id-1');
-
-            const flushed = engine.flush();
-            expect(flushed).toContain('async function hydrate ()');
-            expect(flushed).not.toContain('__name');
-        });
-
         it('Handles functions that are not formatted as fat-arrows', () => {
             const fn = Object.assign(() => {}, {
                 toString: () => '{ console.log("no arrow"); }',

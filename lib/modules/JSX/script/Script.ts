@@ -21,8 +21,6 @@ export type ScriptProps<
   data?: TFData;
 };
 
-const RGX_ASYNC_FATARROW = /__name\(\s*(async\s*\([^)]*\)\s*=>\s*{[^{}]*})\s*,\s*"[^"]*"\s*\)/g;
-const RGX_ASYNC_FUNCTION = /^\s*__name\([^)]*\);\s*$/gm;
 const RGX_DATA_SCRIPT = /<\/script>/gi;
 
 export function Script <
@@ -65,8 +63,7 @@ export function Script <
     const raw = options
         .children
         .toString()
-        .replace(RGX_ASYNC_FATARROW, '$1')
-        .replace(RGX_ASYNC_FUNCTION, '').trim();
+        .trim();
 
     /* Get data */
     const data = options.data
