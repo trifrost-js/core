@@ -21,7 +21,7 @@ export type ScriptProps<
   data?: TFData;
 };
 
-const RGX_ASYNC_FATARROW = /__name\((async\s*\([^)]*\)\s*=>\s*{[\s\S]*?})\s*,\s*"[^"]*"\)/g;
+const RGX_ASYNC_FATARROW = /__name\(\s*(async\s*\(.*?\)\s*=>\s*{[^]*?})\s*,\s*".*?"\s*\)/g;
 const RGX_ASYNC_FUNCTION = /^\s*__name\([^)]*\);\s*$/gm;
 const RGX_DATA_SCRIPT = /<\/script>/gi;
 
