@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
 import {isIntBetween, isIntGt} from '@valkyriestudios/utils/number';
@@ -36,6 +37,9 @@ import {type TriFrostBodyParserOptions} from './utils/BodyParser/types';
 import {type LazyInitFn} from './utils/Lazy';
 import {RouteTree} from './routing/Tree';
 import {extractDomainFromHost} from './utils/Http';
+import {createCss, createScript} from './modules';
+import {mount as mountCss} from './modules/JSX/style/mount';
+import {mount as mountScript} from './modules/JSX/script/mount';
 
 const RGX_RID = /^[a-z0-9-]{8,100}$/i;
 
@@ -99,6 +103,8 @@ type AppOptions <Env extends Record<string, any>> = {
      * @note Different runtimes have different defaults.
      */
     trustProxy?:boolean;
+    script?: ReturnType<typeof createScript>;
+    css?: ReturnType<typeof createCss>;
 }
 
 class App <
@@ -207,6 +213,12 @@ class App <
             /* Logger options */
             this.#exporters = options.tracing.exporters || null;
         }
+
+        /* Add script route */
+        if (options.script) mountScript(this as unknown as Router, '/__atomics__/client.js', options.script);
+
+        /* Add css route */
+        if (options.css) mountCss(this as unknown as Router, '/__atomics__/client.css', options.css);
     }
 
 /**

@@ -22,6 +22,9 @@ export class StyleEngine {
 
     cache:Map<string, string> = new Map();
 
+    /* Mount path for root styles */
+    mount_path:string|null = null;
+
     /**
      * Generate a deterministic class name for a rule
      *
@@ -78,10 +81,12 @@ export class StyleEngine {
     /**
      * Flush all collected styles into a single <style> tag
      */
-    flush ():string {
+    flush (as_file:boolean=false):string {
         let out = this.base.out;
         for (const query in this.media) out += query + '{' + this.media[query].out + '}';
         if (!out) return '';
+        if (as_file) return out;
+
         const n_nonce = nonce();
         return n_nonce
             ? '<style nonce="' + n_nonce + '">' + out + '</style>'
@@ -94,11 +99,18 @@ export class StyleEngine {
      * @param {string} html - HTML string containing the marker or needing prepended styles
      */
     inject (html:string):string {
-        const styles = this.flush();
+        let styles = this.flush();
         if (typeof html !== 'string' || !html.length) return styles;
 
         const idx = html.indexOf(MARKER);
         if (idx < 0) return html;
+
+        /* Add our mounted root */
+        if (this.mount_path && (html.startsWith('<!DOCTYPE') || html.startsWith('<html'))) {
+            const n_nonce = nonce();
+            if (n_nonce) styles = '<link rel="stylesheet" nonce="' + n_nonce + '" href="' + this.mount_path + '">' + styles;
+            else styles = '<link rel="stylesheet" href="' + this.mount_path + '">' + styles;
+        }
 
         const before = html.slice(0, idx);
         const after = html.slice(idx + MARKER.length).replaceAll(MARKER, '');
@@ -112,6 +124,15 @@ export class StyleEngine {
     reset ():void {
         this.base = {out: '', keys: new Set<string>()};
         this.media = {};
+    }
+
+    /**
+     * Sets mount path for as-file renders of root styles
+     *
+     * @param {string} path - Mount path for client root styles
+     */
+    setMountPath (path:string) {
+        this.mount_path = path;
     }
 
 }

@@ -199,6 +199,14 @@ describe('Modules – JSX – style – Engine', () => {
             setActiveCtx(new MockContext({nonce: 'abc123'}));
             expect(engine.flush()).toBe('<style nonce="abc123">.tf-18n9a1p{display:grid}</style>');
         });
+
+        it('flush(true) returns raw css string only, no tags or links', () => {
+            const cls = engine.hash('color:blue');
+            engine.register('color:blue', cls, {});
+            const raw = engine.flush(true);
+
+            expect(raw).toBe(`.${cls}{color:blue}`);
+        });
     });
 
     describe('inject()', () => {
@@ -251,6 +259,56 @@ describe('Modules – JSX – style – Engine', () => {
 
         it('Simply returns an empty string if no html is passed and engine is empty', () => {
             expect(engine.inject('')).toBe('');
+        });
+
+        it('Injects <link> when mount_path is set and HTML starts with <!DOCTYPE>', () => {
+            const cls = engine.hash('color:red');
+            engine.register('color:red', cls, {});
+            engine.setMountPath('/styles.css');
+
+            expect(engine.inject(`<!DOCTYPE html><html>${MARKER}</html>`)).toBe([
+                '<!DOCTYPE html><html>',
+                '<link rel="stylesheet" href="/styles.css">',
+                '<style>.tf-1tlgz3l{color:red}</style>',
+                '</html>',
+            ].join(''));
+        });
+
+        it('Injects <link> when HTML starts with <html>', () => {
+            const cls = engine.hash('margin:0');
+            engine.register('margin:0', cls, {});
+            engine.setMountPath('/styles.css');
+
+            expect(engine.inject(`<html>${MARKER}</html>`)).toBe([
+                '<html>',
+                '<link rel="stylesheet" href="/styles.css">',
+                '<style>.tf-pmr7gx{margin:0}</style>',
+                '</html>',
+            ].join(''));
+        });
+
+        it('Injects <link> with nonce when mount_path is set and nonce context is active', () => {
+            const cls = engine.hash('color:red');
+            engine.register('color:red', cls, {});
+            engine.setMountPath('/styles.css');
+            setActiveCtx(new MockContext({nonce: 'abc123'}));
+
+            expect(engine.inject(`<!DOCTYPE html><html>${MARKER}</html>`)).toBe([
+                '<!DOCTYPE html><html>',
+                '<link rel="stylesheet" nonce="abc123" href="/styles.css">',
+                '<style nonce="abc123">.tf-1tlgz3l{color:red}</style>',
+                '</html>',
+            ].join(''));
+        });
+
+        it('Does not inject <link> if mount_path is set but HTML is not full document', () => {
+            const cls = engine.hash('padding:0');
+            engine.register('padding:0', cls, {});
+            engine.setMountPath('/styles.css');
+
+            expect(engine.inject(`<div>${MARKER}content</div>`)).toBe([
+                '<div><style>.tf-8pxw5a{padding:0}</style>content</div>',
+            ].join(''));
         });
     });
 

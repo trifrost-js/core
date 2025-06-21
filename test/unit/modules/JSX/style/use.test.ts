@@ -5,6 +5,8 @@ import {createCss, getActiveStyleEngine, setActiveStyleEngine} from '../../../..
 import {StyleEngine} from '../../../../../lib/modules/JSX/style/Engine';
 import CONSTANTS from '../../../../constants';
 import {MARKER} from '../../../../../lib/modules/JSX/style/Style';
+import {setActiveCtx} from '../../../../../lib/modules/JSX/ctx/use';
+import {MockContext} from '../../../../MockContext';
 
 describe('Modules - JSX - style - use', () => {
     let engine: StyleEngine;
@@ -12,6 +14,7 @@ describe('Modules - JSX - style - use', () => {
     beforeEach(() => {
         engine = new StyleEngine();
         setActiveStyleEngine(engine);
+        setActiveCtx(null);
     });
 
     describe('css', () => {
@@ -897,6 +900,82 @@ describe('Modules - JSX - style - use', () => {
             css.root();
 
             expect(engine.inject(`${MARKER}<div>No Reset</div>`)).toBe('<div>No Reset</div>');
+        });
+
+        it('Disables root() injection if mount path is set', () => {
+            const css = createCss({
+                var: {size: '1rem'},
+                theme: {bg: '#fff'},
+                reset: true,
+            });
+
+            css.setMountPath('/styles.css');
+
+            css.root(); /* this should NOT inject */
+
+            const html = engine!.inject(`${MARKER}<div>Hello</div>`);
+            expect(html).toBe('<div>Hello</div>');
+        });
+
+        it('Disables root() injection BUT only renders provided css', () => {
+            const css = createCss({var: {}, theme: {}, reset: false});
+
+            css.setMountPath('/styles.css');
+            css.root(); /* this should not inject */
+
+            const cls = css({
+                '[data-active="true"]': {backgroundColor: 'red'},
+            });
+
+            expect(engine.inject(`${MARKER}<div class="${cls}">OnlyAttr</div>`)).toBe([
+                '<style>',
+                `.${cls}[data-active="true"]{background-color:red}`,
+                '</style>',
+                `<div class="${cls}">OnlyAttr</div>`,
+            ].join(''));
+        });
+
+        it('Disables root() injection BUT only renders provided css AND injects link if html is detected', () => {
+            const css = createCss({var: {}, theme: {}, reset: false});
+
+            css.setMountPath('/styles.css');
+            css.root(); /* this should not inject */
+
+            const cls = css({
+                '[data-active="true"]': {backgroundColor: 'red'},
+            });
+
+            expect(engine.inject(`<html>${MARKER}<div class="${cls}">OnlyAttr</div></html>`)).toBe([
+                '<html>',
+                '<link rel="stylesheet" href="/styles.css">',
+                '<style>',
+                `.${cls}[data-active="true"]{background-color:red}`,
+                '</style>',
+                `<div class="${cls}">OnlyAttr</div>`,
+                '</html>',
+            ].join(''));
+        });
+
+        it('Injects <link> for mount_path with nonce in full document', () => {
+            setActiveCtx(new MockContext({nonce: 'abc123'}));
+
+            const css = createCss({var: {}, theme: {}, reset: false});
+            css.setMountPath('/styles.css');
+            css.root(); /* this should not inject */
+
+            const cls = css({
+                '[data-active="true"]': {backgroundColor: 'red'},
+            });
+
+            expect(engine.inject(`<html>${MARKER}<div class="${cls}">OnlyAttr</div></html>`)).toBe([
+                '<html>',
+                '<link rel="stylesheet" nonce="abc123" href="/styles.css">',
+                '<style nonce="abc123">',
+                `.${cls}[data-active="true"]{background-color:red}`,
+                '</style>',
+                `<div class="${cls}">OnlyAttr</div>`,
+                '</html>',
+            ].join(''));
         });
 
         it('Deduplicates root injection per engine', () => {

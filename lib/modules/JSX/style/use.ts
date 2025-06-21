@@ -373,7 +373,7 @@ type VarVal <T extends string> = T extends `--${infer Rest}` ? `var(${T})` : `va
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 type ThemeVal <T extends string> = T extends `--${infer Rest}` ? `var(${T})` : `var(--t-${T})`;
 
-type CssInstance <
+export type CssInstance <
     V extends VarMap,
     T extends ThemeMap,
     R extends Record<string, Record<string, unknown>> = {},
@@ -439,6 +439,10 @@ type CssInstance <
      * ```
      */
     cid: () => string;
+    /**
+     * Sets mount path for the css instance
+     */
+    setMountPath: (path:string|null) => void;
 };
 
 const CSS_RESET = {
@@ -575,6 +579,9 @@ export function createCss <
         : DEFAULT_BREAKPOINTS
     ) as CssInstance<V, T, R, Breakpoints>;
 
+    /* Is mounted on */
+    let mountPath:string|null = null;
+
     /* Specific symbol for this css instance */
     mod.$uid = hexId(8);
 
@@ -660,8 +667,11 @@ export function createCss <
     mod.root = (styles:Record<string, unknown> = {}) => {
         if (!active_engine) setActiveStyleEngine(new StyleEngine());
 
+        /* Set mounted path */
+        if (mountPath) active_engine!.setMountPath(mountPath);
+
         /* If our root variables are already injected, simply run og root */
-        if (Reflect.get(active_engine!, sym)) {
+        if (mountPath || Reflect.get(active_engine!, sym)) {
             ogRoot(styles);
         } else {
             Reflect.set(active_engine!, sym, true);
@@ -697,6 +707,11 @@ export function createCss <
 
     /* Generates a unique classname */
     mod.cid = () => 'tf-' + hexId(8);
+
+    /* Sets mount path */
+    mod.setMountPath = (path:string|null) => {
+        mountPath = typeof path === 'string' ? path : null;
+    };
 
     return mod;
 }
