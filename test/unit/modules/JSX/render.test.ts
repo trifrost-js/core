@@ -711,6 +711,7 @@ describe('Modules - JSX - Renderer', () => {
                 '</ul>',
                 '<script nonce="aWQtMQ==" src="/static.js" defer></script>',
                 '<script nonce="aWQtMQ==" defer>(function(d,w){',
+                'const run=()=>{',
                 'const TFD={"id-4":{"a":1,"b":2},"id-5":{"b":2,"a":1}};',
                 'const TFF={"id-3":(el, data) => el.innerText = JSON.stringify(data)};',
                 'for(const id in TFF){',
@@ -720,7 +721,10 @@ describe('Modules - JSX - Renderer', () => {
                 'const dId=n.getAttribute("data-tfhd");',
                 'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                 ATOMIC_VM_AFTER,
-                '}}})(document,window);</script></body></html>',
+                '}',
+                '}};',
+                'if(!w.$tfhydra){const wait=()=>{w.$tfhydra?run():setTimeout(wait,1)};wait();}else{run()}',
+                '})(document,window);</script></body></html>',
             ].join(''));
         });
 

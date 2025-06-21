@@ -4,6 +4,7 @@ const RGX_COMMENT = /\/\/.*$/gm;
 const RGX_BREAK = /\n/g;
 const RGX_SPACE = /\s+/g;
 const RGX_SYMBOLS = /\s*([{}();,:=<>+\-[\]])\s*/g;
+export const GLOBAL_HYDRATED_NAME = '$tfhydra';
 const GLOBAL_OBSERVER_NAME = '$tfo';
 const GLOBAL_RELAY_NAME = '$tfr';
 const GLOBAL_STORE_NAME = '$tfs';
@@ -67,72 +68,76 @@ export type TriFrostAtomicVM <
 };
 
 export const ATOMIC_GLOBAL = minify(`
-    if (!window.${GLOBAL_RELAY_NAME}) {
-        const topics = Object.create(null);
-        Object.defineProperty(window, "${GLOBAL_RELAY_NAME}", {
-            value: Object.freeze({
-                publish: (msg, data) => {
-                    if (typeof msg !== "string" || !topics[msg]) return;
-                    for (let i = 0; i < topics[msg].length; i++) try { topics[msg][i].fn(data) } catch {}
-                },
-                subscribe: (vmid, msg, fn) => {
-                    if (
-                        typeof vmid !== "string" ||
-                        typeof msg !== "string" ||
-                        typeof fn !== "function"
-                    ) return;
-                    const subs = (topics[msg] ??= []);
-                    const idx = subs.findIndex(el => el.id === vmid);
-                    if (idx >= 0) subs[idx].fn = fn;
-                    else subs.push({id: vmid, fn});
-                },
-                unsubscribe: (vmid, msg) => {
-                    if (typeof vmid !== "string") return;
-                    if (typeof msg === "string") {
-                        if (!(msg in topics)) return;
-                        topics[msg] = topics[msg].filter(el => el.id !== vmid);
-                    } else {
-                        for (const key of Object.keys(topics)) {
-                            topics[key] = topics[key].filter(el => el.id !== vmid);
+    if (!window.${GLOBAL_HYDRATED_NAME}) {
+        if (!window.${GLOBAL_RELAY_NAME}) {
+            const topics = Object.create(null);
+            Object.defineProperty(window, "${GLOBAL_RELAY_NAME}", {
+                value: Object.freeze({
+                    publish: (msg, data) => {
+                        if (typeof msg !== "string" || !topics[msg]) return;
+                        for (let i = 0; i < topics[msg].length; i++) try { topics[msg][i].fn(data) } catch {}
+                    },
+                    subscribe: (vmid, msg, fn) => {
+                        if (
+                            typeof vmid !== "string" ||
+                            typeof msg !== "string" ||
+                            typeof fn !== "function"
+                        ) return;
+                        const subs = (topics[msg] ??= []);
+                        const idx = subs.findIndex(el => el.id === vmid);
+                        if (idx >= 0) subs[idx].fn = fn;
+                        else subs.push({id: vmid, fn});
+                    },
+                    unsubscribe: (vmid, msg) => {
+                        if (typeof vmid !== "string") return;
+                        if (typeof msg === "string") {
+                            if (!(msg in topics)) return;
+                            topics[msg] = topics[msg].filter(el => el.id !== vmid);
+                        } else {
+                            for (const key of Object.keys(topics)) {
+                                topics[key] = topics[key].filter(el => el.id !== vmid);
+                            }
+                        }
+                    }
+                }),
+                writable:!1,
+                configurable:!1
+            });
+        }
+        if (!window.${GLOBAL_OBSERVER_NAME}) {
+            const observer = new MutationObserver(e => {
+                for (let x of e) {
+                    for (let nRemoved of x.removedNodes) {
+                        if (nRemoved.${VM_NAME}) {
+                            if (typeof nRemoved.${VM_HOOK_UNMOUNT_NAME} === "function") try {nRemoved.${VM_HOOK_UNMOUNT_NAME}()} catch {}
+                            window.${GLOBAL_RELAY_NAME}?.unsubscribe(nRemoved.${VM_ID_NAME})
                         }
                     }
                 }
-            }),
-            writable:!1,
-            configurable:!1
-        });
-    }
-    if (!window.${GLOBAL_OBSERVER_NAME}) {
-        const observer = new MutationObserver(e => {
-            for (let x of e) {
-                for (let nRemoved of x.removedNodes) {
-                    if (nRemoved.${VM_NAME}) {
-                        if (typeof nRemoved.${VM_HOOK_UNMOUNT_NAME} === "function") try {nRemoved.${VM_HOOK_UNMOUNT_NAME}()} catch {}
-                        window.${GLOBAL_RELAY_NAME}?.unsubscribe(nRemoved.${VM_ID_NAME})
-                    }
-                }
-            }
-        });
-        observer.observe(document.body, {childList:!0, subtree:!0});
-        window.${GLOBAL_OBSERVER_NAME} = observer;
-    }
-    if (!window.${GLOBAL_STORE_NAME}) {
-        const store = Object.create(null);
-        Object.defineProperty(window, "${GLOBAL_STORE_NAME}", {
-            value: Object.freeze({
-                get: key => {
-                    if (typeof key !== "string" || !key) return undefined;
-                    return store[key]
-                },
-                set: (key, val) => {
-                    if (typeof key !== "string" || !key) return;
-                    store[key] = val;
-                    window.${GLOBAL_RELAY_NAME}.publish("$store:" + key, val);
-                },
-            }),
-            writable:!1,
-            configurable:!1
-        });
+            });
+            observer.observe(document.body, {childList:!0, subtree:!0});
+            window.${GLOBAL_OBSERVER_NAME} = observer;
+        }
+        if (!window.${GLOBAL_STORE_NAME}) {
+            const store = Object.create(null);
+            Object.defineProperty(window, "${GLOBAL_STORE_NAME}", {
+                value: Object.freeze({
+                    get: key => {
+                        if (typeof key !== "string" || !key) return undefined;
+                        return store[key]
+                    },
+                    set: (key, val) => {
+                        if (typeof key !== "string" || !key) return;
+                        store[key] = val;
+                        window.${GLOBAL_RELAY_NAME}.publish("$store:" + key, val);
+                    },
+                }),
+                writable:!1,
+                configurable:!1
+            });
+        }
+
+        Object.defineProperty(window, "${GLOBAL_HYDRATED_NAME}", {get: () => !0, configurable: !1});
     }
 `);
 

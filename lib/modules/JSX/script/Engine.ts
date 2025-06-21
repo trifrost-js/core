@@ -1,6 +1,6 @@
 import {hexId} from '../../../utils/Generic';
 import {nonce} from '../ctx/nonce';
-import {ATOMIC_GLOBAL, ATOMIC_VM_BEFORE, ATOMIC_VM_AFTER} from './atomic';
+import {ATOMIC_GLOBAL, ATOMIC_VM_BEFORE, ATOMIC_VM_AFTER, GLOBAL_HYDRATED_NAME} from './atomic';
 
 export class ScriptEngine {
 
@@ -87,7 +87,21 @@ export class ScriptEngine {
         if (!out) return '';
 
         /* Finalize iife */
-        out = '(function(d,w){' + out + '})(document,window);';
+        if (this.atomic_enabled && this.mount_path && this.root_renderer) {
+            out = [
+                '(function(d,w){',
+                'const run=()=>{',
+                out,
+                '};',
+                `if(!w.${GLOBAL_HYDRATED_NAME}){`,
+                'const wait=()=>{w.$tfhydra?run():setTimeout(wait,1)};',
+                'wait();',
+                '}else{run()}',
+                '})(document,window);',
+            ].join('');
+        } else {
+            out = '(function(d,w){' + out + '})(document,window);';
+        }
 
         const n_nonce = nonce();
         return n_nonce

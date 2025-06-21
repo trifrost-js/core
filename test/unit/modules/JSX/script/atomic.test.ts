@@ -5,6 +5,7 @@ describe('Modules - JSX - script - atomic', () => {
     describe('ATOMIC_GLOBAL', () => {
         it('Should be minified correct', () => {
             expect(ATOMIC_GLOBAL).toBe([
+                'if(!window.$tfhydra){',
                 'if(!window.$tfr){',
                 'const topics=Object.create(null);',
                 'Object.defineProperty(window,"$tfr",{',
@@ -71,6 +72,8 @@ describe('Modules - JSX - script - atomic', () => {
                 'writable:!1,',
                 'configurable:!1',
                 '});',
+                '}',
+                'Object.defineProperty(window,"$tfhydra",{get:()=>!0,configurable:!1});',
                 '}',
             ].join(''));
         });

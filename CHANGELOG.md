@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Improved
+- **feat**: Adjust atomic runtime to prevent race issues with defer loading
+
 ## [0.36.0] - 2025-06-21
 This release builds directly on TriFrost’s **Atomic** foundation, delivering leaner pages, smarter SSR defaults, and internal render polish — all without breaking a sweat.
 

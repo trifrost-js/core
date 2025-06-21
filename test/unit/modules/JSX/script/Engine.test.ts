@@ -221,6 +221,7 @@ describe('Modules - JSX - script - Engine', () => {
             expect(engine.flush()).toBe([
                 '<script nonce="abc123" defer>',
                 '(function(d,w){',
+                'const run=()=>{',
                 'const TFD={"id-2":{"value":42}};',
                 'const TFF={"id-1":function(el,data){el.id="a"}};',
                 'for(const id in TFF){',
@@ -231,7 +232,8 @@ describe('Modules - JSX - script - Engine', () => {
                 'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                 ATOMIC_VM_AFTER,
                 '}',
-                '}',
+                '}};',
+                'if(!w.$tfhydra){const wait=()=>{w.$tfhydra?run():setTimeout(wait,1)};wait();}else{run()}',
                 '})(document,window);</script>',
             ].join(''));
         });
@@ -335,6 +337,7 @@ describe('Modules - JSX - script - Engine', () => {
                 '<script nonce="abc123" src="/static/atomic.js" defer></script>',
                 '<script nonce="abc123" defer>',
                 '(function(d,w){',
+                'const run=()=>{',
                 'const TFD={"id-2":{"value":42}};',
                 'const TFF={"id-1":function(el,data){el.id="a"}};',
                 'for(const id in TFF){',
@@ -345,7 +348,8 @@ describe('Modules - JSX - script - Engine', () => {
                 'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                 ATOMIC_VM_AFTER,
                 '}',
-                '}',
+                '}};',
+                'if(!w.$tfhydra){const wait=()=>{w.$tfhydra?run():setTimeout(wait,1)};wait();}else{run()}',
                 '})(document,window);</script>',
                 '</body></html>',
             ].join(''));
@@ -381,6 +385,7 @@ describe('Modules - JSX - script - Engine', () => {
                 '<main>Hello</main>',
                 '<script nonce="abc123" defer>',
                 '(function(d,w){',
+                'const run=()=>{',
                 'const TFD={"id-2":{"value":42}};',
                 'const TFF={"id-1":function(el,data){el.id="a"}};',
                 'for(const id in TFF){',
@@ -391,7 +396,8 @@ describe('Modules - JSX - script - Engine', () => {
                 'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                 ATOMIC_VM_AFTER,
                 '}',
-                '}',
+                '}};',
+                'if(!w.$tfhydra){const wait=()=>{w.$tfhydra?run():setTimeout(wait,1)};wait();}else{run()}',
                 '})(document,window);</script>',
             ].join(''));
         });
@@ -409,6 +415,7 @@ describe('Modules - JSX - script - Engine', () => {
                 '<script src="/static/atomic.js" defer></script>',
                 '<script defer>',
                 '(function(d,w){',
+                'const run=()=>{',
                 'const TFD={"id-2":{"value":42}};',
                 'const TFF={"id-1":function(el,data){el.id="a"}};',
                 'for(const id in TFF){',
@@ -419,7 +426,8 @@ describe('Modules - JSX - script - Engine', () => {
                 'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                 ATOMIC_VM_AFTER,
                 '}',
-                '}',
+                '}};',
+                'if(!w.$tfhydra){const wait=()=>{w.$tfhydra?run():setTimeout(wait,1)};wait();}else{run()}',
                 '})(document,window);</script></body></html>',
             ].join(''));
         });

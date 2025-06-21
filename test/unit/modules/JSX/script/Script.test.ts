@@ -676,6 +676,7 @@ describe('Modules - JSX - script - <Script>', () => {
             expect(engine.flush()).toBe([
                 '<script nonce="my-nonce" defer>',
                 '(function(d,w){',
+                'const run=()=>{',
                 'const TFD={"id-2":{"msg":"hello"}};',
                 `const TFF={"id-1":(el, data) => {
           el.$publish("eventA", data.msg);
@@ -689,7 +690,8 @@ describe('Modules - JSX - script - <Script>', () => {
                 'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
                 ATOMIC_VM_AFTER,
                 '}',
-                '}',
+                '}};',
+                'if(!w.$tfhydra){const wait=()=>{w.$tfhydra?run():setTimeout(wait,1)};wait();}else{run()}',
                 '})(document,window);</script>',
             ].join(''));
         });
