@@ -4,6 +4,66 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.36.0] - 2025-06-21
+This release builds directly on TriFrost’s **Atomic** foundation, delivering leaner pages, smarter SSR defaults, and internal render polish — all without breaking a sweat.
+
+### Added
+- **feat**: App now accepts `createCss()` and `createScript()` instances as top-level options.
+```typescript
+import {css} from './css';
+import {script} from './script';
+
+new App({css, script})
+```
+Doing so tells TriFrost to mount global assets to static atomic routes:
+- `__atomics__/client.css` for styles
+- `__atomics__/client.js` for atomic runtime
+
+This prevents every page from duplicating shared `<style>` or `<Script>` content — resulting in **smaller, faster, cacheable pages**. Atomic just got even leaner.
+- **feat**: New internal `mount()` utility for atomic scripts/styles. **Internal** engine now mounts atomic runtime (and CSS reset/theme) automatically if `script` or `css` is passed to App.
+- **feat**: `ctx.render()` is now available to manually render a JSX tree to HTML, with optional `css` and `script` instance injection. This method powers `ctx.html()` under the hood, but gives you full control over **alternate styles/scripts**, useful for generating things like, email templates, fragments rendered without app-wide `<Style>` or `<Script>`, SSR modules that inject isolated themes/scripts, .... For example:
+```tsx
+// mailRenderer.ts
+import {createCss} from './lib/modules/JSX/style/use';
+
+export function renderWelcomeEmail (ctx: TriFrostContext) {
+	const css = createCss(); // fresh, isolated CSS engine
+	const cls = css({
+		fontFamily: 'sans-serif',
+		color: '#222',
+	});
+
+	const Email = () => (
+		<html>
+			<body>
+				<h1 className={cls}>Welcome to TriFrost</h1>
+				<p>We’re glad you’re here ❄️</p>
+			</body>
+		</html>
+	);
+
+	// Renders HTML with injected <style> using this custom CSS engine
+	return ctx.render(<Email />, {css});
+}
+```
+
+### Improved
+- **feat**: Automatic `.root()` invocation when passing `css` or `script` to `App`. You no longer need to manually call:
+```typescript
+css.root();
+script.root();
+```
+- **feat**: `<Script>` internal output is now closer to the original function source — preserving reference names and layout. This prevents issues with some bundlers (like esbuild) renaming variables (`data → data2`), improving inline integrity and debuggability.
+- **feat**: Atomic and inline `<Script>` tags now automatically inject defer by default. This ensures scripts execute after document parse, avoiding layout shift or blocking behavior without needing to explicitly specify defer.
+
+---
+
+This update tightens the atomic pipeline, reducing duplicated payloads, improving page weight, and making root logic feel invisible (yet predictable).
+
+Let the runtime do the heavy lifting.
+
+And as always, stay frosty ❄️
+
 ## [0.35.5] - 2025-06-20
 ### Fixed
 - Fix atomic behavior causing script injection malfunction
