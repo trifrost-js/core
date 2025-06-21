@@ -20,6 +20,7 @@ import {
     type MimeType,
     type HttpMethod,
 } from './constants';
+import {type createCss, type createScript} from '../modules';
 
 export type TriFrostContextKind = 'std' | 'notfound' | 'error' | 'options' | 'health';
 
@@ -51,6 +52,9 @@ export type TriFrostContextConfig <Env extends Record<string, any> = Record<stri
     env: Env;
     requestId: TriFrostContextIdOptions|null;
     trustProxy?: boolean;
+    /* Client-side modules */
+    css?: ReturnType<typeof createCss>;
+    script?: ReturnType<typeof createScript>['script'];
 }>;
 
 export type TriFrostContextFileOptions = {
@@ -62,6 +66,11 @@ export type TriFrostContextFileOptions = {
      * Default = false
      */
     download?: boolean|string;
+};
+
+export type TriFrostContextRenderOptions = {
+    css?:ReturnType<typeof createCss>;
+    script?:ReturnType<typeof createScript>['script'];
 };
 
 export type TriFrostContextResponseOptions = {

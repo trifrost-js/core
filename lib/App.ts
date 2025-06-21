@@ -37,7 +37,7 @@ import {type TriFrostBodyParserOptions} from './utils/BodyParser/types';
 import {type LazyInitFn} from './utils/Lazy';
 import {RouteTree} from './routing/Tree';
 import {extractDomainFromHost} from './utils/Http';
-import {createCss, createScript} from './modules';
+import {type createCss, type createScript} from './modules';
 import {mount as mountCss} from './modules/JSX/style/mount';
 import {mount as mountScript} from './modules/JSX/script/mount';
 
@@ -103,7 +103,7 @@ type AppOptions <Env extends Record<string, any>> = {
      * @note Different runtimes have different defaults.
      */
     trustProxy?:boolean;
-    script?: ReturnType<typeof createScript>;
+    script?: ReturnType<typeof createScript>['script'];
     css?: ReturnType<typeof createCss>;
 }
 
@@ -140,6 +140,12 @@ class App <
 
     /* Global cache */
     #cache:TriFrostCache<Env>;
+
+    /* Client-css instance */
+    #css:ReturnType<typeof createCss>|null = null;
+
+    /* Client-script instance */
+    #script:ReturnType<typeof createScript>['script']|null = null;
 
     /* Provided host */
     #host:string|null = null;
@@ -215,10 +221,16 @@ class App <
         }
 
         /* Add script route */
-        if (options.script) mountScript(this as unknown as Router, '/__atomics__/client.js', options.script);
+        if (options.script) {
+            mountScript(this as unknown as Router, '/__atomics__/client.js', options.script);
+            this.#script = options.script;
+        }
 
         /* Add css route */
-        if (options.css) mountCss(this as unknown as Router, '/__atomics__/client.css', options.css);
+        if (options.css) {
+            mountCss(this as unknown as Router, '/__atomics__/client.css', options.css);
+            this.#css = options.css;
+        }
     }
 
 /**
@@ -316,6 +328,8 @@ class App <
                     env: this.#env as unknown as Env,
                     timeout: this.timeout,
                     ...this.#trustProxy !== null && {trustProxy: this.#trustProxy},
+                    ...this.#css !== null && {css: this.#css},
+                    ...this.#script !== null && {script: this.#script},
                 },
                 onIncoming: (async (ctx:TriFrostContext<Env, State>) => {
                     const {path, method} = ctx;

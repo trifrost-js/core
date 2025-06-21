@@ -396,6 +396,62 @@ describe('Modules - JSX - script - Engine', () => {
             ].join(''));
         });
 
+        it('Injects without nonce if no active nonce', () => {
+            vi.spyOn(Nonce, 'nonce').mockReturnValue(null);
+            engine.setAtomic(true);
+            engine.setRoot(true);
+            engine.setMountPath('/static/atomic.js');
+            engine.register('function(el,data){el.id="a"}', '{"value":42}');
+            engine.register('function(el,data){el.id="a"}', '{"value":42}');
+            expect(engine.inject('<html><body><main>Hello</main></body></html>')).toBe([
+                '<html><body>',
+                '<main>Hello</main>',
+                '<script src="/static/atomic.js" defer></script>',
+                '<script defer>',
+                '(function(d,w){',
+                'const TFD={"id-2":{"value":42}};',
+                'const TFF={"id-1":function(el,data){el.id="a"}};',
+                'for(const id in TFF){',
+                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                'for(let n of N){',
+                ATOMIC_VM_BEFORE,
+                'const dId=n.getAttribute("data-tfhd");',
+                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
+                ATOMIC_VM_AFTER,
+                '}',
+                '}',
+                '})(document,window);</script></body></html>',
+            ].join(''));
+        });
+
+        it('Injects without nonce if no active nonce and no mount path', () => {
+            vi.spyOn(Nonce, 'nonce').mockReturnValue(null);
+            engine.setAtomic(true);
+            engine.setRoot(true);
+            engine.setMountPath(null as unknown as string);
+            engine.register('function(el,data){el.id="a"}', '{"value":42}');
+            engine.register('function(el,data){el.id="a"}', '{"value":42}');
+            expect(engine.inject('<html><body><main>Hello</main></body></html>')).toBe([
+                '<html><body>',
+                '<main>Hello</main>',
+                '<script defer>',
+                '(function(d,w){',
+                ATOMIC_GLOBAL,
+                'const TFD={"id-2":{"value":42}};',
+                'const TFF={"id-1":function(el,data){el.id="a"}};',
+                'for(const id in TFF){',
+                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                'for(let n of N){',
+                ATOMIC_VM_BEFORE,
+                'const dId=n.getAttribute("data-tfhd");',
+                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
+                ATOMIC_VM_AFTER,
+                '}',
+                '}',
+                '})(document,window);</script></body></html>',
+            ].join(''));
+        });
+
         it('Gracefully handles empty html in inject()', () => {
             engine.register('function(){}', null);
             expect(engine.inject('')).toBe([

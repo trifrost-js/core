@@ -103,6 +103,14 @@ describe('Modules - JSX - Script - use', () => {
             expect(spy).toHaveBeenCalledWith('/runtime.js');
         });
 
+        it('Does not forward mount path to engine during root() if null', () => {
+            const spy = vi.spyOn(engine, 'setMountPath');
+            const {script} = createScript();
+            script.setMountPath(null);
+            script.root();
+            expect(spy).not.toHaveBeenCalled();
+        });
+
         it('Auto-instantiates ScriptEngine if none is set (Script)', () => {
             setActiveScriptEngine(null);
             const {Script} = createScript({atomic: true});

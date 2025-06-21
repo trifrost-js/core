@@ -1,6 +1,6 @@
 /* eslint-disable no-underscore-dangle,no-use-before-define */
 
-import {type TriFrostContext} from '../../types/context';
+import {type TriFrostContextRenderOptions, type TriFrostContext} from '../../types/context';
 import {type JSXProps} from './types';
 import {Fragment} from './runtime';
 import {StyleEngine} from './style/Engine';
@@ -177,11 +177,15 @@ export function render (node:JSX.Element|string|number|boolean|null, parentProps
 export function rootRender <
     Env extends Record<string, any>,
     State extends Record<string, unknown>
-> (ctx:TriFrostContext<Env, State>, tree:JSX.Element):string {
+> (ctx:TriFrostContext<Env, State>, tree:JSX.Element, options:TriFrostContextRenderOptions = {}):string {
     /* Instantiate globals */
     const style_engine = getActiveStyleEngine() || setActiveStyleEngine(new StyleEngine());
     const script_engine = getActiveScriptEngine() || setActiveScriptEngine(new ScriptEngine());
     setActiveCtx(ctx);
+
+    // Auto-call root() if script or css provided in ctx config
+    options?.script?.root?.();
+    options?.css?.root?.();
 
     /* Render jsx to html */
     const html = script_engine.inject(

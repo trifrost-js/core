@@ -31,10 +31,14 @@ import {
     type TriFrostContext,
     type TriFrostContextConfig,
     type TriFrostContextKind,
+    type TriFrostContextRenderOptions,
 } from './types/context';
 import {encodeFilename} from './utils/Http';
 import {hexId} from './utils/Generic';
-import {TriFrostBodyParserOptions, type ParsedBody} from './utils/BodyParser/types';
+import {
+    type TriFrostBodyParserOptions,
+    type ParsedBody,
+} from './utils/BodyParser/types';
 
 type RequestConfig = {
     method: HttpMethod,
@@ -636,6 +640,13 @@ export abstract class Context <
  */
 
     /**
+     * Render a JSX body to a string
+     */
+    render (body:JSX.Element, opts?:TriFrostContextRenderOptions):string {
+        return rootRender<Env, State>(this, body, (opts || this.ctx_config) as TriFrostContextConfig<Env>);
+    }
+
+    /**
      * Respond with a file
      */
     async file (path:string, opts?:TriFrostContextFileOptions):Promise<void> {
@@ -691,7 +702,7 @@ export abstract class Context <
             if (!this.res_headers['Content-Type']) this.res_headers['Content-Type'] = MimeTypes.HTML;
 
             /* Render html */
-            let html = typeof body === 'string' ? body : rootRender<Env, State>(this, body);
+            let html = typeof body === 'string' ? body : this.render(body, this.ctx_config);
 
             /* Auto-prepend <!DOCTYPE html> if starts with <html */
             html = html.trimStart();

@@ -228,6 +228,10 @@ describe('Modules - JSX - Renderer', () => {
             css = createCss();
         });
 
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
         it('Injects styles correctly from inside the render tree', () => {
             const Component = () => {
                 const cls = css({padding: '1rem', backgroundColor: 'blue'});
@@ -411,6 +415,315 @@ describe('Modules - JSX - Renderer', () => {
             expect(html2).not.toContain('abc123');
         });
 
+        it('Calls script.root and css.root from options if provided', () => {
+            const mockCss = {root: vi.fn(), inject: vi.fn(html => html)};
+            const mockScript = {root: vi.fn(), inject: vi.fn(html => html)};
+            const ctx = new MockContext();
+            const Component = () => ({type: 'div', props: {children: 'Hello'}});
+
+            /* @ts-ignore */
+            const html = rootRender(ctx, {type: Component, props: {}}, {css: mockCss, script: mockScript});
+
+            expect(mockCss.root).toHaveBeenCalledTimes(1);
+            expect(mockScript.root).toHaveBeenCalledTimes(1);
+            expect(html).toBe('<div>Hello</div>');
+        });
+
+        it('calls only css.root if script is not provided', () => {
+            const mockCss = {root: vi.fn(), inject: vi.fn(html => html)};
+            const mockScript = {root: vi.fn(), inject: vi.fn(html => html)};
+            const ctx = new MockContext();
+            const Component = () => ({type: 'div', props: {children: 'Hello'}});
+
+            /* @ts-ignore */
+            const html = rootRender(ctx, {type: Component, props: {}}, {css: mockCss});
+
+            expect(mockCss.root).toHaveBeenCalledTimes(1);
+            expect(mockScript.root).not.toHaveBeenCalled();
+            expect(html).toBe('<div>Hello</div>');
+        });
+
+        it('calls only script.root if css is not provided', () => {
+            const mockCss = {root: vi.fn(), inject: vi.fn(html => html)};
+            const mockScript = {root: vi.fn(), inject: vi.fn(html => html)};
+            const ctx = new MockContext();
+            const Component = () => ({type: 'div', props: {children: 'Hello'}});
+
+            /* @ts-ignore */
+            const html = rootRender(ctx, {type: Component, props: {}}, {script: mockScript});
+
+            expect(mockCss.root).not.toHaveBeenCalled();
+            expect(mockScript.root).toHaveBeenCalledTimes(1);
+            expect(html).toBe('<div>Hello</div>');
+        });
+
+        it('Includes css root and script root when passed to render context and not in html', () => {
+            let idCounter = 0;
+            vi.spyOn(Generic, 'hexId').mockImplementation(() => `id-${++idCounter}`);
+
+            const ctx = new MockContext();
+
+            const css2 = createCss({reset:true});
+            const client = createScript({atomic: true});
+
+            const Component = () => {
+                const cls = css2({margin: '2rem', color: 'black'});
+                return {type: 'div', props: {className: cls, children: 'Styled'}};
+            };
+
+            const html = rootRender(ctx, {
+                type: 'ul',
+                props: {
+                    children: [
+                        {
+                            type: Component,
+                        },
+                        {
+                            type: 'li',
+                            props: {
+                                children: [
+                                    'A',
+                                    {
+                                        type: client.Script,
+                                        props: {
+                                            data: {a: 1, b: 2},
+                                            children: (el, data) => el.innerText = JSON.stringify(data),
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                        {
+                            type: 'li',
+                            props: {
+                                children: [
+                                    'B',
+                                    {
+                                        type: client.Script,
+                                        props: {
+                                            data: {b: 2, a: 1},
+                                            children: (el, data) => el.innerText = JSON.stringify(data),
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                        '__TRIFROST_STYLE_MARKER__',
+                    ],
+                },
+                /* @ts-ignore */
+            }, {css: css2, script: client.script});
+
+            /* Note: order in json stringification matters */
+            expect(html).toBe([
+                '<ul>',
+                '<div class="tf-1ahm5s3">Styled</div>',
+                '<li data-tfhf="id-3" data-tfhd="id-4">A</li>',
+                '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
+                '<style nonce="aWQtMQ==">*, *::before, *::after{box-sizing:border-box}html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}footer, header, nav, section, main{display:block}ol, ul{list-style:none}q, blockquote::before{content:none}q, blockquote::after{content:none}q, blockquote{quotes:none}table{border-collapse:collapse;border-spacing:0}.tf-1ahm5s3{margin:2rem;color:black}</style>',
+                '</ul>',
+                '<script nonce="aWQtMQ==" defer>(function(d,w){',
+                ATOMIC_GLOBAL,
+                'const TFD={"id-4":{"a":1,"b":2},"id-5":{"b":2,"a":1}};',
+                'const TFF={"id-3":(el, data) => el.innerText = JSON.stringify(data)};',
+                'for(const id in TFF){',
+                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                'for(let n of N){',
+                ATOMIC_VM_BEFORE,
+                'const dId=n.getAttribute("data-tfhd");',
+                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
+                ATOMIC_VM_AFTER,
+                '}}})(document,window);</script>',
+            ].join(''));
+        });
+
+        it('Includes css root and script root when passed to render context and in html', () => {
+            let idCounter = 0;
+            vi.spyOn(Generic, 'hexId').mockImplementation(() => `id-${++idCounter}`);
+
+            const ctx = new MockContext();
+
+            const css2 = createCss({reset:true});
+            const client = createScript({atomic: true});
+
+            const Component = () => {
+                const cls = css2({margin: '2rem', color: 'black'});
+                return {type: 'div', props: {className: cls, children: 'Styled'}};
+            };
+
+            const html = rootRender(ctx, {
+                type: 'html',
+                props: {
+                    children: [{
+                        type: 'body',
+                        props: {
+                            children: [{
+                                type: 'ul',
+                                props: {
+                                    children: [
+                                        {
+                                            type: Component,
+                                        },
+                                        {
+                                            type: 'li',
+                                            props: {
+                                                children: [
+                                                    'A',
+                                                    {
+                                                        type: client.Script,
+                                                        props: {
+                                                            data: {a: 1, b: 2},
+                                                            children: (el, data) => el.innerText = JSON.stringify(data),
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                        {
+                                            type: 'li',
+                                            props: {
+                                                children: [
+                                                    'B',
+                                                    {
+                                                        type: client.Script,
+                                                        props: {
+                                                            data: {b: 2, a: 1},
+                                                            children: (el, data) => el.innerText = JSON.stringify(data),
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                        '__TRIFROST_STYLE_MARKER__',
+                                    ],
+                                },
+                            }],
+                        },
+                    }],
+                },
+            /* @ts-ignore */
+            }, {css: css2, script: client.script});
+
+            /* Note: order in json stringification matters */
+            expect(html).toBe([
+                '<html><body><ul>',
+                '<div class="tf-1ahm5s3">Styled</div>',
+                '<li data-tfhf="id-3" data-tfhd="id-4">A</li>',
+                '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
+                '<style nonce="aWQtMQ==">',
+                '*, *::before, *::after{box-sizing:border-box}html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}footer, header, nav, section, main{display:block}ol, ul{list-style:none}q, blockquote::before{content:none}q, blockquote::after{content:none}q, blockquote{quotes:none}table{border-collapse:collapse;border-spacing:0}',
+                '.tf-1ahm5s3{margin:2rem;color:black}',
+                '</style>',
+                '</ul>',
+                '<script nonce="aWQtMQ==" defer>(function(d,w){',
+                ATOMIC_GLOBAL,
+                'const TFD={"id-4":{"a":1,"b":2},"id-5":{"b":2,"a":1}};',
+                'const TFF={"id-3":(el, data) => el.innerText = JSON.stringify(data)};',
+                'for(const id in TFF){',
+                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                'for(let n of N){',
+                ATOMIC_VM_BEFORE,
+                'const dId=n.getAttribute("data-tfhd");',
+                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
+                ATOMIC_VM_AFTER,
+                '}}})(document,window);</script></body></html>',
+            ].join(''));
+        });
+
+        it('Includes css root and script root when passed to render context and in html BUT with mount paths set', () => {
+            let idCounter = 0;
+            vi.spyOn(Generic, 'hexId').mockImplementation(() => `id-${++idCounter}`);
+
+            const ctx = new MockContext();
+
+            const css2 = createCss({reset:true});
+            const client = createScript({atomic: true});
+
+            css2.setMountPath('/static.css');
+            client.script.setMountPath('/static.js');
+
+            const Component = () => {
+                const cls = css2({margin: '2rem', color: 'black'});
+                return {type: 'div', props: {className: cls, children: 'Styled'}};
+            };
+
+            const html = rootRender(ctx, {
+                type: 'html',
+                props: {
+                    children: [{
+                        type: 'body',
+                        props: {
+                            children: [{
+                                type: 'ul',
+                                props: {
+                                    children: [
+                                        {
+                                            type: Component,
+                                        },
+                                        {
+                                            type: 'li',
+                                            props: {
+                                                children: [
+                                                    'A',
+                                                    {
+                                                        type: client.Script,
+                                                        props: {
+                                                            data: {a: 1, b: 2},
+                                                            children: (el, data) => el.innerText = JSON.stringify(data),
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                        {
+                                            type: 'li',
+                                            props: {
+                                                children: [
+                                                    'B',
+                                                    {
+                                                        type: client.Script,
+                                                        props: {
+                                                            data: {b: 2, a: 1},
+                                                            children: (el, data) => el.innerText = JSON.stringify(data),
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                        '__TRIFROST_STYLE_MARKER__',
+                                    ],
+                                },
+                            }],
+                        },
+                    }],
+                },
+            /* @ts-ignore */
+            }, {css: css2, script: client.script});
+
+            /* Note: order in json stringification matters */
+            expect(html).toBe([
+                '<html><body><ul>',
+                '<div class="tf-1ahm5s3">Styled</div>',
+                '<li data-tfhf="id-3" data-tfhd="id-4">A</li>',
+                '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
+                '<link rel="stylesheet" nonce="aWQtMQ==" href="/static.css">',
+                '<style nonce="aWQtMQ==">.tf-1ahm5s3{margin:2rem;color:black}</style>',
+                '</ul>',
+                '<script nonce="aWQtMQ==" src="/static.js" defer></script>',
+                '<script nonce="aWQtMQ==" defer>(function(d,w){',
+                'const TFD={"id-4":{"a":1,"b":2},"id-5":{"b":2,"a":1}};',
+                'const TFF={"id-3":(el, data) => el.innerText = JSON.stringify(data)};',
+                'for(const id in TFF){',
+                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                'for(let n of N){',
+                ATOMIC_VM_BEFORE,
+                'const dId=n.getAttribute("data-tfhd");',
+                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
+                ATOMIC_VM_AFTER,
+                '}}})(document,window);</script></body></html>',
+            ].join(''));
+        });
+
         describe('JSX - render - ctx access (env/state/nonce)', () => {
             it('accesses env variables using env()', () => {
                 const Component = () => ({
@@ -495,9 +808,7 @@ describe('Modules - JSX - Renderer', () => {
                                     type: Script,
                                     props: {
                                         data: {foo: 'bar'},
-                                        children: (el, data) => {
-                                            console.log('Hydrated:', el, data);
-                                        },
+                                        children: (el, data) => console.log('Hydrated:', el, data),
                                     },
                                 },
                             ],
@@ -507,8 +818,9 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<button data-tfhf="id-2" data-tfhd="id-3">Click me</button><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"foo":"bar"}};',
-                    'const TFF={"id-2":function(el,data){console.log("Hydrated:", el, data);}};',
+                    '<button data-tfhf="id-2" data-tfhd="id-3">Click me</button>',
+                    '<script nonce="aWQtMQ==" defer>(function(d,w){const TFD={"id-3":{"foo":"bar"}};',
+                    'const TFF={"id-2":(el, data) => console.log("Hydrated:", el, data)};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
@@ -536,10 +848,7 @@ describe('Modules - JSX - Renderer', () => {
                                         type: Script,
                                         props: {
                                             data: {x: 1},
-                                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                                            children: (el, data) => {
-                                                el.dataset.bound = 'true';
-                                            },
+                                            children: el => el.dataset.bound = 'true',
                                         },
                                     },
                                 ],
@@ -549,8 +858,9 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<span data-tfhf="id-2" data-tfhd="id-3">Item</span><span data-tfhf="id-2" data-tfhd="id-3">Item</span><span data-tfhf="id-2" data-tfhd="id-3">Item</span><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"x":1}};',
-                    'const TFF={"id-2":function(el,data){el.dataset.bound = "true";}};',
+                    '<span data-tfhf="id-2" data-tfhd="id-3">Item</span><span data-tfhf="id-2" data-tfhd="id-3">Item</span><span data-tfhf="id-2" data-tfhd="id-3">Item</span>',
+                    '<script nonce="aWQtMQ==" defer>(function(d,w){const TFD={"id-3":{"x":1}};',
+                    'const TFF={"id-2":(el) => el.dataset.bound = "true"};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
@@ -573,9 +883,7 @@ describe('Modules - JSX - Renderer', () => {
                             {
                                 type: Script,
                                 props: {
-                                    children: el => {
-                                        el.id = 'injected';
-                                    },
+                                    children: el => el.id = 'injected',
                                 },
                             },
                         ],
@@ -583,8 +891,9 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<div data-tfhf="id-2">No Data</div><script nonce="aWQtMQ==">(function(d,w){const TFD={};',
-                    'const TFF={"id-2":function(el,data){el.id = "injected";}};',
+                    '<div data-tfhf="id-2">No Data</div>',
+                    '<script nonce="aWQtMQ==" defer>(function(d,w){const TFD={};',
+                    'const TFF={"id-2":(el) => el.id = "injected"};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
@@ -606,9 +915,7 @@ describe('Modules - JSX - Renderer', () => {
                                 type: Script,
                                 props: {
                                     data: {enabled: true},
-                                    children: (el, data) => {
-                                        el.setAttribute('data-enabled', data.enabled);
-                                    },
+                                    children: (el, data) => el.setAttribute('data-enabled', data.enabled),
                                 },
                             },
                         ],
@@ -623,8 +930,9 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<div data-tfhf="id-2" data-tfhd="id-3">Nested</div><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"enabled":true}};',
-                    'const TFF={"id-2":function(el,data){el.setAttribute("data-enabled", data.enabled);}};',
+                    '<div data-tfhf="id-2" data-tfhd="id-3">Nested</div>',
+                    '<script nonce="aWQtMQ==" defer>(function(d,w){const TFD={"id-3":{"enabled":true}};',
+                    'const TFF={"id-2":(el, data) => el.setAttribute("data-enabled", data.enabled)};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
@@ -653,9 +961,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: Script,
                                             props: {
                                                 data: {count: 1},
-                                                children: (el, data) => {
-                                                    el.textContent = `count:${data.count}`;
-                                                },
+                                                children: (el, data) => el.textContent = `count:${data.count}`,
                                             },
                                         },
                                     ],
@@ -670,9 +976,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: Script,
                                             props: {
                                                 data: {count: 2},
-                                                children: (el, data) => {
-                                                    el.textContent = `count is ${data.count}`;
-                                                },
+                                                children: (el, data) => el.textContent = `count is ${data.count}`,
                                             },
                                         },
                                     ],
@@ -683,8 +987,9 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-4" data-tfhd="id-5">Second</div><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"count":1},"id-5":{"count":2}};',
-                    'const TFF={"id-2":function(el,data){el.textContent = `count:${data.count}`;},"id-4":function(el,data){el.textContent = `count is ${data.count}`;}};',
+                    '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-4" data-tfhd="id-5">Second</div>',
+                    '<script nonce="aWQtMQ==" defer>(function(d,w){const TFD={"id-3":{"count":1},"id-5":{"count":2}};',
+                    'const TFF={"id-2":(el, data) => el.textContent = `count:${data.count}`,"id-4":(el, data) => el.textContent = `count is ${data.count}`};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
@@ -713,9 +1018,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: Script,
                                             props: {
                                                 data: {count: 1},
-                                                children: (el, data) => {
-                                                    el.textContent = `count:${data.count}`;
-                                                },
+                                                children: (el, data) => el.textContent = `count:${data.count}`,
                                             },
                                         },
                                     ],
@@ -730,9 +1033,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: Script,
                                             props: {
                                                 data: {count: 1},
-                                                children: (el, data) => {
-                                                    el.textContent = `count is ${data.count}`;
-                                                },
+                                                children: (el, data) => el.textContent = `count is ${data.count}`,
                                             },
                                         },
                                     ],
@@ -743,8 +1044,9 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-4" data-tfhd="id-3">Second</div><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"count":1}};',
-                    'const TFF={"id-2":function(el,data){el.textContent = `count:${data.count}`;},"id-4":function(el,data){el.textContent = `count is ${data.count}`;}};',
+                    '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-4" data-tfhd="id-3">Second</div>',
+                    '<script nonce="aWQtMQ==" defer>(function(d,w){const TFD={"id-3":{"count":1}};',
+                    'const TFF={"id-2":(el, data) => el.textContent = `count:${data.count}`,"id-4":(el, data) => el.textContent = `count is ${data.count}`};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
@@ -773,9 +1075,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: Script,
                                             props: {
                                                 data: {count: 1},
-                                                children: (el, data) => {
-                                                    el.textContent = `count is ${data.count}`;
-                                                },
+                                                children: (el, data) => el.textContent = `count is ${data.count}`,
                                             },
                                         },
                                     ],
@@ -790,9 +1090,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: Script,
                                             props: {
                                                 data: {count: 1},
-                                                children: (el, data) => {
-                                                    el.textContent = `count is ${data.count}`;
-                                                },
+                                                children: (el, data) => el.textContent = `count is ${data.count}`,
                                             },
                                         },
                                     ],
@@ -803,8 +1101,9 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-2" data-tfhd="id-3">Second</div><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"count":1}};',
-                    'const TFF={"id-2":function(el,data){el.textContent = `count is ${data.count}`;}};',
+                    '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-2" data-tfhd="id-3">Second</div>',
+                    '<script nonce="aWQtMQ==" defer>(function(d,w){const TFD={"id-3":{"count":1}};',
+                    'const TFF={"id-2":(el, data) => el.textContent = `count is ${data.count}`};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
@@ -836,9 +1135,7 @@ describe('Modules - JSX - Renderer', () => {
                                                         type: Script,
                                                         props: {
                                                             data: {active: true},
-                                                            children: (el, data) => {
-                                                                el.dataset.active = String(data.active);
-                                                            },
+                                                            children: (el, data) => el.dataset.active = String(data.active),
                                                         },
                                                     },
                                                 ],
@@ -852,9 +1149,7 @@ describe('Modules - JSX - Renderer', () => {
                                                     {
                                                         type: Script,
                                                         props: {
-                                                            children: el => {
-                                                                el.dataset.foot = 'true';
-                                                            },
+                                                            children: el => el.dataset.foot = 'true',
                                                         },
                                                     },
                                                 ],
@@ -868,8 +1163,9 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<section><article><header data-tfhf="id-2" data-tfhd="id-3">Header</header><footer data-tfhf="id-4">Footer</footer></article></section><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"active":true}};',
-                    'const TFF={"id-2":function(el,data){el.dataset.active = String(data.active);},"id-4":function(el,data){el.dataset.foot = "true";}};',
+                    '<section><article><header data-tfhf="id-2" data-tfhd="id-3">Header</header><footer data-tfhf="id-4">Footer</footer></article></section>',
+                    '<script nonce="aWQtMQ==" defer>(function(d,w){const TFD={"id-3":{"active":true}};',
+                    'const TFF={"id-2":(el, data) => el.dataset.active = String(data.active),"id-4":(el) => el.dataset.foot = "true"};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
@@ -897,9 +1193,7 @@ describe('Modules - JSX - Renderer', () => {
                                         type: Script,
                                         props: {
                                             data: {x: 5},
-                                            children: (el, data) => {
-                                                el.setAttribute('data-value', data.x);
-                                            },
+                                            children: (el, data) => el.setAttribute('data-value', data.x),
                                         },
                                     },
                                 ],
@@ -909,8 +1203,8 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<div data-tfhf="id-2" data-tfhd="id-3">Hello</div><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"x":5}};',
-                    'const TFF={"id-2":function(el,data){el.setAttribute("data-value", data.x);}};',
+                    '<div data-tfhf="id-2" data-tfhd="id-3">Hello</div><script nonce="aWQtMQ==" defer>(function(d,w){const TFD={"id-3":{"x":5}};',
+                    'const TFF={"id-2":(el, data) => el.setAttribute("data-value", data.x)};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
@@ -951,9 +1245,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: Script,
                                             props: {
                                                 data: {a: 1, b: 2},
-                                                children: (el, data) => {
-                                                    el.innerText = JSON.stringify(data);
-                                                },
+                                                children: (el, data) => el.innerText = JSON.stringify(data),
                                             },
                                         },
                                     ],
@@ -968,9 +1260,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: Script,
                                             props: {
                                                 data: {b: 2, a: 1},
-                                                children: (el, data) => {
-                                                    el.innerText = JSON.stringify(data);
-                                                },
+                                                children: (el, data) => el.innerText = JSON.stringify(data),
                                             },
                                         },
                                     ],
@@ -982,8 +1272,8 @@ describe('Modules - JSX - Renderer', () => {
 
                 /* Note: order in json stringification matters */
                 expect(html).toBe([
-                    '<ul><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
-                    'const TFF={"id-2":function(el,data){el.innerText = JSON.stringify(data);}};',
+                    '<ul><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==" defer>(function(d,w){const TFD={"id-3":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
+                    'const TFF={"id-2":(el, data) => el.innerText = JSON.stringify(data)};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
@@ -1022,9 +1312,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: client.Script,
                                             props: {
                                                 data: {a: 1, b: 2},
-                                                children: (el, data) => {
-                                                    el.innerText = JSON.stringify(data);
-                                                },
+                                                children: (el, data) => el.innerText = JSON.stringify(data),
                                             },
                                         },
                                     ],
@@ -1039,9 +1327,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: client.Script,
                                             props: {
                                                 data: {b: 2, a: 1},
-                                                children: (el, data) => {
-                                                    el.innerText = JSON.stringify(data);
-                                                },
+                                                children: (el, data) => el.innerText = JSON.stringify(data),
                                             },
                                         },
                                     ],
@@ -1053,10 +1339,10 @@ describe('Modules - JSX - Renderer', () => {
 
                 /* Note: order in json stringification matters */
                 expect(html).toBe([
-                    '<ul><div class="tf-1ahm5s3">Styled</div><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==">(function(d,w){',
+                    '<ul><div class="tf-1ahm5s3">Styled</div><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==" defer>(function(d,w){',
                     ATOMIC_GLOBAL,
                     'const TFD={"id-3":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
-                    'const TFF={"id-2":function(el,data){el.innerText = JSON.stringify(data);}};',
+                    'const TFF={"id-2":(el, data) => el.innerText = JSON.stringify(data)};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
@@ -1080,9 +1366,7 @@ describe('Modules - JSX - Renderer', () => {
                             {
                                 type: Script,
                                 props: {
-                                    children: el => {
-                                        el.id = 'reset';
-                                    },
+                                    children: el => el.id = 'reset',
                                 },
                             },
                         ],
@@ -1090,8 +1374,8 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html1).toBe([
-                    '<div data-tfhf="id-2">Reset me</div><script nonce="aWQtMQ==">(function(d,w){const TFD={};',
-                    'const TFF={"id-2":function(el,data){el.id = "reset";}};',
+                    '<div data-tfhf="id-2">Reset me</div><script nonce="aWQtMQ==" defer>(function(d,w){const TFD={};',
+                    'const TFF={"id-2":(el) => el.id = "reset"};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
