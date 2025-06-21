@@ -103,8 +103,10 @@ type AppOptions <Env extends Record<string, any>> = {
      * @note Different runtimes have different defaults.
      */
     trustProxy?:boolean;
-    script?: ReturnType<typeof createScript>['script'];
-    css?: ReturnType<typeof createCss>;
+    client?: {
+        script?: ReturnType<typeof createScript>['script'];
+        css?: ReturnType<typeof createCss>;
+    };
 }
 
 class App <
@@ -221,15 +223,15 @@ class App <
         }
 
         /* Add script route */
-        if (options.script) {
-            mountScript(this as unknown as Router, '/__atomics__/client.js', options.script);
-            this.#script = options.script;
+        if (options.client?.script) {
+            mountScript(this as unknown as Router, '/__atomics__/client.js', options.client.script);
+            this.#script = options.client?.script;
         }
 
         /* Add css route */
-        if (options.css) {
-            mountCss(this as unknown as Router, '/__atomics__/client.css', options.css);
-            this.#css = options.css;
+        if (options.client?.css) {
+            mountCss(this as unknown as Router, '/__atomics__/client.css', options.client.css);
+            this.#css = options.client.css;
         }
     }
 

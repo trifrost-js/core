@@ -8,12 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 This release builds directly on TriFrost’s **Atomic** foundation, delivering leaner pages, smarter SSR defaults, and internal render polish — all without breaking a sweat.
 
 ### Added
-- **feat**: App now accepts `createCss()` and `createScript()` instances as top-level options.
+- **feat**: App now accepts `createCss()` and `createScript()` instances as part of a new `client` option.
 ```typescript
 import {css} from './css';
 import {script} from './script';
 
-new App({css, script})
+new App({client: {css, script}})
 ```
 Doing so tells TriFrost to mount global assets to static atomic routes:
 - `__atomics__/client.css` for styles
