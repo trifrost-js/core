@@ -16,6 +16,9 @@ export class ScriptEngine {
     /* Whether or not the Engine instance is in charge of root rendering */
     protected root_renderer:boolean = false;
 
+    /* Mount path for root styles */
+    protected mount_path:string|null = null;
+
     setAtomic (is_atomic:boolean) {
         this.atomic_enabled = is_atomic === true;
     }
@@ -50,9 +53,12 @@ export class ScriptEngine {
         if (this.map_fn.size === 0 && !this.atomic_enabled) return '';
 
         /* Start script */
-        let out = '(function(d,w){';
+        let out = '';
 
-        if (this.atomic_enabled && this.root_renderer) out += ATOMIC_GLOBAL;
+        /* Include atomics IF atomic is enabled AND we're doing a root render AND we dont have a mount path */
+        if (this.atomic_enabled && this.root_renderer && !this.mount_path) {
+            out += ATOMIC_GLOBAL;
+        }
 
         if (this.map_fn.size) {
             // --- Payloads (TFD) ---
@@ -78,30 +84,50 @@ export class ScriptEngine {
             ].join('');
         }
 
+        if (!out) return '';
+
         /* Finalize iife */
-        out += '})(document,window);';
+        out = '(function(d,w){' + out + '})(document,window);';
 
         const n_nonce = nonce();
         return n_nonce
-            ? '<script nonce="' + n_nonce + '">' + out + '</script>'
-            : '<script>' + out + '</script>';
+            ? '<script nonce="' + n_nonce + '" defer>' + out + '</script>'
+            : '<script defer>' + out + '</script>';
     }
 
     inject (html:string):string {
         if (typeof html !== 'string') return '';
 
-        const script = this.flush();
-        if (!script) return html;
+        const bodyIdx = html.indexOf('</body>');
+        const n_nonce = nonce();
 
-        const body_idx = html.indexOf('</body>');
-        return body_idx < 0
-            ? html + script
-            : html.slice(0, body_idx) + script + html.slice(body_idx);
+        /* Mount script */
+        let mount_script = '';
+        if (this.mount_path && (html.startsWith('<!DOCTYPE') || html.startsWith('<html'))) {
+            mount_script = n_nonce
+                ? `<script nonce="${n_nonce}" src="${this.mount_path}" defer></script>`
+                : `<script src="${this.mount_path}" defer></script>`;
+        }
+
+        const injection = mount_script + this.flush();
+
+        return bodyIdx >= 0
+            ? html.slice(0, bodyIdx) + injection + html.slice(bodyIdx)
+            : html + injection;
     }
 
     reset (): void {
         this.map_data = new Map();
         this.map_fn = new Map();
+    }
+
+    /**
+     * Sets mount path for as-file renders of root scripts
+     *
+     * @param {string} path - Mount path for client root scripts
+     */
+    setMountPath (path:string) {
+        this.mount_path = path;
     }
 
 }

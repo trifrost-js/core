@@ -61,35 +61,24 @@ export function Script <
     const engine = getActiveScriptEngine();
     if (!engine) return null as unknown as JSX.Element;
 
-    const raw = options.children.toString();
-
-    /* Normalize Arrow vs function */
-    let body = raw;
-    if (raw.startsWith('(')) {
-        const arrow_idx = raw.indexOf('=>');
-        const body_start_idx = raw.indexOf('{', arrow_idx);
-        const body_end_idx = raw.lastIndexOf('}');
-        /* arrow with braces */
-        if (body_start_idx !== -1 && body_end_idx !== -1) {
-            body = raw.slice(body_start_idx + 1, body_end_idx);
-        } else {
-            /* One-liner arrow without braces */
-            body = raw.slice(arrow_idx + 2).trim();
-        }
-    }
-
-    /* At this point we're working with a normalized function */
-    body = body
+    /* Normalize function body */
+    const raw = options
+        .children
+        .toString()
         .replace(RGX_ASYNC_FATARROW, '$1')
-        .replace(RGX_ASYNC_FUNCTION, '')
-        .trim();
+        .replace(RGX_ASYNC_FUNCTION, '').trim();
 
     /* Get data */
-    const data = options.data ? JSON.stringify(options.data).replace(RGX_DATA_SCRIPT, '<\\/script>') : null;
+    const data = options.data
+        ? JSON.stringify(options.data).replace(RGX_DATA_SCRIPT, '<\\/script>')
+        : null;
 
     return {
         type: SCRIPT_MARKER,
-        props: engine.register('function(el,data){' + body + '}', data),
+        props: engine.register(
+            raw.startsWith('function') || raw.startsWith('(') ? raw : `(${raw})`,
+            data
+        ),
         key: null,
     };
 }

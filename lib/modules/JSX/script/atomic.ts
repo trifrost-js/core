@@ -67,9 +67,9 @@ export type TriFrostAtomicVM <
 };
 
 export const ATOMIC_GLOBAL = minify(`
-    if (!w.${GLOBAL_RELAY_NAME}) {
+    if (!window.${GLOBAL_RELAY_NAME}) {
         const topics = Object.create(null);
-        Object.defineProperty(w, "${GLOBAL_RELAY_NAME}", {
+        Object.defineProperty(window, "${GLOBAL_RELAY_NAME}", {
             value: Object.freeze({
                 publish: (msg, data) => {
                     if (typeof msg !== "string" || !topics[msg]) return;
@@ -102,23 +102,23 @@ export const ATOMIC_GLOBAL = minify(`
             configurable:!1
         });
     }
-    if (!w.${GLOBAL_OBSERVER_NAME}) {
+    if (!window.${GLOBAL_OBSERVER_NAME}) {
         const observer = new MutationObserver(e => {
             for (let x of e) {
                 for (let nRemoved of x.removedNodes) {
                     if (nRemoved.${VM_NAME}) {
                         if (typeof nRemoved.${VM_HOOK_UNMOUNT_NAME} === "function") try {nRemoved.${VM_HOOK_UNMOUNT_NAME}()} catch {}
-                        w.${GLOBAL_RELAY_NAME}?.unsubscribe(nRemoved.${VM_ID_NAME})
+                        window.${GLOBAL_RELAY_NAME}?.unsubscribe(nRemoved.${VM_ID_NAME})
                     }
                 }
             }
         });
-        observer.observe(d.body, {childList:!0, subtree:!0});
-        w.${GLOBAL_OBSERVER_NAME} = observer;
+        observer.observe(document.body, {childList:!0, subtree:!0});
+        window.${GLOBAL_OBSERVER_NAME} = observer;
     }
-    if (!w.${GLOBAL_STORE_NAME}) {
+    if (!window.${GLOBAL_STORE_NAME}) {
         const store = Object.create(null);
-        Object.defineProperty(w, "${GLOBAL_STORE_NAME}", {
+        Object.defineProperty(window, "${GLOBAL_STORE_NAME}", {
             value: Object.freeze({
                 get: key => {
                     if (typeof key !== "string" || !key) return undefined;
@@ -127,7 +127,7 @@ export const ATOMIC_GLOBAL = minify(`
                 set: (key, val) => {
                     if (typeof key !== "string" || !key) return;
                     store[key] = val;
-                    w.${GLOBAL_RELAY_NAME}.publish("$store:" + key, val);
+                    window.${GLOBAL_RELAY_NAME}.publish("$store:" + key, val);
                 },
             }),
             writable:!1,

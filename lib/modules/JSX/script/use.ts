@@ -1,4 +1,4 @@
-import {type ScriptEngine} from './Engine';
+import {ScriptEngine} from './Engine';
 import {env as ogEnv} from '../ctx/env';
 import {state as ogState} from '../ctx/state';
 import {nonce} from '../ctx/nonce';
@@ -28,6 +28,9 @@ export function createScript<
   TFRelay extends Record<string, unknown> = Record<string, unknown>,
   TFStore extends Record<string, unknown> = Record<string, unknown>
 > (config:ScriptConfig = {}) {
+    let mountPath:string|null = null;
+    const isAtomic = 'atomic' in config && config.atomic === true;
+
     /* Env proxy */
     const env = <K extends keyof Env> (key:K) => ogEnv<Env[K]>(key as string);
 
@@ -36,18 +39,24 @@ export function createScript<
 
     /* Script proxy */
     const Script = <TFData = undefined> (props:ScriptProps<TFData, TFRelay, TFStore>) => {
-        if ('atomic' in config) active_engine?.setAtomic(config.atomic!);
+        if (!active_engine) setActiveScriptEngine(new ScriptEngine());
+        if (isAtomic) active_engine!.setAtomic(config.atomic!);
         return ogScript<TFData, TFRelay, TFStore>(props);
     };
 
     /* Tell the ecosystem this is the root render */
     const root = () => {
-        if ('atomic' in config) active_engine?.setAtomic(config.atomic!);
-        active_engine?.setRoot(true);
+        if (!active_engine) setActiveScriptEngine(new ScriptEngine());
+
+        if (isAtomic) active_engine!.setAtomic(config.atomic!);
+        if (mountPath) active_engine!.setMountPath(mountPath);
+        active_engine!.setRoot(true);
     };
 
-    /* Enable/disable atomic mode */
-    const atomic = (enabled:boolean = true) => active_engine?.setAtomic(enabled);
+    /* Sets mount path for global script file collection */
+    const setMountPath = (path: string | null) => {
+        mountPath = typeof path === 'string' ? path : null;
+    };
 
     return {
         Script,
@@ -56,7 +65,8 @@ export function createScript<
             state,
             nonce,
             root,
-            atomic,
+            isAtomic,
+            setMountPath,
         },
     };
 }

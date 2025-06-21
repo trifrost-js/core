@@ -20,10 +20,10 @@ export class StyleEngine {
     /* mediaQuery -> rule -> className */
     protected media: Record<string, {out: string; keys: Set<string>}> = {};
 
-    cache:Map<string, string> = new Map();
-
     /* Mount path for root styles */
-    mount_path:string|null = null;
+    protected mount_path:string|null = null;
+
+    cache:Map<string, string> = new Map();
 
     /**
      * Generate a deterministic class name for a rule

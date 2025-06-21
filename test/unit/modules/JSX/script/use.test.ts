@@ -69,17 +69,6 @@ describe('Modules - JSX - Script - use', () => {
             expect(spyRoot).toHaveBeenCalledWith(true);
         });
 
-        it('calls setAtomic manually when script.atomic() is used', () => {
-            const {script} = createScript();
-            const spy = vi.spyOn(engine, 'setAtomic');
-
-            script.atomic();
-            expect(spy).toHaveBeenCalledWith(true);
-
-            script.atomic(false);
-            expect(spy).toHaveBeenCalledWith(false);
-        });
-
         it('env and state proxies delegate to original ctx functions', () => {
             const envSpy = vi.spyOn(EnvProxy, 'env');
             const stateSpy = vi.spyOn(StateProxy, 'state');
@@ -104,6 +93,29 @@ describe('Modules - JSX - Script - use', () => {
             factory.Script(props);
 
             expect(fn).toHaveBeenCalledWith(props);
+        });
+
+        it('Forwards mount path to engine during root()', () => {
+            const spy = vi.spyOn(engine, 'setMountPath');
+            const {script} = createScript();
+            script.setMountPath('/runtime.js');
+            script.root();
+            expect(spy).toHaveBeenCalledWith('/runtime.js');
+        });
+
+        it('Auto-instantiates ScriptEngine if none is set (Script)', () => {
+            setActiveScriptEngine(null);
+            const {Script} = createScript({atomic: true});
+            const result = Script({children: () => {}});
+            expect(getActiveScriptEngine()).toBeInstanceOf(ScriptEngine);
+            expect(result).not.toBeNull();
+        });
+
+        it('Auto-instantiates ScriptEngine if none is set (root)', () => {
+            setActiveScriptEngine(null);
+            const {script} = createScript({atomic: true});
+            script.root();
+            expect(getActiveScriptEngine()).toBeInstanceOf(ScriptEngine);
         });
     });
 });

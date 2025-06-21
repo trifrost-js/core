@@ -107,7 +107,7 @@ describe('Modules - JSX - script - Engine', () => {
 
             const out = engine.flush();
             expect(out).toBe([
-                '<script nonce="abc123">(function(d,w){',
+                '<script nonce="abc123" defer>(function(d,w){',
                 'const TFD={"id-2":{"x":1}};',
                 'const TFF={"id-1":function(el,data){el.textContent="x";}};',
                 'for(const id in TFF){',
@@ -124,8 +124,18 @@ describe('Modules - JSX - script - Engine', () => {
         it('Respects nonce being null', () => {
             vi.spyOn(Nonce, 'nonce').mockReturnValue(null);
             engine.register('function(){}', null);
-            const result = engine.flush();
-            expect(result.startsWith('<script>')).toBe(true);
+            expect(engine.flush()).toBe([
+                '<script defer>',
+                '(function(d,w){',
+                'const TFD={};',
+                'const TFF={"id-1":function(){}};',
+                'for(const id in TFF){',
+                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                'for(let n of N){',
+                'const dId=n.getAttribute("data-tfhd");',
+                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
+                '}}})(document,window);</script>',
+            ].join(''));
         });
 
         it('Flushes atomic globals and vm hooks only when atomic + root are enabled', () => {
@@ -134,7 +144,7 @@ describe('Modules - JSX - script - Engine', () => {
             engine.register('function(el,data){el.textContent="Hi"}', null);
 
             expect(engine.flush()).toBe([
-                '<script nonce="abc123">',
+                '<script nonce="abc123" defer>',
                 '(function(d,w){',
                 ATOMIC_GLOBAL,
                 'const TFD={};',
@@ -158,7 +168,7 @@ describe('Modules - JSX - script - Engine', () => {
             engine.register('function(el,data){el.textContent="Hi"}', null);
 
             expect(engine.flush()).toBe([
-                '<script nonce="abc123">',
+                '<script nonce="abc123" defer>',
                 '(function(d,w){',
                 'const TFD={};',
                 'const TFF={"id-1":function(el,data){el.textContent="Hi"}};',
@@ -179,7 +189,7 @@ describe('Modules - JSX - script - Engine', () => {
             engine.register('function(el,data){el.id="a"}', '{"value":42}');
             engine.register('function(el,data){el.id="a"}', '{"value":42}');
             expect(engine.flush()).toBe([
-                '<script nonce="abc123">',
+                '<script nonce="abc123" defer>',
                 '(function(d,w){',
                 'const TFD={"id-2":{"value":42}};',
                 'const TFF={"id-1":function(el,data){el.id="a"}};',
@@ -200,6 +210,31 @@ describe('Modules - JSX - script - Engine', () => {
 
             expect(engine.flush()).toBe('');
         });
+
+        it('Does NOT include atomic global when mount path is set (even if atomic + root)', () => {
+            engine.setAtomic(true);
+            engine.setRoot(true);
+            engine.setMountPath('/static/atomic.js');
+            engine.register('function(el,data){el.id="a"}', '{"value":42}');
+            engine.register('function(el,data){el.id="a"}', '{"value":42}');
+
+            expect(engine.flush()).toBe([
+                '<script nonce="abc123" defer>',
+                '(function(d,w){',
+                'const TFD={"id-2":{"value":42}};',
+                'const TFF={"id-1":function(el,data){el.id="a"}};',
+                'for(const id in TFF){',
+                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                'for(let n of N){',
+                ATOMIC_VM_BEFORE,
+                'const dId=n.getAttribute("data-tfhd");',
+                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
+                ATOMIC_VM_AFTER,
+                '}',
+                '}',
+                '})(document,window);</script>',
+            ].join(''));
+        });
     });
 
     describe('inject', () => {
@@ -212,7 +247,7 @@ describe('Modules - JSX - script - Engine', () => {
             engine.register('function(){}', null);
             expect(engine.inject('<html><main>Stuff</main></html>')).toBe([
                 '<html><main>Stuff</main></html>',
-                '<script nonce="abc123">',
+                '<script nonce="abc123" defer>',
                 '(function(d,w){',
                 'const TFD={};',
                 'const TFF={"id-1":function(){}};',
@@ -233,7 +268,7 @@ describe('Modules - JSX - script - Engine', () => {
                 '<html>',
                 '<body>',
                 '<main>Content</main>',
-                '<script nonce="abc123">',
+                '<script nonce="abc123" defer>',
                 '(function(d,w){',
                 'const TFD={};',
                 'const TFF={"id-1":function(){}};',
@@ -255,7 +290,7 @@ describe('Modules - JSX - script - Engine', () => {
 
             expect(engine.inject('<div>Partial content</div>')).toBe([
                 '<div>Partial content</div>',
-                '<script nonce="abc123">',
+                '<script nonce="abc123" defer>',
                 '(function(d,w){',
                 'const TFD={};',
                 'const TFF={"id-1":function(el){el.dataset.x="1"}};',
@@ -277,10 +312,94 @@ describe('Modules - JSX - script - Engine', () => {
             }
         });
 
+        it('Injects only <script src> when mounted and root', () => {
+            engine.setAtomic(true);
+            engine.setMountPath('/static/client.js');
+
+            expect(engine.inject('<!DOCTYPE html><html><body><main>Hi</main></body></html>')).toBe([
+                '<!DOCTYPE html>',
+                '<html><body><main>Hi</main>',
+                '<script nonce="abc123" src="/static/client.js" defer></script>',
+                '</body></html>',
+            ].join(''));
+        });
+
+        it('Injects both <script src> and inline script when mounted and root', () => {
+            engine.setAtomic(true);
+            engine.setRoot(true);
+            engine.setMountPath('/static/atomic.js');
+            engine.register('function(el,data){el.id="a"}', '{"value":42}');
+            engine.register('function(el,data){el.id="a"}', '{"value":42}');
+            expect(engine.inject('<!DOCTYPE html><html><body><main>Hello</main></body></html>')).toBe([
+                '<!DOCTYPE html><html><body><main>Hello</main>',
+                '<script nonce="abc123" src="/static/atomic.js" defer></script>',
+                '<script nonce="abc123" defer>',
+                '(function(d,w){',
+                'const TFD={"id-2":{"value":42}};',
+                'const TFF={"id-1":function(el,data){el.id="a"}};',
+                'for(const id in TFF){',
+                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                'for(let n of N){',
+                ATOMIC_VM_BEFORE,
+                'const dId=n.getAttribute("data-tfhd");',
+                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
+                ATOMIC_VM_AFTER,
+                '}',
+                '}',
+                '})(document,window);</script>',
+                '</body></html>',
+            ].join(''));
+        });
+
+        it('Does not inject <script src> when mount is set but HTML is not a full document', () => {
+            engine.setAtomic(true);
+            engine.setMountPath('/atomic.js');
+
+            expect(engine.inject('<div>Partial</div>')).toBe([
+                '<div>Partial</div>',
+            ].join(''));
+        });
+
+        it('Includes nonce on mount script if available', () => {
+            engine.setAtomic(true);
+            engine.setMountPath('/atomic.js');
+
+            expect(engine.inject('<!DOCTYPE html><html><body><main>App</main></body></html>')).toBe([
+                '<!DOCTYPE html><html><body><main>App</main>',
+                '<script nonce="abc123" src="/atomic.js" defer></script>',
+                '</body></html>',
+            ].join(''));
+        });
+
+        it('Injects only and inline script when mounted and not full html', () => {
+            engine.setAtomic(true);
+            engine.setRoot(true);
+            engine.setMountPath('/static/atomic.js');
+            engine.register('function(el,data){el.id="a"}', '{"value":42}');
+            engine.register('function(el,data){el.id="a"}', '{"value":42}');
+            expect(engine.inject('<main>Hello</main>')).toBe([
+                '<main>Hello</main>',
+                '<script nonce="abc123" defer>',
+                '(function(d,w){',
+                'const TFD={"id-2":{"value":42}};',
+                'const TFF={"id-1":function(el,data){el.id="a"}};',
+                'for(const id in TFF){',
+                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                'for(let n of N){',
+                ATOMIC_VM_BEFORE,
+                'const dId=n.getAttribute("data-tfhd");',
+                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
+                ATOMIC_VM_AFTER,
+                '}',
+                '}',
+                '})(document,window);</script>',
+            ].join(''));
+        });
+
         it('Gracefully handles empty html in inject()', () => {
             engine.register('function(){}', null);
             expect(engine.inject('')).toBe([
-                '<script nonce="abc123">',
+                '<script nonce="abc123" defer>',
                 '(function(d,w){',
                 'const TFD={};',
                 'const TFF={"id-1":function(){}};',
