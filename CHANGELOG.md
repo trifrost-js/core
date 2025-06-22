@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.36.4] - 2025-06-22
 ### Added
 - **feat**: Support for `jsxDEV()` in the JSX runtime, enabling compatibility with dev-mode JSX emit in **Bun** and **modern bundlers**. This ensures TriFrost works seamlessly when `jsx: react-jsx` is enabled, and eliminates the need for manual path shimming or env overrides. The `jsxDEV()` function internally aliases `jsx()`, discarding extra dev-only parameters (`_source`, `_self`, etc) for now.
 
