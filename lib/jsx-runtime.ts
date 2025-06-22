@@ -1,1 +1,1 @@
-export {jsx, jsxs, Fragment} from './modules/JSX/runtime';
+export {jsx, jsxs, jsxDEV, Fragment} from './modules/JSX/runtime';

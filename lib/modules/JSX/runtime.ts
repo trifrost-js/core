@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import {
     type JSXType,
     type JSXProps,
@@ -26,6 +28,34 @@ export function jsx (type:JSXType, props:JSXProps, key?:JSXKey):JSX.Element {
  * @param {JSXKey} key - An optional key for element identity in a list.
  */
 export function jsxs (type:JSXType, props:JSXProps, key?:JSXKey):JSX.Element {
+    return jsx(type, props, key);
+}
+
+/**
+ * Dev-mode JSX function. Used by Bun, TypeScript, Vite etc. when compiling JSX in development.
+ *
+ * TriFrost does not currently use dev metadata like `source` or `self` for traceability,
+ * but this function exists to maintain compatibility with modern JSX pipelines.
+ *
+ * Internally, it aliases `jsx()`, discarding the extra parameters.
+ *
+ * @future Consider emitting debug info (filename, line) for error boundaries or logging.
+ *
+ * @param {JSXType} type - The tag/component type (e.g., 'div' or MyComponent).
+ * @param {JSXProps} props - The properties/attributes for the element.
+ * @param {JSXKey} key - Optional key for list reconciliation (not currently used).
+ * @param {boolean} _isStaticChildren - Indicates if children are statically analyzed (unused).
+ * @param {{fileName: string;lineNumber:number}} _source - Metadata about the JSX origin location (file + line).
+ * @param {any} _self - The lexical 'this' in source (unused).
+ */
+export function jsxDEV (
+    type:JSXType,
+    props:JSXProps,
+    key:JSXKey|undefined,
+    _isStaticChildren: boolean,
+    _source: {fileName: string; lineNumber: number},
+    _self: any
+):JSX.Element {
     return jsx(type, props, key);
 }
 

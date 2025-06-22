@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {jsx, jsxs, Fragment} from '../../../../lib/modules/JSX/runtime';
+import {jsx, jsxs, Fragment, jsxDEV} from '../../../../lib/modules/JSX/runtime';
 
 describe('Modules - JSX - Runtime', () => {
     describe('jsx', () => {
@@ -21,6 +21,14 @@ describe('Modules - JSX - Runtime', () => {
     describe('jsxs', () => {
         it('Should behave the same as jsx()', () => {
             const el1 = jsx('ul', {children: ['a', 'b']}, 'key1');
+            const el2 = jsxs('ul', {children: ['a', 'b']}, 'key1');
+            expect(el2).toEqual(el1);
+        });
+    });
+
+    describe('jsxDEV', () => {
+        it('Should behave the same as jsx()', () => {
+            const el1 = jsxDEV('ul', {children: ['a', 'b']}, 'key1', true, {fileName: 'me.ts', lineNumber: 50}, undefined);
             const el2 = jsxs('ul', {children: ['a', 'b']}, 'key1');
             expect(el2).toEqual(el1);
         });

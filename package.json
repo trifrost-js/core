@@ -53,6 +53,12 @@
             "require": "./jsx-runtime.js",
             "default": "./jsx-runtime.js"
         },
+        "./jsx-dev-runtime": {
+            "types": "./jsx-runtime.d.ts",
+            "import": "./jsx-runtime.js",
+            "require": "./jsx-runtime.js",
+            "default": "./jsx-runtime.js"
+        },
         "./middleware": {
             "types": "./middleware/index.d.ts",
             "import": "./middleware/index.js",
