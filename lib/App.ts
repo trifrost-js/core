@@ -40,7 +40,7 @@ import {extractDomainFromHost} from './utils/Http';
 import {type createScript} from './modules';
 import {mount as mountCss} from './modules/JSX/style/mount';
 import {mount as mountScript} from './modules/JSX/script/mount';
-import {type CssInstance} from './modules/JSX/style/use';
+import {type CssGeneric, type CssInstance} from './modules/JSX/style/use';
 
 const RGX_RID = /^[a-z0-9-]{8,100}$/i;
 
@@ -106,7 +106,7 @@ type AppOptions <Env extends Record<string, any>> = {
     trustProxy?:boolean;
     client?: {
         script?: ReturnType<typeof createScript>['script'];
-        css?: CssInstance<any, any, any, any>;
+        css?: CssGeneric<any>;
     };
 }
 
@@ -231,8 +231,8 @@ class App <
 
         /* Add css route */
         if (options.client?.css) {
-            mountCss(this as unknown as Router, '/__atomics__/client.css', options.client.css);
-            this.#css = options.client.css;
+            mountCss(this as unknown as Router, '/__atomics__/client.css', options.client.css as CssInstance<any, any, any, any>);
+            this.#css = options.client.css as CssInstance<any, any, any, any>;
         }
     }
 

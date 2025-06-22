@@ -39,7 +39,7 @@ type CSSOptions = {
     inject?: boolean;
 };
 
-type CssGeneric <Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS> = {
+export type CssGeneric <Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS> = {
     (style: Record<string, unknown>, opts?: { inject?: boolean }): string;
     /* Pseudo Classes */
     hover:string;
