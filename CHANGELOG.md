@@ -4,6 +4,193 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+This release unveils **TriFrost Atomic Data Reactor**, a minimal yet powerful reactive data layer built for inline `<Script>` blocks. Designed to bring form state, interactivity, and SSR reactivity together, **without sacrificing type safety or control**.
+
+Gone are the days of setting up boilerplate state handlers, this new system lets you declaratively wire up your DOM to your logic, right at the point of use.
+
+Yes, it's reactive. Yes, it's typed. Yes, it just works.
+
+### Added
+- **feature**: Introducing $tfdr (TriFrost Atomic Data Reactor), a lightweight reactive data proxy that enables local data binding and change tracking in `<Script>` blocks. Exposed as the data argument in `<Script data={...}>`.
+- **feature**: Native `$dispatch(type, detail?)` available on the script parent VM element. Enables bubbling `CustomEvent` dispatching from child elements to outer logic or listeners.
+
+### 🔍 What is it?
+Enables **declarative form binding** and **local state reactivity** with full **SSR compatibility**. 
+
+### 🧠 Features
+- **Typed API based on your data shape**, eg: `data.user.name` is type-safe, and so are `data.$bind('user.name', ...)`, `data.$set(...)`, etc.
+- `$bind(path, selector)`: Binds one or multiple form inputs to a data path. **Take Note:** the selector here is **run against the script parent, not the document**.
+- `$watch(path, fn, immediate?)`: Watches a specific path for changes, optionally firing immediately.
+- `$set(path | object)`: Updates part or whole of the reactive state tree and notifies bound elements.
+- `$dispatch(type, detail?)`: Dispatches a native bubbling `CustomEvent` from the root script element — useful for parent VMs or outside components to listen and respond.
+
+### ✅ Behavior
+- Initial state in `data={...}` is automatically cloned and reactive.
+- If form inputs already exist in the DOM, `$bind()` uses data values as source of truth.
+- Supports checkboxes (single/group), radios, `<select multiple>`, and plain inputs out of the box.
+- Emits updates on input and change events as appropriate.
+
+### 🧪 Examples
+##### Basic Form Binding
+```tsx
+<form>
+  <label>Name: <input name="username" type="text" /></label>
+  <label>Age: <input name="age" type="number" /></label>
+  <Script data={{user:{name: 'Peter', age: 35}}}>
+    {(el, data) => {
+      /* The binding will set the value of the form fields */
+      data.$bind('user.name', 'input[name="username"]');
+      data.$bind('user.age', 'input[name="age"]');
+    }}
+  </Script>
+</form>
+```
+##### Watch + Patch
+```tsx
+<form>
+  <label>Count: <input name="counter" type="number" /></label>
+  <Script data={{ count: 0 }}>
+    {(el, data) => {
+      data.$bind('count', 'input[name="counter"]');
+      
+      /* Do stuff when count is updated */
+      data.$watch('count', val => console.log('Updated count:', val));
+
+      /* Manually set count */
+      data.$set('count', 10);
+    }}
+  </Script>
+</form>
+```
+##### Checkboxes (Group Binding)
+```tsx
+<form>
+  <fieldset>
+    <legend>Tags:</legend>
+    <label><input type="checkbox" name="tags" value="js" /> JavaScript</label>
+    <label><input type="checkbox" name="tags" value="ts" /> TypeScript</label>
+    <label><input type="checkbox" name="tags" value="css" /> CSS</label>
+  </fieldset>
+  <Script data={{filters: {tags: [] as string[]}}}>
+    {(el, data) => {
+      data.$bind('filters.tags', 'input[name="tags"]');
+      data.$watch('filters.tags', tags => console.log('Selected:', tags));
+    }}
+  </Script>
+</form>
+```
+##### Radios and Select
+```tsx
+<form>
+  <fieldset>
+    <legend>Preferred Language</legend>
+    <label><input type="radio" name="lang" value="js" /> JavaScript</label>
+    <label><input type="radio" name="lang" value="ts" /> TypeScript</label>
+  </fieldset>
+  <label>
+    Framework:
+    <select name="framework">
+      <option value="vue">Vue</option>
+      <option value="react">React</option>
+      <option value="svelte">Svelte</option>
+    </select>
+  </label>
+  <Script data={{prefs: {lang: '', framework: ''}}}>
+    {(el, data) => {
+      data.$bind('prefs.lang', 'input[name="lang"]');
+      data.$bind('prefs.framework', 'select[name="framework"]');
+    }}
+  </Script>
+</form>
+```
+##### Async Submit on Change
+```tsx
+<form>
+  <label>Email: <input type="email" name="email" required /></label>
+  <label>Subscribe: <input type="checkbox" name="subscribe" /></label>
+  <p>Idle</p>
+  <Script data={{ form: { email: '', subscribe: false } }}>
+    {(el, data) => {
+      data.$bind('form.email', 'input[name="email"]');
+      data.$bind('form.subscribe', 'input[name="subscribe"]');
+
+      const status = el.querySelector('p')!;
+
+      async function submit () {
+        status.textContent = 'Submitting...';
+        try {
+          ...
+          console.log('Submitted:', { ...data.form });
+          status.textContent = 'Submitted ✅';
+        } catch {
+          status.textContent = 'Failed ❌';
+        }
+      }
+
+      /* We debounce listen for email */
+      data.$watch('form.email', submit, {debounce: 300});
+      data.$watch('form.subscribe', submit);
+    }}
+  </Script>
+</form>
+```
+##### Enable Submit Button Conditionally
+```tsx
+<form>
+  <label>Name: <input type="text" name="name" required /></label>
+  <label>Age: <input type="number" name="age" min="0" /></label>
+  <button type="submit" disabled>Submit</button>
+  <Script data={{user: {name: '', age: 0}}}>
+    {(el, data) => {
+      data.$bind('user.name', 'input[name="name"]');
+      data.$bind('user.age', 'input[name="age"]');
+
+      const submitBtn = el.querySelector('button[type="submit"]')!;
+
+      data.$watch('user', () => {
+        const {name, age} = data.user;
+        const valid = name.trim().length > 0 && Number(age) >= 18;
+        submitBtn.disabled = !valid;
+      }, {immediate: true}); /* We pass true to immediately trigger our watch function as its a validation method */
+    }}
+  </Script>
+</form>
+```
+##### $dispatch and forms
+```tsx
+<form>
+  <label>Search: <input type="text" name="q" /></label>
+  <button type="button">
+    Refresh
+    <Script>{el => el.onclick = () => el.$dispatch('refresh')}</Script>
+  </button>
+  <Script data={{q: ''}}>
+    {(el, data) => {
+      data.$bind('form.q', 'input[name="q"]');
+
+      async function submit () {
+        // Perform some async operation
+      }
+
+      el.addEventListener('refresh', submit);
+      data.$watch('form', submit);
+    }}
+  </Script>
+</form>
+```
+> 💡 **Tip**: Where `$subscribe` and `$publish` are great for global page-wide communication, `$dispatch` is ideal for communicating from inner VMs to parents using custom event bubbles.
+
+---
+
+**TriFrost Atomic** continues our pursuit of **zero-runtime-cost ergonomics**, enabling developers to write declarative, reactive, and portable UI logic with unmatched SSR alignment.
+
+This foundation further opens the door to scoped VMs, nested data islands, progressive enhancement, and composable UI logic that doesn’t compromise.
+
+Let us know what you build.
+
+And as always, stay frosty ❄️.
+
 ## [0.36.5] - 2025-06-23
 ### Improved
 - **qol**: `ctx.redirect()` now defaults to `303 See Other` instead of `307`. This aligns with [RFC 7231](https://www.rfc-editor.org/rfc/rfc7231) and ensures correct behavior for POST-to-GET transitions in redirect flows.
