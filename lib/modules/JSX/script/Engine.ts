@@ -1,6 +1,6 @@
 import {hexId} from '../../../utils/Generic';
 import {nonce} from '../ctx/nonce';
-import {ATOMIC_GLOBAL, ATOMIC_VM_BEFORE, ATOMIC_VM_AFTER, GLOBAL_HYDRATED_NAME} from './atomic';
+import {ATOMIC_GLOBAL, ATOMIC_VM_BEFORE, ATOMIC_VM_AFTER, GLOBAL_HYDRATED_NAME, GLOBAL_DATA_REACTOR_NAME} from './atomic';
 
 export class ScriptEngine {
 
@@ -77,7 +77,8 @@ export class ScriptEngine {
                 this.atomic_enabled ? ATOMIC_VM_BEFORE : '',
                 /* Run function and pass data */
                 'const dId=n.getAttribute("data-tfhd");',
-                'try{TFF[id](n,dId?TFD[dId]:undefined)}catch{}',
+                'try{',
+                `TFF[id](n,w.${GLOBAL_DATA_REACTOR_NAME}(n,dId?TFD[dId]:{}))}catch{}`,
                 this.atomic_enabled ? ATOMIC_VM_AFTER : '',
                 '}',
                 '}',
