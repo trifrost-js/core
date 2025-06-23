@@ -404,7 +404,6 @@ export abstract class Context <
             this.clearTimeout();
             this.#timeout = val;
             this.#timeout_id = setTimeout(() => {
-                if (this.isLocked) return;
                 this.#timeout_id = null;
                 this.#logger.error('Request timed out');
                 this.abort(408);
@@ -679,7 +678,7 @@ export abstract class Context <
                 /* Take Note, as per RFC 6266 we make use of filename* with UTF-8 */
                 this.res_headers['Content-Disposition'] = ascii.length
                     ? 'attachment; filename="' + ascii + '"; filename*=UTF-8\'\'' + encoded
-                    : 'attachment; filename*=UTF-8\'\'' + encoded;
+                    : 'attachment; filename="download"; filename*=UTF-8\'\'' + encoded;
             }
 
             /* Pass the stream to the runtime-specific stream method */
@@ -760,6 +759,7 @@ export abstract class Context <
             /* Ensure we dont double write */
             if (this.isLocked) throw new Error('Context@status: Cannot modify a finalized response');
 
+            this.res_body = null;
             this.setStatus(status);
             this.end();
         } catch (err) {
@@ -797,7 +797,7 @@ export abstract class Context <
     /**
      * Respond by redirecting
      *
-     * @note Default status is 307 Temporary Redirect
+     * @note Default status is 303 See Other
      * @note Default keep_query is true
      */
     redirect (to:string, opts?:TriFrostContextRedirectOptions):void {
@@ -810,28 +810,33 @@ export abstract class Context <
             /* Ensure we dont double write */
             if (this.isLocked) throw new Error('Context@redirect: Cannot modify a finalized response');
 
-            let normalized_to = to;
-            /* If the url is not fully qualified prepend the protocol and host */
-            if (!RGX_URL.test(normalized_to)) {
-                const host = this.host;
-                if (typeof host !== 'string' || !host.length) throw new Error('Context@redirect: Not able to determine host for redirect');
+            let url = to.trim();
 
-                const normalized_host = host.startsWith('http://') ? 'https://' + host.slice(7) : host;
-                normalized_to = normalized_host.trim() + normalized_to.trim();
+            /* If not absolute or protocol-relative, and not root-relative, prepend host */
+            const is_absolute = RGX_URL.test(url);
+            const is_relative = url.startsWith('/');
+            const is_proto_relative = url.startsWith('//');
+
+            /* If the url is not fully qualified prepend the protocol and host */
+            if (!is_absolute && !is_relative && !is_proto_relative) {
+                const host = this.host;
+                if (!host) throw new Error('Context@redirect: Unable to determine host');
+                const normalized = host.startsWith('http://')
+                    ? 'https://' + host.slice(7)
+                    : host.startsWith('http') ? host : 'https://' + host;
+                url = normalized.replace(/\/+$/, '') + '/' + url.replace(/^\/+/, '');
             }
 
             /* If keep_query is passed as true and a query exists add it to normalized to */
-            if (
-                this.query.size && (
-                    (!opts || !('keep_query' in opts)) ||
-                    opts.keep_query === true
-                )
-            ) normalized_to += '?' + this.query;
+            if (this.query.size && opts?.keep_query !== false) {
+                const prefix = url.indexOf('?') >= 0 ? '&' : '?';
+                url += prefix + this.query.toString();
+            }
 
             /* This is a redirect, as such a body should not be present */
-            this.res_body = '';
-            this.res_headers.Location = normalized_to;
-            this.setStatus(opts?.status ?? 307);
+            this.res_body = null;
+            this.res_headers.Location = url;
+            this.setStatus(opts?.status ?? 303);
             this.end();
         } catch (err) {
             this.#logger.error(err, {to, opts});
