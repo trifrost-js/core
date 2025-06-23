@@ -9,6 +9,8 @@ const GLOBAL_OBSERVER_NAME = '$tfo';
 const GLOBAL_RELAY_NAME = '$tfr';
 const GLOBAL_STORE_NAME = '$tfs';
 const GLOBAL_UTIL_DEBOUNCE = '$tfdebounce';
+const GLOBAL_CLOCK = '$tfc';
+const GLOBAL_CLOCK_TICK = '$tfcr';
 export const GLOBAL_DATA_REACTOR_NAME = '$tfdr';
 const VM_NAME = '$tfVM';
 const VM_ID_NAME = '$uid';
@@ -143,7 +145,8 @@ export const ATOMIC_GLOBAL = minify(`
                     for (let nRemoved of x.removedNodes) {
                         if (nRemoved.${VM_NAME}) {
                             if (typeof nRemoved.${VM_HOOK_UNMOUNT_NAME} === "function") try {nRemoved.${VM_HOOK_UNMOUNT_NAME}()} catch {}
-                            window.${GLOBAL_RELAY_NAME}?.unsubscribe(nRemoved.${VM_ID_NAME})
+                            window.${GLOBAL_RELAY_NAME}?.unsubscribe(nRemoved.${VM_ID_NAME});
+                            window.${GLOBAL_CLOCK}?.delete(nRemoved.${VM_ID_NAME});
                         }
                     }
                 }
@@ -170,25 +173,73 @@ export const ATOMIC_GLOBAL = minify(`
             });
         }
 
+        if (!window.${GLOBAL_CLOCK}) {
+            const clocks = new Map();
+            let tick_pending = false;
+            const tick_vms = new Set();
+            window.${GLOBAL_CLOCK} = clocks;
+            window.${GLOBAL_CLOCK_TICK} = uid => {
+                tick_vms.add(uid);
+                if (!tick_pending) {
+                    tick_pending = true;
+                    requestAnimationFrame(() => {
+                        const uids = [...tick_vms.values()];
+                        tick_pending = false;
+                        tick_vms.clear();
+                        for (let i = 0; i < uids.length; i++) {
+                            try {
+                                const fn = clocks.get(uids[i]);
+                                if (fn) fn();
+                            } catch {}
+                        }
+                    });
+                }
+            };
+        }
+
         if (!window.${GLOBAL_DATA_REACTOR_NAME}) {
             window.${GLOBAL_DATA_REACTOR_NAME} = (root, raw) => {
                 const store = structuredClone(raw);
                 const subs = Object.create(null);
+                const pending = new Set();
 
                 const get = path => path.split(".").reduce((o, k) => o?.[k], store);
                 const set = (path, val) => {
                     const k = path.split(".");
                     let c = store;
                     for (let i = 0; i < k.length - 1; i++) c = c[k[i]] ??= {};
-                    c[k.at(-1)] = val;
+                    const last = k.at(-1);
+                    if (c[last] === val) return;
+                    c[last] = val;
                 };
 
                 const notify = path => {
                     let c = "";
-                    for (const part of path.split(".")) {
-                        c = c ? c + "." + part : part;
-                        subs[c]?.forEach(fn => fn(get(c)));
+                    const parts = path.split(".");
+                    for (let i = 0; i < parts.length; i++) {
+                        c = i === 0 ? parts[0] : c + "." + parts[i];
+                        pending.add(c);
                     }
+                    window.${GLOBAL_CLOCK_TICK}(root.${VM_ID_NAME});
+                };
+
+                const tick = () => {
+                    if (!pending.size) return;
+                    for (const key of pending) {
+                        const handlers = subs[key];
+                        if (!handlers) continue;
+                        const val = get(key);
+                        for (let i = 0; i < handlers.length; i++) {
+                            try {
+                                const fn = handlers[i];
+                                if (fn._last !== val) {
+                                    fn(val);
+                                    fn._last = val;
+                                }
+                            } catch {}
+                        }
+                    }
+                    pending.clear();
                 };
 
                 const patch = (obj, val) => {
@@ -241,6 +292,8 @@ export const ATOMIC_GLOBAL = minify(`
                     } else e.value = val ?? "";
                 };
 
+                window.${GLOBAL_CLOCK}.set(root.${VM_ID_NAME}, tick);
+
                 return new Proxy(store, {
                     get(_, key) {
                         switch (key) {
@@ -273,6 +326,7 @@ export const ATOMIC_GLOBAL = minify(`
                                 (subs[path] ??= []).push(v => setIV(els, v));
                             };
                             case "$watch": return (path, fn, opts = {}) => {
+                                if (typeof path !== "string" || typeof fn !== "function") return;
                                 const {
                                     immediate = false,
                                     debounce = 0
@@ -281,13 +335,15 @@ export const ATOMIC_GLOBAL = minify(`
                                     ? window.${GLOBAL_UTIL_DEBOUNCE}(fn, debounce)
                                     : fn;
                                 (subs[path] ??= []).push(handler);
-                                if (immediate) handler(get(path));
+                                fn._last = get(path);
+                                if (immediate) handler(fn._last);
                             };
                             case "$set": return patch;
                             default: return store[key];
                         }
                     },
                     set(_, key, val) {
+                        if (store[key] === val) return true;
                         store[key] = val;
                         notify(String(key));
                         return true;

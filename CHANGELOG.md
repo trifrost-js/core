@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Improved
+- **perf**: Atomic Data Reactor watchers now track and compare the last known value to prevent redundant executions
+- **perf**: Atomic Data Reactor change notifications are now deduplicated per-path and scheduled per-frame using a global clock (`$tfc`)
+- **perf**: Atomic Data Reactor `$set()` skips writes if values are unchanged, minimizing dirty work
+- **feat**: Each Atomic Data Reactor registers a `tick()` function with the global clock on creation, which is cleaned up on vm unmount
+
 ## [0.37.1] - 2025-06-23
 ### Improved
 - **dx**: Ensure `mode` and `data` in $dispatch 2nd argument are optional
