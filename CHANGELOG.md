@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.37.0] - 2025-06-23
 This release unveils **TriFrost Atomic Data Reactor**, a minimal yet powerful reactive data layer built for inline `<Script>` blocks. Designed to bring form state, interactivity, and SSR reactivity together, **without sacrificing type safety or control**.
 
 Gone are the days of setting up boilerplate state handlers, this new system lets you declaratively wire up your DOM to your logic, right at the point of use.
