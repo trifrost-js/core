@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.36.5] - 2025-06-23
+### Improved
+- **qol**: `ctx.redirect()` now defaults to `303 See Other` instead of `307`. This aligns with [RFC 7231](https://www.rfc-editor.org/rfc/rfc7231) and ensures correct behavior for POST-to-GET transitions in redirect flows.
+- **qol**: `ctx.redirect()` now only prepends the host if the to value is **not absolute**, **not root-relative** (`/`), and **not protocol-relative** (`//`). This avoids accidental double-prefixing and supports relative path routing more intuitively.
+- **qol**: Query strings are now appended safely when `keep_query` is enabled in `ctx.redirect()`, if the destination already contains a query (`?`), parameters are appended with `&`, otherwise `?` is used. This ensures consistent behavior for URL merging.
+- **qol**: Calling `ctx.status()` will now explicitly clear any existing response body to prevent accidental payload leakage in status-only responses.
+- **qol**: `ctx.file()` will now always include both `filename` and `filename*` in Content-Disposition for maximum client compatibility (per RFC 6266). In case ASCII-safe name is empty we fallback to `download`. See below (extreme) Example:
+```typescript
+await ctx.file('/utf', {download: '📄'});
+
+/* Expected Content-Disposition header */
+'Content-Disposition': 'attachment; filename="download"; filename*=UTF-8\'\'%EF%BF%BD%EF%BF%BD'
+```
+- **qol**: Improved encodeFileName behavior (used in `ctx.file()` when working with download option) preventing URIError from malformed `encodeURIComponent()` usage on high Unicode input by using safe byte-level encoding via `TextEncoder`.
+
 ## [0.36.4] - 2025-06-22
 ### Added
 - **feat**: Support for `jsxDEV()` in the JSX runtime, enabling compatibility with dev-mode JSX emit in **Bun** and **modern bundlers**. This ensures TriFrost works seamlessly when `jsx: react-jsx` is enabled, and eliminates the need for manual path shimming or env overrides. The `jsxDEV()` function internally aliases `jsx()`, discarding extra dev-only parameters (`_source`, `_self`, etc) for now.
