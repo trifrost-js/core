@@ -6,6 +6,7 @@
 [![CodeQL](https://github.com/trifrost-js/core/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/trifrost-js/core/actions/workflows/github-code-scanning/codeql)
 [![npm](https://img.shields.io/npm/v/@trifrost/core.svg)](https://www.npmjs.com/package/@trifrost/core)
 [![npm](https://img.shields.io/npm/dm/@trifrost/core.svg)](https://www.npmjs.com/package/@trifrost/core)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftrifrost-js%2Fcore.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftrifrost-js%2Fcore?ref=badge_shield)
 
 **TriFrost** is a blazing-fast, runtime-agnostic server framework built for the modern JavaScript ecosystem — from low-latency edge environments to traditional backend infrastructure.
 
@@ -88,3 +89,7 @@ Whether it's a bug fix, new module, test case, or doc improvement — PRs are ap
 
 ## 👤 Author
 Created and maintained by [Peter Vermeulen](https://github.com/peterver)
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftrifrost-js%2Fcore.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftrifrost-js%2Fcore?ref=badge_large)
