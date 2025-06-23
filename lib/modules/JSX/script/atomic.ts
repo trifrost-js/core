@@ -9,6 +9,8 @@ const GLOBAL_OBSERVER_NAME = '$tfo';
 const GLOBAL_RELAY_NAME = '$tfr';
 const GLOBAL_STORE_NAME = '$tfs';
 const GLOBAL_UTIL_DEBOUNCE = '$tfdebounce';
+const GLOBAL_UTIL_EQUAL = '$tfequal';
+const GLOBAL_UTIL_CLONE = '$tfclone';
 const GLOBAL_CLOCK = '$tfc';
 const GLOBAL_CLOCK_TICK = '$tfcr';
 export const GLOBAL_DATA_REACTOR_NAME = '$tfdr';
@@ -92,6 +94,11 @@ export type TriFrostAtomicProxy <T> = T & {
     $set: (key: DotPaths<T> | T, val?: any) => void;
 }
 
+/**
+ * Atomic Upgrades
+ * @idea Future: Add globally registered utils to future $ helpers (el, data, $), $ here should then have {equal,debounce,clone,...}
+ */
+
 export const ATOMIC_GLOBAL = minify(`
     if (!window.${GLOBAL_HYDRATED_NAME}) {
         if (!window.${GLOBAL_UTIL_DEBOUNCE}) {
@@ -102,6 +109,43 @@ export const ATOMIC_GLOBAL = minify(`
                     t = setTimeout(() => fn(...args), delay);
                 };
             };
+        }
+
+        if (!window.${GLOBAL_UTIL_EQUAL}) {
+            const equal = (a,b) => {
+                if (a === b) return!0;
+                switch (typeof a) {
+                    case "number":
+                        return Number.isNaN(a) && Number.isNaN(b);
+                    case "object":{
+                        if (!a || !b) return!1;
+                        if (Array.isArray(a)) return Array.isArray(b) && a.length === b.length && a.every((v,i)=>equal(v,b[i]));
+                        const pa = Object.prototype.toString.call(a);
+                        const pb = Object.prototype.toString.call(b);
+                        if (pa !== pb) return!1;
+                        switch (pa) {
+                            case "[object Date]": return a.valueOf()===b.valueOf();
+                            case "[object Object]": {
+                                const ka=Object.keys(a);
+                                const kb=Object.keys(b);
+                                if(ka.length !== kb.length) return!1;
+                                return ka.every(k=>equal(a[k],b[k]));
+                            }
+                            case "[object Error]": return a.name === b.name && a.message === b.message;
+                            case "[object RegExp]": return String(a) === String(b);
+                            default:
+                                return !1;
+                        }
+                    }
+                    default:
+                        return !1;
+                }
+            };
+            window.${GLOBAL_UTIL_EQUAL} = equal;
+        }
+
+        if (!window.${GLOBAL_UTIL_CLONE}) {
+            window.${GLOBAL_UTIL_CLONE} = v => (v === undefined || v === null || typeof v !== "object") ? v : structuredClone(v);
         }
 
         if (!window.${GLOBAL_RELAY_NAME}) {
@@ -232,9 +276,9 @@ export const ATOMIC_GLOBAL = minify(`
                         for (let i = 0; i < handlers.length; i++) {
                             try {
                                 const fn = handlers[i];
-                                if (fn._last !== val) {
+                                if (!window.${GLOBAL_UTIL_EQUAL}(fn._last, val)) {
                                     fn(val);
-                                    fn._last = val;
+                                    fn._last = window.${GLOBAL_UTIL_CLONE}(val);
                                 }
                             } catch {}
                         }
@@ -335,7 +379,7 @@ export const ATOMIC_GLOBAL = minify(`
                                     ? window.${GLOBAL_UTIL_DEBOUNCE}(fn, debounce)
                                     : fn;
                                 (subs[path] ??= []).push(handler);
-                                fn._last = get(path);
+                                fn._last = window.${GLOBAL_UTIL_CLONE}(get(path));
                                 if (immediate) handler(fn._last);
                             };
                             case "$set": return patch;
@@ -343,7 +387,7 @@ export const ATOMIC_GLOBAL = minify(`
                         }
                     },
                     set(_, key, val) {
-                        if (store[key] === val) return true;
+                        if (window.${GLOBAL_UTIL_EQUAL}(store[key], val)) return true;
                         store[key] = val;
                         notify(String(key));
                         return true;
