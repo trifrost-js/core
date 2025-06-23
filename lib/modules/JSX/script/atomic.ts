@@ -11,6 +11,7 @@ const GLOBAL_STORE_NAME = '$tfs';
 const GLOBAL_UTIL_DEBOUNCE = '$tfdebounce';
 const VM_NAME = '$tfVM';
 const VM_ID_NAME = '$uid';
+const VM_DISPATCH_NAME = '$dispatch';
 const VM_RELAY_SUBSCRIBE_NAME = '$subscribe';
 const VM_RELAY_UNSUBSCRIBE_NAME = '$unsubscribe';
 const VM_RELAY_PUBLISH_NAME = '$publish';
@@ -36,6 +37,8 @@ export type TriFrostAtomicVM <
     RelayKeys extends keyof Relay | StoreTopics<keyof Store & string> = keyof Relay | StoreTopics<keyof Store & string>
 > = {
     [VM_ID_NAME]: string;
+    /* VM Dispatch */
+    [VM_DISPATCH_NAME]: <T = unknown>(type: string, options?: {data: T, mode: 'up'|'down'}) => void;
     /* VM Relay */
     [VM_RELAY_SUBSCRIBE_NAME]<T extends RelayKeys>(
         topic: T,
@@ -149,8 +152,8 @@ export const ATOMIC_GLOBAL = minify(`
         }
 
         if (!window.__name) {
-            window.__name = (fn, name) => {
-                try {Object.defineProperty(fn, "name", {value: name});} catch {}
+            window.__name = (fn, n) => {
+                try {Object.defineProperty(fn, "name", {value: n});} catch {}
                 return fn;
             };
         }
@@ -169,7 +172,18 @@ export const ATOMIC_VM_BEFORE = minify(
             ${VM_RELAY_PUBLISH_NAME}:{value: (msg, data) => w.${GLOBAL_RELAY_NAME}.publish(msg, data), configurable: !1, writable: !1},
             ${VM_STORE_GET_NAME}:{value: w.${GLOBAL_STORE_NAME}.get, configurable: !1, writable: !1},
             ${VM_STORE_SET_NAME}:{value: w.${GLOBAL_STORE_NAME}.set, configurable: !1, writable: !1},
-            ${VM_NAME}:{get: () => !0, configurable:!1},
+            ${VM_DISPATCH_NAME}:{
+                value:(type,options)=>n.dispatchEvent(
+                    new CustomEvent(type,{
+                        detail: options?.data,
+                        bubbles:(options?.mode ?? "up") === "up",
+                        cancelable:!0
+                    })
+                ),
+                configurable:!1,
+                writable:!1
+            },
+            ${VM_NAME}:{get: () => !0, configurable:!1}
         });
     }`
 );
