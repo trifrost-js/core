@@ -1,6 +1,8 @@
 # TriFrost
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftrifrost-js%2Fcore.svg?type=shield&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftrifrost-js%2Fcore?ref=badge_shield&issueType=license)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftrifrost-js%2Fcore.svg?type=shield&issueType=security)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftrifrost-js%2Fcore?ref=badge_shield&issueType=security)
 [![CodeCov](https://codecov.io/gh/trifrost-js/core/graph/badge.svg?token=WGGKOQH7MB)](https://codecov.io/gh/trifrost-js/core)
 [![CI](https://github.com/trifrost-js/core/actions/workflows/ci.yml/badge.svg)](https://github.com/trifrost-js/core/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/trifrost-js/core/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/trifrost-js/core/actions/workflows/github-code-scanning/codeql)
