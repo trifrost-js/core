@@ -51,7 +51,7 @@ export type TriFrostAtomicVM <
 > = {
     [VM_ID_NAME]: string;
     /* VM Dispatch */
-    [VM_DISPATCH_NAME]: <T = unknown>(type: string, options?: {data: T, mode: 'up'|'down'}) => void;
+    [VM_DISPATCH_NAME]: <T = unknown>(type: string, options?: {data?: T, mode?: 'up'|'down'}) => void;
     /* VM Relay */
     [VM_RELAY_SUBSCRIBE_NAME]<T extends RelayKeys>(
         topic: T,
