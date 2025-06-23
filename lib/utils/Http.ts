@@ -1,3 +1,5 @@
+const enc = new TextEncoder();
+
 /* eslint-disable array-element-newline */
 export const TRANSLITERATOR: Record<string, string> = {
     /* German */
@@ -74,7 +76,13 @@ export function encodeFilename (val:string):{ascii:string; encoded:string} {
                     encoded += '%29';
                     break;
                 default:
-                    encoded += encodeURIComponent(char);
+                    try {
+                        encoded += encodeURIComponent(char);
+                    } catch {
+                        /* Fallback to using text encoder */
+                        const bytes = enc.encode(char);
+                        for (const byte of bytes) encoded += '%' + byte.toString(16).toUpperCase().padStart(2, '0');
+                    }
                     break;
             }
         }

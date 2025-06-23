@@ -135,6 +135,14 @@ describe('Utils - Http', () => {
             const result = encodeFilename(input);
             expect(result.ascii).toBe('(c)(r)(tm)(sm)');
         });
+
+        it('Handles an issue in encoding correctly by falling back to text encoder', () => {
+            const result = encodeFilename('📄');
+            expect(result).toEqual({
+                ascii: '',
+                encoded: '%EF%BF%BD%EF%BF%BD',
+            });
+        });
     });
 
     describe('extractPartsFromUrl', () => {
