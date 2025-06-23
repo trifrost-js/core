@@ -15,23 +15,29 @@ Yes, it's reactive. Yes, it's typed. Yes, it just works.
 - **feature**: Introducing $tfdr (TriFrost Atomic Data Reactor), a lightweight reactive data proxy that enables local data binding and change tracking in `<Script>` blocks. Exposed as the data argument in `<Script data={...}>`.
 - **feature**: Native `$dispatch(type, detail?)` available on the script parent VM element. Enables bubbling `CustomEvent` dispatching from child elements to outer logic or listeners.
 
-### 🔍 What is it?
+### Improved
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250620.0
+- **deps**: Upgrade bun-types to 1.2.17
+
+---
+
+### What is it?
 Enables **declarative form binding** and **local state reactivity** with full **SSR compatibility**. 
 
-### 🧠 Features
+### Features
 - **Typed API based on your data shape**, eg: `data.user.name` is type-safe, and so are `data.$bind('user.name', ...)`, `data.$set(...)`, etc.
 - `$bind(path, selector)`: Binds one or multiple form inputs to a data path. **Take Note:** the selector here is **run against the script parent, not the document**.
 - `$watch(path, fn, immediate?)`: Watches a specific path for changes, optionally firing immediately.
 - `$set(path | object)`: Updates part or whole of the reactive state tree and notifies bound elements.
 - `$dispatch(type, detail?)`: Dispatches a native bubbling `CustomEvent` from the root script element — useful for parent VMs or outside components to listen and respond.
 
-### ✅ Behavior
+### Behavior
 - Initial state in `data={...}` is automatically cloned and reactive.
 - If form inputs already exist in the DOM, `$bind()` uses data values as source of truth.
 - Supports checkboxes (single/group), radios, `<select multiple>`, and plain inputs out of the box.
 - Emits updates on input and change events as appropriate.
 
-### 🧪 Examples
+### Examples
 ##### Basic Form Binding
 ```tsx
 <form>
