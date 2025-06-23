@@ -79,6 +79,129 @@ describe('Context', () => {
         ctx = new TestContext(mockLogger as any, baseConfig as any, baseRequest);
     });
 
+    describe('Constructor', () => {
+        it('Uses requestId from headers when present and valid', () => {
+            const ctxWithId = new TestContext(mockLogger as any, {
+                ...baseConfig,
+                /* @ts-ignore */
+                requestId: {
+                    inbound: ['x-request-id'],
+                },
+            }, {
+                ...baseRequest,
+                headers: {
+                    ...baseRequest.headers,
+                    'x-request-id': 'abc-123',
+                },
+            });
+
+            expect(ctxWithId.requestId).toBe('abc-123');
+        });
+
+        it('Skips invalid requestId when validator fails', () => {
+            const validator = (val: string) => val.startsWith('valid-');
+
+            const ctxInvalid = new TestContext(mockLogger as any, {
+                ...baseConfig,
+                /* @ts-ignore */
+                requestId: {
+                    inbound: ['x-request-id'],
+                    validate: validator,
+                },
+            }, {
+                ...baseRequest,
+                headers: {
+                    ...baseRequest.headers,
+                    'x-request-id': 'bad-id',
+                },
+            });
+
+            // Should fall back to hexId (not 'bad-id')
+            expect(ctxInvalid.requestId).not.toBe('bad-id');
+            expect(ctxInvalid.requestId).toMatch(/^[a-f0-9]{32}$/);
+        });
+
+        it('Accepts requestId from headers if validator passes', () => {
+            const validator = (val: string) => val.startsWith('valid-');
+
+            const ctxValid = new TestContext(mockLogger as any, {
+                ...baseConfig,
+                /* @ts-ignore */
+                requestId: {
+                    inbound: ['x-request-id'],
+                    validate: validator,
+                },
+            }, {
+                ...baseRequest,
+                headers: {
+                    ...baseRequest.headers,
+                    'x-request-id': 'valid-42',
+                },
+            });
+
+            expect(ctxValid.requestId).toBe('valid-42');
+        });
+
+        it('Falls back to hexId if no requestId header present', () => {
+            const ctxFallback = new TestContext(mockLogger as any, {
+                ...baseConfig,
+                /* @ts-ignore */
+                requestId: {
+                    inbound: ['x-request-id'],
+                },
+            }, {
+                ...baseRequest,
+                headers: {}, // no headers
+            });
+
+            expect(ctxFallback.requestId).toMatch(/^[a-f0-9]{32}$/);
+        });
+
+        it('Spawns logger with correct traceId and env', () => {
+            const loggerSpy = vi.fn().mockReturnValue({
+                traceId: 'trace-me',
+                setAttributes: vi.fn(),
+                span: vi.fn((_, fn) => fn()),
+                error: vi.fn(),
+                debug: vi.fn(),
+            });
+
+            const req = {
+                ...baseRequest,
+                headers: {
+                    'x-trace-id': 'trace-me',
+                },
+            };
+
+            const ctxFresh = new TestContext({spawn: loggerSpy} as any, {
+                ...baseConfig,
+                env: {stage: 'test'},
+                /* @ts-ignore */
+                requestId: {
+                    inbound: ['x-trace-id'],
+                },
+            }, req);
+
+            expect(loggerSpy).toHaveBeenCalledWith({
+                traceId: 'trace-me',
+                env: {stage: 'test'},
+            });
+
+            expect(ctxFresh.requestId).toBe('trace-me');
+            expect(ctxFresh.logger.traceId).toBe('trace-me');
+        });
+
+        it('Stores provided config and request config correctly', () => {
+            const ctxFresh = new TestContext(mockLogger as any, baseConfig as any, baseRequest);
+
+            /* @ts-ignore */
+            expect(ctxFresh.ctx_config).toBe(baseConfig);
+
+            /* @ts-ignore */
+            expect(ctxFresh.req_config).toBe(baseRequest);
+        });
+    });
+
     describe('State management', () => {
         it('Sets state correctly', () => {
             ctx.setState({foo: 'bar'});
@@ -104,6 +227,13 @@ describe('Context', () => {
             ctx.setHeaders({'X-A': 'a', 'X-B': 'b'});
             /* @ts-ignore */
             expect(ctx.res_headers).toEqual({'X-A': 'a', 'X-B': 'b'});
+        });
+
+        it('Overwrites header when set multiple times', () => {
+            ctx.setHeader('X-Foo', '1');
+            ctx.setHeader('X-Foo', '2');
+            /* @ts-ignore */
+            expect(ctx.res_headers['X-Foo']).toBe('2');
         });
 
         it('Deletes a header', () => {
@@ -136,6 +266,12 @@ describe('Context', () => {
             expect(ctx.isDone).toBe(true);
         });
 
+        it('Calling end() multiple times is safe', () => {
+            ctx.end();
+            expect(() => ctx.end()).not.toThrow();
+            expect(ctx.isDone).toBe(true);
+        });
+
         it('Aborts context', () => {
             ctx.abort(503);
             expect(ctx.isAborted).toBe(true);
@@ -156,6 +292,48 @@ describe('Context', () => {
             ctx.clearTimeout();
             expect(ctx.timeout).toBe(null);
         });
+
+        it('Logs error on invalid timeout value', () => {
+            const spy = vi.spyOn(ctx.logger, 'error');
+            ctx.setTimeout(-5);
+            expect(spy).toHaveBeenCalledWith(
+                'Context@setTimeout: Expects a value above 0 or null',
+                {val: -5}
+            );
+        });
+
+        it('Aborts with 408 if timeout triggers and context not locked', async () => {
+            vi.useFakeTimers();
+            ctx.logger.error = vi.fn();
+
+            ctx.setTimeout(10);
+            vi.advanceTimersByTime(10);
+
+            expect(ctx.statusCode).toBe(408);
+            expect(ctx.logger.error).toHaveBeenCalledWith('Request timed out');
+            vi.useRealTimers();
+        });
+
+        it('Skips timeout abort if context is already locked', () => {
+            vi.useFakeTimers();
+            ctx.logger.error = vi.fn();
+
+            ctx.setTimeout(50);
+            ctx.end();
+
+            vi.advanceTimersByTime(50);
+
+            expect(ctx.logger.error).not.toHaveBeenCalledWith('Request timed out');
+            expect(ctx.statusCode).toBe(200);
+            vi.useRealTimers();
+        });
+
+        it('Clears timeout when setTimeout(null) is called', () => {
+            ctx.setTimeout(100);
+            expect(ctx.timeout).toBe(100);
+            ctx.setTimeout(null);
+            expect(ctx.timeout).toBe(null);
+        });
     });
 
     describe('After hooks', () => {
@@ -165,6 +343,21 @@ describe('Context', () => {
             ctx.runAfter();
             expect(spy).toHaveBeenCalled();
             expect(ctx.afterHooks).toEqual([spy]);
+        });
+
+        it('Runs async after hooks sequentially', async () => {
+            const calls: string[] = [];
+            ctx.addAfter(async () => {
+                await new Promise(res => setTimeout(res, 10));
+                calls.push('one');
+            });
+            ctx.addAfter(async () => {
+                await new Promise(res => setTimeout(res, 10));
+                calls.push('two');
+            });
+
+            await Promise.all(ctx.afterHooks.map(fn => fn()));
+            expect(calls).toEqual(['one', 'two']);
         });
 
         it('Does not add an after hook if not a function', () => {
@@ -320,6 +513,18 @@ describe('Context', () => {
 
             /* @ts-ignore */
             expect(TestContext.prototype.getIP).not.toHaveBeenCalled();
+        });
+
+        it('Falls back to getIP() and nullifies invalid format', () => {
+            const ctx2 = new TestContext(mockLogger as any, baseConfig as any, {
+                ...baseRequest,
+                headers: {},
+            });
+
+            vi.spyOn(ctx2 as any, 'getIP').mockReturnValue('not-an-ip');
+
+            const result = ctx2.ip;
+            expect(result).toBe(null);
         });
     });
 
@@ -486,6 +691,12 @@ describe('Context', () => {
             expect(ctx.nonce).toBe(expected);
         });
 
+        it('Encodes requestId as base64 fallback nonce', () => {
+            ctx.setState({});
+            const nonce = ctx.nonce;
+            expect(() => atob(nonce)).not.toThrow();
+        });
+
         it('Caches fallback nonce after computing', () => {
             ctx.setState({});
             const nonce1 = ctx.nonce;
@@ -512,6 +723,28 @@ describe('Context', () => {
                 headers: {},
             });
             expect(ctx3.host).toBe(null);
+        });
+    });
+
+    describe('body', () => {
+        it('Returns empty object if body was not parsed', () => {
+            expect(ctx.body).toEqual({});
+        });
+
+        it('Returns body if body was parsed', async () => {
+            const parsed = {foo: 'bar'};
+            const postCtx = new TestContext(mockLogger as any, baseConfig as any, {
+                ...baseRequest,
+                method: HttpMethods.POST,
+            });
+
+            await postCtx.init({
+                /* @ts-ignore */
+                route: {name: 'test', kind: 'std', bodyParser: null},
+                params: {},
+            }, async () => parsed);
+
+            expect(postCtx.body).toEqual(parsed);
         });
     });
 
@@ -655,7 +888,7 @@ describe('Context', () => {
             }));
         });
 
-        it('Injects requestId into outbound headers if configured', async () => {
+        it('Injects logger trace id into outbound headers if configured', async () => {
             const configWithOutbound = {
                 ...baseConfig,
                 requestId: {
@@ -672,7 +905,7 @@ describe('Context', () => {
             const [url, init] = (globalThis.fetch as any).mock.calls[0];
 
             expect(url).toBe('https://test.io/data');
-            expect((init.headers as Headers).get('x-request-id')).toBe(ctx2.requestId);
+            expect((init.headers as Headers).get('x-request-id')).toBe(ctx2.logger.traceId);
             expect(res.status).toBe(201);
         });
 
@@ -944,7 +1177,9 @@ describe('Context', () => {
             ctx.redirect('https://example.com');
             /* @ts-ignore */
             expect(ctx.res_headers.Location).toBe('https://example.com');
-            expect(ctx.statusCode).toBe(307);
+            expect(ctx.statusCode).toBe(303);
+            /* @ts-ignore */
+            expect(ctx.res_body).toBe(null);
             expect(ctx.isDone).toBe(true);
         });
 
@@ -956,6 +1191,10 @@ describe('Context', () => {
             withQuery.redirect('/next');
             /* @ts-ignore */
             expect(withQuery.res_headers.Location).toContain('?a=1');
+            expect(withQuery.statusCode).toBe(303);
+            /* @ts-ignore */
+            expect(withQuery.res_body).toBe(null);
+            expect(withQuery.isDone).toBe(true);
         });
 
         it('Redirects with custom status and without query', () => {
@@ -967,21 +1206,113 @@ describe('Context', () => {
             /* @ts-ignore */
             expect(clean.res_headers.Location).not.toContain('q=123');
             expect(clean.statusCode).toBe(301);
+            /* @ts-ignore */
+            expect(clean.res_body).toBe(null);
+            expect(clean.isDone).toBe(true);
         });
 
-        it('Upgrades http:// host to https:// correctly', () => {
+        it('Preserves "/"-prefixed paths without adding host', () => {
+            const rel = new TestContext(mockLogger as any, baseConfig as any, baseRequest);
+            rel.redirect('/dashboard');
             /* @ts-ignore */
-            const httpHostCtx = new TestContext(mockLogger as any, {
+            expect(rel.res_headers.Location).toBe('/dashboard');
+            expect(rel.statusCode).toBe(303);
+            /* @ts-ignore */
+            expect(rel.res_body).toBe(null);
+            expect(rel.isDone).toBe(true);
+        });
+
+        it('Appends query to URLs that already contain one', () => {
+            const withQuery = new TestContext(mockLogger as any, baseConfig as any, {
+                ...baseRequest,
+                query: 'b=2',
+            });
+
+            withQuery.redirect('/next?page=1');
+            /* @ts-ignore */
+            expect(withQuery.res_headers.Location).toBe('/next?page=1&b=2');
+            expect(withQuery.statusCode).toBe(303);
+            /* @ts-ignore */
+            expect(withQuery.res_body).toBe(null);
+            expect(withQuery.isDone).toBe(true);
+        });
+
+        it('Respects protocol-relative URLs and skips prefixing', () => {
+            ctx.redirect('//cdn.example.com/image.jpg');
+            /* @ts-ignore */
+            expect(ctx.res_headers.Location).toBe('//cdn.example.com/image.jpg');
+            expect(ctx.statusCode).toBe(303);
+            /* @ts-ignore */
+            expect(ctx.res_body).toBe(null);
+            expect(ctx.isDone).toBe(true);
+        });
+
+        it('Prefixes host for non-slash-prefixed relative paths', () => {
+            /* @ts-ignore */
+            const rel = new TestContext(mockLogger as any, {
                 ...baseConfig,
-                host: 'http://plain.example',
+                host: 'example.org',
             }, {
                 ...baseRequest,
                 headers: {},
             });
 
-            httpHostCtx.redirect('/secure');
-            // @ts-ignore
-            expect(httpHostCtx.res_headers.Location).toBe('https://plain.example/secure');
+            rel.redirect('dashboard');
+            /* @ts-ignore */
+            expect(rel.res_headers.Location).toBe('https://example.org/dashboard');
+            expect(rel.statusCode).toBe(303);
+            /* @ts-ignore */
+            expect(rel.res_body).toBe(null);
+            expect(rel.isDone).toBe(true);
+        });
+
+        it('Upgrades http:// host to https:// if needed', () => {
+            /* @ts-ignore */
+            const rel = new TestContext(mockLogger as any, {
+                ...baseConfig,
+                host: 'http://plain.org',
+            }, {
+                ...baseRequest,
+                headers: {},
+            });
+
+            rel.redirect('secure', {status: 307});
+            /* @ts-ignore */
+            expect(rel.res_headers.Location).toBe('https://plain.org/secure');
+            expect(rel.statusCode).toBe(307);
+            /* @ts-ignore */
+            expect(rel.res_body).toBe(null);
+            expect(rel.isDone).toBe(true);
+        });
+
+        it('Redirects using host that already starts with https://', () => {
+            const ctxWithHttpsHost = new TestContext(mockLogger as any, {
+                ...baseConfig,
+                host: 'https://example.com',
+            } as any, {
+                ...baseRequest,
+                headers: {},
+                query: '',
+            });
+
+            ctxWithHttpsHost.redirect('dashboard');
+            /* @ts-ignore */
+            expect(ctxWithHttpsHost.res_headers.Location).toBe('https://example.com/dashboard');
+        });
+
+        it('Redirects using host that starts with http:// (normalizes to https)', () => {
+            const ctxWithHttpHost = new TestContext(mockLogger as any, {
+                ...baseConfig,
+                host: 'http://example.com',
+            } as any, {
+                ...baseRequest,
+                headers: {},
+                query: '',
+            });
+
+            ctxWithHttpHost.redirect('foo');
+            /* @ts-ignore */
+            expect(ctxWithHttpHost.res_headers.Location).toBe('https://example.com/foo');
         });
 
         it('Throws if payload is invalid', () => {
@@ -1000,28 +1331,30 @@ describe('Context', () => {
             );
         });
 
-        it('Throws if host is missing and URL is relative', () => {
-            const noHost = new TestContext(mockLogger as any, {
-                ...baseConfig,
-                /* @ts-ignore */
-                host: undefined,
-            }, {
-                ...baseRequest,
-                headers: {},
-            });
-            noHost.redirect('/fail');
-            expect(ctx.logger.error).toHaveBeenCalledWith(
-                new Error('Context@redirect: Not able to determine host for redirect'),
-                {to: '/fail', opts: undefined}
-            );
-        });
-
         it('Throws if already ended', () => {
             ctx.end();
             ctx.redirect('/fail');
             expect(ctx.logger.error).toHaveBeenCalledWith(
                 new Error('Context@redirect: Cannot modify a finalized response'),
                 {to: '/fail', opts: undefined}
+            );
+        });
+
+        it('Throws if host is missing and redirect path requires prefixing', () => {
+            const noHostCtx = new TestContext(mockLogger as any, {
+                ...baseConfig,
+                /* @ts-ignore */
+                host: undefined, /* explicitly no host in config */
+            }, {
+                ...baseRequest,
+                headers: {}, /* and no host in headers */
+            });
+
+            noHostCtx.redirect('dashboard');
+
+            expect(noHostCtx.logger.error).toHaveBeenCalledWith(
+                new Error('Context@redirect: Unable to determine host'),
+                {to: 'dashboard', opts: undefined}
             );
         });
     });
@@ -1031,18 +1364,27 @@ describe('Context', () => {
             ctx.status(204);
             expect(ctx.statusCode).toBe(204);
             expect(ctx.isDone).toBe(true);
+            /* @ts-ignore */
+            expect(ctx.res_body).toBe(null);
         });
 
         it('Overwrites previously set status code', () => {
             ctx.setStatus(200);
             ctx.status(404);
             expect(ctx.statusCode).toBe(404);
+            expect(ctx.isDone).toBe(true);
+            /* @ts-ignore */
+            expect(ctx.res_body).toBe(null);
         });
 
         it('Does not update otel.status_code if same as start (200)', () => {
             ctx.logger.setAttributes = vi.fn();
             ctx.status(200);
             expect(ctx.logger.setAttributes).not.toHaveBeenCalled();
+            expect(ctx.statusCode).toBe(200);
+            /* @ts-ignore */
+            expect(ctx.res_body).toBe(null);
+            expect(ctx.isDone).toBe(true);
         });
 
         it('Updates otel.status_code based on range (201)', () => {
@@ -1052,6 +1394,10 @@ describe('Context', () => {
                 'http.status_code': 201,
                 'otel.status_code': 'OK',
             });
+            expect(ctx.statusCode).toBe(201);
+            /* @ts-ignore */
+            expect(ctx.res_body).toBe(null);
+            expect(ctx.isDone).toBe(true);
         });
 
         it('Updates otel.status_code based on range (404)', () => {
@@ -1061,6 +1407,10 @@ describe('Context', () => {
                 'http.status_code': 404,
                 'otel.status_code': 'OK',
             });
+            expect(ctx.statusCode).toBe(404);
+            /* @ts-ignore */
+            expect(ctx.res_body).toBe(null);
+            expect(ctx.isDone).toBe(true);
         });
 
         it('Updates otel.status_code based on range (500)', () => {
@@ -1070,12 +1420,27 @@ describe('Context', () => {
                 'http.status_code': 500,
                 'otel.status_code': 'ERROR',
             });
+            expect(ctx.statusCode).toBe(500);
+            /* @ts-ignore */
+            expect(ctx.res_body).toBe(null);
+            expect(ctx.isDone).toBe(true);
         });
 
         it('Does not set a response body', () => {
             ctx.status(204);
+            expect(ctx.statusCode).toBe(204);
             /* @ts-ignore */
             expect(ctx.res_body).toBe(null);
+            expect(ctx.isDone).toBe(true);
+        });
+
+        it('Clears a set response body', () => {
+            ctx.setBody('Howdie');
+            ctx.status(204);
+            expect(ctx.statusCode).toBe(204);
+            /* @ts-ignore */
+            expect(ctx.res_body).toBe(null);
+            expect(ctx.isDone).toBe(true);
         });
 
         it('Throws if called after end()', () => {
@@ -1102,6 +1467,180 @@ describe('Context', () => {
                 new Error('Context@setStatus: Invalid status code 999'),
                 {status: 999}
             );
+        });
+    });
+
+    describe('file()', () => {
+        let streamSpy: any;
+        let getStreamMock: any;
+
+        beforeEach(() => {
+            streamSpy = vi.fn();
+            getStreamMock = vi.fn();
+
+            ctx.stream = streamSpy;
+            ctx.getStream = getStreamMock;
+        });
+
+        it('Throws if path is not a string', async () => {
+            await ctx.file(123 as any);
+            expect(ctx.logger.error).toHaveBeenCalledWith(
+                new Error('Context@file: Invalid Payload'),
+                {file: 123, opts: undefined}
+            );
+        });
+
+        it('Skips if context is locked', async () => {
+            ctx.end();
+            await ctx.file('/some/file.txt');
+            expect(ctx.logger.error).toHaveBeenCalledWith(
+                new Error('Context@file: Cannot modify a finalized response'),
+                {file: '/some/file.txt', opts: undefined}
+            );
+        });
+
+        it('Applies cache control headers when passed', async () => {
+            getStreamMock.mockResolvedValue({stream: 'x', size: 100});
+            await ctx.file('/a.png', {
+                cacheControl: {type: 'private', maxage: 123},
+            });
+
+            /* @ts-ignore */
+            expect(ctx.res_headers['Cache-Control']).toBe('private, max-age=123');
+        });
+
+        it('Infers Content-Type from extension if not already set', async () => {
+            getStreamMock.mockResolvedValue({stream: 'x', size: 100});
+            await ctx.file('/cool.json');
+            /* @ts-ignore */
+            expect(ctx.res_headers['Content-Type']).toBe('application/json');
+        });
+
+        it('Skips mime detection if Content-Type already exists', async () => {
+            getStreamMock.mockResolvedValue({stream: 'x', size: 100});
+            ctx.setHeader('Content-Type', 'custom/type');
+            await ctx.file('/anything.unknown');
+            /* @ts-ignore */
+            expect(ctx.res_headers['Content-Type']).toBe('custom/type');
+        });
+
+        it('Applies Content-Disposition for download=true', async () => {
+            getStreamMock.mockResolvedValue({stream: 'x', size: 100});
+            await ctx.file('/data.zip', {download: true});
+            /* @ts-ignore */
+            expect(ctx.res_headers['Content-Disposition']).toBe('attachment');
+        });
+
+        it('Applies Content-Disposition for download=filename', async () => {
+            getStreamMock.mockResolvedValue({stream: 'x', size: 100});
+            await ctx.file('/data.zip', {download: 'résumé.pdf'});
+            /* @ts-ignore */
+            expect(ctx.res_headers['Content-Disposition']).toMatch(/filename/i);
+            /* @ts-ignore */
+            expect(ctx.res_headers['Content-Disposition']).toContain('UTF-8');
+        });
+
+        it('Skips Content-Disposition if download option not passed', async () => {
+            getStreamMock.mockResolvedValue({stream: 'x', size: 1});
+            await ctx.file('/no-disposition.pdf');
+            /* @ts-ignore */
+            expect(ctx.res_headers['Content-Disposition']).toBeUndefined();
+        });
+
+        it('Sets Content-Disposition to "attachment" when download is true', async () => {
+            getStreamMock.mockResolvedValue({stream: 'x', size: 1});
+            await ctx.file('/yes.txt', {download: true});
+            /* @ts-ignore */
+            expect(ctx.res_headers['Content-Disposition']).toBe('attachment');
+        });
+
+        it('Handles download with ASCII-only filename', async () => {
+            getStreamMock.mockResolvedValue({stream: 'x', size: 1});
+            await ctx.file('/file.zip', {download: 'report.csv'});
+            /* @ts-ignore */
+            expect(ctx.res_headers['Content-Disposition']).toBe(
+                'attachment; filename="report.csv"; filename*=UTF-8\'\'report.csv'
+            );
+        });
+
+        it('Handles download with UTF-8 filename needing encoding', async () => {
+            getStreamMock.mockResolvedValue({stream: 'x', size: 1});
+            await ctx.file('/résumé.zip', {download: 'rêsumé.zip'});
+            /* @ts-ignore */
+            const header = ctx.res_headers['Content-Disposition'];
+            expect(header).toContain('attachment;');
+            expect(header).toContain('filename*=');
+            expect(header).toMatch(/UTF-8''r%C3%AAsum%C3%A9\.zip/);
+        });
+
+        it('Handles download with filename that has only UTF-8 chars (no ASCII fallback)', async () => {
+            ctx = new TestContext(mockLogger as any, baseConfig as any, baseRequest);
+            ctx.getStream = vi.fn().mockResolvedValue({stream: 'x', size: 1});
+
+            await ctx.file('/utf', {download: '📄.pdf'});
+
+            /* @ts-ignore */
+            expect(ctx.res_headers).toEqual({
+                'Content-Disposition': 'attachment; filename=".pdf"; filename*=UTF-8\'\'%EF%BF%BD%EF%BF%BD.pdf',
+            });
+        });
+
+        it('Handles download with filename that has only UTF-8 chars (no ASCII fallback, part 2)', async () => {
+            ctx = new TestContext(mockLogger as any, baseConfig as any, baseRequest);
+            ctx.getStream = vi.fn().mockResolvedValue({stream: 'x', size: 1});
+
+            await ctx.file('/utf', {download: '📄'});
+
+            /* @ts-ignore */
+            expect(ctx.res_headers).toEqual({
+                'Content-Disposition': 'attachment; filename="download"; filename*=UTF-8\'\'%EF%BF%BD%EF%BF%BD',
+            });
+        });
+
+        it('Streams file if getStream() returns value', async () => {
+            const fakeStream = {stream: 'stream-data', size: 420};
+            getStreamMock.mockResolvedValue(fakeStream);
+            await ctx.file('/serve.txt');
+            expect(streamSpy).toHaveBeenCalledWith('stream-data', 420);
+        });
+
+        it('Returns 404 if getStream() returns null', async () => {
+            getStreamMock.mockResolvedValue(null);
+            const statusSpy = vi.spyOn(ctx, 'status');
+            await ctx.file('/not-found.txt');
+            expect(statusSpy).toHaveBeenCalledWith(404);
+        });
+
+        it('Catches and logs thrown errors', async () => {
+            const err = new Error('fail');
+            getStreamMock.mockRejectedValue(err);
+            await ctx.file('/crash.png', {});
+            expect(ctx.logger.error).toHaveBeenCalledWith(err, {
+                file: '/crash.png',
+                opts: {},
+            });
+        });
+    });
+
+    describe('render()', () => {
+        it('Passes the override config if provided', async () => {
+            const configOverride = {env: {}, cookies: {}, cache: null, trustProxy: false};
+            const jsx = {type: 'span', props: {children: 'Custom'}};
+            const spy = vi.spyOn(await import('../../lib/modules/JSX/render'), 'rootRender').mockReturnValue('<span>Custom</span>');
+
+            const result = ctx.render(jsx as any, configOverride as any);
+            expect(result).toBe('<span>Custom</span>');
+            expect(spy).toHaveBeenCalledWith(ctx, jsx, configOverride);
+
+            spy.mockRestore();
+        });
+
+        it('Returns result even when JSX is empty', async () => {
+            const jsx = {} as any;
+            const spy = vi.spyOn(await import('../../lib/modules/JSX/render'), 'rootRender').mockReturnValue('<!empty>');
+            const result = ctx.render(jsx);
+            expect(result).toBe('<!empty>');
+            spy.mockRestore();
         });
     });
 
