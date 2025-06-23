@@ -8,6 +8,7 @@ export const GLOBAL_HYDRATED_NAME = '$tfhydra';
 const GLOBAL_OBSERVER_NAME = '$tfo';
 const GLOBAL_RELAY_NAME = '$tfr';
 const GLOBAL_STORE_NAME = '$tfs';
+const GLOBAL_UTIL_DEBOUNCE = '$tfdebounce';
 const VM_NAME = '$tfVM';
 const VM_ID_NAME = '$uid';
 const VM_RELAY_SUBSCRIBE_NAME = '$subscribe';
@@ -69,6 +70,16 @@ export type TriFrostAtomicVM <
 
 export const ATOMIC_GLOBAL = minify(`
     if (!window.${GLOBAL_HYDRATED_NAME}) {
+        if (!window.${GLOBAL_UTIL_DEBOUNCE}) {
+            window.${GLOBAL_UTIL_DEBOUNCE} = (fn, delay) => {
+                let t;
+                return (...args) => {
+                    clearTimeout(t);
+                    t = setTimeout(() => fn(...args), delay);
+                };
+            };
+        }
+
         if (!window.${GLOBAL_RELAY_NAME}) {
             const topics = Object.create(null);
             Object.defineProperty(window, "${GLOBAL_RELAY_NAME}", {
