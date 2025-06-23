@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.37.1] - 2025-06-23
+### Improved
+- **dx**: Ensure `mode` and `data` in $dispatch 2nd argument are optional
+- **sys**: Add [FOSSA](https://fossa.com/) license badge to readme
+- **sys**: Add [FOSSA](https://fossa.com/) security badge to readme
+
 ## [0.37.0] - 2025-06-23
 This release unveils **TriFrost Atomic Data Reactor**, a minimal yet powerful reactive data layer built for inline `<Script>` blocks. Designed to bring form state, interactivity, and SSR reactivity together, **without sacrificing type safety or control**.
 
@@ -22,7 +28,7 @@ Yes, it's reactive. Yes, it's typed. Yes, it just works.
 ---
 
 ### What is it?
-Enables **declarative form binding** and **local state reactivity** with full **SSR compatibility**. 
+Enables **declarative form binding** and **local state reactivity** with full **SSR compatibility**.
 
 ### Features
 - **Typed API based on your data shape**, eg: `data.user.name` is type-safe, and so are `data.$bind('user.name', ...)`, `data.$set(...)`, etc.
@@ -59,7 +65,7 @@ Enables **declarative form binding** and **local state reactivity** with full **
   <Script data={{ count: 0 }}>
     {(el, data) => {
       data.$bind('count', 'input[name="counter"]');
-      
+
       /* Do stuff when count is updated */
       data.$watch('count', val => console.log('Updated count:', val));
 
