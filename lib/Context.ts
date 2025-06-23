@@ -120,6 +120,9 @@ export abstract class Context <
     /* TriFrost Request */
     protected req_config:Readonly<RequestConfig>;
 
+    /* TriFrost Request Id (take note: this CAN be different from the traceId used in logger, this is the inbound request id) */
+    protected req_id:string|null = null;
+
     /* TriFrost Request body */
     protected req_body:Readonly<ParsedBody>|null = null;
 
@@ -157,22 +160,21 @@ export abstract class Context <
         this.req_config = req;
 
         /* Determine request id for logger */
-        let rid:string|null = null;
         const ridConfig = cfg.requestId;
         if (ridConfig) {
             for (let i = 0; i < ridConfig.inbound.length; i++) {
                 const val = req.headers[ridConfig.inbound[i]];
                 if (typeof val === 'string' && (!ridConfig.validate || ridConfig.validate(val))) {
-                    rid = val;
+                    this.req_id = val;
                     break;
                 }
             }
         }
-        if (!rid) rid = hexId(16);
+        if (!this.req_id) this.req_id = hexId(16);
 
         /* Instantiate logger */
         this.#logger = logger.spawn({
-            traceId: rid,
+            traceId: this.req_id,
             env: cfg.env,
         });
     }
@@ -273,7 +275,7 @@ export abstract class Context <
      * Request ID
      */
     get requestId (): string {
-        return this.#logger.traceId as string;
+        return this.req_id as string;
     }
 
     /**
@@ -568,7 +570,7 @@ export abstract class Context <
             /* Inject trace ID into headers */
             if (this.ctx_config.requestId?.outbound) {
                 const headers = new Headers(init.headers || {});
-                headers.set(this.ctx_config.requestId.outbound, this.requestId);
+                headers.set(this.ctx_config.requestId.outbound, this.#logger.traceId as string);
                 init.headers = headers;
             }
 
