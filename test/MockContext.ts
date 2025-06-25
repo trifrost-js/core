@@ -165,9 +165,9 @@ export class MockContext<
 
     runAfter: () => void;
 
-    json = (_body?: Record<string, unknown>|unknown[], _opts?:TriFrostContextResponseOptions): void => {};
-    html = (_body?: string|any, _opts?:TriFrostContextResponseOptions): void => {};
-    text = (_body: string, _opts?:TriFrostContextResponseOptions): void => {};
-    redirect = (_to: string, _opts?:TriFrostContextRedirectOptions): void => {};
-    file = async (_path: string, _opts?:TriFrostContextFileOptions): Promise<void> => {};
+    json = (_body?:Record<string, unknown>|unknown[], _opts?:TriFrostContextResponseOptions):void => {};
+    html = (_body?:string|any, _opts?:TriFrostContextResponseOptions):void => {};
+    text = (_body:string, _opts?:TriFrostContextResponseOptions):void => {};
+    redirect = (_to:string, _opts?:TriFrostContextRedirectOptions):void => {};
+    file = async (_path:string|{stream:unknown; size?:number|null; name:string}, _opts?:TriFrostContextFileOptions):Promise<void> => {};
 }

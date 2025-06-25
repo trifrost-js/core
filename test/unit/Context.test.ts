@@ -27,8 +27,8 @@ class TestContext extends Context {
         return {stream: new ReadableStream(), size: 123};
     }
 
-    stream (stream: unknown, size: number | null): void {
-      /* stub */
+    public stream (stream: unknown, size: number | null): void {
+        super.stream(stream, size);
     }
 
     runAfter (): void {
@@ -1027,6 +1027,12 @@ describe('Context', () => {
             expect(ctx.res_headers['Cache-Control']).toBeUndefined();
         });
 
+        it('Preserves previously set status', () => {
+            ctx.setStatus(201);
+            ctx.json({msg: 'ok'});
+            expect(ctx.statusCode).toBe(201);
+        });
+
         it('Throws on invalid body type', () => {
             for (const el of [...CONSTANTS.NOT_OBJECT, ...CONSTANTS.NOT_ARRAY]) {
                 if (el === undefined || Object.prototype.toString.call(el) === '[object Object]' || Array.isArray(el)) continue;
@@ -1089,6 +1095,12 @@ describe('Context', () => {
             ctx.text('no headers here');
             /* @ts-ignore */
             expect(ctx.res_headers['Cache-Control']).toBeUndefined();
+        });
+
+        it('Preserves previously set status', () => {
+            ctx.setStatus(202);
+            ctx.text('accepted');
+            expect(ctx.statusCode).toBe(202);
         });
 
         it('Throws on non-string payload', () => {
@@ -1160,6 +1172,18 @@ describe('Context', () => {
             ctx.html('<em>Simple</em>');
             /* @ts-ignore */
             expect(ctx.res_headers['Cache-Control']).toBeUndefined();
+        });
+
+        it('Adds doctype if HTML starts with <html', () => {
+            ctx.html('<html><head></head><body></body></html>');
+            /* @ts-ignore */
+            expect(ctx.res_body).toBe('<!DOCTYPE html><html><head></head><body></body></html>');
+        });
+
+        it('Preserves previously set status', () => {
+            ctx.setStatus(418);
+            ctx.html('<html><body></body></html>');
+            expect(ctx.statusCode).toBe(418);
         });
 
         it('Throws if context is locked', () => {
@@ -1486,7 +1510,7 @@ describe('Context', () => {
             await ctx.file(123 as any);
             expect(ctx.logger.error).toHaveBeenCalledWith(
                 new Error('Context@file: Invalid Payload'),
-                {file: 123, opts: undefined}
+                {input: 123, opts: undefined}
             );
         });
 
@@ -1495,7 +1519,7 @@ describe('Context', () => {
             await ctx.file('/some/file.txt');
             expect(ctx.logger.error).toHaveBeenCalledWith(
                 new Error('Context@file: Cannot modify a finalized response'),
-                {file: '/some/file.txt', opts: undefined}
+                {input: '/some/file.txt', opts: undefined}
             );
         });
 
@@ -1528,7 +1552,7 @@ describe('Context', () => {
             getStreamMock.mockResolvedValue({stream: 'x', size: 100});
             await ctx.file('/data.zip', {download: true});
             /* @ts-ignore */
-            expect(ctx.res_headers['Content-Disposition']).toBe('attachment');
+            expect(ctx.res_headers['Content-Disposition']).toBe('attachment; filename="data.zip"; filename*=UTF-8\'\'data.zip');
         });
 
         it('Applies Content-Disposition for download=filename', async () => {
@@ -1547,11 +1571,11 @@ describe('Context', () => {
             expect(ctx.res_headers['Content-Disposition']).toBeUndefined();
         });
 
-        it('Sets Content-Disposition to "attachment" when download is true', async () => {
+        it('Sets Content-Disposition correctly when download is true', async () => {
             getStreamMock.mockResolvedValue({stream: 'x', size: 1});
             await ctx.file('/yes.txt', {download: true});
             /* @ts-ignore */
-            expect(ctx.res_headers['Content-Disposition']).toBe('attachment');
+            expect(ctx.res_headers['Content-Disposition']).toBe('attachment; filename="yes.txt"; filename*=UTF-8\'\'yes.txt');
         });
 
         it('Handles download with ASCII-only filename', async () => {
@@ -1582,6 +1606,7 @@ describe('Context', () => {
             /* @ts-ignore */
             expect(ctx.res_headers).toEqual({
                 'Content-Disposition': 'attachment; filename=".pdf"; filename*=UTF-8\'\'%EF%BF%BD%EF%BF%BD.pdf',
+                'Content-Length': '1',
             });
         });
 
@@ -1594,6 +1619,7 @@ describe('Context', () => {
             /* @ts-ignore */
             expect(ctx.res_headers).toEqual({
                 'Content-Disposition': 'attachment; filename="download"; filename*=UTF-8\'\'%EF%BF%BD%EF%BF%BD',
+                'Content-Length': '1',
             });
         });
 
@@ -1602,6 +1628,16 @@ describe('Context', () => {
             getStreamMock.mockResolvedValue(fakeStream);
             await ctx.file('/serve.txt');
             expect(streamSpy).toHaveBeenCalledWith('stream-data', 420);
+        });
+
+        it('Skips setting Content-Type if already set', async () => {
+            ctx.setHeader('Content-Type', 'application/custom');
+            ctx.getStream = vi.fn().mockResolvedValue({stream: 'x', size: 1});
+            await ctx.file('/file.png');
+            /* @ts-ignore */
+            expect(ctx.res_headers).toEqual({
+                'Content-Type': 'application/custom',
+            });
         });
 
         it('Returns 404 if getStream() returns null', async () => {
@@ -1616,9 +1652,116 @@ describe('Context', () => {
             getStreamMock.mockRejectedValue(err);
             await ctx.file('/crash.png', {});
             expect(ctx.logger.error).toHaveBeenCalledWith(err, {
-                file: '/crash.png',
+                input: '/crash.png',
                 opts: {},
             });
+        });
+
+        describe('custom stream input', () => {
+            it('Streams from a valid stream object with name', async () => {
+                const stream = {pipe: vi.fn()};
+                ctx.stream = vi.fn();
+                await ctx.file({stream, name: 'custom.txt'});
+                expect(ctx.stream).toHaveBeenCalledWith(stream, null);
+            });
+
+            it('Uses provided size when present', async () => {
+                const stream = {pipe: vi.fn()};
+                ctx.stream = vi.fn();
+                await ctx.file({stream, name: 'sized.txt', size: 456});
+                expect(ctx.stream).toHaveBeenCalledWith(stream, 456);
+            });
+
+            it('Infers MIME from file name when not already set', async () => {
+                const stream = {pipe: vi.fn()};
+                ctx.stream = vi.fn();
+                await ctx.file({stream, name: 'file.json'});
+                /* @ts-ignore */
+                expect(ctx.res_headers).toEqual({
+                    'Content-Type': 'application/json',
+                });
+            });
+
+            it('Applies Content-Disposition from string `download`', async () => {
+                const stream = {pipe: vi.fn()};
+                ctx.stream = vi.fn();
+                await ctx.file({stream, name: 'resume.pdf'}, {download: 'resume.pdf'});
+                /* @ts-ignore */
+                expect(ctx.res_headers).toEqual({
+                    'Content-Disposition': 'attachment; filename="resume.pdf"; filename*=UTF-8\'\'resume.pdf',
+                    'Content-Type': 'application/pdf',
+                });
+            });
+
+            it('Throws if name is missing', async () => {
+                for (const el of [...CONSTANTS.NOT_STRING, '']) {
+                    const errorSpy = vi.spyOn(ctx.logger, 'error');
+                    await ctx.file({stream: {} as any, name: el} as any);
+                    expect(errorSpy).toHaveBeenCalledWith(
+                        new Error('Context@file: name is required when passing a stream'),
+                        expect.anything()
+                    );
+                }
+            });
+
+            it('Throws on completely invalid stream input', async () => {
+                const errorSpy = vi.spyOn(ctx.logger, 'error');
+                await ctx.file({notAStream: true} as any);
+                expect(errorSpy).toHaveBeenCalledWith(
+                    new Error('Context@file: Invalid Payload'),
+                    expect.anything()
+                );
+            });
+        });
+    });
+
+    describe('stream()', () => {
+        class StreamTestContext extends TestContext {
+
+            public stream (stream: unknown, size: number | null) {
+                super.stream(stream, size);
+            }
+
+        }
+
+        let streamCtx: StreamTestContext;
+
+        beforeEach(() => {
+            streamCtx = new StreamTestContext(mockLogger as any, baseConfig as any, baseRequest);
+        });
+
+        it('Marks context as done', () => {
+            streamCtx.stream('my-stream', null);
+            expect(streamCtx.isDone).toBe(true);
+        });
+
+        it('Sets Content-Length if valid size provided', () => {
+            streamCtx.stream('streamy', 512);
+            /* @ts-ignore */
+            expect(streamCtx.res_headers).toEqual({
+                'Content-Length': '512',
+            });
+        });
+
+        it('Does not set Content-Length if size is null', () => {
+            streamCtx.stream('data', null);
+            /* @ts-ignore */
+            expect(streamCtx.res_headers).toEqual({});
+        });
+
+        it('Clears timeout on stream', () => {
+            const clearSpy = vi.spyOn(streamCtx, 'clearTimeout');
+            streamCtx.stream('blob', 123);
+            expect(clearSpy).toHaveBeenCalled();
+        });
+
+        it('Skips if context is already locked', () => {
+            streamCtx.end();
+            /* @ts-ignore */
+            const before = {...streamCtx.res_headers};
+            streamCtx.stream('ignored', 42);
+            /* @ts-ignore */
+            expect(streamCtx.res_headers).toEqual(before);
         });
     });
 

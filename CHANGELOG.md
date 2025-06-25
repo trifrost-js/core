@@ -6,7 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 ### Improved
+- **feat**: **[EXPERIMENTAL]** `ctx.file()` on top of passing a path now also supports direct streaming from a variety of sources. Native `ReadableStream` (Workerd, Bun, and browser-compatible sources), Node.js `Readable` streams (e.g. from `fs.createReadStream`, S3 SDKs), Buffers, strings, `Uint8Array`, `ArrayBuffer` and `Blob` inputs. This makes TriFrost file responses work seamlessly with S3, R2, and dynamic stream-based backends. One API, many sources. 🌀
+- **qol**: `ctx.file()` with `download: true` now uses the original file name in the `Content-Disposition` header, giving users a proper fallback for filenames in their downloads when not passing a custom one.
+- **qol**: Internals for `ctx.stream()` (a protected internal method) and runtime stream handling (Bun/Workerd/Node) have been unified and hardened.
 - **qol**: Void tags in the JSX renderer now includes  svg-spec tags `path`, `circle`, `ellipse`, `line`, `polygon`, `polyline`, `rect`, `stop`, `use`.
+
+
+### Fixed
+- Fixed an edge case where long-running streams in `ctx.file()` could incorrectly inherit stale timeouts.
 
 ### Deprecated
 - 🧹 **Removed: `UWSContext` (uWebSockets.js runtime)**. Back in 2024, `uWS` felt like a great addition to TriFrost — an "automatic upgrade" path for Node users who wanted raw speed with minimal changes. But the landscape has shifted: Node has steadily improved its performance, while `uWS` continues to demand non-standard stream handling, complicates internal abstractions and also has some quirks (such as the fact that they add a uWS header to every response and that uWS will not work on a large amount of systems when containerizing). As a result after long pondering and thinking, we've removed support for `uWS`. This eliminates boilerplate, makes TriFrost just that bit leaner while simplifying internal stream behavior and clearing the path for better DX and broader runtime support (👀 looking at you, Netlify and Vercel). **Don’t worry though**, if you're currently running TriFrost with uWS, the system will gracefully fall back to the Node runtime, no changes required from your end.

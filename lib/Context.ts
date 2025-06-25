@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
+import {isObject} from '@valkyriestudios/utils/object';
+import {isNeString} from '@valkyriestudios/utils/string';
 import {type TriFrostCache} from './modules/Cache';
 import {Cookies} from './modules/Cookies';
 import {rootRender} from './modules/JSX/render';
@@ -650,41 +652,57 @@ export abstract class Context <
     /**
      * Respond with a file
      */
-    async file (path:string, opts?:TriFrostContextFileOptions):Promise<void> {
+    async file (input:string|{stream:unknown; size?:number|null; name:string}, opts?:TriFrostContextFileOptions):Promise<void> {
         try {
-            if (typeof path !== 'string') throw new Error('Context@file: Invalid Payload');
-
-            /* Ensure we dont double write */
             if (this.isLocked) throw new Error('Context@file: Cannot modify a finalized response');
 
             /* Cache Control */
             if (opts?.cacheControl) ParseAndApplyCacheControl(this as TriFrostContext, opts.cacheControl);
 
-            /* Get a streamable */
-            const streamer = await this.getStream(path);
-            if (!streamer) return this.status(404);
+            let stream:unknown;
+            let size:number|null = null;
+            let name:string;
+            if (isNeString(input)) {
+                /* Get a streamable */
+                const result = await this.getStream(input);
+                if (!result) return this.status(404);
+                stream = result.stream;
+                size = result.size;
+                name = input.split('/').pop() as string;
+            } else if (isObject(input) && input.stream) {
+                if (!isNeString(input.name)) throw new Error('Context@file: name is required when passing a stream');
+                stream = input.stream;
+                size = input.size ?? null;
+                name = input.name;
+            } else {
+                throw new Error('Context@file: Invalid Payload');
+            }
 
-            /* Try determining the mime type from the path if no mime type was set already */
+            /* Try determining the mime type from the name if no mime type was set already */
             if (!this.res_headers['Content-Type']) {
-                const mime = ExtensionToMimeType.get(path.split('.').pop() as string);
+                const mime = ExtensionToMimeType.get(name.split('.').pop() as string);
                 if (mime) this.res_headers['Content-Type'] = mime;
             }
 
-            /* Set Content-Disposition header depending on download option */
-            if (opts?.download === true) {
-                this.res_headers['Content-Disposition'] = 'attachment';
-            } else if (typeof opts?.download === 'string') {
-                const {encoded, ascii} = encodeFilename(opts.download);
-                /* Take Note, as per RFC 6266 we make use of filename* with UTF-8 */
-                this.res_headers['Content-Disposition'] = ascii.length
-                    ? 'attachment; filename="' + ascii + '"; filename*=UTF-8\'\'' + encoded
-                    : 'attachment; filename="download"; filename*=UTF-8\'\'' + encoded;
+            /**
+             * Set Content-Disposition header depending on download option
+             * @note As per RFC 6266 we make use of filename* with UTF-8
+             */
+            const download:{encoded:string; ascii:string}|null = opts?.download === true
+                ? encodeFilename(name)
+                : typeof opts?.download === 'string'
+                    ? encodeFilename(opts.download)
+                    : null;
+            if (download) {
+                this.res_headers['Content-Disposition'] = download.ascii.length
+                    ? 'attachment; filename="' + download.ascii + '"; filename*=UTF-8\'\'' + download.encoded
+                    : 'attachment; filename="download"; filename*=UTF-8\'\'' + download.encoded;
             }
 
             /* Pass the stream to the runtime-specific stream method */
-            this.stream(streamer.stream, streamer.size);
+            this.stream(stream, size);
         } catch (err) {
-            this.#logger.error(err, {file: path, opts});
+            this.#logger.error(err, {input, opts});
         }
     }
 
@@ -890,7 +908,18 @@ export abstract class Context <
     /**
      * Stream a response from a streamlike value
      */
-    abstract stream (stream:unknown, size:number|null):void;
+    protected stream (stream:unknown, size:number|null) {
+        if (this.isLocked) return;
+
+        /* Lock the context to ensure no other responding can happen as we stream */
+        this.is_done = true;
+
+        /* Add Content-Length to headers */
+        if (Number.isInteger(size) && (size as number) > 0) this.res_headers['Content-Length'] = '' + size;
+
+        /* Clear timeout */
+        this.clearTimeout();
+    }
 
     /**
      * Runs our after hooks

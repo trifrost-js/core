@@ -143,5 +143,5 @@ export type TriFrostContext<
     html: (body?:string|JSX.Element, opts?:TriFrostContextResponseOptions) => void;
     text: (body:string, opts?:TriFrostContextResponseOptions) => void;
     redirect: (to:string, opts?:TriFrostContextRedirectOptions) => void;
-    file: (path:string, opts?:TriFrostContextFileOptions) => Promise<void>;
+    file: (path:string|{stream:unknown;size?:number|null;name:string}, opts?:TriFrostContextFileOptions) => Promise<void>;
 };
