@@ -49,6 +49,15 @@ describe('Modules - JSX - script - atomic', () => {
                 'if(!window.$tfclone){',
                 'window.$tfclone=v=>(v===undefined || v===null || typeof v !=="object")? v:structuredClone(v);',
                 '}',
+                /* Util: Create Custom Event */
+                'if(!window.$tfevent){',
+                'window.$tfevent=(type,opts)=>{',
+                'try{return new CustomEvent(type,opts);}',
+                'catch(_){',
+                'const e=document.createEvent("CustomEvent");',
+                'e.initCustomEvent(type,opts?.bubbles,opts?.cancelable,opts?.detail);',
+                'return e;',
+                '}};}',
                 /* Relay */
                 'if(!window.$tfr){',
                 'const topics=Object.create(null);',
@@ -311,7 +320,7 @@ describe('Modules - JSX - script - atomic', () => {
                 '$storeGet:{value:w.$tfs.get,configurable:!1,writable:!1},',
                 '$storeSet:{value:w.$tfs.set,configurable:!1,writable:!1},',
                 // eslint-disable-next-line max-len
-                '$dispatch:{value:(type,options)=>n.dispatchEvent(new CustomEvent(type,{detail:options?.data,bubbles:(options?.mode ?? "up")==="up",cancelable:!0})),configurable:!1,writable:!1},',
+                '$dispatch:{value:(type,options)=>n.dispatchEvent(w.$tfevent(type,{detail:options?.data,bubbles:(options?.mode ?? "up")==="up",cancelable:!0})),configurable:!1,writable:!1},',
                 '$tfVM:{get:()=>!0,configurable:!1}',
                 '});',
                 '}',

@@ -11,6 +11,7 @@ const GLOBAL_STORE_NAME = '$tfs';
 const GLOBAL_UTIL_DEBOUNCE = '$tfdebounce';
 const GLOBAL_UTIL_EQUAL = '$tfequal';
 const GLOBAL_UTIL_CLONE = '$tfclone';
+const GLOBAL_UTIL_CREATE_EVENT = '$tfevent';
 const GLOBAL_CLOCK = '$tfc';
 const GLOBAL_CLOCK_TICK = '$tfcr';
 export const GLOBAL_DATA_REACTOR_NAME = '$tfdr';
@@ -146,6 +147,18 @@ export const ATOMIC_GLOBAL = minify(`
 
         if (!window.${GLOBAL_UTIL_CLONE}) {
             window.${GLOBAL_UTIL_CLONE} = v => (v === undefined || v === null || typeof v !== "object") ? v : structuredClone(v);
+        }
+
+        if (!window.${GLOBAL_UTIL_CREATE_EVENT}) {
+            window.${GLOBAL_UTIL_CREATE_EVENT} = (type, opts) => {
+                try {
+                    return new CustomEvent(type, opts);
+                } catch (_) {
+                    const e = document.createEvent("CustomEvent");
+                    e.initCustomEvent(type, opts?.bubbles, opts?.cancelable, opts?.detail);
+                    return e;
+                }
+            };
         }
 
         if (!window.${GLOBAL_RELAY_NAME}) {
@@ -419,7 +432,7 @@ export const ATOMIC_VM_BEFORE = minify(
             ${VM_STORE_SET_NAME}:{value: w.${GLOBAL_STORE_NAME}.set, configurable: !1, writable: !1},
             ${VM_DISPATCH_NAME}:{
                 value:(type,options)=>n.dispatchEvent(
-                    new CustomEvent(type,{
+                    w.${GLOBAL_UTIL_CREATE_EVENT}(type,{
                         detail: options?.data,
                         bubbles:(options?.mode ?? "up") === "up",
                         cancelable:!0
