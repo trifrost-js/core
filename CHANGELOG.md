@@ -9,8 +9,58 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **feat**: **[EXPERIMENTAL]** `ctx.file()` on top of passing a path now also supports direct streaming from a variety of sources. Native `ReadableStream` (Workerd, Bun, and browser-compatible sources), Node.js `Readable` streams (e.g. from `fs.createReadStream`, S3 SDKs), Buffers, strings, `Uint8Array`, `ArrayBuffer` and `Blob` inputs. This makes TriFrost file responses work seamlessly with S3, R2, and dynamic stream-based backends. One API, many sources. 🌀
 - **qol**: `ctx.file()` with `download: true` now uses the original file name in the `Content-Disposition` header, giving users a proper fallback for filenames in their downloads when not passing a custom one.
 - **qol**: Internals for `ctx.stream()` (a protected internal method) and runtime stream handling (Bun/Workerd/Node) have been unified and hardened.
+- **qol**: Added runtime-safe validation for supported stream types.
 - **qol**: Void tags in the JSX renderer now includes  svg-spec tags `path`, `circle`, `ellipse`, `line`, `polygon`, `polyline`, `rect`, `stop`, `use`.
 
+Example using s3 sdk:
+```typescript
+import {GetObjectCommand, S3Client} from '@aws-sdk/client-s3';
+
+const s3 = new S3Client({ region: 'us-east-1' });
+const Bucket = 'my-bucket';
+
+export default async function handler (ctx) {
+    const Key = ctx.query.get('key');
+    if (!Key) return ctx.status(400);
+
+    try {
+        const {Body, ContentLength} = await s3.send(new GetObjectCommand({Bucket, Key}));
+
+        await ctx.file({
+            stream: Body,
+            size: ContentLength,
+            name: Key,
+        }, {download: true});
+
+    } catch (err) {
+        ctx.logger.error('S3 fetch failed', { err });
+        ctx.status(404);
+    }
+}
+```
+
+Example using Cloudflare R2 (workerd runtime):
+```typescript
+export default async function handler (ctx) {
+    const key = ctx.query.get('key');
+    if (!key) return ctx.status(400);
+
+    try {
+        const res = await ctx.env.MY_BUCKET.get(key); /* R2 binding via `wrangler.toml` */
+        if (!res?.body) return ctx.status(404);
+
+        await ctx.file({
+            stream: res.body,
+            size: res.size ?? null,
+            name: key,
+        }, {download: true});
+
+    } catch (err) {
+        ctx.logger.error('R2 fetch failed', {err});
+        ctx.status(500);
+    }
+}
+```
 
 ### Fixed
 - Fixed an edge case where long-running streams in `ctx.file()` could incorrectly inherit stale timeouts.
