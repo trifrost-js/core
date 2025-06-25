@@ -12,6 +12,7 @@ import {setActiveScriptEngine, getActiveScriptEngine} from './script/use';
 import {setActiveCtx} from './ctx/use';
 
 const VOID_TAGS = {
+    /* HTML */
     area: true,
     base: true,
     br: true,
@@ -25,6 +26,16 @@ const VOID_TAGS = {
     source: true,
     track: true,
     wbr: true,
+    /* SVG */
+    path: true,
+    circle: true,
+    ellipse: true,
+    line: true,
+    polygon: true,
+    polyline: true,
+    rect: true,
+    stop: true,
+    use: true,
 } as const;
 
 const BOOL_PROPS = {

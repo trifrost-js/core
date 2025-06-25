@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Improved
+- **qol**: Void tags in the JSX renderer now includes  svg-spec tags `path`, `circle`, `ellipse`, `line`, `polygon`, `polyline`, `rect`, `stop`, `use`.
+
 ## [0.37.3] - 2025-06-23
 ### Improved
 - **feat**: Atomic Data Reactor will now run deep equality checks and clone into `_last` during tick to ensure unreferenced watching. (Take Note: the equality check is done using an adjusted version of [Valkyrie Utils: Equal](https://github.com/ValkyrieStudios/utils/blob/main/lib/equal.ts))
