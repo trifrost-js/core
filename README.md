@@ -27,7 +27,21 @@ Unlike many frameworks, TriFrost doesn't bind itself to Node-specific APIs or as
 
 ---
 
-## 📦 Installation
+## 📦 Quickstart
+TriFrost has a [creation cli](https://github.com/trifrost-js/create-trifrost) which is available through npm/bun create, just run:
+```bash
+# npm
+npm create trifrost@latest
+
+# bun
+bun create trifrost@latest
+```
+
+And you'll be set up with a starter project in under a minute.
+
+---
+
+## 📦 From Scratch
 Using your favorite package manager:
 
 ```bash
