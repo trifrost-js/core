@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **qol**: Internals for `ctx.stream()` (a protected internal method) and runtime stream handling (Bun/Workerd/Node) have been unified and hardened.
 - **qol**: Added runtime-safe validation for supported stream types.
 - **qol**: Void tags in the JSX renderer now includes  svg-spec tags `path`, `circle`, `ellipse`, `line`, `polygon`, `polyline`, `rect`, `stop`, `use`.
+- **deps**: Upgrade @types/node to 22.15.33
+- **deps**: Upgrade typescript-eslint to 8.35.0
 
 Example using s3 sdk:
 ```typescript
