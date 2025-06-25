@@ -1,6 +1,5 @@
 /// <reference types="bun-types" />
 
-import {isIntGt} from '@valkyriestudios/utils/number';
 import {Context} from '../../Context';
 import {type TriFrostRootLogger} from '../../modules/Logger';
 import {type TriFrostContextConfig} from '../../types/context';
@@ -13,6 +12,7 @@ import {type TriFrostRouteMatch} from '../../types/routing';
 import {parseBody} from '../../utils/BodyParser/Request';
 import {extractPartsFromUrl} from '../../utils/Http';
 import {DEFAULT_BODY_PARSER_OPTIONS} from '../../utils/BodyParser/types';
+import {verifyFileStream} from '../../utils/Stream';
 
 const encoder = new TextEncoder();
 
@@ -93,24 +93,18 @@ export class BunContext extends Context {
     }
 
     /**
-     * Stream a response from a ReadableStream in Bun
+     * Stream a file-like response in Bun
      *
-     * @param {ReadableStream} stream - Stream to respond with
+     * @param {unknown} stream - Stream to respond with
      * @param {number|null} size - Size of the stream
      */
-    stream (stream: ReadableStream, size: number|null = null) {
-        if (!(stream instanceof ReadableStream)) {
-            throw new Error('BunContext@stream: Invalid stream type');
-        }
-
+    protected stream (stream:unknown, size:number|null = null) {
         /* If already locked do nothing */
         if (this.isLocked) return;
 
-        /* Lock the context to ensure no other responding can happen as we stream */
-        this.is_done = true;
+        verifyFileStream(stream);
 
-        /* Set content-length if provided */
-        if (isIntGt(size, 0)) this.res_headers['content-length'] = '' + size;
+        super.stream(stream, size);
 
         /* Set response with stream */
         this.#response = new Response(stream, {

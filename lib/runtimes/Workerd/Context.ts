@@ -1,4 +1,3 @@
-import {isIntGt} from '@valkyriestudios/utils/number';
 import {Context} from '../../Context';
 import {type TriFrostRootLogger} from '../../modules/Logger';
 import {type TriFrostContextConfig} from '../../types/context';
@@ -12,19 +11,20 @@ import {type TriFrostRouteMatch} from '../../types/routing';
 import {parseBody} from '../../utils/BodyParser/Request';
 import {extractPartsFromUrl} from '../../utils/Http';
 import {DEFAULT_BODY_PARSER_OPTIONS} from '../../utils/BodyParser/types';
+import {verifyFileStream} from '../../utils/Stream';
 
 const encoder = new TextEncoder();
 
 export class WorkerdContext extends Context {
 
     /* Workerd Request instance */
-    #workerd_req:Request;
+    private workerd_req:Request;
 
     /* Workerd execution context */
-    #workerd_ctx:ExecutionContext;
+    private workerd_ctx:ExecutionContext;
 
     /* Internal Response instance */
-    #response: Response | null = null;
+    private res: Response | null = null;
 
     constructor (
         cfg:TriFrostContextConfig,
@@ -50,22 +50,22 @@ export class WorkerdContext extends Context {
             query,
         });
 
-        this.#workerd_req = req;
-        this.#workerd_ctx = ctx;
+        this.workerd_req = req;
+        this.workerd_ctx = ctx;
     }
 
     /**
      * Getter for the final response
      */
     get response (): Response|null {
-        return this.#response;
+        return this.res;
     }
 
     /**
      * Initializes the context, this happens when a route is matched and tied to this context.
      */
     async init (val:TriFrostRouteMatch) {
-        await super.init(val, async () => parseBody(this, this.#workerd_req, val.route.bodyParser || DEFAULT_BODY_PARSER_OPTIONS));
+        await super.init(val, async () => parseBody(this, this.workerd_req, val.route.bodyParser || DEFAULT_BODY_PARSER_OPTIONS));
     }
 
     /**
@@ -106,33 +106,28 @@ export class WorkerdContext extends Context {
     }
 
     /**
-     * Stream a response from a ReadableStream in Workerd
+     * Stream a file-like response in Workerd
      *
-     * @param {ReadableStream} stream - Stream to respond with
+     * @param {unknown} stream - Stream to respond with
      * @param {number|null} size - Size of the stream
      */
-    stream (stream: ReadableStream, size: number|null = null) {
-        if (!(stream instanceof ReadableStream)) {
-            throw new Error('WorkerdContext@stream: Invalid stream type');
-        }
-
+    protected stream (stream: unknown, size: number|null = null) {
         /* If already locked do nothing */
         if (this.isLocked) return;
 
-        /* Lock the context to ensure no other responding can happen as we stream */
-        this.is_done = true;
+        /* Verify stream */
+        verifyFileStream(stream);
 
-        /* Set content-length if provided */
-        if (isIntGt(size, 0)) this.res_headers['content-length'] = '' + size;
+        super.stream(stream, size);
 
         /* Set response with stream */
-        this.#response = new Response(stream, {
+        this.res = new Response(stream, {
             status: this.res_code,
             headers: this.res_headers,
         });
 
         /* Write cookies */
-        this.#writeCookies();
+        this.writeCookies();
     }
 
     /**
@@ -146,13 +141,13 @@ export class WorkerdContext extends Context {
         super.abort(status);
 
         /* Set response */
-        this.#response = new Response(null, {
+        this.res = new Response(null, {
             status: this.res_code,
             headers: this.res_headers,
         });
 
         /* Write cookies */
-        this.#writeCookies();
+        this.writeCookies();
     }
 
     /**
@@ -170,24 +165,24 @@ export class WorkerdContext extends Context {
                     : '0';
 
                 /* Set response */
-                this.#response = new Response(null, {
+                this.res = new Response(null, {
                     status: this.res_code,
                     headers: this.res_headers,
                 });
 
                 /* Write cookies */
-                this.#writeCookies();
+                this.writeCookies();
                 break;
             }
             default:
                 /* Set response */
-                this.#response = new Response(this.res_body, {
+                this.res = new Response(this.res_body, {
                     status: this.res_code,
                     headers: this.res_headers,
                 });
 
                 /* Write cookies */
-                this.#writeCookies();
+                this.writeCookies();
                 break;
         }
     }
@@ -199,7 +194,7 @@ export class WorkerdContext extends Context {
         const hooks = this.afterHooks;
         for (let i = 0; i < hooks.length; i++) {
             try {
-                this.#workerd_ctx.waitUntil(hooks[i]());
+                this.workerd_ctx.waitUntil(hooks[i]());
             } catch {
                 /* No-Op */
             }
@@ -219,11 +214,11 @@ export class WorkerdContext extends Context {
  * MARK: Private
  */
 
-    #writeCookies () {
+    private writeCookies () {
         if (!this.$cookies) return;
         const outgoing = this.$cookies.outgoing;
         if (!outgoing.length) return;
-        for (let i = 0; i < outgoing.length; i++) this.#response!.headers.append('Set-Cookie', outgoing[i]);
+        for (let i = 0; i < outgoing.length; i++) this.response!.headers.append('Set-Cookie', outgoing[i]);
     }
 
 }
