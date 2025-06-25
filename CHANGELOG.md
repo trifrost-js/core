@@ -13,6 +13,7 @@ This release introduces powerful improvements to `ctx.file()`, allowing direct, 
 - **qol**: Internals for `ctx.stream()` (a protected internal method) and runtime stream handling (Bun/Workerd/Node) have been unified and hardened.
 - **qol**: Added runtime-safe validation for supported stream types.
 - **qol**: Void tags in the JSX renderer now includes  svg-spec tags `path`, `circle`, `ellipse`, `line`, `polygon`, `polyline`, `rect`, `stop`, `use`.
+- **qol**: Inline atomic hydrator will no longer be given a `defer` marker as there's no longer a need for this
 - **deps**: Upgrade @types/node to 22.15.33
 - **deps**: Upgrade typescript-eslint to 8.35.0
 

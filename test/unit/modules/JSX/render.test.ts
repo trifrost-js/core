@@ -522,7 +522,7 @@ describe('Modules - JSX - Renderer', () => {
                 '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
                 '<style nonce="aWQtMQ==">*, *::before, *::after{box-sizing:border-box}html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}footer, header, nav, section, main{display:block}ol, ul{list-style:none}q, blockquote::before{content:none}q, blockquote::after{content:none}q, blockquote{quotes:none}table{border-collapse:collapse;border-spacing:0}.tf-1ahm5s3{margin:2rem;color:black}</style>',
                 '</ul>',
-                '<script nonce="aWQtMQ==" defer>(function(d,w){',
+                '<script nonce="aWQtMQ==">(function(d,w){',
                 ATOMIC_GLOBAL,
                 'const TFD={"id-4":{"a":1,"b":2},"id-5":{"b":2,"a":1}};',
                 'const TFF={"id-3":(el, data) => el.innerText = JSON.stringify(data)};',
@@ -615,7 +615,7 @@ describe('Modules - JSX - Renderer', () => {
                 '.tf-1ahm5s3{margin:2rem;color:black}',
                 '</style>',
                 '</ul>',
-                '<script nonce="aWQtMQ==" defer>(function(d,w){',
+                '<script nonce="aWQtMQ==">(function(d,w){',
                 ATOMIC_GLOBAL,
                 'const TFD={"id-4":{"a":1,"b":2},"id-5":{"b":2,"a":1}};',
                 'const TFF={"id-3":(el, data) => el.innerText = JSON.stringify(data)};',
@@ -710,7 +710,7 @@ describe('Modules - JSX - Renderer', () => {
                 '<style nonce="aWQtMQ==">.tf-1ahm5s3{margin:2rem;color:black}</style>',
                 '</ul>',
                 '<script nonce="aWQtMQ==" src="/static.js" defer></script>',
-                '<script nonce="aWQtMQ==" defer>(function(d,w){',
+                '<script nonce="aWQtMQ==">(function(d,w){',
                 'const run=()=>{',
                 'const TFD={"id-4":{"a":1,"b":2},"id-5":{"b":2,"a":1}};',
                 'const TFF={"id-3":(el, data) => el.innerText = JSON.stringify(data)};',
@@ -823,7 +823,7 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe([
                     '<button data-tfhf="id-2" data-tfhd="id-3">Click me</button>',
-                    '<script nonce="aWQtMQ==" defer>(function(d,w){const TFD={"id-3":{"foo":"bar"}};',
+                    '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"foo":"bar"}};',
                     'const TFF={"id-2":(el, data) => console.log("Hydrated:", el, data)};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
@@ -863,7 +863,7 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe([
                     '<span data-tfhf="id-2" data-tfhd="id-3">Item</span><span data-tfhf="id-2" data-tfhd="id-3">Item</span><span data-tfhf="id-2" data-tfhd="id-3">Item</span>',
-                    '<script nonce="aWQtMQ==" defer>(function(d,w){const TFD={"id-3":{"x":1}};',
+                    '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"x":1}};',
                     'const TFF={"id-2":(el) => el.dataset.bound = "true"};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
@@ -896,7 +896,7 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe([
                     '<div data-tfhf="id-2">No Data</div>',
-                    '<script nonce="aWQtMQ==" defer>(function(d,w){const TFD={};',
+                    '<script nonce="aWQtMQ==">(function(d,w){const TFD={};',
                     'const TFF={"id-2":(el) => el.id = "injected"};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
@@ -935,7 +935,7 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe([
                     '<div data-tfhf="id-2" data-tfhd="id-3">Nested</div>',
-                    '<script nonce="aWQtMQ==" defer>(function(d,w){const TFD={"id-3":{"enabled":true}};',
+                    '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"enabled":true}};',
                     'const TFF={"id-2":(el, data) => el.setAttribute("data-enabled", data.enabled)};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
@@ -992,7 +992,7 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe([
                     '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-4" data-tfhd="id-5">Second</div>',
-                    '<script nonce="aWQtMQ==" defer>(function(d,w){const TFD={"id-3":{"count":1},"id-5":{"count":2}};',
+                    '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"count":1},"id-5":{"count":2}};',
                     'const TFF={"id-2":(el, data) => el.textContent = `count:${data.count}`,"id-4":(el, data) => el.textContent = `count is ${data.count}`};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
@@ -1049,7 +1049,7 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe([
                     '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-4" data-tfhd="id-3">Second</div>',
-                    '<script nonce="aWQtMQ==" defer>(function(d,w){const TFD={"id-3":{"count":1}};',
+                    '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"count":1}};',
                     'const TFF={"id-2":(el, data) => el.textContent = `count:${data.count}`,"id-4":(el, data) => el.textContent = `count is ${data.count}`};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
@@ -1106,7 +1106,7 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe([
                     '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-2" data-tfhd="id-3">Second</div>',
-                    '<script nonce="aWQtMQ==" defer>(function(d,w){const TFD={"id-3":{"count":1}};',
+                    '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"count":1}};',
                     'const TFF={"id-2":(el, data) => el.textContent = `count is ${data.count}`};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
@@ -1168,7 +1168,7 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe([
                     '<section><article><header data-tfhf="id-2" data-tfhd="id-3">Header</header><footer data-tfhf="id-4">Footer</footer></article></section>',
-                    '<script nonce="aWQtMQ==" defer>(function(d,w){const TFD={"id-3":{"active":true}};',
+                    '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"active":true}};',
                     'const TFF={"id-2":(el, data) => el.dataset.active = String(data.active),"id-4":(el) => el.dataset.foot = "true"};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
@@ -1207,7 +1207,7 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html).toBe([
-                    '<div data-tfhf="id-2" data-tfhd="id-3">Hello</div><script nonce="aWQtMQ==" defer>(function(d,w){const TFD={"id-3":{"x":5}};',
+                    '<div data-tfhf="id-2" data-tfhd="id-3">Hello</div><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"x":5}};',
                     'const TFF={"id-2":(el, data) => el.setAttribute("data-value", data.x)};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
@@ -1276,7 +1276,7 @@ describe('Modules - JSX - Renderer', () => {
 
                 /* Note: order in json stringification matters */
                 expect(html).toBe([
-                    '<ul><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==" defer>(function(d,w){const TFD={"id-3":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
+                    '<ul><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
                     'const TFF={"id-2":(el, data) => el.innerText = JSON.stringify(data)};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
@@ -1343,7 +1343,7 @@ describe('Modules - JSX - Renderer', () => {
 
                 /* Note: order in json stringification matters */
                 expect(html).toBe([
-                    '<ul><div class="tf-1ahm5s3">Styled</div><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==" defer>(function(d,w){',
+                    '<ul><div class="tf-1ahm5s3">Styled</div><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==">(function(d,w){',
                     ATOMIC_GLOBAL,
                     'const TFD={"id-3":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
                     'const TFF={"id-2":(el, data) => el.innerText = JSON.stringify(data)};',
@@ -1378,7 +1378,7 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html1).toBe([
-                    '<div data-tfhf="id-2">Reset me</div><script nonce="aWQtMQ==" defer>(function(d,w){const TFD={};',
+                    '<div data-tfhf="id-2">Reset me</div><script nonce="aWQtMQ==">(function(d,w){const TFD={};',
                     'const TFF={"id-2":(el) => el.id = "reset"};',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',

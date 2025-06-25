@@ -107,7 +107,7 @@ describe('Modules - JSX - script - Engine', () => {
 
             const out = engine.flush();
             expect(out).toBe([
-                '<script nonce="abc123" defer>(function(d,w){',
+                '<script nonce="abc123">(function(d,w){',
                 'const TFD={"id-2":{"x":1}};',
                 'const TFF={"id-1":function(el,data){el.textContent="x";}};',
                 'for(const id in TFF){',
@@ -125,7 +125,7 @@ describe('Modules - JSX - script - Engine', () => {
             vi.spyOn(Nonce, 'nonce').mockReturnValue(null);
             engine.register('function(){}', null);
             expect(engine.flush()).toBe([
-                '<script defer>',
+                '<script>',
                 '(function(d,w){',
                 'const TFD={};',
                 'const TFF={"id-1":function(){}};',
@@ -144,7 +144,7 @@ describe('Modules - JSX - script - Engine', () => {
             engine.register('function(el,data){el.textContent="Hi"}', null);
 
             expect(engine.flush()).toBe([
-                '<script nonce="abc123" defer>',
+                '<script nonce="abc123">',
                 '(function(d,w){',
                 ATOMIC_GLOBAL,
                 'const TFD={};',
@@ -168,7 +168,7 @@ describe('Modules - JSX - script - Engine', () => {
             engine.register('function(el,data){el.textContent="Hi"}', null);
 
             expect(engine.flush()).toBe([
-                '<script nonce="abc123" defer>',
+                '<script nonce="abc123">',
                 '(function(d,w){',
                 'const TFD={};',
                 'const TFF={"id-1":function(el,data){el.textContent="Hi"}};',
@@ -189,7 +189,7 @@ describe('Modules - JSX - script - Engine', () => {
             engine.register('function(el,data){el.id="a"}', '{"value":42}');
             engine.register('function(el,data){el.id="a"}', '{"value":42}');
             expect(engine.flush()).toBe([
-                '<script nonce="abc123" defer>',
+                '<script nonce="abc123">',
                 '(function(d,w){',
                 'const TFD={"id-2":{"value":42}};',
                 'const TFF={"id-1":function(el,data){el.id="a"}};',
@@ -219,7 +219,7 @@ describe('Modules - JSX - script - Engine', () => {
             engine.register('function(el,data){el.id="a"}', '{"value":42}');
 
             expect(engine.flush()).toBe([
-                '<script nonce="abc123" defer>',
+                '<script nonce="abc123">',
                 '(function(d,w){',
                 'const run=()=>{',
                 'const TFD={"id-2":{"value":42}};',
@@ -249,7 +249,7 @@ describe('Modules - JSX - script - Engine', () => {
             engine.register('function(){}', null);
             expect(engine.inject('<html><main>Stuff</main></html>')).toBe([
                 '<html><main>Stuff</main></html>',
-                '<script nonce="abc123" defer>',
+                '<script nonce="abc123">',
                 '(function(d,w){',
                 'const TFD={};',
                 'const TFF={"id-1":function(){}};',
@@ -270,7 +270,7 @@ describe('Modules - JSX - script - Engine', () => {
                 '<html>',
                 '<body>',
                 '<main>Content</main>',
-                '<script nonce="abc123" defer>',
+                '<script nonce="abc123">',
                 '(function(d,w){',
                 'const TFD={};',
                 'const TFF={"id-1":function(){}};',
@@ -292,7 +292,7 @@ describe('Modules - JSX - script - Engine', () => {
 
             expect(engine.inject('<div>Partial content</div>')).toBe([
                 '<div>Partial content</div>',
-                '<script nonce="abc123" defer>',
+                '<script nonce="abc123">',
                 '(function(d,w){',
                 'const TFD={};',
                 'const TFF={"id-1":function(el){el.dataset.x="1"}};',
@@ -335,7 +335,7 @@ describe('Modules - JSX - script - Engine', () => {
             expect(engine.inject('<!DOCTYPE html><html><body><main>Hello</main></body></html>')).toBe([
                 '<!DOCTYPE html><html><body><main>Hello</main>',
                 '<script nonce="abc123" src="/static/atomic.js" defer></script>',
-                '<script nonce="abc123" defer>',
+                '<script nonce="abc123">',
                 '(function(d,w){',
                 'const run=()=>{',
                 'const TFD={"id-2":{"value":42}};',
@@ -383,7 +383,7 @@ describe('Modules - JSX - script - Engine', () => {
             engine.register('function(el,data){el.id="a"}', '{"value":42}');
             expect(engine.inject('<main>Hello</main>')).toBe([
                 '<main>Hello</main>',
-                '<script nonce="abc123" defer>',
+                '<script nonce="abc123">',
                 '(function(d,w){',
                 'const run=()=>{',
                 'const TFD={"id-2":{"value":42}};',
@@ -413,7 +413,7 @@ describe('Modules - JSX - script - Engine', () => {
                 '<html><body>',
                 '<main>Hello</main>',
                 '<script src="/static/atomic.js" defer></script>',
-                '<script defer>',
+                '<script>',
                 '(function(d,w){',
                 'const run=()=>{',
                 'const TFD={"id-2":{"value":42}};',
@@ -442,7 +442,7 @@ describe('Modules - JSX - script - Engine', () => {
             expect(engine.inject('<html><body><main>Hello</main></body></html>')).toBe([
                 '<html><body>',
                 '<main>Hello</main>',
-                '<script defer>',
+                '<script>',
                 '(function(d,w){',
                 ATOMIC_GLOBAL,
                 'const TFD={"id-2":{"value":42}};',
@@ -463,7 +463,7 @@ describe('Modules - JSX - script - Engine', () => {
         it('Gracefully handles empty html in inject()', () => {
             engine.register('function(){}', null);
             expect(engine.inject('')).toBe([
-                '<script nonce="abc123" defer>',
+                '<script nonce="abc123">',
                 '(function(d,w){',
                 'const TFD={};',
                 'const TFF={"id-1":function(){}};',

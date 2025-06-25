@@ -106,8 +106,8 @@ export class ScriptEngine {
 
         const n_nonce = nonce();
         return n_nonce
-            ? '<script nonce="' + n_nonce + '" defer>' + out + '</script>'
-            : '<script defer>' + out + '</script>';
+            ? '<script nonce="' + n_nonce + '">' + out + '</script>'
+            : '<script>' + out + '</script>';
     }
 
     inject (html:string):string {

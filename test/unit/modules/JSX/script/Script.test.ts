@@ -142,7 +142,7 @@ describe('Modules - JSX - script - <Script>', () => {
 
             const flushed = engine.flush();
             expect(flushed).toBe([
-                '<script nonce="my-nonce" defer>',
+                '<script nonce="my-nonce">',
                 '(function(d,w){',
                 'const TFD={"id-2":{"enabled":true}};',
                 'const TFF={"id-1":(el, data) => el.dataset.enabled = String(data.enabled)};',
@@ -183,7 +183,7 @@ describe('Modules - JSX - script - <Script>', () => {
             });
 
             expect(engine.flush()).toBe([
-                '<script nonce="my-nonce" defer>',
+                '<script nonce="my-nonce">',
                 '(function(d,w){',
                 'const TFD={"id-2":{"x":1},"id-3":{"y":2}};',
                 'const TFF={"id-1":(el) => el.textContent = "hi"};',
@@ -224,7 +224,7 @@ describe('Modules - JSX - script - <Script>', () => {
             });
 
             expect(engine.flush()).toBe([
-                '<script nonce="my-nonce" defer>',
+                '<script nonce="my-nonce">',
                 '(function(d,w){',
                 'const TFD={"id-2":{"a":1,"b":2}};',
                 'const TFF={"id-1":(el) => el.innerText = "X","id-3":(el) => el.innerText = "Y"};',
@@ -265,7 +265,7 @@ describe('Modules - JSX - script - <Script>', () => {
             });
 
             expect(engine.flush()).toBe([
-                '<script nonce="my-nonce" defer>',
+                '<script nonce="my-nonce">',
                 '(function(d,w){',
                 'const TFD={"id-2":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
                 'const TFF={"id-1":(el) => el.innerText = "X","id-3":(el) => el.innerText = "Y"};',
@@ -295,7 +295,7 @@ describe('Modules - JSX - script - <Script>', () => {
             });
 
             expect(engine.flush()).toBe([
-                '<script nonce="my-nonce" defer>',
+                '<script nonce="my-nonce">',
                 '(function(d,w){',
                 'const TFD={};',
                 'const TFF={"id-1":(el) => el.className = "injected"};',
@@ -364,7 +364,7 @@ describe('Modules - JSX - script - <Script>', () => {
 
             Script({children: fn});
             expect(engine.flush()).toBe([
-                '<script nonce="my-nonce" defer>(function(d,w){const TFD={};const TFF={"id-1":(node) => {',
+                '<script nonce="my-nonce">(function(d,w){const TFD={};const TFF={"id-1":(node) => {',
                 '        function greet() {',
                 '          console.log("hello");',
                 '        }',
@@ -403,7 +403,7 @@ describe('Modules - JSX - script - <Script>', () => {
 
             const flushed = engine.flush();
             expect(flushed).toBe([
-                '<script nonce="my-nonce" defer>',
+                '<script nonce="my-nonce">',
                 '(function(d,w){',
                 ATOMIC_GLOBAL,
                 'const TFD={"id-2":{"enabled":true}};',
@@ -445,7 +445,7 @@ describe('Modules - JSX - script - <Script>', () => {
 
             const flushed = engine.flush();
             expect(flushed).toBe([
-                '<script nonce="my-nonce" defer>',
+                '<script nonce="my-nonce">',
                 '(function(d,w){',
                 'const TFD={"id-2":{"enabled":true}};',
                 `const TFF={"id-1":(el, data) => {
@@ -481,7 +481,7 @@ describe('Modules - JSX - script - <Script>', () => {
             });
 
             expect(engine.flush()).toBe([
-                '<script nonce="my-nonce" defer>',
+                '<script nonce="my-nonce">',
                 '(function(d,w){',
                 'const TFD={"id-2":{"x":1},"id-3":{"y":2}};',
                 `const TFF={"id-1":(el, data) => {
@@ -513,7 +513,7 @@ describe('Modules - JSX - script - <Script>', () => {
             });
 
             expect(engine.flush()).toBe([
-                '<script nonce="my-nonce" defer>',
+                '<script nonce="my-nonce">',
                 '(function(d,w){',
                 'const TFD={"id-2":{"x":1}};',
                 'const TFF={"id-1":(el, data) => el.textContent = String(data),"id-3":(el, data) => el.innerHTML = String(data)};',
@@ -539,7 +539,7 @@ describe('Modules - JSX - script - <Script>', () => {
             engine.setAtomic(true);
 
             expect(engine.flush()).toBe([
-                '<script nonce="my-nonce" defer>',
+                '<script nonce="my-nonce">',
                 '(function(d,w){',
                 'const TFD={"id-2":{"msg":"early"}};',
                 'const TFF={"id-1":(el, data) => el.textContent = data.msg};',
@@ -568,7 +568,7 @@ describe('Modules - JSX - script - <Script>', () => {
             engine.setRoot(true);
 
             expect(engine.flush()).toBe([
-                '<script nonce="my-nonce" defer>',
+                '<script nonce="my-nonce">',
                 '(function(d,w){',
                 ATOMIC_GLOBAL,
                 'const TFD={"id-2":{"msg":"early"}};',
@@ -599,7 +599,7 @@ describe('Modules - JSX - script - <Script>', () => {
             });
 
             expect(engine.flush()).toBe([
-                '<script nonce="my-nonce" defer>',
+                '<script nonce="my-nonce">',
                 '(function(d,w){',
                 ATOMIC_GLOBAL,
                 'const TFD={"id-2":{"msg":"hello"}};',
@@ -634,7 +634,7 @@ describe('Modules - JSX - script - <Script>', () => {
             });
 
             expect(engine.flush()).toBe([
-                '<script nonce="my-nonce" defer>',
+                '<script nonce="my-nonce">',
                 '(function(d,w){',
                 'const run=()=>{',
                 'const TFD={"id-2":{"msg":"hello"}};',
@@ -677,7 +677,7 @@ describe('Modules - JSX - script - <Script>', () => {
             atomicEngine.setAtomic(true);
             atomicEngine.setRoot(true);
             expect(atomicEngine.flush()).toBe([
-                '<script nonce="my-nonce" defer>',
+                '<script nonce="my-nonce">',
                 '(function(d,w){',
                 ATOMIC_GLOBAL,
                 '})(document,window);</script>',
