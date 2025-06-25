@@ -32,54 +32,30 @@ describe('Modules - JSX - getRuntime', () => {
         expect(runtime.name).toBe('BunRuntime');
     });
 
-    it('detects UWS runtime', async () => {
+    it('detects Node runtime', async () => {
         /* @ts-ignore */
         delete globalThis.WorkerGlobalScope;
-    
-        /* @ts-ignore */
-        vi.spyOn(process, 'versions', 'get').mockReturnValue({node: '22.0.0'});
-    
-        /* @ts-ignore */
-        vi.doMock('uWebSockets.js', () => ({}), {virtual: true});
-        vi.doMock('../../../lib/runtimes/UWS/Runtime.js', () => ({
-            UWSRuntime: vi.fn().mockImplementation(() => ({name: 'UWSRuntime'})),
-        }));
-    
-        /* eslint-disable-next-line no-shadow */
-        const {getRuntime} = await import('../../../lib/runtimes/Runtime');
-        const runtime = await getRuntime();
-        expect(runtime.name).toBe('UWSRuntime');
-    });    
 
-    it('detects Node runtime when UWS fails', async () => {
-        /* @ts-ignore */
-        delete globalThis.WorkerGlobalScope;
-    
         /* @ts-ignore */
         vi.spyOn(process, 'versions', 'get').mockReturnValue({node: '22.0.0'});
-    
-        vi.doMock('uWebSockets.js', () => {
-            throw new Error('Module not found');
-            /* @ts-ignore */
-        }, {virtual: true});
-    
+
         vi.doMock('../../../lib/runtimes/Node/Runtime.js', () => ({
             NodeRuntime: vi.fn().mockImplementation(() => ({name: 'NodeRuntime'})),
         }));
-    
+
         /* eslint-disable-next-line no-shadow */
         const {getRuntime} = await import('../../../lib/runtimes/Runtime');
         const runtime = await getRuntime();
         expect(runtime.name).toBe('NodeRuntime');
-    });    
+    });
 
     it('throws error when no runtime detected', async () => {
         /* @ts-ignore */
         delete globalThis.WorkerGlobalScope;
-        
+
         /* @ts-ignore */
         delete globalThis.Bun;
-        
+
         /* @ts-ignore */
         vi.spyOn(process, 'versions', 'get').mockReturnValue(undefined);
 

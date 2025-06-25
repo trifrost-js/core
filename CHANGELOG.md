@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ### Improved
 - **qol**: Void tags in the JSX renderer now includes  svg-spec tags `path`, `circle`, `ellipse`, `line`, `polygon`, `polyline`, `rect`, `stop`, `use`.
 
+### Deprecated
+- 🧹 **Removed: `UWSContext` (uWebSockets.js runtime)**. Back in 2024, `uWS` felt like a great addition to TriFrost — an "automatic upgrade" path for Node users who wanted raw speed with minimal changes. But the landscape has shifted: Node has steadily improved its performance, while `uWS` continues to demand non-standard stream handling, complicates internal abstractions and also has some quirks (such as the fact that they add a uWS header to every response and that uWS will not work on a large amount of systems when containerizing). As a result after long pondering and thinking, we've removed support for `uWS`. This eliminates boilerplate, makes TriFrost just that bit leaner while simplifying internal stream behavior and clearing the path for better DX and broader runtime support (👀 looking at you, Netlify and Vercel). **Don’t worry though**, if you're currently running TriFrost with uWS, the system will gracefully fall back to the Node runtime, no changes required from your end.
+
 ## [0.37.3] - 2025-06-23
 ### Improved
 - **feat**: Atomic Data Reactor will now run deep equality checks and clone into `_last` during tick to ensure unreferenced watching. (Take Note: the equality check is done using an adjusted version of [Valkyrie Utils: Equal](https://github.com/ValkyrieStudios/utils/blob/main/lib/equal.ts))

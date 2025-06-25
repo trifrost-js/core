@@ -11,7 +11,7 @@
 
 **TriFrost** is a blazing-fast, runtime-agnostic server framework built for the modern JavaScript ecosystem — from low-latency edge environments to traditional backend infrastructure.
 
-Whether you're deploying to Node.js, Bun, Cloudflare Workers, or uWebSockets.js, TriFrost provides a unified API and internal architecture that adapts to the runtime — without compromising on performance, developer experience, or clarity.
+Whether you're deploying to Node.js, Bun or Cloudflare Workers, TriFrost provides a unified API and internal architecture that adapts to the runtime — without compromising on performance, developer experience, or clarity.
 
 ---
 
@@ -19,7 +19,7 @@ Whether you're deploying to Node.js, Bun, Cloudflare Workers, or uWebSockets.js,
 TriFrost is the result of deep experience across frameworks, runtimes, and production systems. It combines:
 
 - 🧩 **Koa-like composability**: build with middleware that’s small, explicit, and powerful
-- ⚡ **uWS-level performance**: thanks to tight internal control over routing, context, and async flows
+- ⚡ **High performance**: thanks to tight internal control over routing, context, and async flows, how fast? [Take a look at a benchmark we did](https://www.trifrost.dev/news/blog/hello_world_benchmark_trifrost)
 - 🌐 **Edge-native philosophy**: designed from the ground up to support Cloudflare Workers, and other emerging runtimes
 - 🧠 **Observability-first design**: tracing is not an afterthought; it’s a core design concern with built-in support for structured telemetry
 

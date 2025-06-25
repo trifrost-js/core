@@ -18,16 +18,8 @@ export async function getRuntime (): Promise<TriFrostRuntime> {
 
     /* NodeJS */
     if (process?.versions?.node) {
-        try {
-            /* UWS */
-            await import('uWebSockets.js');
-            const {UWSRuntime} = await import('./UWS/Runtime.js');
-            return new UWSRuntime() as TriFrostRuntime;
-        } catch {
-            /* Node */
-            const {NodeRuntime} = await import('./Node/Runtime.js');
-            return new NodeRuntime() as TriFrostRuntime;
-        }
+        const {NodeRuntime} = await import('./Node/Runtime.js');
+        return new NodeRuntime() as TriFrostRuntime;
     }
 
     throw new Error('TriFrost: No supported runtime detected. Please specify a runtime.');

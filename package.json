@@ -114,7 +114,6 @@
         "eslint": "^9.29.0",
         "typescript": "^5.8.3",
         "typescript-eslint": "^8.34.1",
-        "uWebSockets.js": "https://github.com/uNetworking/uWebSockets.js/archive/refs/tags/v20.51.0.tar.gz",
         "vitest": "^3.2.4"
     }
 }
