@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.38.1] - 2025-06-25
+### Fixed
+- Fix an issue due to IOS Safari working differently regarding CustomEvent instantiation
+
 ## [0.38.0] - 2025-06-25
 This release introduces powerful improvements to `ctx.file()`, allowing direct, streaming responses from native, Node, and cloud storage sources — alongside foundational work to unify stream behavior and remove legacy friction.
 
