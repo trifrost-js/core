@@ -1,4 +1,3 @@
-import {isIntGt} from '@valkyriestudios/utils/number';
 import {Context} from '../../Context';
 import {type TriFrostRootLogger} from '../../modules/Logger';
 import {type TriFrostContextConfig} from '../../types/context';
@@ -35,6 +34,7 @@ export class NodeContext extends Context {
 
     /* Node Apis */
     #node:{
+        Readable: typeof import('node:stream')['Readable'];
         statSync: typeof import('node:fs')['statSync'];
         createReadStream: typeof import('node:fs')['createReadStream'];
         pipeline: typeof import('node:stream/promises')['pipeline'];
@@ -50,6 +50,7 @@ export class NodeContext extends Context {
         cfg:TriFrostContextConfig,
         logger:TriFrostRootLogger,
         nodeApis: {
+            Readable: typeof import('node:stream')['Readable'];
             statSync: typeof import('node:fs')['statSync'];
             createReadStream: typeof import('node:fs')['createReadStream'];
             pipeline: typeof import('node:stream/promises')['pipeline'];
@@ -109,18 +110,38 @@ export class NodeContext extends Context {
     /**
      * Stream a response from a read stream
      *
-     * @param {NonNullable<Awaited<ReturnType<typeof this.getStream>>>['stream']} stream - Stream to respond with
+     * @param {unknown} stream - Stream to respond with
      * @param {number|null} size - Size of the stream
      */
-    stream (stream:NonNullable<Awaited<ReturnType<typeof this.getStream>>>['stream'], size: number|null = null) {
+    protected stream (stream:unknown, size: number|null = null) {
         /* If already locked do nothing */
         if (this.isLocked) return;
 
-        /* Lock the context to ensure no other responding can happen as we stream */
-        this.is_done = true;
+        /* Coerce to a pipe-compatible Node Readable if needed */
+        if (typeof (stream as any)?.pipe !== 'function') {
+            if (stream instanceof ReadableStream) {
+                const reader = stream.getReader();
+                stream = new this.#node.Readable({
+                    async read () {
+                        const {value, done} = await reader.read();
+                        if (done) return this.push(null);
+                        this.push(value);
+                    },
+                });
+            } else if (
+                typeof stream === 'string' ||
+                stream instanceof Uint8Array ||
+                stream instanceof ArrayBuffer ||
+                stream instanceof Blob
+            ) {
+                stream = this.#node.Readable.from(stream as any);
+            } else {
+                const type = Object.prototype.toString.call(stream);
+                throw new Error(`NodeContext@stream: Unsupported stream type (${type})`);
+            }
+        }
 
-        /* Add content-length to headers */
-        if (isIntGt(size, 0)) this.res_headers['content-length'] = '' + size;
+        super.stream(stream, size);
 
         /* Write headers */
         this.#node_res.writeHead(
@@ -134,10 +155,13 @@ export class NodeContext extends Context {
         switch (this.method) {
             case HttpMethods.HEAD:
                 this.#node_res.end();
-                stream.destroy?.();
+                (stream as import('node:stream').Readable).destroy?.();
                 break;
             default: {
-                this.#node.pipeline(stream, this.#node_res as unknown as NodeJS.WritableStream).catch(err => {
+                this.#node.pipeline(
+                    (stream as import('node:stream').Readable),
+                    this.#node_res as unknown as NodeJS.WritableStream
+                ).catch(err => {
                     switch (err.code)  {
                         case 'ERR_STREAM_PREMATURE_CLOSE': /* Stream closed by client (eg: browser refresh) */
                         case 'ERR_STREAM_DESTROYED': /* Stream destroyed manually */

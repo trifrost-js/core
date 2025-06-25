@@ -41,12 +41,14 @@ export class NodeRuntime implements TriFrostRuntime {
     }
 
     async boot (opts:TriFrostRuntimeBootOptions):Promise<void> {
+        let Readable:typeof import('node:stream')['Readable'];
         let createServer: typeof import('node:http')['createServer'];
         let statSync:typeof import('node:fs')['statSync'];
         let createReadStream:typeof import('node:fs')['createReadStream'];
         let pipeline: typeof import('node:stream/promises')['pipeline'];
 
         try {
+            ({Readable} = await import('node:stream'));
             ({createServer} = await import('node:http'));
             ({statSync, createReadStream} = await import('node:fs'));
             ({pipeline} = await import('node:stream/promises'));
@@ -72,7 +74,7 @@ export class NodeRuntime implements TriFrostRuntime {
             this.#logger = opts.logger;
 
             /* Specific APIs used by the context */
-            const apis = {statSync, createReadStream, pipeline};
+            const apis = {statSync, createReadStream, pipeline, Readable};
 
             /**
              * Context config
