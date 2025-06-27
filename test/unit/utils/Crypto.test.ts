@@ -1,6 +1,106 @@
 import {describe, it, expect} from 'vitest';
-import {b64url, b64urlDecode, utf8Encode, utf8Decode, importKey, ALGOS} from '../../../lib/utils/Crypto';
+import {b64url, b64urlDecode, utf8Encode, utf8Decode, importKey, ALGOS, SupportedAlgorithms} from '../../../lib/utils/Crypto';
 import CONSTANTS from '../../constants';
+
+const SECRET = 'my-super-secret';
+const RSA_PRIVATE = `-----BEGIN PRIVATE KEY-----
+MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDGSO918YlG1cG+
+3TcJk76+sFpLH2ww6rqpz0nCrB+TAm4lybFagS6iChMsFSG02L08VuPJqyj35isL
+ip20i1knBpFASBNtd2nVD3KyfwuGtCWHsLOPj0Dk25Y/aNuPIoxeVkiI9acBykDP
+qPQqXFERFnKUwGqJAk0r+rQCkmYX+45VQSz71eTnB3fvs3ZMDyik0612f7zWYoVy
+uaLfkF7lXgEV2wWDJoomU7ygX9/VUWpQL5ni3+59r991hMnSgaPKUarhokTjzQ+k
+EnGP7aLdWLcrr5Nd4mUmAxMrjIrP5QwC6mjOn06xxEWqpppYGVy0Xk5mMnitUAdI
+4rgyYxdZAgMBAAECggEACUAm19BMcL8ROmfUpQA9EmVk2QNex0t0KO7wSIJCONgQ
+rneh7BCBzfJ9YX2c5HSGI5YEK4juMN6OnIu7fsxPfPgb961FJsK+7784QSaXMZIe
+/B0cy3JJ+0NZV5z7PUrF1LLe0HDxeS5n5qhBt+Y1q//pmZH+hmTSl94q3sHYvH6d
+ZyjcagBXwchKjLIpK9fDhzk4qlow9ZQoJvopDYEQB1ebONr0QcoVPEeMEt/p8qE+
+wfkG4W5nf5XXsinMDDcZ0iJdRNIhiROIQ67C3z4sqh93IjYNIby5mm2c/Td/rxdk
+VCnNuvBScv3+rMCldtm6T5zFUNEmwef2QHnUuohYFwKBgQDli+1ZWxLfp3Kd4jLZ
+tjWtOGlF/WERKAnp0he2jVKxQ8WljycUUNA03T83MzM3WACKioh+wzddYgc7OhRO
+JqtMpdIfyrnaaOGRzdNd9KmJyMGmqJgU3Mq9k7P2uCFqaOn2gTLm2XQZ/DVKO/XS
+LBhq2df0grydT+YyBTWMX7ry4wKBgQDdIro4cttn3r7QV2ANaMRksTg33gZSRzmG
+eYwGjm6dZVdWQSbO7mepsgKdlrRwWIr9uojvILkb7kqMiVlwqO+qTqPZBnauyQhu
+35R5oR+EL6pXqqNVfrfXM0JOvntrioRnzqb67NVaBpzIi+1B9I8vneYEWjtofAoo
+9MwXfP8VkwKBgHmGQvnzhWJyu/NqNZGdLX2vR8yOAD2c/OKVH4i9+PFv98tWplHT
+Fudl2nnW2V6LcH3oKasynrUJmNp6PRXC0x2ZDE1Yflxq+kC+vxAW30raxer9hsZE
+vfDvqW8MvGQhdvvSGqispxK6u1u5ssK6JZMsEXCZZlHCYxRIPbk7VTYRAoGAQNCx
+9mOr7Xj7QsOpcqS3k6/iA3X/MlSQBttPcIiE4XtXqv9zqYl1NubnH1uRzbAWJSJs
+inJz7zzb+u8zGPNbM/bSzYS4eqiP4TeFJFVWkH8MFZ/9Oczng5sRn1TzheTWxDps
+9PU/36A6igmBZCiTY2iLh9EOwqRAshp2S5gmiCMCgYAwp2MI8Dq+lsVXXZ7RfMYX
+NoixmPFyUBdu7l7ve4ILmaYOX7f6b8mqqMaK1SKDEcFtegvJe7D5S40GWGZv0Mzh
+PZEQcNQ0x5ew4t2DSyf/gWi5z34NedUDILHHApNH3KoZJYqqaZ4Rl1oTpBaxLHL1
+Kf2cxdEQt7edXE8/yGjneQ==
+-----END PRIVATE KEY-----
+`;
+
+const RSA_PUBLIC = `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxkjvdfGJRtXBvt03CZO+
+vrBaSx9sMOq6qc9JwqwfkwJuJcmxWoEuogoTLBUhtNi9PFbjyaso9+YrC4qdtItZ
+JwaRQEgTbXdp1Q9ysn8LhrQlh7Czj49A5NuWP2jbjyKMXlZIiPWnAcpAz6j0KlxR
+ERZylMBqiQJNK/q0ApJmF/uOVUEs+9Xk5wd377N2TA8opNOtdn+81mKFcrmi35Be
+5V4BFdsFgyaKJlO8oF/f1VFqUC+Z4t/ufa/fdYTJ0oGjylGq4aJE480PpBJxj+2i
+3Vi3K6+TXeJlJgMTK4yKz+UMAupozp9OscRFqqaaWBlctF5OZjJ4rVAHSOK4MmMX
+WQIDAQAB
+-----END PUBLIC KEY-----
+`;
+
+const ES256_PRIVATE = `-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgmqc4cf7bQOzFTmA5
+YNhzMXiHetbVawtBKG8uHMqV40KhRANCAARxw33S5ZJe30VkV68Fkosn08KFzJd1
+ac879AIxJ5wALA1rCoueDQUh0aH9xh2Pw9e59EzfuAysKK+FBeH36FPf
+-----END PRIVATE KEY-----
+`;
+
+const ES256_PUBLIC = `-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEccN90uWSXt9FZFevBZKLJ9PChcyX
+dWnPO/QCMSecACwNawqLng0FIdGh/cYdj8PXufRM37gMrCivhQXh9+hT3w==
+-----END PUBLIC KEY-----
+`;
+
+const ES384_PRIVATE = `-----BEGIN PRIVATE KEY-----
+MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDAETAzXi8ol30FuQk4G
+upDbO62YkcHbh3PusHr+ROFRIAU9VwrKDlKrs5X9KSKc/vGhZANiAAT49uI0cSv6
+i42MCpmNJwoC8gGrWIaBC292cfgNQB5yD7E2s3eOy2RpPFKDT6/dSCaR4fsEqo+X
+FSCaSAfvxsn7GAuhc4Y5M49wTj+p+IG+28gnLKgsUh68o8iFtbxZ//k=
+-----END PRIVATE KEY-----
+`;
+
+const ES384_PUBLIC = `-----BEGIN PUBLIC KEY-----
+MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE+PbiNHEr+ouNjAqZjScKAvIBq1iGgQtv
+dnH4DUAecg+xNrN3jstkaTxSg0+v3UgmkeH7BKqPlxUgmkgH78bJ+xgLoXOGOTOP
+cE4/qfiBvtvIJyyoLFIevKPIhbW8Wf/5
+-----END PUBLIC KEY-----
+`;
+
+const ES512_PRIVATE = `-----BEGIN PRIVATE KEY-----
+MIHuAgEAMBAGByqGSM49AgEGBSuBBAAjBIHWMIHTAgEBBEIAUXz6G215Wvpk0RWU
+rI9ryvYibHsWm//ZK6VSzcw3DqtaXh91TLl/B7qOZO/52oOt/RROn9v/JZG3cmwx
+55d9GX2hgYkDgYYABAFo0zfU6a2yFeZsbGQIk2rKrWhb9T9J9kunrKJ1lwbMlUlA
+hJ7celpE3ugjP4Br4mtAsb3KdVTjBTgVRTNzheOwqAE11qYv5Ordu0aWNDukmk3R
+4eiHfIgvz0KK7MiIo5c+ektKngIfv2ACAJOGm3gqcMQCvNHg1GfmurXnRBjlnM4H
+Iw==
+-----END PRIVATE KEY-----
+`;
+
+const ES512_PUBLIC = `-----BEGIN PUBLIC KEY-----
+MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBaNM31OmtshXmbGxkCJNqyq1oW/U/
+SfZLp6yidZcGzJVJQISe3HpaRN7oIz+Aa+JrQLG9ynVU4wU4FUUzc4XjsKgBNdam
+L+Tq3btGljQ7pJpN0eHoh3yIL89CiuzIiKOXPnpLSp4CH79gAgCThpt4KnDEArzR
+4NRn5rq150QY5ZzOByM=
+-----END PUBLIC KEY-----
+`;
+
+const ALGOS_TO_TEST: Partial<Record<SupportedAlgorithms, {private: string; public: string} | string>> = {
+    HS256: SECRET,
+    HS384: SECRET,
+    HS512: SECRET,
+    RS256: {private: RSA_PRIVATE, public: RSA_PUBLIC},
+    RS384: {private: RSA_PRIVATE, public: RSA_PUBLIC},
+    RS512: {private: RSA_PRIVATE, public: RSA_PUBLIC},
+    ES256: {private: ES256_PRIVATE, public: ES256_PUBLIC},
+    ES384: {private: ES384_PRIVATE, public: ES384_PUBLIC},
+    ES512: {private: ES512_PRIVATE, public: ES512_PUBLIC},
+};
 
 describe('Utils - Crypto', () => {
     describe('b64url', () => {
@@ -361,7 +461,8 @@ describe('Utils - Crypto', () => {
                 {kty: 'oct', k: btoa('supersecret'), alg: 'HS256', ext: true},
                 {kty: 'oct', k: btoa(String.fromCharCode(...utf8Encode('🔥🔥🔥'))), alg: 'HS384', ext: true},
             ]) {
-                const key = await importKey(jwk, ALGOS.HS256, ['sign']);
+                const algo = ALGOS[jwk.alg as keyof typeof ALGOS];
+                const key = await importKey(jwk, algo, ['sign']);
                 expect(key).toBeInstanceOf(CryptoKey);
             }
         });
@@ -381,5 +482,26 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMI...
 -----END PUBLIC KEY-----`.trim();
             await expect(importKey(pem, ALGOS.RS256, ['verify'])).rejects.toThrow(/Crypto@importKey: Failed to import key/);
         });
+
+        for (const [alg, keys] of Object.entries(ALGOS_TO_TEST)) {
+            const config = ALGOS[alg as SupportedAlgorithms];
+
+            describe(`Imports for ${alg}`, () => {
+                it(`imports private key (sign)`, async () => {
+                    const inputKey = typeof keys === 'string' ? keys : keys!.private;
+                    const usages: KeyUsage[] = ['sign'];
+                    const imported = await importKey(inputKey, config!, usages);
+                    expect(imported).toBeInstanceOf(CryptoKey);
+                });
+
+                if (typeof keys !== 'string') {
+                    it(`imports public key (verify)`, async () => {
+                        const usages: KeyUsage[] = ['verify'];
+                        const imported = await importKey(keys!.public, config!, usages);
+                        expect(imported).toBeInstanceOf(CryptoKey);
+                    });
+                }
+            });
+        }
     });
 });

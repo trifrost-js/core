@@ -108,7 +108,7 @@ export function utf8Decode(data: Uint8Array): string {
     try {
         return decoder.decode(data);
     } catch (err) {
-        throw new Error(`Crypto@utf8Decode: ${String((err as Error).message || err)}`);
+        throw new Error(`Crypto@utf8Decode: ${String((err as Error).message)}`);
     }
 }
 
@@ -135,7 +135,7 @@ export async function importKey(
     /* Generate an id for the key */
     const id = [
         algo.name,
-        (algo as any).hash?.name || '',
+        (algo as any).hash!.name,
         (algo as any).namedCurve || '',
         usages.join('.'),
         djb2Hash(typeof key === 'string' ? key : JSON.stringify(key)),
