@@ -3,7 +3,6 @@ import {djb2Hash} from './Generic';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder('utf-8', {fatal: true});
-const RGX_PEM = /-----BEGIN (PRIVATE|PUBLIC) KEY-----[\s\S]+?-----END \1 KEY-----/;
 const RGX_PEMKEY_HEADER = /-----[A-Z ]+-----/g;
 const RGX_PEMLINE = /\r\n?/g;
 const RGX_KEY_SPACES = /\s+/g;
@@ -151,8 +150,9 @@ export async function importKey(
             key_cache.set(id, imported);
             return imported;
         } else if (typeof key === 'string') {
+            const start_trimmed = key.trimStart();
             /* WebCrypto spec defines HMAC keys as raw binary data. as such no pem wrapped */
-            if (algo.name !== 'HMAC' && RGX_PEM.test(key)) {
+            if (algo.name !== 'HMAC' && (start_trimmed.startsWith('-----BEGIN PRIVATE KEY-----') || start_trimmed.startsWith('-----BEGIN PUBLIC KEY-----'))) {
                 const raw = key
                     .replace(RGX_PEMKEY_HEADER, '') /* Normalize pem key header removal */
                     .replace(RGX_KEY_SPACES, '') /* Normalize spaces */
