@@ -4,48 +4,52 @@ import CONSTANTS from '../../constants';
 
 describe('Utils - Crypto', () => {
     describe('b64url', () => {
-        describe('b64url', () => {
-            it('Encodes ASCII strings correctly', () => {
-                const input = utf8Encode('Hello World');
-                const result = b64url(input);
-                expect(result).toBe('SGVsbG8gV29ybGQ');
-            });
+        it('Encodes ASCII strings correctly', () => {
+            const input = utf8Encode('Hello World');
+            const result = b64url(input);
+            expect(result).toBe('SGVsbG8gV29ybGQ');
+        });
 
-            it('Encodes empty input to empty string', () => {
-                const result = b64url(new Uint8Array());
-                expect(result).toBe('');
-            });
+        it('Encodes empty input to empty string', () => {
+            const result = b64url(new Uint8Array());
+            expect(result).toBe('');
+        });
 
-            it('Encodes binary data', () => {
-                const input = new Uint8Array(256).map((_, i) => i);
-                const result = b64url(input);
-                expect(result.startsWith('AAECAwQFBgcICQoLDA0ODxAREhM')).toBe(true);
-                expect(result).not.toMatch(/[=]/); /* Should not include padding */
-            });
+        it('Encodes binary data', () => {
+            const input = new Uint8Array(256).map((_, i) => i);
+            const result = b64url(input);
+            expect(result.startsWith('AAECAwQFBgcICQoLDA0ODxAREhM')).toBe(true);
+            expect(result).not.toMatch(/[=]/); /* Should not include padding */
+        });
 
-            it('Removes padding correctly with one padding char', () => {
-                const input = utf8Encode('any carnal pleasur'); /* Base64 with one '=' */
-                const result = b64url(input);
-                expect(result).toBe('YW55IGNhcm5hbCBwbGVhc3Vy');
-            });
+        it('Removes padding correctly with one padding char', () => {
+            const input = utf8Encode('any carnal pleasur'); /* Base64 with one '=' */
+            const result = b64url(input);
+            expect(result).toBe('YW55IGNhcm5hbCBwbGVhc3Vy');
+        });
 
-            it('Removes padding correctly with two padding chars', () => {
-                const input = utf8Encode('any carnal pleasure.');
-                const result = b64url(input);
-                expect(result).toBe('YW55IGNhcm5hbCBwbGVhc3VyZS4');
-            });
+        it('Removes padding correctly with two padding chars', () => {
+            const input = utf8Encode('any carnal pleasure.');
+            const result = b64url(input);
+            expect(result).toBe('YW55IGNhcm5hbCBwbGVhc3VyZS4');
+        });
 
-            it('Encodes multibyte UTF-8 (emoji)', () => {
-                const input = utf8Encode('🔥🚀💻');
-                const result = b64url(input);
-                expect(result).toBe('8J-UpfCfmoDwn5K7');
-            });
+        it('Encodes multibyte UTF-8 (emoji)', () => {
+            const input = utf8Encode('🔥🚀💻');
+            const result = b64url(input);
+            expect(result).toBe('8J-UpfCfmoDwn5K7');
+        });
 
-            it('Throws on non-Uint8Array input', () => {
-                for (const el of [...CONSTANTS.NOT_ARRAY]) {
-                    expect(() => b64url(el as any)).toThrow('Crypto@b64url: Expected Uint8Array');
-                }
-            });
+        it('Encodes high-value binary data correctly', () => {
+            const input = new Uint8Array([255, 254, 253, 252]);
+            const encoded = b64url(input);
+            expect(encoded).toBe('__79_A');
+        });
+
+        it('Throws on non-Uint8Array input', () => {
+            for (const el of [...CONSTANTS.NOT_ARRAY]) {
+                expect(() => b64url(el as any)).toThrow('Crypto@b64url: Expected Uint8Array');
+            }
         });
     });
 
@@ -83,6 +87,18 @@ describe('Utils - Crypto', () => {
             expect(b64urlDecode('')).toEqual(new Uint8Array());
         });
 
+        it('Decodes back to high-value binary data', () => {
+            const encoded = '__79_A';
+            const decoded = b64urlDecode(encoded);
+            expect(decoded).toEqual(new Uint8Array([255, 254, 253, 252]));
+        });
+
+        it('Handles no padding edge case with exact 4-char blocks', () => {
+            const input = b64url(utf8Encode('test'));
+            const decoded = b64urlDecode(input);
+            expect(utf8Decode(decoded)).toBe('test');
+        });
+
         it('Throws for invalid base64 characters', () => {
             expect(() => b64urlDecode('!!bad--base64')).toThrow(/Invalid base64 length/);
         });
@@ -113,6 +129,37 @@ describe('Utils - Crypto', () => {
             const decoded = b64urlDecode(base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, ''));
             expect(new TextDecoder().decode(decoded)).toBe('TriFrost');
         });
+
+        it('Throws on invalid base64 characters or malformed input', () => {
+            for (const el of [
+                '-65kBcxWPeNN9&kBcxWPeNN9-0vrjfrq3X1AEzNGWI=',
+                'e*==',
+                'F4ypFWF2eW1RulpdMD0e4FwOa0Rip_tk1^1nYOV2uw8H0=',
+                'uCxlPBApf1JseNUcOuLb4PV0j84cWGx0pU0Pe8e#gpXXJBsBz-ne1FRmrHeoJ-RCUy4_EM5w',
+                'abcde',
+            ]) {
+                expect(() => b64urlDecode(el)).toThrow(/Crypto@b64urlDecode:/);
+            }
+        });
+
+        it('Successfully decodes valid fuzzed base64url input', () => {
+            for (const el of [
+                'lXd_mXR-T-B5uDIhFD8pPhKZQ1n940ZVit0DkdChGmp9uk_GtSBVB8SlKDcJ35j15fEV81Ao2AasIVgbmw',
+                'ocwDsM4Z0wMiXvS72W_tfY2lhqhdnqN1vvUghhjXanWwdmO7tCdpez8x34SkjM5f',
+                'qjgDe0b2WPurqv8W6jONTByI3OMIrUslgzEFL7EiC_DCFjQ',
+                '2q9osimnKB0',
+                'UCICxLoKCNZNYDp-CQ',
+                'e7g7qFJABrdNXccELCwBFimE2DwItT_Dk3lB1b_qsL9cNSPcyNMuYA',
+                'e9XTLQ1m1hRfmUCgu4c_OU_M5FFQYh5csDI7AqI',
+                'mOhV2_E7q87j_zlf6i2Y1Q',
+                'goIDxWSTfJltJg9SrYpXvCT6jt8OoNtlBAlh7p7c2qe9',
+                'ArwMQ7KddxRWM6zDPYZAoaZYwoHoVTHLhPAQfZYxQ31Q_kQTpEUo5LF4WflAmA',
+            ]) {
+                const decoded = b64urlDecode(el);
+                expect(decoded).toBeInstanceOf(Uint8Array);
+                expect(decoded.length).toBeGreaterThan(0);
+            }
+        });
     });
 
     describe('utf8Encode', () => {
@@ -142,6 +189,14 @@ describe('Utils - Crypto', () => {
             const encoded = utf8Encode(input);
             expect(encoded).toBeInstanceOf(Uint8Array);
             expect(utf8Decode(encoded)).toBe(input);
+        });
+
+        it('Handles valid UTF-8 strings including edge cases', () => {
+            for (const str of ['a', '🚀', 'áéíóúüñ¿¡', '👨‍👩‍👧‍👦', '𠜎', '\u{10FFFF}', 'a'.repeat(10_000)]) {
+                const encoded = utf8Encode(str);
+                expect(encoded).toBeInstanceOf(Uint8Array);
+                expect(utf8Decode(encoded)).toBe(str);
+            }
         });
 
         it('Throws if input is not a string', () => {
@@ -186,6 +241,30 @@ describe('Utils - Crypto', () => {
             const truncated = full.slice(0, 2); /* invalid UTF-8 */
             expect(() => utf8Decode(truncated)).toThrow(); /* TextDecoder should throw */
         });
+
+        it('Roundtrips mixed script content (e.g. emoji + CJK + Arabic)', () => {
+            const input = 'Hello 🚀 你好 السلام';
+            const encoded = utf8Encode(input);
+            const decoded = utf8Decode(encoded);
+            expect(decoded).toBe(input);
+        });
+
+        it('Throws on partial high surrogate without low surrogate', () => {
+            const input = new Uint8Array([0xed, 0xa0, 0x80]); /* Invalid UTF-8 */
+            expect(() => utf8Decode(input)).toThrow();
+        });
+
+        it('Throws on invalid UTF-8 byte sequences', () => {
+            for (const input of [
+                new Uint8Array([0xc0]) /* Overlong encoding */,
+                new Uint8Array([0xe0, 0x80]) /* Truncated multibyte */,
+                new Uint8Array([0xf0, 0x80, 0x80]) /* Truncated 4-byte */,
+                new Uint8Array([0xff, 0xfe, 0xfd]) /* Invalid bytes */,
+                new Uint8Array([0b11000000]) /* Incomplete 2-byte */,
+            ]) {
+                expect(() => utf8Decode(input)).toThrow(/Crypto@utf8Decode/);
+            }
+        });
     });
 
     describe('importKey', () => {
@@ -217,6 +296,29 @@ describe('Utils - Crypto', () => {
             expect(key).toBeInstanceOf(CryptoKey);
         });
 
+        it('Caches imported keys separately for different algos with same secret', async () => {
+            const key1 = await importKey('secret', ALGOS.HS256, ['sign']);
+            const key2 = await importKey('secret', ALGOS.HS512, ['sign']);
+            expect(key1).not.toBe(key2);
+        });
+
+        it('Supports identical input with different usages', async () => {
+            const key1 = await importKey('secret', ALGOS.HS256, ['sign']);
+            const key2 = await importKey('secret', ALGOS.HS256, ['verify']);
+            expect(key1).not.toBe(key2);
+        });
+
+        it('Does not cache malformed PEM input', async () => {
+            await expect(() =>
+                importKey('-----BEGIN PRIVATE KEY-----\nINVALIDDATA\n-----END PRIVATE KEY-----', ALGOS.RS256, ['sign']),
+            ).rejects.toThrow(/Crypto@importKey: Failed to import key/);
+        });
+
+        it('Handles JWK input with missing kty field gracefully', async () => {
+            const badJWK = {k: btoa('secret'), alg: 'HS256', ext: true};
+            await expect(() => importKey(badJWK, ALGOS.HS256, ['sign'])).rejects.toThrow('Crypto@importKey: Unsupported key input type');
+        });
+
         it('Throws on invalid algorithm', async () => {
             /* @ts-expect-error This is what we're testing */
             await expect(() => importKey('mysecret', {}, ['sign'])).rejects.toThrow('Crypto@importKey: Invalid algorithm');
@@ -232,7 +334,36 @@ describe('Utils - Crypto', () => {
         });
 
         it('Throws on empty PEM body', async () => {
-            await expect(() => importKey('-----PRIVATE KEY-----\n\n', ALGOS.RS256, ['sign'])).rejects.toThrow('Crypto@importKey: Failed to import key (Unable to import RSA key with format raw)');
+            await expect(() => importKey('-----PRIVATE KEY-----\n\n', ALGOS.RS256, ['sign'])).rejects.toThrow(
+                'Crypto@importKey: Failed to import key (Unable to import RSA key with format raw)',
+            );
+        });
+
+        it('throws on invalid PEM formats', async () => {
+            for (const pem of [
+                '-----BEGIN PUBLIC KEY-----\n\n-----END PUBLIC KEY-----',
+                '-----BEGIN PRIVATE KEY-----\n!@#$%^&*\n-----END PRIVATE KEY-----',
+                '-----BEGIN X509 CERTIFICATE-----\nINVALID\n-----END X509 CERTIFICATE-----',
+            ]) {
+                await expect(() => importKey(pem, ALGOS.RS256, ['verify'])).rejects.toThrow(/Crypto@importKey/);
+            }
+        });
+
+        it('handles valid raw string keys', async () => {
+            for (const secret of ['abc', '🔥🔥🔥', '1234567890123456789012345678901234567890']) {
+                const key = await importKey(secret, ALGOS.HS256, ['sign']);
+                expect(key).toBeInstanceOf(CryptoKey);
+            }
+        });
+
+        it('handles fuzzed JWK objects', async () => {
+            for (const jwk of [
+                {kty: 'oct', k: btoa('supersecret'), alg: 'HS256', ext: true},
+                {kty: 'oct', k: btoa(String.fromCharCode(...utf8Encode('🔥🔥🔥'))), alg: 'HS384', ext: true},
+            ]) {
+                const key = await importKey(jwk, ALGOS.HS256, ['sign']);
+                expect(key).toBeInstanceOf(CryptoKey);
+            }
         });
 
         it('Imports PKCS8 PEM private key', async () => {

@@ -3,8 +3,9 @@ import {djb2Hash} from './Generic';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder('utf-8', {fatal: true});
-const RGX_PEM = /-----BEGIN (PRIVATE|PUBLIC) KEY-----/;
+const RGX_PEM = /-----BEGIN (PRIVATE|PUBLIC) KEY-----[\s\S]+?-----END \1 KEY-----/;
 const RGX_PEMKEY_HEADER = /-----[A-Z ]+-----/g;
+const RGX_PEMLINE = /\r\n?/g;
 const RGX_KEY_SPACES = /\s+/g;
 
 const key_cache = new LRU<CryptoKey>({max_size: 100});
@@ -14,6 +15,7 @@ const B64URL_LOOKUP: Record<string, string> = {
     '/': '_',
     '=': '',
 };
+const B64PADS = ['', null, '==', '='];
 
 const RGX_B64URL = /[+/=]/g;
 
@@ -65,27 +67,12 @@ export function b64url(data: Uint8Array): string {
  */
 export function b64urlDecode(input: string): Uint8Array {
     if (typeof input !== 'string') throw new TypeError('Crypto@b64urlDecode: Expected string input');
-    const len = input.length;
-    const rem = len % 4;
 
-    /* Only pad if necessary (0/2/3 remainder) */
-    let padded;
-    switch (rem) {
-        case 2:
-            padded = input + '==';
-            break;
-        case 3:
-            padded = input + '=';
-            break;
-        case 0:
-            padded = input;
-            break;
-        default:
-            throw new Error('Crypto@b64urlDecode: Invalid base64 length');
-    }
+    const rem = input.length % 4;
+    if (rem === 1) throw new Error('Crypto@b64urlDecode: Invalid base64 length');
 
-    /* Replace in a single regex callback for perf */
-    const b64 = padded.replace(/[-_]/g, c => (c === '-' ? '+' : '/'));
+    /* Specific padding based on remainder and then run repl */
+    const b64 = (input + B64PADS[rem]).replace(/[-_]/g, c => (c === '-' ? '+' : '/'));
 
     try {
         const bin = atob(b64);
@@ -118,7 +105,11 @@ export function utf8Encode(str: string): Uint8Array {
  */
 export function utf8Decode(data: Uint8Array): string {
     if (!(data instanceof Uint8Array)) throw new TypeError('Crypto@utf8Decode: Expected Uint8Array');
-    return decoder.decode(data);
+    try {
+        return decoder.decode(data);
+    } catch (err) {
+        throw new Error(`Crypto@utf8Decode: ${String((err as Error).message || err)}`);
+    }
 }
 
 /**
@@ -155,18 +146,20 @@ export async function importKey(
     if (cached) return cached;
 
     try {
-        if (typeof key === 'object') {
+        if (typeof key === 'object' && key.kty) {
             const imported = await crypto.subtle.importKey('jwk', key, algo, false, usages);
             key_cache.set(id, imported);
             return imported;
         } else if (typeof key === 'string') {
             /* WebCrypto spec defines HMAC keys as raw binary data. as such no pem wrapped */
             if (algo.name !== 'HMAC' && RGX_PEM.test(key)) {
-                const raw = key.replace(RGX_PEMKEY_HEADER, '').replace(RGX_KEY_SPACES, '');
+                const raw = key
+                    .replace(RGX_PEMKEY_HEADER, '') /* Normalize pem key header removal */
+                    .replace(RGX_KEY_SPACES, '') /* Normalize spaces */
+                    .replace(RGX_PEMLINE, '\n'); /* Normalize line ending variations */
                 if (!raw) throw new Error('Crypto@importKey: Empty PEM body');
-                const data = b64urlDecode(raw);
                 const format = key.includes('PRIVATE') ? 'pkcs8' : 'spki';
-                const imported = await crypto.subtle.importKey(format, data, algo, false, usages);
+                const imported = await crypto.subtle.importKey(format, b64urlDecode(raw), algo, false, usages);
                 key_cache.set(id, imported);
                 return imported;
             } else {
