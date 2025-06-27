@@ -100,9 +100,9 @@ describe('Modules – JSX – style – Engine', () => {
         });
 
         it('Ignores rule if null or undefined', () => {
-            /* @ts-expect-error testing invalid input */
+            /* @ts-expect-error this is what we're testing */
             engine.register(undefined, 'tfnull', {});
-            /* @ts-expect-error testing invalid input */
+            /* @ts-expect-error this is what we're testing */
             engine.register(null, 'tfnull', {});
             expect(engine.flush()).toBe('');
         });
@@ -347,9 +347,7 @@ describe('Modules – JSX – style – Engine', () => {
                 query: '@media (min-width: 800px)',
             });
             expect(engine.flush()).toBe(
-                ['<style>', '.tf13vslg{font-weight:bold}', '@media (min-width: 800px){.tf771neh{font-size:0.9rem}}', '</style>'].join(
-                    '',
-                ),
+                ['<style>', '.tf13vslg{font-weight:bold}', '@media (min-width: 800px){.tf771neh{font-size:0.9rem}}', '</style>'].join(''),
             );
             engine.reset();
             expect(engine.flush()).toBe('');

@@ -782,7 +782,7 @@ describe('Modules - JSX - style - use', () => {
                 createCss({
                     var: {},
                     theme: {
-                        /* @ts-expect-error Should be good */
+                        /* @ts-expect-error this is what we're testing */
                         bg: null,
                         text: {light: '#111', dark: '#eee'},
                     },
@@ -2104,9 +2104,7 @@ describe('Modules - JSX - style - use', () => {
                     },
                 });
                 expect(engine.inject(`${MARKER}<div class="${cls}">Headers</div>`)).toBe(
-                    ['<style>', '.tfaac61s *:is(h1, h2, h3){font-weight:bold}', '</style>', '<div class="tfaac61s">Headers</div>'].join(
-                        '',
-                    ),
+                    ['<style>', '.tfaac61s *:is(h1, h2, h3){font-weight:bold}', '</style>', '<div class="tfaac61s">Headers</div>'].join(''),
                 );
             });
 

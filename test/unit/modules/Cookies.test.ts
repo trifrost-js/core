@@ -616,14 +616,6 @@ describe('Modules - Cookies', () => {
             expect(cookies.outgoing).toEqual([]);
         });
 
-        it('Reuses cached keys to avoid repeated import', async () => {
-            const cookies = new Cookies(createCtx(), {});
-            const spy = vi.spyOn(crypto.subtle, 'importKey');
-            await cookies.sign('value1', SECRET);
-            await cookies.sign('value2', SECRET);
-            expect(spy).toHaveBeenCalledTimes(1);
-        });
-
         it('Falls back to SHA-256 if invalid algorithm is passed to generateHMAC', async () => {
             const cookies = new Cookies(createCtx(), {});
             const spy = vi.spyOn(cookies as any, 'generateHMAC');

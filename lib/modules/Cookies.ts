@@ -1,7 +1,7 @@
-import {LRU} from '@valkyriestudios/utils/caching';
 import {isDate, addUTC, diff} from '@valkyriestudios/utils/date';
 import {isNeString} from '@valkyriestudios/utils/string';
 import {type TriFrostContext} from '../types/context';
+import {importKey, utf8Encode} from '../utils/Crypto';
 
 export type TriFrostCookieOptions = {
     expires: Date;
@@ -49,12 +49,6 @@ export class Cookies {
 
     /* Incoming/Outgoing values (for usage in eg .all or .get) */
     #combined: Record<string, string> = {};
-
-    /* Scoped TextEncoder instance */
-    #encoder: TextEncoder = new TextEncoder();
-
-    /* HMAC Key cache */
-    #keyCache: LRU<CryptoKey> = new LRU({max_size: 50});
 
     constructor(ctx: TriFrostContext, config: Partial<TriFrostCookieOptions> = {}) {
         this.#ctx = ctx;
@@ -197,7 +191,7 @@ export class Cookies {
         secrets: string | (string | (TriFrostCookieSigningOptions & {val: string}))[],
         options: TriFrostCookieSigningOptions = {algorithm: 'SHA-256'},
     ) {
-        const idx = isNeString(signed) ? signed.lastIndexOf('.') : -1;
+        const idx = typeof signed === 'string' ? signed.lastIndexOf('.') : -1;
         if (idx === -1) return null;
 
         const val = signed.slice(0, idx);
@@ -284,20 +278,19 @@ export class Cookies {
      * @returns
      */
     private async generateHMAC(data: string, secret: string, options: TriFrostCookieSigningOptions) {
-        const algo = options?.algorithm in HMACAlgos ? options.algorithm : 'SHA-256';
-        const cacheKey = algo + ':' + secret;
+        try {
+            const algo = options?.algorithm in HMACAlgos ? options.algorithm : 'SHA-256';
+            const key = await importKey(secret, {name: 'HMAC', hash: {name: algo}}, ['sign']);
+            const sig_buf = await crypto.subtle.sign('HMAC', key, utf8Encode(String(data)));
+            const sig_arr = new Uint8Array(sig_buf);
 
-        /* Because key imports are relatively expensive we place them in a private LRU */
-        let key = this.#keyCache.get(cacheKey);
-        if (!key) {
-            key = await crypto.subtle.importKey('raw', this.#encoder.encode(secret), {name: 'HMAC', hash: {name: algo}}, false, ['sign']);
-            this.#keyCache.set(cacheKey, key);
+            let hex = '';
+            for (let i = 0; i < sig_arr.length; i++) {
+                hex += sig_arr[i].toString(16).padStart(2, '0');
+            }
+            return hex;
+        } catch {
+            return null;
         }
-
-        const sig_buf = await crypto.subtle.sign('HMAC', key, this.#encoder.encode(String(data)));
-        const sig_arr = new Uint8Array(sig_buf);
-        let hex = '';
-        for (let i = 0; i < sig_arr.length; i++) hex += sig_arr[i].toString(16).padStart(2, '0');
-        return hex;
     }
 }

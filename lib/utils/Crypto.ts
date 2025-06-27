@@ -3,8 +3,9 @@ import {djb2Hash} from './Generic';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder('utf-8', {fatal: true});
-const KEY_HEADER = /-----[A-Z ]+-----/g;
-const KEY_SPACES = /\s+/g;
+const RGX_PEM = /-----BEGIN (PRIVATE|PUBLIC) KEY-----/;
+const RGX_PEMKEY_HEADER = /-----[A-Z ]+-----/g;
+const RGX_KEY_SPACES = /\s+/g;
 
 const key_cache = new LRU<CryptoKey>({max_size: 100});
 
@@ -132,16 +133,22 @@ export function utf8Decode(data: Uint8Array): string {
  */
 export async function importKey(
     key: string | JsonWebKey | CryptoKey,
-    algorithm: SubtleCryptoImportKeyAlgorithm,
+    algo: SubtleCryptoImportKeyAlgorithm,
     usages: KeyUsage[],
 ): Promise<CryptoKey> {
-    if (!algorithm?.name) throw new TypeError('Crypto@importKey: Invalid algorithm provided');
+    if (!algo?.name) throw new TypeError('Crypto@importKey: Invalid algorithm provided');
     if (!Array.isArray(usages) || usages.length === 0) throw new TypeError('Crypto@importKey: Missing key usages');
 
     if (key instanceof CryptoKey) return key;
 
     /* Generate an id for the key */
-    const id = algorithm.name + ':' + usages.join('.') + ':' + djb2Hash(typeof key === 'string' ? key : JSON.stringify(key));
+    const id = [
+        algo.name,
+        (algo as any).hash?.name || '',
+        (algo as any).namedCurve || '',
+        usages.join('.'),
+        djb2Hash(typeof key === 'string' ? key : JSON.stringify(key)),
+    ].join(':');
 
     /* If cached, return cached version */
     const cached = key_cache.get(id);
@@ -149,29 +156,29 @@ export async function importKey(
 
     try {
         if (typeof key === 'object') {
-            const imported = await crypto.subtle.importKey('jwk', key, algorithm, false, usages);
+            const imported = await crypto.subtle.importKey('jwk', key, algo, false, usages);
             key_cache.set(id, imported);
             return imported;
+        } else if (typeof key === 'string') {
+            /* WebCrypto spec defines HMAC keys as raw binary data. as such no pem wrapped */
+            if (algo.name !== 'HMAC' && RGX_PEM.test(key)) {
+                const raw = key.replace(RGX_PEMKEY_HEADER, '').replace(RGX_KEY_SPACES, '');
+                if (!raw) throw new Error('Crypto@importKey: Empty PEM body');
+                const data = b64urlDecode(raw);
+                const format = key.includes('PRIVATE') ? 'pkcs8' : 'spki';
+                const imported = await crypto.subtle.importKey(format, data, algo, false, usages);
+                key_cache.set(id, imported);
+                return imported;
+            } else {
+                /* Treat as raw */
+                const imported = await crypto.subtle.importKey('raw', utf8Encode(key), algo, false, usages);
+                key_cache.set(id, imported);
+                return imported;
+            }
         }
 
-        if (typeof key === 'string') {
-            const raw = key.replace(KEY_HEADER, '').replace(KEY_SPACES, '');
-            if (!raw) throw new Error('importKey: Empty PEM body');
-
-            const data = b64urlDecode(raw);
-
-            let format: 'pkcs8' | 'spki' | 'raw';
-            if (key.includes('PRIVATE')) format = 'pkcs8';
-            else if (key.includes('PUBLIC')) format = 'spki';
-            else format = 'raw';
-
-            const imported = await crypto.subtle.importKey(format, format === 'raw' ? utf8Encode(key) : data, algorithm, false, usages);
-            key_cache.set(id, imported);
-            return imported;
-        }
-
-        throw new Error('importKey: Unsupported key input type');
+        throw new Error('Crypto@importKey: Unsupported key input type');
     } catch (err) {
-        throw new Error(`importKey: Failed to import key (${(err as Error).message})`);
+        throw new Error(`Crypto@importKey: Failed to import key (${(err as Error).message})`);
     }
 }

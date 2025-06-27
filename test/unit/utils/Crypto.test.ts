@@ -218,6 +218,7 @@ describe('Utils - Crypto', () => {
         });
 
         it('Throws on invalid algorithm', async () => {
+            /* @ts-expect-error This is what we're testing */
             await expect(() => importKey('mysecret', {}, ['sign'])).rejects.toThrow('Crypto@importKey: Invalid algorithm');
         });
 
@@ -227,11 +228,11 @@ describe('Utils - Crypto', () => {
 
         it('Throws on unknown key input type', async () => {
             /* @ts-expect-error on purpose */
-            await expect(() => importKey(123, ALGOS.HS256, ['sign'])).rejects.toThrow('importKey: Unsupported key input type');
+            await expect(() => importKey(123, ALGOS.HS256, ['sign'])).rejects.toThrow('Crypto@importKey: Unsupported key input type');
         });
 
         it('Throws on empty PEM body', async () => {
-            await expect(() => importKey('-----PRIVATE KEY-----\n\n', ALGOS.RS256, ['sign'])).rejects.toThrow('importKey: Empty PEM body');
+            await expect(() => importKey('-----PRIVATE KEY-----\n\n', ALGOS.RS256, ['sign'])).rejects.toThrow('Crypto@importKey: Failed to import key (Unable to import RSA key with format raw)');
         });
 
         it('Imports PKCS8 PEM private key', async () => {
@@ -239,7 +240,7 @@ describe('Utils - Crypto', () => {
 -----BEGIN PRIVATE KEY-----
 MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBK...
 -----END PRIVATE KEY-----`.trim();
-            await expect(importKey(pem, ALGOS.RS256, ['sign'])).rejects.toThrow(/importKey: Failed to import key/);
+            await expect(importKey(pem, ALGOS.RS256, ['sign'])).rejects.toThrow(/Crypto@importKey: Failed to import key/);
         });
 
         it('Imports SPKI PEM public key', async () => {
@@ -247,7 +248,7 @@ MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBK...
 -----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMI...
 -----END PUBLIC KEY-----`.trim();
-            await expect(importKey(pem, ALGOS.RS256, ['verify'])).rejects.toThrow(/importKey: Failed to import key/);
+            await expect(importKey(pem, ALGOS.RS256, ['verify'])).rejects.toThrow(/Crypto@importKey: Failed to import key/);
         });
     });
 });

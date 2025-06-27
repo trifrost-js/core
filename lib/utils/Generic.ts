@@ -77,7 +77,7 @@ export function hexId(lng: number): string {
  *
  * @param {string} val - Value to hash
  */
-export function djb2Hash (val:string) {
+export function djb2Hash(val: string) {
     let h = 5381;
     let i = val.length;
     while (i) h = (h * 33) ^ val.charCodeAt(--i);
