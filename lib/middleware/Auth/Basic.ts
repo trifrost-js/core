@@ -1,23 +1,17 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-
 import {isNeString} from '@valkyriestudios/utils/string';
-import {
-    Sym_TriFrostDescription,
-    Sym_TriFrostFingerPrint,
-    Sym_TriFrostName,
-} from '../../types/constants';
+import {Sym_TriFrostDescription, Sym_TriFrostFingerPrint, Sym_TriFrostName} from '../../types/constants';
 import {type TriFrostContext} from '../../types/context';
 import {Sym_TriFrostMiddlewareAuth} from './types';
 
 /* Specific symbol attached to auth mware to identify them by */
 export const Sym_TriFrostMiddlewareBasicAuth = Symbol('TriFrost.Middleware.BasicAuth');
 
-export type BasicAuthResult = {user:string};
+export type BasicAuthResult = {user: string};
 
-export type BasicAuthOptions <
+export type BasicAuthOptions<
     Env extends Record<string, any> = {},
     State extends Record<string, unknown> = {},
-    Patch extends Record<string, unknown> = BasicAuthResult
+    Patch extends Record<string, unknown> = BasicAuthResult,
 > = {
     /**
      * Realm label to respond with when not authenticated
@@ -28,7 +22,7 @@ export type BasicAuthOptions <
      * @note Return true if valid or false if false
      * @note You can also return an object if valid, this will then be set on the state as $auth
      */
-    validate: (ctx:TriFrostContext<Env, State>, val: {user: string; pass: string}) => Promise<Patch|boolean>|Patch|boolean;
+    validate: (ctx: TriFrostContext<Env, State>, val: {user: string; pass: string}) => Promise<Patch | boolean> | Patch | boolean;
 };
 
 /**
@@ -45,18 +39,18 @@ export type BasicAuthOptions <
  *   validate: (ctx, {user, pass}) => user === 'admin' && pass === ctx.env.ADMIN_SECRET
  * }))
  */
-export function BasicAuth <
+export function BasicAuth<
     Env extends Record<string, any> = {},
     State extends Record<string, unknown> = {},
-    Patch extends Record<string, unknown> = BasicAuthResult
-> (opts:BasicAuthOptions<Env, State, Patch>) {
+    Patch extends Record<string, unknown> = BasicAuthResult,
+>(opts: BasicAuthOptions<Env, State, Patch>) {
     if (typeof opts?.validate !== 'function') throw new Error('TriFrostMiddleware@BasicAuth: A validate function must be provided');
     const realm = isNeString(opts.realm) ? opts.realm : 'Restricted Area';
     const NOT_AUTH = 'Basic realm="' + realm + '"';
 
-    const mware = async function TriFrostBasicAuth (
-        ctx:TriFrostContext<Env, State>
-    ):Promise<void|TriFrostContext<Env, State & {$auth:Patch}>> {
+    const mware = async function TriFrostBasicAuth(
+        ctx: TriFrostContext<Env, State>,
+    ): Promise<void | TriFrostContext<Env, State & {$auth: Patch}>> {
         const authHeader = ctx.headers.authorization;
         if (typeof authHeader !== 'string' || !authHeader.startsWith('Basic ')) {
             ctx.setHeader('WWW-Authenticate', NOT_AUTH);
@@ -85,7 +79,7 @@ export function BasicAuth <
         }
 
         const authenticated = result === true ? {user} : result;
-        return ctx.setState({$auth: authenticated} as {$auth:Patch});
+        return ctx.setState({$auth: authenticated} as {$auth: Patch});
     };
 
     /* Add symbols for introspection/use further down the line */

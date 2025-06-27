@@ -1,15 +1,9 @@
-/* eslint-disable max-statements */
 import {isAsyncFn} from '@valkyriestudios/utils/function';
 import {describe, it, expect} from 'vitest';
 import {Cors, Sym_TriFrostMiddlewareCors} from '../../../lib/middleware/Cors';
 import CONSTANTS from '../../constants';
 import {MockContext} from '../../MockContext';
-import {
-    HttpMethods,
-    Sym_TriFrostDescription,
-    Sym_TriFrostName,
-    Sym_TriFrostFingerPrint,
-} from '../../../lib/types/constants';
+import {HttpMethods, Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostFingerPrint} from '../../../lib/types/constants';
 
 describe('Middleware - Cors', () => {
     it('Returns a function that is non-async', () => {
@@ -41,7 +35,7 @@ describe('Middleware - Cors', () => {
 
     it('Sets default headers when invalid options provided', () => {
         const ctx = new MockContext();
-        /* @ts-ignore */
+        /* @ts-expect-error Should be good */
         Cors('bla')(ctx);
         expect(ctx.headers).toEqual({
             'Access-Control-Allow-Origin': '*',
@@ -61,7 +55,7 @@ describe('Middleware - Cors', () => {
 
     it('Sets only vary header when invalid options provided and use_defaults is false', () => {
         const ctx = new MockContext();
-        /* @ts-ignore */
+        /* @ts-expect-error Should be good */
         Cors('bla', {use_defaults: false})(ctx);
         expect(ctx.headers).toEqual({Vary: 'Origin'});
     });
@@ -78,10 +72,12 @@ describe('Middleware - Cors', () => {
 
     it('Sets dynamic origin if function returns non-null', () => {
         const ctx = new MockContext({headers: {Origin: 'https://foo.com'}});
-        Cors({origin: el => {
-            if (el === 'https://foo.com') return 'https://bar.com';
-            return null;
-        }})(ctx);
+        Cors({
+            origin: el => {
+                if (el === 'https://foo.com') return 'https://bar.com';
+                return null;
+            },
+        })(ctx);
         expect(ctx.headers).toEqual({
             Origin: 'https://foo.com',
             'Access-Control-Allow-Methods': 'GET, HEAD, POST',
@@ -228,9 +224,11 @@ describe('Middleware - Cors', () => {
     });
 
     it('Throws if provided an invalid origin array', () => {
-        expect(() => Cors({
-            origin: [...CONSTANTS.NOT_STRING_WITH_EMPTY] as string[],
-        })).toThrow();
+        expect(() =>
+            Cors({
+                origin: [...CONSTANTS.NOT_STRING_WITH_EMPTY] as string[],
+            }),
+        ).toThrow();
     });
 
     it('Applies wildcard methods with headers and maxage', () => {

@@ -10,7 +10,7 @@ import {
 import {hexId} from '../../utils/Generic';
 
 /* Ensure valid trace id, a otel trace id IS a 32 hexadecimal char string 0-9 a-f */
-export function isValidTraceId (str:string):boolean {
+export function isValidTraceId(str: string): boolean {
     if (str.length !== 32) return false;
 
     for (let i = 0; i < 32; i++) {
@@ -30,7 +30,7 @@ export function isValidTraceId (str:string):boolean {
             case 99: /* c */
             case 100: /* d */
             case 101: /* e */
-            case 102: /* f */
+            case 102 /* f */:
                 continue;
             default:
                 return false;
@@ -40,28 +40,27 @@ export function isValidTraceId (str:string):boolean {
 }
 
 export class Logger implements TriFrostLogger {
+    #debug: boolean;
 
-    #debug:boolean;
+    #traceId: string | null = null;
 
-    #traceId:string|null = null;
+    #activeSpanId: string | null = null;
 
-    #activeSpanId:string|null = null;
+    #attributes: Record<string, unknown> = {};
 
-    #attributes:Record<string, unknown> = {};
+    #exporters: TriFrostLoggerExporter[];
 
-    #exporters:TriFrostLoggerExporter[];
+    #spanAwareExporters: TriFrostLoggerSpanAwareExporter[] = [];
 
-    #spanAwareExporters:TriFrostLoggerSpanAwareExporter[] = [];
-
-    constructor (cfg:{
-        debug:boolean;
-        traceId?:string;
-        context?:Record<string, unknown>;
-        exporters:TriFrostLoggerExporter[];
-        spanAwareExporters:TriFrostLoggerSpanAwareExporter[];
+    constructor(cfg: {
+        debug: boolean;
+        traceId?: string;
+        context?: Record<string, unknown>;
+        exporters: TriFrostLoggerExporter[];
+        spanAwareExporters: TriFrostLoggerSpanAwareExporter[];
     }) {
         this.#debug = cfg.debug;
-        this.#attributes = {...cfg.context ?? {}};
+        this.#attributes = {...(cfg.context ?? {})};
 
         /* Set trace id */
         if (cfg.traceId) this.#traceId = isValidTraceId(cfg.traceId) ? cfg.traceId : hexId(16);
@@ -70,41 +69,41 @@ export class Logger implements TriFrostLogger {
         this.#spanAwareExporters = cfg.spanAwareExporters;
     }
 
-    get traceId ():string | null {
+    get traceId(): string | null {
         return this.#traceId;
     }
 
-    setDebug (val:boolean) {
+    setDebug(val: boolean) {
         this.#debug = !!val;
     }
 
-    setAttribute (key:string, value:unknown):this {
+    setAttribute(key: string, value: unknown): this {
         this.#attributes[key] = value;
         return this;
     }
 
-    setAttributes (obj:Record<string, unknown>):this {
+    setAttributes(obj: Record<string, unknown>): this {
         Object.assign(this.#attributes, obj);
         return this;
     }
 
-    debug (msg:string, data?:Record<string, unknown>) {
+    debug(msg: string, data?: Record<string, unknown>) {
         if (this.#debug) this.#log('debug', msg, data);
     }
 
-    info (msg:string, data?:Record<string, unknown>) {
+    info(msg: string, data?: Record<string, unknown>) {
         this.#log('info', msg, data);
     }
 
-    log (msg:string, data?:Record<string, unknown>) {
+    log(msg: string, data?: Record<string, unknown>) {
         this.#log('log', msg, data);
     }
 
-    warn (msg:string, data?:Record<string, unknown>) {
+    warn(msg: string, data?: Record<string, unknown>) {
         this.#log('warn', msg, data);
     }
 
-    error (msg:string|Error|unknown, data?:Record<string, unknown>) {
+    error(msg: string | Error | unknown, data?: Record<string, unknown>) {
         if (msg instanceof Error) {
             this.#log('error', msg.message, {
                 ...data,
@@ -117,7 +116,7 @@ export class Logger implements TriFrostLogger {
         }
     }
 
-    async span <T> (name:string, fn: () => Promise<T>|T): Promise<T> {
+    async span<T>(name: string, fn: () => Promise<T> | T): Promise<T> {
         const span = this.startSpan(name);
         try {
             return await fn();
@@ -126,13 +125,13 @@ export class Logger implements TriFrostLogger {
         }
     }
 
-    startSpan (name: string): TriFrostLoggerSpan {
+    startSpan(name: string): TriFrostLoggerSpan {
         const start = Date.now();
         const attributes: Record<string, unknown> = {};
         const parentSpanId = this.#activeSpanId;
         const spanId = hexId(8);
         this.#activeSpanId = spanId;
-        const obj:TriFrostLoggerSpan = {
+        const obj: TriFrostLoggerSpan = {
             uid: () => spanId,
             setAttribute: (key, value) => {
                 attributes[key] = value;
@@ -146,7 +145,7 @@ export class Logger implements TriFrostLogger {
                 const end = Date.now();
 
                 if (this.#spanAwareExporters.length && this.#traceId) {
-                    const span:TriFrostLoggerSpanPayload = {
+                    const span: TriFrostLoggerSpanPayload = {
                         traceId: this.#traceId,
                         spanId,
                         parentSpanId: parentSpanId ?? undefined,
@@ -174,20 +173,16 @@ export class Logger implements TriFrostLogger {
         return obj;
     }
 
-    async flush (): Promise<void> {
-        const proms:Promise<void>[] = [];
+    async flush(): Promise<void> {
+        const proms: Promise<void>[] = [];
         for (let i = 0; i < this.#exporters.length; i++) {
             proms.push(this.#exporters[i].flush());
         }
         await Promise.all(proms);
     }
 
-    #log (
-        level:TriFrostLogLevel,
-        message:string,
-        data?:Record<string, unknown>
-    ) {
-        const log:TriFrostLoggerLogPayload = {
+    #log(level: TriFrostLogLevel, message: string, data?: Record<string, unknown>) {
+        const log: TriFrostLoggerLogPayload = {
             level,
             time: new Date(),
             message,
@@ -198,5 +193,4 @@ export class Logger implements TriFrostLogger {
         if (this.#activeSpanId) log.span_id = this.#activeSpanId;
         for (let i = 0; i < this.#exporters.length; i++) this.#exporters[i].pushLog(log);
     }
-
 }

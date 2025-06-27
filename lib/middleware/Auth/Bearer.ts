@@ -1,28 +1,23 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-import {
-    Sym_TriFrostDescription,
-    Sym_TriFrostFingerPrint,
-    Sym_TriFrostName,
-} from '../../types/constants';
+import {Sym_TriFrostDescription, Sym_TriFrostFingerPrint, Sym_TriFrostName} from '../../types/constants';
 import {type TriFrostContext} from '../../types/context';
 import {Sym_TriFrostMiddlewareAuth} from './types';
 
 /* Specific symbol attached to auth mware to identify them by */
 export const Sym_TriFrostMiddlewareBearerAuth = Symbol('TriFrost.Middleware.BearerAuth');
 
-export type BearerAuthResult = {token:string};
+export type BearerAuthResult = {token: string};
 
-export type BearerAuthOptions <
+export type BearerAuthOptions<
     Env extends Record<string, any> = {},
     State extends Record<string, unknown> = {},
-    Patch extends Record<string, unknown> = BearerAuthResult
+    Patch extends Record<string, unknown> = BearerAuthResult,
 > = {
     /**
      * Validation function.
      * @note Return true if valid or false if false
      * @note You can also return an object if valid, this will then be set on the state as $auth
      */
-    validate: (ctx:TriFrostContext<Env, State>, token: string) => Promise<Patch|boolean>|Patch|boolean;
+    validate: (ctx: TriFrostContext<Env, State>, token: string) => Promise<Patch | boolean> | Patch | boolean;
 };
 
 /**
@@ -39,16 +34,16 @@ export type BearerAuthOptions <
  *   validate: (ctx, token) => token === ctx.env.API_TOKEN
  * }))
  */
-export function BearerAuth <
+export function BearerAuth<
     Env extends Record<string, any> = {},
     State extends Record<string, unknown> = {},
-    Patch extends Record<string, unknown> = BearerAuthResult
-> (opts:BearerAuthOptions<Env, State, Patch>) {
+    Patch extends Record<string, unknown> = BearerAuthResult,
+>(opts: BearerAuthOptions<Env, State, Patch>) {
     if (typeof opts?.validate !== 'function') throw new Error('TriFrostMiddleware@BearerAuth: A validate function must be provided');
 
-    const mware = async function TriFrostBearerAuth (
-        ctx:TriFrostContext<Env, State>
-    ):Promise<void|TriFrostContext<Env, State & {$auth:Patch}>> {
+    const mware = async function TriFrostBearerAuth(
+        ctx: TriFrostContext<Env, State>,
+    ): Promise<void | TriFrostContext<Env, State & {$auth: Patch}>> {
         const raw = ctx.headers.authorization;
         if (typeof raw !== 'string' || !raw.startsWith('Bearer ')) return ctx.status(401);
 
@@ -57,7 +52,7 @@ export function BearerAuth <
         if (!result) return ctx.status(401);
 
         const authenticated = result === true ? {token} : result;
-        return ctx.setState({$auth: authenticated} as {$auth:Patch});
+        return ctx.setState({$auth: authenticated} as {$auth: Patch});
     };
 
     /* Add symbols for introspection/use further down the line */

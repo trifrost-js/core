@@ -1,4 +1,4 @@
-/* eslint-disable no-underscore-dangle,no-use-before-define */
+/* eslint-disable no-use-before-define */
 
 import {type TriFrostContextRenderOptions, type TriFrostContext} from '../../types/context';
 import {type JSXProps} from './types';
@@ -68,7 +68,7 @@ const ESCAPE_LOOKUP = {
     '<': '&lt;',
     '>': '&gt;',
     '"': '&quot;',
-    '\'': '&#39;',
+    "'": '&#39;',
 } as const;
 
 const RGX_ESCAPE = /(?:&(?![a-z#0-9]+;))|[<>"']/gi;
@@ -78,8 +78,8 @@ const RGX_ESCAPE = /(?:&(?![a-z#0-9]+;))|[<>"']/gi;
  *
  * @param {string} str - Input string to escape.
  */
-export function escape (str:string):string {
-    return str.replace(RGX_ESCAPE, (ch:string) => ESCAPE_LOOKUP[ch as keyof typeof ESCAPE_LOOKUP]);
+export function escape(str: string): string {
+    return str.replace(RGX_ESCAPE, (ch: string) => ESCAPE_LOOKUP[ch as keyof typeof ESCAPE_LOOKUP]);
 }
 
 /**
@@ -87,7 +87,7 @@ export function escape (str:string):string {
  *
  * @param {Record<string, unknown>} props - Props to render
  */
-function renderProps (props:Record<string, unknown>|null) {
+function renderProps(props: Record<string, unknown> | null) {
     let acc = '';
     for (const key in props) {
         const val = props[key];
@@ -119,10 +119,7 @@ function renderProps (props:Record<string, unknown>|null) {
 /**
  * Renders child elements
  */
-function renderChildren (
-    children:any,
-    parentProps?:JSXProps
-):string {
+function renderChildren(children: any, parentProps?: JSXProps): string {
     if (!Array.isArray(children)) return children ? render(children, parentProps) : '';
 
     let output = '';
@@ -134,11 +131,14 @@ function renderChildren (
  * Renders a JSXElement or primitive to a string.
  * @param node - JSX tree or primitive.
  */
-export function render (node:JSX.Element|string|number|boolean|null, parentProps:JSXProps = {}):string {
+export function render(node: JSX.Element | string | number | boolean | null, parentProps: JSXProps = {}): string {
     switch (typeof node) {
-        case 'string': return node ? escape(node) : '';
-        case 'number': return node + '';
-        case 'boolean': return '';
+        case 'string':
+            return node ? escape(node) : '';
+        case 'number':
+            return node + '';
+        case 'boolean':
+            return '';
         default: {
             switch (typeof node?.type) {
                 case 'string': {
@@ -152,9 +152,10 @@ export function render (node:JSX.Element|string|number|boolean|null, parentProps
                     }
 
                     /* Render children */
-                    const innerHTML = typeof node.props!.dangerouslySetInnerHTML?.__html === 'string'
-                        ? node.props!.dangerouslySetInnerHTML!.__html
-                        : renderChildren(node.props!.children, node.props!);
+                    const innerHTML =
+                        typeof node.props!.dangerouslySetInnerHTML?.__html === 'string'
+                            ? node.props!.dangerouslySetInnerHTML!.__html
+                            : renderChildren(node.props!.children, node.props!);
 
                     const out = VOID_TAGS[tag as keyof typeof VOID_TAGS]
                         ? '<' + tag + renderProps(node.props) + ' />'
@@ -164,7 +165,7 @@ export function render (node:JSX.Element|string|number|boolean|null, parentProps
                 }
                 case 'function':
                     return (node as JSX.Element).type === Fragment
-                        ? renderChildren(node.props!.children as JSX.Element|string|number|boolean|null, parentProps)
+                        ? renderChildren(node.props!.children as JSX.Element | string | number | boolean | null, parentProps)
                         : render((node.type as any)(node.props), parentProps);
                 default: {
                     if (!node) {
@@ -185,10 +186,11 @@ export function render (node:JSX.Element|string|number|boolean|null, parentProps
 /**
  * Starts the render process for a JSX element
  */
-export function rootRender <
-    Env extends Record<string, any>,
-    State extends Record<string, unknown>
-> (ctx:TriFrostContext<Env, State>, tree:JSX.Element, options:TriFrostContextRenderOptions = {}):string {
+export function rootRender<Env extends Record<string, any>, State extends Record<string, unknown>>(
+    ctx: TriFrostContext<Env, State>,
+    tree: JSX.Element,
+    options: TriFrostContextRenderOptions = {},
+): string {
     /* Instantiate globals */
     const style_engine = getActiveStyleEngine() || setActiveStyleEngine(new StyleEngine());
     const script_engine = getActiveScriptEngine() || setActiveScriptEngine(new ScriptEngine());
@@ -199,11 +201,7 @@ export function rootRender <
     options?.css?.root?.();
 
     /* Render jsx to html */
-    const html = script_engine.inject(
-        style_engine.inject(
-            render(tree)
-        )
-    );
+    const html = script_engine.inject(style_engine.inject(render(tree)));
 
     /* Cleanup globals */
     setActiveCtx(null);

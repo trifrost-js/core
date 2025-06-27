@@ -13,11 +13,7 @@ import {
     XDownloadOptions,
     XFrameOptions,
 } from '../../../lib/middleware/Security';
-import {
-    Sym_TriFrostDescription,
-    Sym_TriFrostFingerPrint,
-    Sym_TriFrostName,
-} from '../../../lib/types/constants';
+import {Sym_TriFrostDescription, Sym_TriFrostFingerPrint, Sym_TriFrostName} from '../../../lib/types/constants';
 import {MockContext} from '../../MockContext';
 import CONSTANTS from '../../constants';
 
@@ -31,9 +27,9 @@ describe('Middleware - Security', () => {
     it('Returns a function with TriFrost symbols set', () => {
         const fn = Security();
         expect(Reflect.get(fn, Sym_TriFrostName)).toBe('TriFrostSecurity');
-        expect(
-            Reflect.get(fn, Sym_TriFrostDescription)
-        ).toBe('Middleware for configuring Security headers and CSP on contexts passing through it');
+        expect(Reflect.get(fn, Sym_TriFrostDescription)).toBe(
+            'Middleware for configuring Security headers and CSP on contexts passing through it',
+        );
     });
 
     it('Sets a specific symbol marker to identify TriFrost security', () => {
@@ -60,7 +56,7 @@ describe('Middleware - Security', () => {
 
     it('Sets default headers when invalid options provided', () => {
         const ctx = new MockContext();
-        /* @ts-ignore */
+        /* @ts-expect-error Should be good */
         Security('bla')(ctx);
         expect(ctx.headers).toEqual({
             'Cross-Origin-Opener-Policy': 'same-origin',
@@ -84,7 +80,7 @@ describe('Middleware - Security', () => {
 
     it('Sets no headers when invalid options provided and use_defaults is false', () => {
         const ctx = new MockContext();
-        /* @ts-ignore */
+        /* @ts-expect-error Should be good */
         Security('bla', {use_defaults: false})(ctx);
         expect(ctx.headers).toEqual({});
     });
@@ -140,12 +136,12 @@ describe('Middleware - Security', () => {
         });
 
         it('Throws on invalid array values', () => {
-            expect(
-                () => Security({
+            expect(() =>
+                Security({
                     contentSecurityPolicy: {
                         [ContentSecurityPolicy.ConnectSrc]: [' api.com ', ...CONSTANTS.NOT_STRING_WITH_EMPTY] as string[],
                     },
-                })
+                }),
             ).toThrow(/TriFrostMiddleware@Security: Invalid value for directive "connect-src" in contentSecurityPolicy/);
         });
 
@@ -217,22 +213,24 @@ describe('Middleware - Security', () => {
                 },
             })(ctx);
 
-            expect(ctx.headers['Content-Security-Policy']).toEqual([
-                'default-src "self"',
-                'script-src "self" cdn.scripts.com',
-                'style-src cdn.styles.com',
-                'img-src "self" img.cdn.com',
-                'connect-src api.example.com',
-                'font-src fonts.example.com',
-                'object-src "none"',
-                'media-src media.example.com',
-                'frame-src frame.example.com',
-                'base-uri "self"',
-                'form-action forms.example.com',
-                'frame-ancestors "none"',
-                'plugin-types application/pdf',
-                'report-uri /csp-report',
-            ].join('; '));
+            expect(ctx.headers['Content-Security-Policy']).toEqual(
+                [
+                    'default-src "self"',
+                    'script-src "self" cdn.scripts.com',
+                    'style-src cdn.styles.com',
+                    'img-src "self" img.cdn.com',
+                    'connect-src api.example.com',
+                    'font-src fonts.example.com',
+                    'object-src "none"',
+                    'media-src media.example.com',
+                    'frame-src frame.example.com',
+                    'base-uri "self"',
+                    'form-action forms.example.com',
+                    'frame-ancestors "none"',
+                    'plugin-types application/pdf',
+                    'report-uri /csp-report',
+                ].join('; '),
+            );
         });
 
         it('Replaces nonce placeholder in script-src and sets ctx.nonce', () => {
@@ -240,7 +238,7 @@ describe('Middleware - Security', () => {
 
             Security({
                 contentSecurityPolicy: {
-                    [ContentSecurityPolicy.ScriptSrc]: ['"self"', '\'nonce\''],
+                    [ContentSecurityPolicy.ScriptSrc]: ['"self"', "'nonce'"],
                 },
             })(ctx);
 
@@ -270,8 +268,8 @@ describe('Middleware - Security', () => {
 
             Security({
                 contentSecurityPolicy: {
-                    [ContentSecurityPolicy.ScriptSrc]: ['"self"', '\'nonce\''],
-                    [ContentSecurityPolicy.StyleSrc]: ['"self"', 'hello.nonce.com', '\'nonce\''],
+                    [ContentSecurityPolicy.ScriptSrc]: ['"self"', "'nonce'"],
+                    [ContentSecurityPolicy.StyleSrc]: ['"self"', 'hello.nonce.com', "'nonce'"],
                 },
             })(ctx);
 
@@ -300,8 +298,8 @@ describe('Middleware - Security', () => {
 
             Security({
                 contentSecurityPolicy: {
-                    [ContentSecurityPolicy.ScriptSrc]: ['"self"', '\'nonce\''],
-                    [ContentSecurityPolicy.StyleSrc]: ['"self"', '\'nonce\''],
+                    [ContentSecurityPolicy.ScriptSrc]: ['"self"', "'nonce'"],
+                    [ContentSecurityPolicy.StyleSrc]: ['"self"', "'nonce'"],
                 },
             })(ctx);
 
@@ -331,9 +329,9 @@ describe('Middleware - Security', () => {
         it('Throws on non-recognized values', () => {
             for (const el of [...CONSTANTS.NOT_STRING_WITH_EMPTY, 'foo', 'bar']) {
                 if (el === undefined || el === null) continue;
-                expect(
-                    () => Security({crossOriginEmbedderPolicy: el as any})(new MockContext())
-                ).toThrow(/TriFrostMiddleware@Security: Invalid configuration for crossOriginEmbedderPolicy/);
+                expect(() => Security({crossOriginEmbedderPolicy: el as any})(new MockContext())).toThrow(
+                    /TriFrostMiddleware@Security: Invalid configuration for crossOriginEmbedderPolicy/,
+                );
             }
         });
     });
@@ -356,9 +354,9 @@ describe('Middleware - Security', () => {
         it('Throws on non-recognized values', () => {
             for (const el of [...CONSTANTS.NOT_STRING_WITH_EMPTY, 'foo', 'bar']) {
                 if (el === undefined || el === null) continue;
-                expect(
-                    () => Security({crossOriginOpenerPolicy: el as any})(new MockContext())
-                ).toThrow(/TriFrostMiddleware@Security: Invalid configuration for crossOriginOpenerPolicy/);
+                expect(() => Security({crossOriginOpenerPolicy: el as any})(new MockContext())).toThrow(
+                    /TriFrostMiddleware@Security: Invalid configuration for crossOriginOpenerPolicy/,
+                );
             }
         });
     });
@@ -381,9 +379,9 @@ describe('Middleware - Security', () => {
         it('Throws on non-recognized values', () => {
             for (const el of [...CONSTANTS.NOT_STRING_WITH_EMPTY, 'foo', 'bar']) {
                 if (el === undefined || el === null) continue;
-                expect(
-                    () => Security({crossOriginResourcePolicy: el as any})(new MockContext())
-                ).toThrow(/TriFrostMiddleware@Security: Invalid configuration for crossOriginResourcePolicy/);
+                expect(() => Security({crossOriginResourcePolicy: el as any})(new MockContext())).toThrow(
+                    /TriFrostMiddleware@Security: Invalid configuration for crossOriginResourcePolicy/,
+                );
             }
         });
     });
@@ -438,7 +436,7 @@ describe('Middleware - Security', () => {
 
         it('Trims and deduplicates strings with whitespace', () => {
             const ctx = new MockContext();
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             Security({referrerPolicy: [' strict-origin ', 'strict-origin']})(ctx);
             expect(ctx.headers['Referrer-Policy']).toBe('strict-origin');
         });
@@ -446,10 +444,7 @@ describe('Middleware - Security', () => {
         it('Allows usage of ReferrerPolicy enum values', () => {
             const ctx = new MockContext();
             Security({
-                referrerPolicy: [
-                    ReferrerPolicy.Origin,
-                    ReferrerPolicy.SameOrigin,
-                ],
+                referrerPolicy: [ReferrerPolicy.Origin, ReferrerPolicy.SameOrigin],
             })(ctx);
             expect(ctx.headers['Referrer-Policy']).toBe('origin, same-origin');
         });
@@ -600,9 +595,9 @@ describe('Middleware - Security', () => {
         it('Throws on non-recognized values', () => {
             for (const el of [...CONSTANTS.NOT_STRING_WITH_EMPTY, 'foo', 'bar']) {
                 if (el === undefined || el === null) continue;
-                expect(
-                    () => Security({xContentTypeOptions: el as any})(new MockContext())
-                ).toThrow(/TriFrostMiddleware@Security: Invalid configuration for xContentTypeOptions/);
+                expect(() => Security({xContentTypeOptions: el as any})(new MockContext())).toThrow(
+                    /TriFrostMiddleware@Security: Invalid configuration for xContentTypeOptions/,
+                );
             }
         });
     });
@@ -625,9 +620,9 @@ describe('Middleware - Security', () => {
         it('Throws on non-recognized values', () => {
             for (const el of [...CONSTANTS.NOT_STRING_WITH_EMPTY, 'foo', 'bar']) {
                 if (el === undefined || el === null) continue;
-                expect(
-                    () => Security({xDnsPrefetchControl: el as any})(new MockContext())
-                ).toThrow(/TriFrostMiddleware@Security: Invalid configuration for xDnsPrefetchControl/);
+                expect(() => Security({xDnsPrefetchControl: el as any})(new MockContext())).toThrow(
+                    /TriFrostMiddleware@Security: Invalid configuration for xDnsPrefetchControl/,
+                );
             }
         });
     });
@@ -650,9 +645,9 @@ describe('Middleware - Security', () => {
         it('Throws on non-recognized values', () => {
             for (const el of [...CONSTANTS.NOT_STRING_WITH_EMPTY, 'foo', 'bar']) {
                 if (el === undefined || el === null) continue;
-                expect(
-                    () => Security({xDownloadOptions: el as any})(new MockContext())
-                ).toThrow(/TriFrostMiddleware@Security: Invalid configuration for xDownloadOptions/);
+                expect(() => Security({xDownloadOptions: el as any})(new MockContext())).toThrow(
+                    /TriFrostMiddleware@Security: Invalid configuration for xDownloadOptions/,
+                );
             }
         });
     });
@@ -675,9 +670,9 @@ describe('Middleware - Security', () => {
         it('Throws on non-recognized values', () => {
             for (const el of [...CONSTANTS.NOT_STRING_WITH_EMPTY, 'foo', 'bar']) {
                 if (el === undefined || el === null) continue;
-                expect(
-                    () => Security({xFrameOptions: el as any})(new MockContext())
-                ).toThrow(/TriFrostMiddleware@Security: Invalid configuration for xFrameOptions/);
+                expect(() => Security({xFrameOptions: el as any})(new MockContext())).toThrow(
+                    /TriFrostMiddleware@Security: Invalid configuration for xFrameOptions/,
+                );
             }
         });
     });

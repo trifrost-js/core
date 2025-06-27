@@ -144,5 +144,5 @@ export interface ServerResponse {
      */
     on(event: 'finish', listener: () => void): this;
 
-    destroy(err:Error):void;
+    destroy(err: Error): void;
 }

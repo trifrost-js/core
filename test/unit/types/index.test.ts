@@ -1,11 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {
-    Sym_TriFrostName,
-    Sym_TriFrostDescription,
-    Sym_TriFrostFingerPrint,
-    MimeTypes,
-    HttpStatuses,
-} from '../../../lib/types/constants';
+import {Sym_TriFrostName, Sym_TriFrostDescription, Sym_TriFrostFingerPrint, MimeTypes, HttpStatuses} from '../../../lib/types/constants';
 import * as Index from '../../../lib/types/index';
 
 describe('types - index', () => {

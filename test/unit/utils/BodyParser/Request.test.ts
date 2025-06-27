@@ -4,7 +4,7 @@ import {MockContext} from '../../../MockContext';
 import {DEFAULT_BODY_PARSER_OPTIONS} from '../../../../lib/utils/BodyParser/types';
 import * as Uint8Parser from '../../../../lib/utils/BodyParser/Uint8Array';
 
-function makeRequest (contentType: string, body: BodyInit): Request {
+function makeRequest(contentType: string, body: BodyInit): Request {
     return new Request('http://localhost', {
         method: 'POST',
         headers: {'content-type': contentType},

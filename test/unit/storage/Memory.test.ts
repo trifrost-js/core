@@ -1,7 +1,7 @@
 import {sleep} from '@valkyriestudios/utils/function';
 import {isObject} from '@valkyriestudios/utils/object';
 import {describe, it, expect, beforeEach, vi, afterEach} from 'vitest';
-import {MemoryStore, MemoryCache, MemoryRateLimit}  from '../../../lib/storage/Memory';
+import {MemoryStore, MemoryCache, MemoryRateLimit} from '../../../lib/storage/Memory';
 import {cacheSkip} from '../../../lib/modules/Cache/util';
 import {Sym_TriFrostDescription, Sym_TriFrostName} from '../../../lib/types/constants';
 import {type TriFrostContextKind} from '../../../lib/types/context';
@@ -414,27 +414,21 @@ describe('Storage - Memory', () => {
 
         describe('init', () => {
             it('Throws on get before init', async () => {
-                await expect(cache.get('x'))
-                    .rejects
-                    .toThrow(/TriFrostCache@get: Cache needs to be initialized first/);
+                await expect(cache.get('x')).rejects.toThrow(/TriFrostCache@get: Cache needs to be initialized first/);
             });
 
             it('Throws on set before init', async () => {
-                await expect(cache.set('x', {fail: true}))
-                    .rejects
-                    .toThrow(/TriFrostCache@set: Cache needs to be initialized first/);
+                await expect(cache.set('x', {fail: true})).rejects.toThrow(/TriFrostCache@set: Cache needs to be initialized first/);
             });
 
             it('Throws on delete before init', async () => {
-                await expect(cache.del('x'))
-                    .rejects
-                    .toThrow(/TriFrostCache@del: Cache needs to be initialized first/);
+                await expect(cache.del('x')).rejects.toThrow(/TriFrostCache@del: Cache needs to be initialized first/);
             });
 
             it('Throws on wrap before init', async () => {
-                await expect(cache.wrap('x', async () => ({computed: true})))
-                    .rejects
-                    .toThrow(/TriFrostCache@wrap: Cache needs to be initialized first/);
+                await expect(cache.wrap('x', async () => ({computed: true}))).rejects.toThrow(
+                    /TriFrostCache@wrap: Cache needs to be initialized first/,
+                );
             });
 
             it('Does not throw on stop before init', async () => {
@@ -452,14 +446,14 @@ describe('Storage - Memory', () => {
         });
 
         describe('get', () => {
-            let getSpy:ReturnType<typeof vi['spyOn']>;
-            let setSpy:ReturnType<typeof vi['spyOn']>;
+            let getSpy: ReturnType<(typeof vi)['spyOn']>;
+            let setSpy: ReturnType<(typeof vi)['spyOn']>;
 
             beforeEach(() => {
                 cache.init({env: true});
-                /* @ts-ignore we're testing this */
+                /* @ts-expect-error Should be good */
                 getSpy = vi.spyOn(cache.resolvedStore, 'get');
-                /* @ts-ignore we're testing this */
+                /* @ts-expect-error Should be good */
                 setSpy = vi.spyOn(cache.resolvedStore, 'set');
             });
 
@@ -506,14 +500,14 @@ describe('Storage - Memory', () => {
         });
 
         describe('set', () => {
-            let getSpy:ReturnType<typeof vi['spyOn']>;
-            let setSpy:ReturnType<typeof vi['spyOn']>;
+            let getSpy: ReturnType<(typeof vi)['spyOn']>;
+            let setSpy: ReturnType<(typeof vi)['spyOn']>;
 
             beforeEach(() => {
                 cache.init({env: true});
-                /* @ts-ignore we're testing this */
+                /* @ts-expect-error Should be good */
                 getSpy = vi.spyOn(cache.resolvedStore, 'get');
-                /* @ts-ignore we're testing this */
+                /* @ts-expect-error Should be good */
                 setSpy = vi.spyOn(cache.resolvedStore, 'set');
             });
 
@@ -523,10 +517,8 @@ describe('Storage - Memory', () => {
             });
 
             it('Throws if provided undefined', async () => {
-                /* @ts-ignore This is what we're testing */
-                await expect(cache.set('x'))
-                    .rejects
-                    .toThrow(/TriFrostCache@set: Value can not be undefined/);
+                /* @ts-expect-error Should be good */
+                await expect(cache.set('x')).rejects.toThrow(/TriFrostCache@set: Value can not be undefined/);
                 expect(getSpy).toHaveBeenCalledTimes(0);
                 expect(setSpy).toHaveBeenCalledTimes(0);
             });
@@ -591,7 +583,7 @@ describe('Storage - Memory', () => {
             });
 
             it('Delegates to internal store.del', async () => {
-                /* @ts-ignore we're testing this */
+                /* @ts-expect-error Should be good */
                 const spy = vi.spyOn(cache.resolvedStore, 'del');
 
                 await cache.set('x', {v: 1});
@@ -602,14 +594,14 @@ describe('Storage - Memory', () => {
         });
 
         describe('wrap', () => {
-            let getSpy:ReturnType<typeof vi['spyOn']>;
-            let setSpy:ReturnType<typeof vi['spyOn']>;
+            let getSpy: ReturnType<(typeof vi)['spyOn']>;
+            let setSpy: ReturnType<(typeof vi)['spyOn']>;
 
             beforeEach(() => {
                 cache.init({env: true});
-                /* @ts-ignore we're testing this */
+                /* @ts-expect-error Should be good */
                 getSpy = vi.spyOn(cache.resolvedStore, 'get');
-                /* @ts-ignore we're testing this */
+                /* @ts-expect-error Should be good */
                 setSpy = vi.spyOn(cache.resolvedStore, 'set');
             });
 
@@ -634,7 +626,7 @@ describe('Storage - Memory', () => {
             });
 
             it('Computes and does not store anything if function returns nada', async () => {
-                /* @ts-ignore this is what we're testing */
+                /* @ts-expect-error Should be good */
                 const result = await cache.wrap('noret', async () => {});
                 expect(result).toEqual(undefined);
                 expect(await cache.get('noret')).toEqual(null);
@@ -656,7 +648,7 @@ describe('Storage - Memory', () => {
                 const result = await cache.wrap('timed', async () => [1, 2, 3], {ttl: 60});
                 expect(result).toEqual([1, 2, 3]);
                 expect(getSpy).toHaveBeenCalledWith('timed');
-                expect(setSpy).toHaveBeenCalledWith('timed', {v: [1,2,3]}, {ttl: 60});
+                expect(setSpy).toHaveBeenCalledWith('timed', {v: [1, 2, 3]}, {ttl: 60});
             });
 
             it('Caches null as a valid value from wrap', async () => {
@@ -754,7 +746,7 @@ describe('Storage - Memory', () => {
             it('Sets rate limit headers when enabled', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new MemoryRateLimit({window: 1});
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
                 const mw = rl.limit(1);
                 await mw(ctx);
                 await mw(ctx);
@@ -785,12 +777,12 @@ describe('Storage - Memory', () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new MemoryRateLimit({keygen: el => `ip:${el.ip}`});
                 const mw = rl.limit(10);
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(200);
 
-                /* @ts-ignore We want to test this */
+                /* @ts-expect-error Should be good */
                 const val = await rl.resolvedStore.store.get('ip:127.0.0.1');
                 expect(val.amt).toBe(2);
                 expect(val.reset).toBeGreaterThanOrEqual(now + rl.window);
@@ -828,12 +820,12 @@ describe('Storage - Memory', () => {
                 for (const [key, key_expected] of Object.entries(expected)) {
                     const rl = new MemoryRateLimit({keygen: key as any});
                     const mw = rl.limit(1);
-                    const now = Math.floor(Date.now()/1000);
+                    const now = Math.floor(Date.now() / 1000);
                     await mw(ctx);
                     await mw(ctx);
                     expect(ctx.statusCode).toBe(429);
 
-                    /* @ts-ignore We want to test this */
+                    /* @ts-expect-error Should be good */
                     const val = await rl.resolvedStore.store.get(key_expected);
                     expect(val.amt).toBe(1);
                     expect(val.reset).toBeGreaterThanOrEqual(now + rl.window);
@@ -854,12 +846,12 @@ describe('Storage - Memory', () => {
                 for (const [key, key_expected] of Object.entries(expected)) {
                     const rl = new MemoryRateLimit({keygen: key as any});
                     const mw = rl.limit(1);
-                    const now = Math.floor(Date.now()/1000);
+                    const now = Math.floor(Date.now() / 1000);
                     await mw(ctx);
                     await mw(ctx);
                     expect(ctx.statusCode).toBe(429);
 
-                    /* @ts-ignore We want to test this */
+                    /* @ts-expect-error Should be good */
                     const val = await rl.resolvedStore.store.get(key_expected);
                     expect(val.amt).toBe(1);
                     expect(val.reset).toBeGreaterThanOrEqual(now + rl.window);
@@ -869,23 +861,23 @@ describe('Storage - Memory', () => {
 
             it('Falls back to "unknown" if keygen returns falsy', async () => {
                 const rl = new MemoryRateLimit({
-                    keygen: () => undefined as unknown as string, /* Force falsy value */
+                    keygen: () => undefined as unknown as string /* Force falsy value */,
                 });
 
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const mw = rl.limit(1);
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
 
                 await mw(ctx);
 
-                /* @ts-ignore We want to test this */
+                /* @ts-expect-error Should be good */
                 const val = await rl.resolvedStore.store.get('unknown');
                 expect(val.amt).toBe(1);
                 expect(val.reset).toBeGreaterThanOrEqual(now + rl.window);
 
                 await mw(ctx);
 
-                /* @ts-ignore We want to test this */
+                /* @ts-expect-error Should be good */
                 const val2 = await rl.resolvedStore.store.get('unknown');
                 expect(val2.amt).toBe(1); /* It should not have touched on the value as we shouldn't have done writes*/
                 expect(val2.reset).toBeGreaterThanOrEqual(now + rl.window);
@@ -924,16 +916,16 @@ describe('Storage - Memory', () => {
 
                 await mw(ctx);
 
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
 
-                /* @ts-ignore We want to test this */
+                /* @ts-expect-error Should be good */
                 const val = await rl.resolvedStore.store.get('127.0.0.1:test:POST');
                 expect(val.amt).toBe(1);
                 expect(val.reset).toBeGreaterThanOrEqual(now + rl.window);
 
                 await sleep(100); /* Allow gc to run */
 
-                /* @ts-ignore We want to test this */
+                /* @ts-expect-error Should be good */
                 expect(await rl.resolvedStore.store.get('127.0.0.1:test:POST')).toBeNull();
                 await rl.stop(); /* gc cleanup */
             });
@@ -1003,18 +995,18 @@ describe('Storage - Memory', () => {
                 /* First request */
                 await mw(ctx);
 
-                /* @ts-ignore Manually insert an old timestamp to simulate an aged entry */
-                await rl.resolvedStore.store.set('127.0.0.1:test:POST', [Math.floor(Date.now()/1000) - 2]);
+                /* @ts-expect-error Should be good */
+                await rl.resolvedStore.store.set('127.0.0.1:test:POST', [Math.floor(Date.now() / 1000) - 2]);
 
                 /* Second request triggers pruning of old timestamp */
                 await mw(ctx);
 
-                /* @ts-ignore We want to test this */
+                /* @ts-expect-error Should be good */
                 const val = await rl.resolvedStore.store.get('127.0.0.1:test:POST');
 
                 expect(Array.isArray(val)).toBe(true);
                 expect(val.length).toBe(1); /* old timestamp pruned */
-                expect(val[0]).toBeGreaterThan(Math.floor(Date.now()/1000) - 1); /* only recent timestamp remains */
+                expect(val[0]).toBeGreaterThan(Math.floor(Date.now() / 1000) - 1); /* only recent timestamp remains */
                 expect(ctx.statusCode).toBe(200);
                 await rl.stop(); /* gc cleanup */
             });

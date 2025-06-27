@@ -1,5 +1,3 @@
-/* eslint-disable complexity */
-
 import {LRU} from '@valkyriestudios/utils/caching';
 import {isDate, addUTC, diff} from '@valkyriestudios/utils/date';
 import {isNeString} from '@valkyriestudios/utils/string';
@@ -38,34 +36,33 @@ export type SigningAlgorithm = `${keyof typeof HMACAlgos}`;
 export type TriFrostCookieSigningOptions = {algorithm: SigningAlgorithm};
 
 export class Cookies {
-
-    #ctx:TriFrostContext;
+    #ctx: TriFrostContext;
 
     /* Global cookie defaults */
-    #config:Partial<TriFrostCookieOptions>;
+    #config: Partial<TriFrostCookieOptions>;
 
     /* Incoming cookies from request */
-    #incoming:Record<string, string>;
+    #incoming: Record<string, string>;
 
     /* Outgoing cookies */
-    #outgoing:Record<string, string> = {};
+    #outgoing: Record<string, string> = {};
 
     /* Incoming/Outgoing values (for usage in eg .all or .get) */
-    #combined:Record<string, string> = {};
+    #combined: Record<string, string> = {};
 
     /* Scoped TextEncoder instance */
-    #encoder:TextEncoder = new TextEncoder();
+    #encoder: TextEncoder = new TextEncoder();
 
     /* HMAC Key cache */
-    #keyCache:LRU<CryptoKey> = new LRU({max_size: 50});
+    #keyCache: LRU<CryptoKey> = new LRU({max_size: 50});
 
-    constructor (ctx:TriFrostContext, config:Partial<TriFrostCookieOptions> = {}) {
+    constructor(ctx: TriFrostContext, config: Partial<TriFrostCookieOptions> = {}) {
         this.#ctx = ctx;
         this.#config = Object.prototype.toString.call(config) === '[object Object]' ? config : {};
 
         /* Process cookie header into map */
         const cookies = typeof ctx.headers.cookie === 'string' ? ctx.headers.cookie.split(';') : [];
-        const map:Record<string, string> = {};
+        const map: Record<string, string> = {};
         for (let i = 0; i < cookies.length; i++) {
             const raw = cookies[i];
             /* We don't use split here as the following could be a valid cookie x=1=2=3 which would be {x: '1=2=3'} */
@@ -80,14 +77,14 @@ export class Cookies {
         this.#combined = {...this.#incoming};
     }
 
-    get outgoing ():string[] {
+    get outgoing(): string[] {
         return Object.values(this.#outgoing);
     }
 
     /**
      * Returns all cookies. Both the ones provided by the client as a KV-Map AND the cookies that are going to be passed to the client
      */
-    all ():Readonly<Record<string, string>> {
+    all(): Readonly<Record<string, string>> {
         return {...this.#combined};
     }
 
@@ -97,10 +94,8 @@ export class Cookies {
      * @param {string} name - Cookie name
      * @returns Cookie value or null if not found
      */
-    get (name:string):string|null {
-        return typeof name === 'string' && name in this.#combined
-            ? this.#combined[name]
-            : null;
+    get(name: string): string | null {
+        return typeof name === 'string' && name in this.#combined ? this.#combined[name] : null;
     }
 
     /**
@@ -116,20 +111,16 @@ export class Cookies {
      * @param {string|number} value - The cookie value.
      * @param {TriFrostCookieOptions} options - Cookie options (e.g., max-age, path, etc.).
      */
-    set (name: string, value: string|number, options: Partial<TriFrostCookieOptions> = {}):void {
+    set(name: string, value: string | number, options: Partial<TriFrostCookieOptions> = {}): void {
         const normalized = Number.isFinite(value) ? String(value) : value;
         const config = {
             ...this.#config,
-            ...Object.prototype.toString.call(options) === '[object Object]' && options,
+            ...(Object.prototype.toString.call(options) === '[object Object]' && options),
         };
 
         /* Validate */
-        if (
-            typeof name !== 'string' ||
-            typeof normalized !== 'string' ||
-            !RGX_NAME.test(name) ||
-            !RGX_VALUE.test(normalized)
-        ) return this.#ctx.logger.error('TriFrostCookies@set: Invalid name or value', {name, value, options});
+        if (typeof name !== 'string' || typeof normalized !== 'string' || !RGX_NAME.test(name) || !RGX_VALUE.test(normalized))
+            return this.#ctx.logger.error('TriFrostCookies@set: Invalid name or value', {name, value, options});
 
         /* Start cookie construction */
         let new_cookie = name + '=' + encodeURIComponent(normalized);
@@ -187,11 +178,8 @@ export class Cookies {
      * @param {string} secret - Signing secret
      * @param {TriFrostCookieSigningOptions} options - Options for signing (defaults to {algorithm: 'SHA-256'})
      */
-    async sign (val:string|number, secret: string, options:TriFrostCookieSigningOptions = {algorithm: 'SHA-256'}): Promise<string> {
-        if (
-            !isNeString(secret) ||
-            (typeof val !== 'string' && !Number.isFinite(val))
-        ) return '';
+    async sign(val: string | number, secret: string, options: TriFrostCookieSigningOptions = {algorithm: 'SHA-256'}): Promise<string> {
+        if (!isNeString(secret) || (typeof val !== 'string' && !Number.isFinite(val))) return '';
 
         const sig = await this.generateHMAC(String(val), secret, options);
         return val + '.' + sig;
@@ -204,10 +192,10 @@ export class Cookies {
      * @param {string|(string|(TriFrostCookieSigningOptions & {val:string}))[]} secrets - Secret or Secrets to check
      * @param {TriFrostCookieSigningOptions} options - Options for verifying (defaults to {algorithm: 'SHA-256'})
      */
-    async verify (
-        signed:string,
-        secrets:string|(string|(TriFrostCookieSigningOptions & {val:string}))[],
-        options:TriFrostCookieSigningOptions = {algorithm: 'SHA-256'}
+    async verify(
+        signed: string,
+        secrets: string | (string | (TriFrostCookieSigningOptions & {val: string}))[],
+        options: TriFrostCookieSigningOptions = {algorithm: 'SHA-256'},
     ) {
         const idx = isNeString(signed) ? signed.lastIndexOf('.') : -1;
         if (idx === -1) return null;
@@ -223,7 +211,7 @@ export class Cookies {
                 const expected_sig = await this.generateHMAC(
                     val,
                     secret.val,
-                    isNeString(secret?.algorithm) ? {algorithm: secret.algorithm} : options
+                    isNeString(secret?.algorithm) ? {algorithm: secret.algorithm} : options,
                 );
                 if (expected_sig === sig) return val;
             }
@@ -239,7 +227,7 @@ export class Cookies {
      * @param {string|{prefix:string}} val - Name of the cookie to delete or the prefix of the cookies to delete
      * @param {Partial<TriFrostCookieDeleteOptions>} options - Cookie Delete options (path, domain)
      */
-    del (val:string|{prefix:string}, options:Partial<TriFrostCookieDeleteOptions> = {}) {
+    del(val: string | {prefix: string}, options: Partial<TriFrostCookieDeleteOptions> = {}) {
         if (isNeString(val)) {
             return this.internalDel(val, {...options, maxage: 0});
         } else if (isNeString(val?.prefix)) {
@@ -264,7 +252,7 @@ export class Cookies {
      *
      * @param {Partial<TriFrostCookieDeleteOptions>} options - Cookie Delete options (path, domain)
      */
-    delAll (options:Partial<TriFrostCookieDeleteOptions> = {}):void {
+    delAll(options: Partial<TriFrostCookieDeleteOptions> = {}): void {
         const normalized_options = {...options, maxage: 0};
         /* 1. Remove any newly-set cookies */
         for (const key in this.#outgoing) {
@@ -278,11 +266,11 @@ export class Cookies {
         }
     }
 
-/**
- * MARK: Private
- */
+    /**
+     * MARK: Private
+     */
 
-    private internalDel (name:string, options:Partial<TriFrostCookieDeleteOptions & {maxage: number}> = {}) {
+    private internalDel(name: string, options: Partial<TriFrostCookieDeleteOptions & {maxage: number}> = {}) {
         if (name in this.#outgoing) delete this.#outgoing[name];
         if (name in this.#incoming) this.set(name, '', options);
         if (name in this.#combined) delete this.#combined[name];
@@ -295,20 +283,14 @@ export class Cookies {
      * @param {TriFrostCookieSigningOptions} options - HMAC Options
      * @returns
      */
-    private async generateHMAC (data:string, secret:string, options:TriFrostCookieSigningOptions) {
+    private async generateHMAC(data: string, secret: string, options: TriFrostCookieSigningOptions) {
         const algo = options?.algorithm in HMACAlgos ? options.algorithm : 'SHA-256';
         const cacheKey = algo + ':' + secret;
 
         /* Because key imports are relatively expensive we place them in a private LRU */
         let key = this.#keyCache.get(cacheKey);
         if (!key) {
-            key = await crypto.subtle.importKey(
-                'raw',
-                this.#encoder.encode(secret),
-                {name: 'HMAC', hash: {name: algo}},
-                false,
-                ['sign']
-            );
+            key = await crypto.subtle.importKey('raw', this.#encoder.encode(secret), {name: 'HMAC', hash: {name: algo}}, false, ['sign']);
             this.#keyCache.set(cacheKey, key);
         }
 
@@ -318,5 +300,4 @@ export class Cookies {
         for (let i = 0; i < sig_arr.length; i++) hex += sig_arr[i].toString(16).padStart(2, '0');
         return hex;
     }
-
 }

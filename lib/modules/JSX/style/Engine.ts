@@ -5,15 +5,14 @@ type StyleEngineRegisterOptions = {
     /**
      * A potential media query this rule belongs to
      */
-    query?:string;
+    query?: string;
     /**
      * A potential sub-selector this rule belongs to
      */
-    selector?:string|null;
+    selector?: string | null;
 };
 
 export class StyleEngine {
-
     /* rule -> className */
     protected base = {out: '', keys: new Set<string>()};
 
@@ -21,16 +20,16 @@ export class StyleEngine {
     protected media: Record<string, {out: string; keys: Set<string>}> = {};
 
     /* Mount path for root styles */
-    protected mount_path:string|null = null;
+    protected mount_path: string | null = null;
 
-    cache:Map<string, string> = new Map();
+    cache: Map<string, string> = new Map();
 
     /**
      * Generate a deterministic class name for a rule
      *
      * @note This internally uses DJB2 hashing and autoprefixes tf-
      */
-    hash (input:string):string {
+    hash(input: string): string {
         let h = 5381;
         for (let i = 0; i < input.length; i++) {
             h = (h * 33) ^ input.charCodeAt(i);
@@ -45,20 +44,13 @@ export class StyleEngine {
      * @param {string} name - Deterministic class name to register under (usually the output of StyleEngine.hash)
      * @param {StyleEngineRegisterOptions} opts - Optional context including media query and selector
      */
-    register (
-        rule:string,
-        name:string,
-        opts:StyleEngineRegisterOptions
-    ):void {
+    register(rule: string, name: string, opts: StyleEngineRegisterOptions): void {
         if (
             typeof rule !== 'string' ||
             !rule.length ||
-            (
-                opts.selector !== undefined &&
-                (typeof opts.selector !== 'string' || !opts.selector.length) &&
-                opts.selector !== null
-            )
-        ) return;
+            (opts.selector !== undefined && (typeof opts.selector !== 'string' || !opts.selector.length) && opts.selector !== null)
+        )
+            return;
 
         const {query, selector} = opts;
         const normalized = selector !== null ? (selector ?? '.' + name) + '{' + rule.trim() + '}' : rule;
@@ -81,16 +73,14 @@ export class StyleEngine {
     /**
      * Flush all collected styles into a single <style> tag
      */
-    flush (as_file:boolean=false):string {
+    flush(as_file: boolean = false): string {
         let out = this.base.out;
         for (const query in this.media) out += query + '{' + this.media[query].out + '}';
         if (!out) return '';
         if (as_file) return out;
 
         const n_nonce = nonce();
-        return n_nonce
-            ? '<style nonce="' + n_nonce + '">' + out + '</style>'
-            : '<style>' + out + '</style>';
+        return n_nonce ? '<style nonce="' + n_nonce + '">' + out + '</style>' : '<style>' + out + '</style>';
     }
 
     /**
@@ -98,7 +88,7 @@ export class StyleEngine {
      *
      * @param {string} html - HTML string containing the marker or needing prepended styles
      */
-    inject (html:string):string {
+    inject(html: string): string {
         let styles = this.flush();
         if (typeof html !== 'string' || !html.length) return styles;
 
@@ -121,7 +111,7 @@ export class StyleEngine {
     /**
      * Clears all internal state
      */
-    reset ():void {
+    reset(): void {
         this.base = {out: '', keys: new Set<string>()};
         this.media = {};
     }
@@ -131,8 +121,7 @@ export class StyleEngine {
      *
      * @param {string} path - Mount path for client root styles
      */
-    setMountPath (path:string) {
+    setMountPath(path: string) {
         this.mount_path = path;
     }
-
 }

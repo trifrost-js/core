@@ -1,15 +1,9 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-
 import {isNeArray} from '@valkyriestudios/utils/array';
 import {isBoolean} from '@valkyriestudios/utils/boolean';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {isObject} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
-import {
-    Sym_TriFrostDescription,
-    Sym_TriFrostFingerPrint,
-    Sym_TriFrostName,
-} from '../types/constants';
+import {Sym_TriFrostDescription, Sym_TriFrostFingerPrint, Sym_TriFrostName} from '../types/constants';
 import {type TriFrostContext} from '../types/context';
 import {hexId} from '../utils/Generic';
 
@@ -19,20 +13,20 @@ const RGX_NONCE = /'nonce'/g;
 export const Sym_TriFrostMiddlewareSecurity = Symbol('TriFrost.Middleware.Security');
 
 export enum ContentSecurityPolicy {
-    DefaultSrc      = 'default-src',
-    ScriptSrc       = 'script-src',
-    StyleSrc        = 'style-src',
-    ImgSrc          = 'img-src',
-    ConnectSrc      = 'connect-src',
-    FontSrc         = 'font-src',
-    ObjectSrc       = 'object-src',
-    MediaSrc        = 'media-src',
-    FrameSrc        = 'frame-src',
-    BaseUri         = 'base-uri',
-    FormAction      = 'form-action',
-    FrameAncestors  = 'frame-ancestors',
-    PluginTypes     = 'plugin-types',
-    ReportUri       = 'report-uri',
+    DefaultSrc = 'default-src',
+    ScriptSrc = 'script-src',
+    StyleSrc = 'style-src',
+    ImgSrc = 'img-src',
+    ConnectSrc = 'connect-src',
+    FontSrc = 'font-src',
+    ObjectSrc = 'object-src',
+    MediaSrc = 'media-src',
+    FrameSrc = 'frame-src',
+    BaseUri = 'base-uri',
+    FormAction = 'form-action',
+    FrameAncestors = 'frame-ancestors',
+    PluginTypes = 'plugin-types',
+    ReportUri = 'report-uri',
 }
 
 export interface TriFrostContentSecurityPolicyOptions {
@@ -95,32 +89,32 @@ export interface TriFrostContentSecurityPolicyOptions {
 }
 
 export enum CrossOriginEmbedderPolicy {
-    UnsafeNone      = 'unsafe-none',
-    RequireCorp     = 'require-corp',
-    Credentialless  = 'credentialless',
-  }
+    UnsafeNone = 'unsafe-none',
+    RequireCorp = 'require-corp',
+    Credentialless = 'credentialless',
+}
 
 export enum CrossOriginOpenerPolicy {
-    UnsafeNone              = 'unsafe-none',
-    SameOriginAllowPopups   = 'same-origin-allow-popups',
-    SameOrigin              = 'same-origin',
+    UnsafeNone = 'unsafe-none',
+    SameOriginAllowPopups = 'same-origin-allow-popups',
+    SameOrigin = 'same-origin',
 }
 
 export enum CrossOriginResourcePolicy {
-    SameSite    = 'same-site',
-    SameOrigin  = 'same-origin',
+    SameSite = 'same-site',
+    SameOrigin = 'same-origin',
     CrossOrigin = 'cross-origin',
 }
 
 export enum ReferrerPolicy {
-    NoReferrer                  = 'no-referrer',
-    NoReferrerWhenDowngrade     = 'no-referrer-when-downgrade',
-    Origin                      = 'origin',
-    OriginWhenCrossOrigin       = 'origin-when-cross-origin',
-    SameOrigin                  = 'same-origin',
-    StrictOrigin                = 'strict-origin',
+    NoReferrer = 'no-referrer',
+    NoReferrerWhenDowngrade = 'no-referrer-when-downgrade',
+    Origin = 'origin',
+    OriginWhenCrossOrigin = 'origin-when-cross-origin',
+    SameOrigin = 'same-origin',
+    StrictOrigin = 'strict-origin',
     StrictOriginWhenCrossOrigin = 'strict-origin-when-cross-origin',
-    UnsafeUrl                   = 'unsafe-url',
+    UnsafeUrl = 'unsafe-url',
 }
 
 export enum XContentTypes {
@@ -128,7 +122,7 @@ export enum XContentTypes {
 }
 
 export enum XDnsPrefetchControl {
-    On  = 'on',
+    On = 'on',
     Off = 'off',
 }
 
@@ -137,8 +131,8 @@ export enum XDownloadOptions {
 }
 
 export enum XFrameOptions {
-    Deny        = 'DENY',
-    SameOrigin  = 'SAMEORIGIN',
+    Deny = 'DENY',
+    SameOrigin = 'SAMEORIGIN',
 }
 
 export interface TriFrostSecurityOptions {
@@ -165,12 +159,12 @@ export interface TriFrostSecurityOptions {
     /**
      * Referrer-Policy configuration, defaults to 'no-referrer'
      */
-    referrerPolicy?: `${ReferrerPolicy}` | (`${ReferrerPolicy}`)[] | null;
+    referrerPolicy?: `${ReferrerPolicy}` | `${ReferrerPolicy}`[] | null;
     /**
      * Strict-Transport-Security configuration, defaults to {maxAge: 15552000, includeSubDomains: true}
      * @note When setting preload to true the maxAge must be at least 31536000 and includeSubDomains must be set.
      */
-    strictTransportSecurity?: {maxAge: number; includeSubDomains?:boolean; preload?:boolean} | null;
+    strictTransportSecurity?: {maxAge: number; includeSubDomains?: boolean; preload?: boolean} | null;
     /**
      * X-Content-Type-Options configuration, defaults to 'nosniff'
      */
@@ -197,7 +191,7 @@ export type TriFrostSecurityConfig = {
     /**
      * (Default=true) Merge with the defaults (true) or not (false)
      */
-    use_defaults?:boolean;
+    use_defaults?: boolean;
 };
 
 /**
@@ -219,22 +213,13 @@ const REFERRERPOLICIES = new Set(Object.values(ReferrerPolicy));
  * @param {string[]} options - Array of possible options the value needs to fall into
  * @param {string} name - Name of the option
  */
-function header (
-    map: Record<string, string>,
-    key: string,
-    val: string | null,
-    options: string[],
-    name: string
-) {
+function header(map: Record<string, string>, key: string, val: string | null, options: string[], name: string) {
     /* If val is null it means we don't want to set the header */
     if (val === undefined || val === null) return;
 
     /* Validation check */
-    if (
-        !isNeString(val) ||
-        !isNeArray(options) ||
-        options.indexOf(val) < 0
-    ) throw new Error(`TriFrostMiddleware@Security: Invalid configuration for ${name}`);
+    if (!isNeString(val) || !isNeArray(options) || options.indexOf(val) < 0)
+        throw new Error(`TriFrostMiddleware@Security: Invalid configuration for ${name}`);
 
     map[key] = val;
 }
@@ -247,7 +232,7 @@ function header (
  * @param {Record<string, string>} map - Map to store the header on
  * @param {TriFrostSecurityOptions['contentSecurityPolicy']} val - Value to set
  */
-function contentSecurityPolicy (map: Record<string, string>, val:TriFrostSecurityOptions['contentSecurityPolicy']) {
+function contentSecurityPolicy(map: Record<string, string>, val: TriFrostSecurityOptions['contentSecurityPolicy']) {
     if (!isObject(val)) return;
 
     /* Loop through each key in the csp object being passed */
@@ -274,9 +259,8 @@ function contentSecurityPolicy (map: Record<string, string>, val:TriFrostSecurit
             const seen = new Set();
             for (let i = 0; i < chunk.length; i++) {
                 let el = chunk[i];
-                if (
-                    !isNeString(el)
-                ) throw new Error(`TriFrostMiddleware@Security: Invalid value for directive "${key}" in contentSecurityPolicy`);
+                if (!isNeString(el))
+                    throw new Error(`TriFrostMiddleware@Security: Invalid value for directive "${key}" in contentSecurityPolicy`);
 
                 el = el.trim();
                 if (seen.has(el)) continue;
@@ -302,12 +286,12 @@ function contentSecurityPolicy (map: Record<string, string>, val:TriFrostSecurit
  * @param {Record<string, string>} map - Map to store the header on
  * @param {TriFrostSecurityOptions['originAgentCluster']} val - Value to set
  */
-function originAgentCluster (map:Record<string, string>, val:TriFrostSecurityOptions['originAgentCluster']) {
+function originAgentCluster(map: Record<string, string>, val: TriFrostSecurityOptions['originAgentCluster']) {
     switch (val) {
         case true:
-            return map['Origin-Agent-Cluster'] = '?1';
+            return (map['Origin-Agent-Cluster'] = '?1');
         case false:
-            return map['Origin-Agent-Cluster'] = '?0';
+            return (map['Origin-Agent-Cluster'] = '?0');
         case null:
         case undefined:
             return;
@@ -323,7 +307,7 @@ function originAgentCluster (map:Record<string, string>, val:TriFrostSecurityOpt
  * @param {Record<string, string>} map - Map to store the header on
  * @param {TriFrostSecurityOptions['referrerPolicy']} val - Value to set
  */
-function referrerPolicy (map:Record<string, string>, val:TriFrostSecurityOptions['referrerPolicy']) {
+function referrerPolicy(map: Record<string, string>, val: TriFrostSecurityOptions['referrerPolicy']) {
     if (val === undefined || val === null) return;
 
     const input = Array.isArray(val) ? val : typeof val === 'string' ? [val] : [];
@@ -332,7 +316,7 @@ function referrerPolicy (map:Record<string, string>, val:TriFrostSecurityOptions
     const seen = new Set();
     const normalized = [];
     for (let i = 0; i < input.length; i++) {
-        let el:string = input[i];
+        let el: string = input[i];
         if (typeof el !== 'string') {
             throw new Error('TriFrostMiddleware@Security: Invalid configuration for referrerPolicy');
         }
@@ -358,7 +342,7 @@ function referrerPolicy (map:Record<string, string>, val:TriFrostSecurityOptions
  * @param {Record<string, string>} map - Map to store the header on
  * @param {TriFrostSecurityOptions['strictTransportSecurity']} val - Value to set
  */
-function strictTransportSecurity (map:Record<string, string>, val:TriFrostSecurityOptions['strictTransportSecurity']) {
+function strictTransportSecurity(map: Record<string, string>, val: TriFrostSecurityOptions['strictTransportSecurity']) {
     if (val === undefined || val === null) return;
 
     if (isIntGt(val?.maxAge, 0)) {
@@ -371,7 +355,7 @@ function strictTransportSecurity (map:Record<string, string>, val:TriFrostSecuri
         if (parts.length === 2 && val.preload === true && isIntGt(val.maxAge, 31536000)) parts.push('preload');
 
         /* Only set header if we have parts */
-        return map['Strict-Transport-Security'] = parts.join('; ');
+        return (map['Strict-Transport-Security'] = parts.join('; '));
     }
 
     throw new Error('TriFrostMiddleware@Security: Invalid configuration for strictTransportSecurity');
@@ -384,18 +368,18 @@ function strictTransportSecurity (map:Record<string, string>, val:TriFrostSecuri
  * @param {Record<string, string>} map - Map to store the header on
  * @param {TriFrostSecurityOptions['xXssProtection']} val - Value to set
  */
-function xXssProtection (map:Record<string, string>, val:TriFrostSecurityOptions['xXssProtection']) {
+function xXssProtection(map: Record<string, string>, val: TriFrostSecurityOptions['xXssProtection']) {
     if (val === undefined || val === null) return;
 
     if (val === '0') {
-        return map['X-XSS-Protection'] = '0';
+        return (map['X-XSS-Protection'] = '0');
     } else if (val === '1') {
-        return map['X-XSS-Protection'] = '1';
+        return (map['X-XSS-Protection'] = '1');
     } else if (val === 'block') {
-        return map['X-XSS-Protection'] = '1; mode=block';
+        return (map['X-XSS-Protection'] = '1; mode=block');
     } else if (typeof val === 'string') {
         const n_val = val.trim();
-        if (n_val.startsWith('/')) return map['X-XSS-Protection'] = '1; report=' + n_val;
+        if (n_val.startsWith('/')) return (map['X-XSS-Protection'] = '1; report=' + n_val);
     }
 
     throw new Error('TriFrostMiddleware@Security: Invalid configuration for xXssProtection');
@@ -425,17 +409,16 @@ const SecurityDefaults: TriFrostSecurityOptions = {
  * @param {TriFrostSecurityOptions} options - Options to apply
  * @param {TriFrostSecurityConfig} config - Additional behavioral config
  */
-export function Security <
-    Env extends Record<string, any> = {},
-    State extends Record<string, unknown> = {},
-> (options:TriFrostSecurityOptions = {}, config?:TriFrostSecurityConfig) {
+export function Security<Env extends Record<string, any> = {}, State extends Record<string, unknown> = {}>(
+    options: TriFrostSecurityOptions = {},
+    config?: TriFrostSecurityConfig,
+) {
     const use_defaults = !isBoolean(config?.use_defaults) ? true : config.use_defaults;
-    const cfg:TriFrostSecurityOptions = use_defaults === true
-        ? {...SecurityDefaults, ...isObject(options) && options}
-        : isObject(options) ? options : {};
+    const cfg: TriFrostSecurityOptions =
+        use_defaults === true ? {...SecurityDefaults, ...(isObject(options) && options)} : isObject(options) ? options : {};
 
     /* Generate configuration */
-    const map:Record<string, string> = {};
+    const map: Record<string, string> = {};
 
     /* Content-Security-Policy */
     contentSecurityPolicy(map, cfg.contentSecurityPolicy);
@@ -451,21 +434,21 @@ export function Security <
         'Cross-Origin-Embedder-Policy',
         cfg.crossOriginEmbedderPolicy!,
         Object.values(CrossOriginEmbedderPolicy),
-        'crossOriginEmbedderPolicy'
+        'crossOriginEmbedderPolicy',
     );
     header(
         map,
         'Cross-Origin-Opener-Policy',
         cfg.crossOriginOpenerPolicy!,
         Object.values(CrossOriginOpenerPolicy),
-        'crossOriginOpenerPolicy'
+        'crossOriginOpenerPolicy',
     );
     header(
         map,
         'Cross-Origin-Resource-Policy',
         cfg.crossOriginResourcePolicy!,
         Object.values(CrossOriginResourcePolicy),
-        'crossOriginResourcePolicy'
+        'crossOriginResourcePolicy',
     );
 
     /* Origin-Agent-Cluster */
@@ -481,55 +464,31 @@ export function Security <
      * X-Content-Type-Options
      * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
      */
-    header(
-        map,
-        'X-Content-Type-Options',
-        cfg.xContentTypeOptions!,
-        Object.values(XContentTypes),
-        'xContentTypeOptions'
-    );
+    header(map, 'X-Content-Type-Options', cfg.xContentTypeOptions!, Object.values(XContentTypes), 'xContentTypeOptions');
 
     /**
      * X-DNS-Prefetch-Control
      * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-DNS-Prefetch-Control
      */
-    header(
-        map,
-        'X-DNS-Prefetch-Control',
-        cfg.xDnsPrefetchControl!,
-        Object.values(XDnsPrefetchControl),
-        'xDnsPrefetchControl'
-    );
+    header(map, 'X-DNS-Prefetch-Control', cfg.xDnsPrefetchControl!, Object.values(XDnsPrefetchControl), 'xDnsPrefetchControl');
 
     /**
      * X-Download-Options
      * @see https://docs.microsoft.com/en-us/archive/blogs/ie/ie8-security-part-v-comprehensive-protection
      */
-    header(
-        map,
-        'X-Download-Options',
-        cfg.xDownloadOptions!,
-        Object.values(XDownloadOptions),
-        'xDownloadOptions'
-    );
+    header(map, 'X-Download-Options', cfg.xDownloadOptions!, Object.values(XDownloadOptions), 'xDownloadOptions');
 
     /**
      * X-Frame-Options
      * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
      */
-    header(
-        map,
-        'X-Frame-Options',
-        cfg.xFrameOptions!,
-        Object.values(XFrameOptions),
-        'xFrameOptions'
-    );
+    header(map, 'X-Frame-Options', cfg.xFrameOptions!, Object.values(XFrameOptions), 'xFrameOptions');
 
     /* X-XSS-Protection */
     xXssProtection(map, cfg.xXssProtection);
 
     /* Baseline Middleware function */
-    const mware = function TriFrostSecurityMiddleware (ctx:TriFrostContext<Env, State>):void {
+    const mware = function TriFrostSecurityMiddleware(ctx: TriFrostContext<Env, State>): void {
         ctx.setHeaders(map);
 
         /* Replace nonce placeholder with a generated nonce */
@@ -537,7 +496,7 @@ export function Security <
             const val = map['Content-Security-Policy'];
             if (RGX_NONCE.test(val)) {
                 const nonce = btoa(hexId(8));
-                ctx.setHeader('Content-Security-Policy', val.replace(RGX_NONCE, '\'nonce-' + nonce + '\''));
+                ctx.setHeader('Content-Security-Policy', val.replace(RGX_NONCE, "'nonce-" + nonce + "'"));
                 ctx.setState({nonce});
             }
         }

@@ -37,7 +37,6 @@ describe('Modules - JSX - Runtime', () => {
     describe('Fragment', () => {
         it('Should unwrap children as-is', () => {
             const children = ['one', 'two'];
-            /* @ts-ignore */
             const result = Fragment({children});
             expect(result).toBe(children);
         });

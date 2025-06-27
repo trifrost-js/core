@@ -1,5 +1,3 @@
-/* eslint-disable max-lines */
-/* eslint-disable max-len */
 /* eslint-disable no-console */
 import {describe, it, expect, beforeEach, vi, afterEach} from 'vitest';
 import {render, escape, rootRender} from '../../../../lib/modules/JSX/render';
@@ -28,7 +26,7 @@ describe('Modules - JSX - Renderer', () => {
 
         it('Escapes double and single quotes', () => {
             expect(escape('"quote"')).toBe('&quot;quote&quot;');
-            expect(escape('\'quote\'')).toBe('&#39;quote&#39;');
+            expect(escape("'quote'")).toBe('&#39;quote&#39;');
         });
 
         it('Escapes multiple entities in one string', () => {
@@ -59,7 +57,6 @@ describe('Modules - JSX - Renderer', () => {
             expect(render(123)).toBe('123');
             expect(render(false)).toBe('');
             expect(render(null)).toBe('');
-            /* @ts-ignore */
             expect(render(undefined)).toBe('');
         });
 
@@ -67,7 +64,7 @@ describe('Modules - JSX - Renderer', () => {
             expect(render('<script>alert("x")</script>')).toBe('&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;');
             expect(render('&test')).toBe('&amp;test');
             expect(render('"quoted"')).toBe('&quot;quoted&quot;');
-            expect(render('\'quote\''))?.toBe('&#39;quote&#39;');
+            expect(render("'quote'"))?.toBe('&#39;quote&#39;');
         });
 
         it('Renders single standard HTML element', () => {
@@ -75,20 +72,22 @@ describe('Modules - JSX - Renderer', () => {
         });
 
         it('Renders nested elements', () => {
-            expect(render({
-                type: 'section',
-                props: {
-                    children: {
-                        type: 'div',
-                        props: {
-                            children: {
-                                type: 'p',
-                                props: {children: 'Deep'},
+            expect(
+                render({
+                    type: 'section',
+                    props: {
+                        children: {
+                            type: 'div',
+                            props: {
+                                children: {
+                                    type: 'p',
+                                    props: {children: 'Deep'},
+                                },
                             },
                         },
                     },
-                },
-            })).toBe('<section><div><p>Deep</p></div></section>');
+                }),
+            ).toBe('<section><div><p>Deep</p></div></section>');
         });
 
         it('Renders void/self-closing tags properly', () => {
@@ -97,28 +96,31 @@ describe('Modules - JSX - Renderer', () => {
         });
 
         it('Renders style props with kebab-cased CSS', () => {
-            expect(render({
-                type: 'div',
-                props: {style: {backgroundColor: 'red', fontSize: '12px'}, children: ''},
-            })).toBe('<div style="background-color:red;font-size:12px"></div>');
+            expect(
+                render({
+                    type: 'div',
+                    props: {style: {backgroundColor: 'red', fontSize: '12px'}, children: ''},
+                }),
+            ).toBe('<div style="background-color:red;font-size:12px"></div>');
         });
 
         it('Renders style props with numeric and camelCase values', () => {
-            expect(render({
-                type: 'span',
-                props: {
-                    style: {
-                        lineHeight: 1.5,
-                        paddingTop: '10px',
-                        borderBottomColor: 'blue',
+            expect(
+                render({
+                    type: 'span',
+                    props: {
+                        style: {
+                            lineHeight: 1.5,
+                            paddingTop: '10px',
+                            borderBottomColor: 'blue',
+                        },
+                        children: 'Styled',
                     },
-                    children: 'Styled',
-                },
-            })).toBe('<span style="line-height:1.5;padding-top:10px;border-bottom-color:blue">Styled</span>');
+                }),
+            ).toBe('<span style="line-height:1.5;padding-top:10px;border-bottom-color:blue">Styled</span>');
         });
 
         it('Renders an array of JSX elements', () => {
-            /* @ts-ignore this is what we're testing */
             const out = render([
                 {type: 'span', props: {children: 'one'}},
                 {type: 'span', props: {children: 'two'}},
@@ -133,17 +135,19 @@ describe('Modules - JSX - Renderer', () => {
         });
 
         it('Ignores null/undefined style values', () => {
-            expect(render({
-                type: 'div',
-                props: {
-                    style: {
-                        color: null,
-                        display: undefined,
-                        margin: '0',
+            expect(
+                render({
+                    type: 'div',
+                    props: {
+                        style: {
+                            color: null,
+                            display: undefined,
+                            margin: '0',
+                        },
+                        children: '',
                     },
-                    children: '',
-                },
-            })).toBe('<div style="margin:0"></div>');
+                }),
+            ).toBe('<div style="margin:0"></div>');
         });
 
         it('Renders boolean props properly', () => {
@@ -162,16 +166,17 @@ describe('Modules - JSX - Renderer', () => {
         });
 
         it('Renders Fragment with multiple children', () => {
-            expect(render({
-                /* @ts-ignore */
-                type: Fragment,
-                props: {
-                    children: [
-                        {type: 'span', props: {children: 'One'}},
-                        {type: 'span', props: {children: 'Two'}},
-                    ],
-                },
-            })).toBe('<span>One</span><span>Two</span>');
+            expect(
+                render({
+                    type: Fragment,
+                    props: {
+                        children: [
+                            {type: 'span', props: {children: 'One'}},
+                            {type: 'span', props: {children: 'Two'}},
+                        ],
+                    },
+                }),
+            ).toBe('<span>One</span><span>Two</span>');
         });
 
         it('Renders mapped JSX output (e.g. list)', () => {
@@ -180,20 +185,21 @@ describe('Modules - JSX - Renderer', () => {
         });
 
         it('Renders function components with props', () => {
-            const Comp = ({text}: { text: string }) => ({type: 'p', props: {children: text}});
-            /* @ts-ignore */
+            const Comp = ({text}: {text: string}) => ({type: 'p', props: {children: text}});
             expect(render({type: Comp, props: {text: 'hello'}})).toBe('<p>hello</p>');
         });
 
         it('Renders dangerouslySetInnerHTML properly', () => {
-            expect(render({
-                type: 'div',
-                props: {
-                    dangerouslySetInnerHTML: {
-                        __html: '<b>bold</b>',
+            expect(
+                render({
+                    type: 'div',
+                    props: {
+                        dangerouslySetInnerHTML: {
+                            __html: '<b>bold</b>',
+                        },
                     },
-                },
-            })).toBe('<div><b>bold</b></div>');
+                }),
+            ).toBe('<div><b>bold</b></div>');
         });
 
         it('Renders nested Fragments inside elements', () => {
@@ -222,7 +228,7 @@ describe('Modules - JSX - Renderer', () => {
     });
 
     describe('rootRender', () => {
-        let css:ReturnType<typeof createCss>;
+        let css: ReturnType<typeof createCss>;
 
         beforeEach(() => {
             css = createCss();
@@ -240,12 +246,13 @@ describe('Modules - JSX - Renderer', () => {
 
             const ctx = new MockContext();
 
-            /* @ts-ignore */
             const html = rootRender(ctx, ['__TRIFROST_STYLE_MARKER__', {type: Component, props: {}}]);
-            expect(html).toBe([
-                `<style nonce="${ctx.nonce}">.tf-46gioo{padding:1rem;background-color:blue}</style>`,
-                '<div class="tf-46gioo">Hello</div>',
-            ].join(''));
+            expect(html).toBe(
+                [
+                    `<style nonce="${ctx.nonce}">.tf-46gioo{padding:1rem;background-color:blue}</style>`,
+                    '<div class="tf-46gioo">Hello</div>',
+                ].join(''),
+            );
         });
 
         it('Renders with expected class name and style from inside component', () => {
@@ -258,7 +265,6 @@ describe('Modules - JSX - Renderer', () => {
 
             const ctx = new MockContext();
 
-            /* @ts-ignore */
             const html = rootRender(ctx, ['__TRIFROST_STYLE_MARKER__', {type: Component, props: {}}]);
             expect(html).toBe(`<style nonce="${ctx.nonce}">.${cls}{margin:2rem;color:black}</style><div class="${cls}">Styled</div>`);
         });
@@ -275,25 +281,22 @@ describe('Modules - JSX - Renderer', () => {
             const Page = () => ({
                 type: Fragment,
                 props: {
-                    children: [
-                        {type: Header, props: {}},
-                        '__TRIFROST_STYLE_MARKER__',
-                        {type: Body, props: {}},
-                    ],
+                    children: [{type: Header, props: {}}, '__TRIFROST_STYLE_MARKER__', {type: Body, props: {}}],
                 },
             });
 
             const ctx = new MockContext();
-            /* @ts-ignore */
             const html = rootRender(ctx, {type: Page, props: {}});
-            expect(html).toBe([
-                '<header class="tf-iypj3">Title</header>',
-                `<style nonce="${ctx.nonce}">`,
-                '.tf-iypj3{font-size:1.5rem;font-weight:bold}',
-                '.tf-rnr4jx{line-height:1.5;padding:2rem}',
-                '</style>',
-                '<main class="tf-rnr4jx">Content</main>',
-            ].join(''));
+            expect(html).toBe(
+                [
+                    '<header class="tf-iypj3">Title</header>',
+                    `<style nonce="${ctx.nonce}">`,
+                    '.tf-iypj3{font-size:1.5rem;font-weight:bold}',
+                    '.tf-rnr4jx{line-height:1.5;padding:2rem}',
+                    '</style>',
+                    '<main class="tf-rnr4jx">Content</main>',
+                ].join(''),
+            );
         });
 
         it('Returns class but does not inject style when css({…}, {inject: false}) is used', () => {
@@ -351,21 +354,23 @@ describe('Modules - JSX - Renderer', () => {
 
             const ctx = new MockContext();
             const output = rootRender(ctx, {type: FullPage, props: {}});
-            expect(output).toBe([
-                '<html>',
-                '<head>',
-                '<title>TriFrost Demo</title>',
-                `<style nonce="${ctx.nonce}">`,
-                '.tf-gz38p9:hover{background-color:darkblue}',
-                '.tf-gz38p9{padding:0.75rem 1.25rem;border:none;background-color:blue;color:white;font-weight:bold;border-radius:0.25rem}',
-                '</style>',
-                '</head>',
-                '<body>',
-                '<h1>Welcome to TriFrost</h1>',
-                '<button class="tf-gz38p9">Click Me</button>',
-                '</body>',
-                '</html>',
-            ].join(''));
+            expect(output).toBe(
+                [
+                    '<html>',
+                    '<head>',
+                    '<title>TriFrost Demo</title>',
+                    `<style nonce="${ctx.nonce}">`,
+                    '.tf-gz38p9:hover{background-color:darkblue}',
+                    '.tf-gz38p9{padding:0.75rem 1.25rem;border:none;background-color:blue;color:white;font-weight:bold;border-radius:0.25rem}',
+                    '</style>',
+                    '</head>',
+                    '<body>',
+                    '<h1>Welcome to TriFrost</h1>',
+                    '<button class="tf-gz38p9">Click Me</button>',
+                    '</body>',
+                    '</html>',
+                ].join(''),
+            );
         });
 
         it('Resets the StyleEngine after rendering', () => {
@@ -377,7 +382,6 @@ describe('Modules - JSX - Renderer', () => {
 
             const ctx = new MockContext();
 
-            /* @ts-ignore */
             const html = rootRender(ctx, ['__TRIFROST_STYLE_MARKER__', {type: Component, props: {}}]);
             expect(html).toBe(`<style nonce="${ctx.nonce}">.${cls}{margin:2rem;color:black}</style><div class="${cls}">Styled</div>`);
 
@@ -388,18 +392,17 @@ describe('Modules - JSX - Renderer', () => {
                 cls2 = css({color: 'white', fontFamily: 'sans-serif'});
                 return {type: 'p', props: {className: cls2, children: 'Styled'}};
             };
-            /* @ts-ignore */
             const html2 = rootRender(ctx2, ['__TRIFROST_STYLE_MARKER__', {type: Component2, props: {}}]);
-            expect(html2).toBe([
-                `<style nonce="${ctx2.nonce}">.${cls2}{color:white;font-family:sans-serif}</style>`,
-                `<p class="${cls2}">Styled</p>`,
-            ].join(''));
+            expect(html2).toBe(
+                [`<style nonce="${ctx2.nonce}">.${cls2}{color:white;font-family:sans-serif}</style>`, `<p class="${cls2}">Styled</p>`].join(
+                    '',
+                ),
+            );
         });
 
         it('Exposes nonce via active context during render', () => {
             const Component = () => ({type: 'script', props: {nonce: nonce(), children: 'Nonce-bound'}});
 
-            /* @ts-ignore */
             const html = rootRender(new MockContext({nonce: 'abc-123'}), {type: Component, props: {}});
             expect(html).toBe('<script nonce="abc-123">Nonce-bound</script>');
         });
@@ -407,7 +410,6 @@ describe('Modules - JSX - Renderer', () => {
         it('Resets active ctx after render completes', () => {
             const Component = () => ({type: 'div', props: {children: nonce()}});
 
-            /* @ts-ignore */
             const html = rootRender(new MockContext({nonce: 'abc123'}), {type: Component, props: {}});
             expect(html).toContain('abc123');
 
@@ -421,7 +423,7 @@ describe('Modules - JSX - Renderer', () => {
             const ctx = new MockContext();
             const Component = () => ({type: 'div', props: {children: 'Hello'}});
 
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             const html = rootRender(ctx, {type: Component, props: {}}, {css: mockCss, script: mockScript});
 
             expect(mockCss.root).toHaveBeenCalledTimes(1);
@@ -435,7 +437,7 @@ describe('Modules - JSX - Renderer', () => {
             const ctx = new MockContext();
             const Component = () => ({type: 'div', props: {children: 'Hello'}});
 
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             const html = rootRender(ctx, {type: Component, props: {}}, {css: mockCss});
 
             expect(mockCss.root).toHaveBeenCalledTimes(1);
@@ -449,7 +451,7 @@ describe('Modules - JSX - Renderer', () => {
             const ctx = new MockContext();
             const Component = () => ({type: 'div', props: {children: 'Hello'}});
 
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             const html = rootRender(ctx, {type: Component, props: {}}, {script: mockScript});
 
             expect(mockCss.root).not.toHaveBeenCalled();
@@ -463,7 +465,7 @@ describe('Modules - JSX - Renderer', () => {
 
             const ctx = new MockContext();
 
-            const css2 = createCss({reset:true});
+            const css2 = createCss({reset: true});
             const client = createScript({atomic: true});
 
             const Component = () => {
@@ -471,70 +473,76 @@ describe('Modules - JSX - Renderer', () => {
                 return {type: 'div', props: {className: cls, children: 'Styled'}};
             };
 
-            const html = rootRender(ctx, {
-                type: 'ul',
-                props: {
-                    children: [
-                        {
-                            type: Component,
-                        },
-                        {
-                            type: 'li',
-                            props: {
-                                children: [
-                                    'A',
-                                    {
-                                        type: client.Script,
-                                        props: {
-                                            data: {a: 1, b: 2},
-                                            children: (el, data) => el.innerText = JSON.stringify(data),
-                                        },
-                                    },
-                                ],
+            const html = rootRender(
+                ctx,
+                {
+                    type: 'ul',
+                    props: {
+                        children: [
+                            {
+                                type: Component,
                             },
-                        },
-                        {
-                            type: 'li',
-                            props: {
-                                children: [
-                                    'B',
-                                    {
-                                        type: client.Script,
-                                        props: {
-                                            data: {b: 2, a: 1},
-                                            children: (el, data) => el.innerText = JSON.stringify(data),
+                            {
+                                type: 'li',
+                                props: {
+                                    children: [
+                                        'A',
+                                        {
+                                            type: client.Script,
+                                            props: {
+                                                data: {a: 1, b: 2},
+                                                children: (el, data) => (el.innerText = JSON.stringify(data)),
+                                            },
                                         },
-                                    },
-                                ],
+                                    ],
+                                },
                             },
-                        },
-                        '__TRIFROST_STYLE_MARKER__',
-                    ],
+                            {
+                                type: 'li',
+                                props: {
+                                    children: [
+                                        'B',
+                                        {
+                                            type: client.Script,
+                                            props: {
+                                                data: {b: 2, a: 1},
+                                                children: (el, data) => (el.innerText = JSON.stringify(data)),
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                            '__TRIFROST_STYLE_MARKER__',
+                        ],
+                    },
                 },
-                /* @ts-ignore */
-            }, {css: css2, script: client.script});
+                /* @ts-expect-error Should be good */
+                {css: css2, script: client.script},
+            );
 
             /* Note: order in json stringification matters */
-            expect(html).toBe([
-                '<ul>',
-                '<div class="tf-1ahm5s3">Styled</div>',
-                '<li data-tfhf="id-3" data-tfhd="id-4">A</li>',
-                '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
-                '<style nonce="aWQtMQ==">*, *::before, *::after{box-sizing:border-box}html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}footer, header, nav, section, main{display:block}ol, ul{list-style:none}q, blockquote::before{content:none}q, blockquote::after{content:none}q, blockquote{quotes:none}table{border-collapse:collapse;border-spacing:0}.tf-1ahm5s3{margin:2rem;color:black}</style>',
-                '</ul>',
-                '<script nonce="aWQtMQ==">(function(d,w){',
-                ATOMIC_GLOBAL,
-                'const TFD={"id-4":{"a":1,"b":2},"id-5":{"b":2,"a":1}};',
-                'const TFF={"id-3":(el, data) => el.innerText = JSON.stringify(data)};',
-                'for(const id in TFF){',
-                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
-                'for(let n of N){',
-                ATOMIC_VM_BEFORE,
-                'const dId=n.getAttribute("data-tfhd");',
-                'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
-                ATOMIC_VM_AFTER,
-                '}}})(document,window);</script>',
-            ].join(''));
+            expect(html).toBe(
+                [
+                    '<ul>',
+                    '<div class="tf-1ahm5s3">Styled</div>',
+                    '<li data-tfhf="id-3" data-tfhd="id-4">A</li>',
+                    '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
+                    '<style nonce="aWQtMQ==">*, *::before, *::after{box-sizing:border-box}html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}footer, header, nav, section, main{display:block}ol, ul{list-style:none}q, blockquote::before{content:none}q, blockquote::after{content:none}q, blockquote{quotes:none}table{border-collapse:collapse;border-spacing:0}.tf-1ahm5s3{margin:2rem;color:black}</style>',
+                    '</ul>',
+                    '<script nonce="aWQtMQ==">(function(d,w){',
+                    ATOMIC_GLOBAL,
+                    'const TFD={"id-4":{"a":1,"b":2},"id-5":{"b":2,"a":1}};',
+                    'const TFF={"id-3":(el, data) => el.innerText = JSON.stringify(data)};',
+                    'for(const id in TFF){',
+                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for(let n of N){',
+                    ATOMIC_VM_BEFORE,
+                    'const dId=n.getAttribute("data-tfhd");',
+                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
+                    ATOMIC_VM_AFTER,
+                    '}}})(document,window);</script>',
+                ].join(''),
+            );
         });
 
         it('Includes css root and script root when passed to render context and in html', () => {
@@ -543,7 +551,7 @@ describe('Modules - JSX - Renderer', () => {
 
             const ctx = new MockContext();
 
-            const css2 = createCss({reset:true});
+            const css2 = createCss({reset: true});
             const client = createScript({atomic: true});
 
             const Component = () => {
@@ -551,83 +559,93 @@ describe('Modules - JSX - Renderer', () => {
                 return {type: 'div', props: {className: cls, children: 'Styled'}};
             };
 
-            const html = rootRender(ctx, {
-                type: 'html',
-                props: {
-                    children: [{
-                        type: 'body',
-                        props: {
-                            children: [{
-                                type: 'ul',
+            const html = rootRender(
+                ctx,
+                {
+                    type: 'html',
+                    props: {
+                        children: [
+                            {
+                                type: 'body',
                                 props: {
                                     children: [
                                         {
-                                            type: Component,
-                                        },
-                                        {
-                                            type: 'li',
+                                            type: 'ul',
                                             props: {
                                                 children: [
-                                                    'A',
                                                     {
-                                                        type: client.Script,
+                                                        type: Component,
+                                                    },
+                                                    {
+                                                        type: 'li',
                                                         props: {
-                                                            data: {a: 1, b: 2},
-                                                            children: (el, data) => el.innerText = JSON.stringify(data),
+                                                            children: [
+                                                                'A',
+                                                                {
+                                                                    type: client.Script,
+                                                                    props: {
+                                                                        data: {a: 1, b: 2},
+                                                                        children: (el, data) => (el.innerText = JSON.stringify(data)),
+                                                                    },
+                                                                },
+                                                            ],
                                                         },
                                                     },
+                                                    {
+                                                        type: 'li',
+                                                        props: {
+                                                            children: [
+                                                                'B',
+                                                                {
+                                                                    type: client.Script,
+                                                                    props: {
+                                                                        data: {b: 2, a: 1},
+                                                                        children: (el, data) => (el.innerText = JSON.stringify(data)),
+                                                                    },
+                                                                },
+                                                            ],
+                                                        },
+                                                    },
+                                                    '__TRIFROST_STYLE_MARKER__',
                                                 ],
                                             },
                                         },
-                                        {
-                                            type: 'li',
-                                            props: {
-                                                children: [
-                                                    'B',
-                                                    {
-                                                        type: client.Script,
-                                                        props: {
-                                                            data: {b: 2, a: 1},
-                                                            children: (el, data) => el.innerText = JSON.stringify(data),
-                                                        },
-                                                    },
-                                                ],
-                                            },
-                                        },
-                                        '__TRIFROST_STYLE_MARKER__',
                                     ],
                                 },
-                            }],
-                        },
-                    }],
+                            },
+                        ],
+                    },
                 },
-            /* @ts-ignore */
-            }, {css: css2, script: client.script});
+                /* @ts-expect-error Should be good */
+                {css: css2, script: client.script},
+            );
 
             /* Note: order in json stringification matters */
-            expect(html).toBe([
-                '<html><body><ul>',
-                '<div class="tf-1ahm5s3">Styled</div>',
-                '<li data-tfhf="id-3" data-tfhd="id-4">A</li>',
-                '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
-                '<style nonce="aWQtMQ==">',
-                '*, *::before, *::after{box-sizing:border-box}html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}footer, header, nav, section, main{display:block}ol, ul{list-style:none}q, blockquote::before{content:none}q, blockquote::after{content:none}q, blockquote{quotes:none}table{border-collapse:collapse;border-spacing:0}',
-                '.tf-1ahm5s3{margin:2rem;color:black}',
-                '</style>',
-                '</ul>',
-                '<script nonce="aWQtMQ==">(function(d,w){',
-                ATOMIC_GLOBAL,
-                'const TFD={"id-4":{"a":1,"b":2},"id-5":{"b":2,"a":1}};',
-                'const TFF={"id-3":(el, data) => el.innerText = JSON.stringify(data)};',
-                'for(const id in TFF){',
-                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
-                'for(let n of N){',
-                ATOMIC_VM_BEFORE,
-                'const dId=n.getAttribute("data-tfhd");',
-                'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
-                ATOMIC_VM_AFTER,
-                '}}})(document,window);</script></body></html>',
-            ].join(''));
+            expect(html).toBe(
+                [
+                    '<html><body><ul>',
+                    '<div class="tf-1ahm5s3">Styled</div>',
+                    '<li data-tfhf="id-3" data-tfhd="id-4">A</li>',
+                    '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
+                    '<style nonce="aWQtMQ==">',
+                    '*, *::before, *::after{box-sizing:border-box}html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}footer, header, nav, section, main{display:block}ol, ul{list-style:none}q, blockquote::before{content:none}q, blockquote::after{content:none}q, blockquote{quotes:none}table{border-collapse:collapse;border-spacing:0}',
+                    '.tf-1ahm5s3{margin:2rem;color:black}',
+                    '</style>',
+                    '</ul>',
+                    '<script nonce="aWQtMQ==">(function(d,w){',
+                    ATOMIC_GLOBAL,
+                    'const TFD={"id-4":{"a":1,"b":2},"id-5":{"b":2,"a":1}};',
+                    'const TFF={"id-3":(el, data) => el.innerText = JSON.stringify(data)};',
+                    'for(const id in TFF){',
+                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for(let n of N){',
+                    ATOMIC_VM_BEFORE,
+                    'const dId=n.getAttribute("data-tfhd");',
+                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
+                    ATOMIC_VM_AFTER,
+                    '}}})(document,window);</script></body></html>',
+                ].join(''),
+            );
         });
 
         it('Includes css root and script root when passed to render context and in html BUT with mount paths set', () => {
@@ -636,7 +654,7 @@ describe('Modules - JSX - Renderer', () => {
 
             const ctx = new MockContext();
 
-            const css2 = createCss({reset:true});
+            const css2 = createCss({reset: true});
             const client = createScript({atomic: true});
 
             css2.setMountPath('/static.css');
@@ -647,85 +665,95 @@ describe('Modules - JSX - Renderer', () => {
                 return {type: 'div', props: {className: cls, children: 'Styled'}};
             };
 
-            const html = rootRender(ctx, {
-                type: 'html',
-                props: {
-                    children: [{
-                        type: 'body',
-                        props: {
-                            children: [{
-                                type: 'ul',
+            const html = rootRender(
+                ctx,
+                {
+                    type: 'html',
+                    props: {
+                        children: [
+                            {
+                                type: 'body',
                                 props: {
                                     children: [
                                         {
-                                            type: Component,
-                                        },
-                                        {
-                                            type: 'li',
+                                            type: 'ul',
                                             props: {
                                                 children: [
-                                                    'A',
                                                     {
-                                                        type: client.Script,
+                                                        type: Component,
+                                                    },
+                                                    {
+                                                        type: 'li',
                                                         props: {
-                                                            data: {a: 1, b: 2},
-                                                            children: (el, data) => el.innerText = JSON.stringify(data),
+                                                            children: [
+                                                                'A',
+                                                                {
+                                                                    type: client.Script,
+                                                                    props: {
+                                                                        data: {a: 1, b: 2},
+                                                                        children: (el, data) => (el.innerText = JSON.stringify(data)),
+                                                                    },
+                                                                },
+                                                            ],
                                                         },
                                                     },
+                                                    {
+                                                        type: 'li',
+                                                        props: {
+                                                            children: [
+                                                                'B',
+                                                                {
+                                                                    type: client.Script,
+                                                                    props: {
+                                                                        data: {b: 2, a: 1},
+                                                                        children: (el, data) => (el.innerText = JSON.stringify(data)),
+                                                                    },
+                                                                },
+                                                            ],
+                                                        },
+                                                    },
+                                                    '__TRIFROST_STYLE_MARKER__',
                                                 ],
                                             },
                                         },
-                                        {
-                                            type: 'li',
-                                            props: {
-                                                children: [
-                                                    'B',
-                                                    {
-                                                        type: client.Script,
-                                                        props: {
-                                                            data: {b: 2, a: 1},
-                                                            children: (el, data) => el.innerText = JSON.stringify(data),
-                                                        },
-                                                    },
-                                                ],
-                                            },
-                                        },
-                                        '__TRIFROST_STYLE_MARKER__',
                                     ],
                                 },
-                            }],
-                        },
-                    }],
+                            },
+                        ],
+                    },
                 },
-            /* @ts-ignore */
-            }, {css: css2, script: client.script});
+                /* @ts-expect-error Should be good */
+                {css: css2, script: client.script},
+            );
 
             /* Note: order in json stringification matters */
-            expect(html).toBe([
-                '<html><body><ul>',
-                '<div class="tf-1ahm5s3">Styled</div>',
-                '<li data-tfhf="id-3" data-tfhd="id-4">A</li>',
-                '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
-                '<link rel="stylesheet" nonce="aWQtMQ==" href="/static.css">',
-                '<style nonce="aWQtMQ==">.tf-1ahm5s3{margin:2rem;color:black}</style>',
-                '</ul>',
-                '<script nonce="aWQtMQ==" src="/static.js" defer></script>',
-                '<script nonce="aWQtMQ==">(function(d,w){',
-                'const run=()=>{',
-                'const TFD={"id-4":{"a":1,"b":2},"id-5":{"b":2,"a":1}};',
-                'const TFF={"id-3":(el, data) => el.innerText = JSON.stringify(data)};',
-                'for(const id in TFF){',
-                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
-                'for(let n of N){',
-                ATOMIC_VM_BEFORE,
-                'const dId=n.getAttribute("data-tfhd");',
-                'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
-                ATOMIC_VM_AFTER,
-                '}',
-                '}};',
-                'if(!w.$tfhydra){const wait=()=>{w.$tfhydra?run():setTimeout(wait,1)};wait();}else{run()}',
-                '})(document,window);</script></body></html>',
-            ].join(''));
+            expect(html).toBe(
+                [
+                    '<html><body><ul>',
+                    '<div class="tf-1ahm5s3">Styled</div>',
+                    '<li data-tfhf="id-3" data-tfhd="id-4">A</li>',
+                    '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
+                    '<link rel="stylesheet" nonce="aWQtMQ==" href="/static.css">',
+                    '<style nonce="aWQtMQ==">.tf-1ahm5s3{margin:2rem;color:black}</style>',
+                    '</ul>',
+                    '<script nonce="aWQtMQ==" src="/static.js" defer></script>',
+                    '<script nonce="aWQtMQ==">(function(d,w){',
+                    'const run=()=>{',
+                    'const TFD={"id-4":{"a":1,"b":2},"id-5":{"b":2,"a":1}};',
+                    'const TFF={"id-3":(el, data) => el.innerText = JSON.stringify(data)};',
+                    'for(const id in TFF){',
+                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                    'for(let n of N){',
+                    ATOMIC_VM_BEFORE,
+                    'const dId=n.getAttribute("data-tfhd");',
+                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
+                    ATOMIC_VM_AFTER,
+                    '}',
+                    '}};',
+                    'if(!w.$tfhydra){const wait=()=>{w.$tfhydra?run():setTimeout(wait,1)};wait();}else{run()}',
+                    '})(document,window);</script></body></html>',
+                ].join(''),
+            );
         });
 
         describe('JSX - render - ctx access (env/state/nonce)', () => {
@@ -781,7 +809,7 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe('<span>val123abc123</span>');
 
-              // after render completes
+                // after render completes
                 expect(env('key')).toBeUndefined();
                 expect(state('n')).toBeUndefined();
                 expect(nonce()).toBeNull();
@@ -821,26 +849,27 @@ describe('Modules - JSX - Renderer', () => {
                     props: {},
                 });
 
-                expect(html).toBe([
-                    '<button data-tfhf="id-2" data-tfhd="id-3">Click me</button>',
-                    '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"foo":"bar"}};',
-                    'const TFF={"id-2":(el, data) => console.log("Hydrated:", el, data)};',
-                    'for(const id in TFF){',
-                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for(let n of N){',
-                    'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
-                    '}',
-                    '}',
-                    '})(document,window);</script>',
-                ].join(''));
+                expect(html).toBe(
+                    [
+                        '<button data-tfhf="id-2" data-tfhd="id-3">Click me</button>',
+                        '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"foo":"bar"}};',
+                        'const TFF={"id-2":(el, data) => console.log("Hydrated:", el, data)};',
+                        'for(const id in TFF){',
+                        'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                        'for(let n of N){',
+                        'const dId=n.getAttribute("data-tfhd");',
+                        'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
+                        '}',
+                        '}',
+                        '})(document,window);</script>',
+                    ].join(''),
+                );
             });
 
             it('Deduplicates identical functions', () => {
                 const ctx = new MockContext();
 
                 const html = rootRender(ctx, {
-                    /* @ts-ignore */
                     type: Fragment,
                     props: {
                         children: Array.from({length: 3}).map(() => ({
@@ -852,7 +881,7 @@ describe('Modules - JSX - Renderer', () => {
                                         type: Script,
                                         props: {
                                             data: {x: 1},
-                                            children: el => el.dataset.bound = 'true',
+                                            children: el => (el.dataset.bound = 'true'),
                                         },
                                     },
                                 ],
@@ -861,19 +890,21 @@ describe('Modules - JSX - Renderer', () => {
                     },
                 });
 
-                expect(html).toBe([
-                    '<span data-tfhf="id-2" data-tfhd="id-3">Item</span><span data-tfhf="id-2" data-tfhd="id-3">Item</span><span data-tfhf="id-2" data-tfhd="id-3">Item</span>',
-                    '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"x":1}};',
-                    'const TFF={"id-2":(el) => el.dataset.bound = "true"};',
-                    'for(const id in TFF){',
-                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for(let n of N){',
-                    'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
-                    '}',
-                    '}',
-                    '})(document,window);</script>',
-                ].join(''));
+                expect(html).toBe(
+                    [
+                        '<span data-tfhf="id-2" data-tfhd="id-3">Item</span><span data-tfhf="id-2" data-tfhd="id-3">Item</span><span data-tfhf="id-2" data-tfhd="id-3">Item</span>',
+                        '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"x":1}};',
+                        'const TFF={"id-2":(el) => el.dataset.bound = "true"};',
+                        'for(const id in TFF){',
+                        'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                        'for(let n of N){',
+                        'const dId=n.getAttribute("data-tfhd");',
+                        'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
+                        '}',
+                        '}',
+                        '})(document,window);</script>',
+                    ].join(''),
+                );
             });
 
             it('Handles no data payloads', () => {
@@ -887,26 +918,28 @@ describe('Modules - JSX - Renderer', () => {
                             {
                                 type: Script,
                                 props: {
-                                    children: el => el.id = 'injected',
+                                    children: el => (el.id = 'injected'),
                                 },
                             },
                         ],
                     },
                 });
 
-                expect(html).toBe([
-                    '<div data-tfhf="id-2">No Data</div>',
-                    '<script nonce="aWQtMQ==">(function(d,w){const TFD={};',
-                    'const TFF={"id-2":(el) => el.id = "injected"};',
-                    'for(const id in TFF){',
-                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for(let n of N){',
-                    'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
-                    '}',
-                    '}',
-                    '})(document,window);</script>',
-                ].join(''));
+                expect(html).toBe(
+                    [
+                        '<div data-tfhf="id-2">No Data</div>',
+                        '<script nonce="aWQtMQ==">(function(d,w){const TFD={};',
+                        'const TFF={"id-2":(el) => el.id = "injected"};',
+                        'for(const id in TFF){',
+                        'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                        'for(let n of N){',
+                        'const dId=n.getAttribute("data-tfhd");',
+                        'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
+                        '}',
+                        '}',
+                        '})(document,window);</script>',
+                    ].join(''),
+                );
             });
 
             it('Works when nested inside components', () => {
@@ -933,26 +966,27 @@ describe('Modules - JSX - Renderer', () => {
                     props: {},
                 });
 
-                expect(html).toBe([
-                    '<div data-tfhf="id-2" data-tfhd="id-3">Nested</div>',
-                    '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"enabled":true}};',
-                    'const TFF={"id-2":(el, data) => el.setAttribute("data-enabled", data.enabled)};',
-                    'for(const id in TFF){',
-                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for(let n of N){',
-                    'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
-                    '}',
-                    '}',
-                    '})(document,window);</script>',
-                ].join(''));
+                expect(html).toBe(
+                    [
+                        '<div data-tfhf="id-2" data-tfhd="id-3">Nested</div>',
+                        '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"enabled":true}};',
+                        'const TFF={"id-2":(el, data) => el.setAttribute("data-enabled", data.enabled)};',
+                        'for(const id in TFF){',
+                        'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                        'for(let n of N){',
+                        'const dId=n.getAttribute("data-tfhd");',
+                        'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
+                        '}',
+                        '}',
+                        '})(document,window);</script>',
+                    ].join(''),
+                );
             });
 
             it('Supports multiple distinct scripts with separate ids', () => {
                 const ctx = new MockContext();
 
                 const html = rootRender(ctx, {
-                    /* @ts-ignore */
                     type: Fragment,
                     props: {
                         children: [
@@ -965,7 +999,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: Script,
                                             props: {
                                                 data: {count: 1},
-                                                children: (el, data) => el.textContent = `count:${data.count}`,
+                                                children: (el, data) => (el.textContent = `count:${data.count}`),
                                             },
                                         },
                                     ],
@@ -980,7 +1014,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: Script,
                                             props: {
                                                 data: {count: 2},
-                                                children: (el, data) => el.textContent = `count is ${data.count}`,
+                                                children: (el, data) => (el.textContent = `count is ${data.count}`),
                                             },
                                         },
                                     ],
@@ -990,26 +1024,27 @@ describe('Modules - JSX - Renderer', () => {
                     },
                 });
 
-                expect(html).toBe([
-                    '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-4" data-tfhd="id-5">Second</div>',
-                    '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"count":1},"id-5":{"count":2}};',
-                    'const TFF={"id-2":(el, data) => el.textContent = `count:${data.count}`,"id-4":(el, data) => el.textContent = `count is ${data.count}`};',
-                    'for(const id in TFF){',
-                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for(let n of N){',
-                    'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
-                    '}',
-                    '}',
-                    '})(document,window);</script>',
-                ].join(''));
+                expect(html).toBe(
+                    [
+                        '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-4" data-tfhd="id-5">Second</div>',
+                        '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"count":1},"id-5":{"count":2}};',
+                        'const TFF={"id-2":(el, data) => el.textContent = `count:${data.count}`,"id-4":(el, data) => el.textContent = `count is ${data.count}`};',
+                        'for(const id in TFF){',
+                        'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                        'for(let n of N){',
+                        'const dId=n.getAttribute("data-tfhd");',
+                        'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
+                        '}',
+                        '}',
+                        '})(document,window);</script>',
+                    ].join(''),
+                );
             });
 
             it('Supports multiple distinct scripts with separate ids but same data', () => {
                 const ctx = new MockContext();
 
                 const html = rootRender(ctx, {
-                    /* @ts-ignore */
                     type: Fragment,
                     props: {
                         children: [
@@ -1022,7 +1057,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: Script,
                                             props: {
                                                 data: {count: 1},
-                                                children: (el, data) => el.textContent = `count:${data.count}`,
+                                                children: (el, data) => (el.textContent = `count:${data.count}`),
                                             },
                                         },
                                     ],
@@ -1037,7 +1072,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: Script,
                                             props: {
                                                 data: {count: 1},
-                                                children: (el, data) => el.textContent = `count is ${data.count}`,
+                                                children: (el, data) => (el.textContent = `count is ${data.count}`),
                                             },
                                         },
                                     ],
@@ -1047,26 +1082,27 @@ describe('Modules - JSX - Renderer', () => {
                     },
                 });
 
-                expect(html).toBe([
-                    '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-4" data-tfhd="id-3">Second</div>',
-                    '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"count":1}};',
-                    'const TFF={"id-2":(el, data) => el.textContent = `count:${data.count}`,"id-4":(el, data) => el.textContent = `count is ${data.count}`};',
-                    'for(const id in TFF){',
-                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for(let n of N){',
-                    'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
-                    '}',
-                    '}',
-                    '})(document,window);</script>',
-                ].join(''));
+                expect(html).toBe(
+                    [
+                        '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-4" data-tfhd="id-3">Second</div>',
+                        '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"count":1}};',
+                        'const TFF={"id-2":(el, data) => el.textContent = `count:${data.count}`,"id-4":(el, data) => el.textContent = `count is ${data.count}`};',
+                        'for(const id in TFF){',
+                        'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                        'for(let n of N){',
+                        'const dId=n.getAttribute("data-tfhd");',
+                        'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
+                        '}',
+                        '}',
+                        '})(document,window);</script>',
+                    ].join(''),
+                );
             });
 
             it('Supports same scripts with same data', () => {
                 const ctx = new MockContext();
 
                 const html = rootRender(ctx, {
-                    /* @ts-ignore */
                     type: Fragment,
                     props: {
                         children: [
@@ -1079,7 +1115,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: Script,
                                             props: {
                                                 data: {count: 1},
-                                                children: (el, data) => el.textContent = `count is ${data.count}`,
+                                                children: (el, data) => (el.textContent = `count is ${data.count}`),
                                             },
                                         },
                                     ],
@@ -1094,7 +1130,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: Script,
                                             props: {
                                                 data: {count: 1},
-                                                children: (el, data) => el.textContent = `count is ${data.count}`,
+                                                children: (el, data) => (el.textContent = `count is ${data.count}`),
                                             },
                                         },
                                     ],
@@ -1104,19 +1140,21 @@ describe('Modules - JSX - Renderer', () => {
                     },
                 });
 
-                expect(html).toBe([
-                    '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-2" data-tfhd="id-3">Second</div>',
-                    '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"count":1}};',
-                    'const TFF={"id-2":(el, data) => el.textContent = `count is ${data.count}`};',
-                    'for(const id in TFF){',
-                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for(let n of N){',
-                    'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
-                    '}',
-                    '}',
-                    '})(document,window);</script>',
-                ].join(''));
+                expect(html).toBe(
+                    [
+                        '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-2" data-tfhd="id-3">Second</div>',
+                        '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"count":1}};',
+                        'const TFF={"id-2":(el, data) => el.textContent = `count is ${data.count}`};',
+                        'for(const id in TFF){',
+                        'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                        'for(let n of N){',
+                        'const dId=n.getAttribute("data-tfhd");',
+                        'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
+                        '}',
+                        '}',
+                        '})(document,window);</script>',
+                    ].join(''),
+                );
             });
 
             it('Handles deep nested script markers correctly', () => {
@@ -1139,7 +1177,7 @@ describe('Modules - JSX - Renderer', () => {
                                                         type: Script,
                                                         props: {
                                                             data: {active: true},
-                                                            children: (el, data) => el.dataset.active = String(data.active),
+                                                            children: (el, data) => (el.dataset.active = String(data.active)),
                                                         },
                                                     },
                                                 ],
@@ -1153,7 +1191,7 @@ describe('Modules - JSX - Renderer', () => {
                                                     {
                                                         type: Script,
                                                         props: {
-                                                            children: el => el.dataset.foot = 'true',
+                                                            children: el => (el.dataset.foot = 'true'),
                                                         },
                                                     },
                                                 ],
@@ -1166,19 +1204,21 @@ describe('Modules - JSX - Renderer', () => {
                     },
                 });
 
-                expect(html).toBe([
-                    '<section><article><header data-tfhf="id-2" data-tfhd="id-3">Header</header><footer data-tfhf="id-4">Footer</footer></article></section>',
-                    '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"active":true}};',
-                    'const TFF={"id-2":(el, data) => el.dataset.active = String(data.active),"id-4":(el) => el.dataset.foot = "true"};',
-                    'for(const id in TFF){',
-                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for(let n of N){',
-                    'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
-                    '}',
-                    '}',
-                    '})(document,window);</script>',
-                ].join(''));
+                expect(html).toBe(
+                    [
+                        '<section><article><header data-tfhf="id-2" data-tfhd="id-3">Header</header><footer data-tfhf="id-4">Footer</footer></article></section>',
+                        '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"active":true}};',
+                        'const TFF={"id-2":(el, data) => el.dataset.active = String(data.active),"id-4":(el) => el.dataset.foot = "true"};',
+                        'for(const id in TFF){',
+                        'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                        'for(let n of N){',
+                        'const dId=n.getAttribute("data-tfhd");',
+                        'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
+                        '}',
+                        '}',
+                        '})(document,window);</script>',
+                    ].join(''),
+                );
             });
 
             it('Works with fragments as children and still injects on parent', () => {
@@ -1188,7 +1228,6 @@ describe('Modules - JSX - Renderer', () => {
                     type: 'div',
                     props: {
                         children: {
-                            /* @ts-ignore */
                             type: Fragment,
                             props: {
                                 children: [
@@ -1206,18 +1245,20 @@ describe('Modules - JSX - Renderer', () => {
                     },
                 });
 
-                expect(html).toBe([
-                    '<div data-tfhf="id-2" data-tfhd="id-3">Hello</div><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"x":5}};',
-                    'const TFF={"id-2":(el, data) => el.setAttribute("data-value", data.x)};',
-                    'for(const id in TFF){',
-                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for(let n of N){',
-                    'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
-                    '}',
-                    '}',
-                    '})(document,window);</script>',
-                ].join(''));
+                expect(html).toBe(
+                    [
+                        '<div data-tfhf="id-2" data-tfhd="id-3">Hello</div><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"x":5}};',
+                        'const TFF={"id-2":(el, data) => el.setAttribute("data-value", data.x)};',
+                        'for(const id in TFF){',
+                        'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                        'for(let n of N){',
+                        'const dId=n.getAttribute("data-tfhd");',
+                        'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
+                        '}',
+                        '}',
+                        '})(document,window);</script>',
+                    ].join(''),
+                );
             });
 
             it('Skips script engine entirely if no Script is used', () => {
@@ -1249,7 +1290,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: Script,
                                             props: {
                                                 data: {a: 1, b: 2},
-                                                children: (el, data) => el.innerText = JSON.stringify(data),
+                                                children: (el, data) => (el.innerText = JSON.stringify(data)),
                                             },
                                         },
                                     ],
@@ -1264,7 +1305,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: Script,
                                             props: {
                                                 data: {b: 2, a: 1},
-                                                children: (el, data) => el.innerText = JSON.stringify(data),
+                                                children: (el, data) => (el.innerText = JSON.stringify(data)),
                                             },
                                         },
                                     ],
@@ -1275,18 +1316,20 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 /* Note: order in json stringification matters */
-                expect(html).toBe([
-                    '<ul><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
-                    'const TFF={"id-2":(el, data) => el.innerText = JSON.stringify(data)};',
-                    'for(const id in TFF){',
-                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for(let n of N){',
-                    'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
-                    '}',
-                    '}',
-                    '})(document,window);</script>',
-                ].join(''));
+                expect(html).toBe(
+                    [
+                        '<ul><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
+                        'const TFF={"id-2":(el, data) => el.innerText = JSON.stringify(data)};',
+                        'for(const id in TFF){',
+                        'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                        'for(let n of N){',
+                        'const dId=n.getAttribute("data-tfhd");',
+                        'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
+                        '}',
+                        '}',
+                        '})(document,window);</script>',
+                    ].join(''),
+                );
             });
 
             it('Normalizes and deduplicates equal JSON payloads as well as embeds atomic', () => {
@@ -1316,7 +1359,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: client.Script,
                                             props: {
                                                 data: {a: 1, b: 2},
-                                                children: (el, data) => el.innerText = JSON.stringify(data),
+                                                children: (el, data) => (el.innerText = JSON.stringify(data)),
                                             },
                                         },
                                     ],
@@ -1331,7 +1374,7 @@ describe('Modules - JSX - Renderer', () => {
                                             type: client.Script,
                                             props: {
                                                 data: {b: 2, a: 1},
-                                                children: (el, data) => el.innerText = JSON.stringify(data),
+                                                children: (el, data) => (el.innerText = JSON.stringify(data)),
                                             },
                                         },
                                     ],
@@ -1342,22 +1385,24 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 /* Note: order in json stringification matters */
-                expect(html).toBe([
-                    '<ul><div class="tf-1ahm5s3">Styled</div><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==">(function(d,w){',
-                    ATOMIC_GLOBAL,
-                    'const TFD={"id-3":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
-                    'const TFF={"id-2":(el, data) => el.innerText = JSON.stringify(data)};',
-                    'for(const id in TFF){',
-                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for(let n of N){',
-                    ATOMIC_VM_BEFORE,
-                    'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
-                    ATOMIC_VM_AFTER,
-                    '}',
-                    '}',
-                    '})(document,window);</script>',
-                ].join(''));
+                expect(html).toBe(
+                    [
+                        '<ul><div class="tf-1ahm5s3">Styled</div><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==">(function(d,w){',
+                        ATOMIC_GLOBAL,
+                        'const TFD={"id-3":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
+                        'const TFF={"id-2":(el, data) => el.innerText = JSON.stringify(data)};',
+                        'for(const id in TFF){',
+                        'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                        'for(let n of N){',
+                        ATOMIC_VM_BEFORE,
+                        'const dId=n.getAttribute("data-tfhd");',
+                        'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
+                        ATOMIC_VM_AFTER,
+                        '}',
+                        '}',
+                        '})(document,window);</script>',
+                    ].join(''),
+                );
             });
 
             it('Flushes and resets between render calls', () => {
@@ -1370,25 +1415,27 @@ describe('Modules - JSX - Renderer', () => {
                             {
                                 type: Script,
                                 props: {
-                                    children: el => el.id = 'reset',
+                                    children: el => (el.id = 'reset'),
                                 },
                             },
                         ],
                     },
                 });
 
-                expect(html1).toBe([
-                    '<div data-tfhf="id-2">Reset me</div><script nonce="aWQtMQ==">(function(d,w){const TFD={};',
-                    'const TFF={"id-2":(el) => el.id = "reset"};',
-                    'for(const id in TFF){',
-                    'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
-                    'for(let n of N){',
-                    'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
-                    '}',
-                    '}',
-                    '})(document,window);</script>',
-                ].join(''));
+                expect(html1).toBe(
+                    [
+                        '<div data-tfhf="id-2">Reset me</div><script nonce="aWQtMQ==">(function(d,w){const TFD={};',
+                        'const TFF={"id-2":(el) => el.id = "reset"};',
+                        'for(const id in TFF){',
+                        'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                        'for(let n of N){',
+                        'const dId=n.getAttribute("data-tfhd");',
+                        'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}))}catch{}',
+                        '}',
+                        '}',
+                        '})(document,window);</script>',
+                    ].join(''),
+                );
 
                 const html2 = rootRender(new MockContext(), {
                     type: 'div',

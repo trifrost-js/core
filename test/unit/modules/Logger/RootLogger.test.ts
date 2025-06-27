@@ -17,7 +17,7 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
         init: vi.fn(ctx => {
             initCalledWith = ctx;
         }),
-        /* @ts-ignore */
+        /* @ts-expect-error Should be good */
         pushLog: vi.fn(log => logs.push(log)),
         pushSpan: vi.fn(span => spans.push(span)),
         flush: vi.fn(() => Promise.resolve()),
@@ -200,7 +200,7 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
         it('does not emit spans if exporter lacks pushSpan', () => {
             const nonSpanExporter: TriFrostLoggerExporter = {
                 init: vi.fn(),
-                /* @ts-ignore */
+                /* @ts-expect-error Should be good */
                 pushLog: vi.fn(log => logs.push(log)),
                 flush: vi.fn(() => Promise.resolve()),
             };
@@ -226,7 +226,7 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
         it('still logs messages even if exporter has no pushSpan', () => {
             const nonSpanExporter: TriFrostLoggerExporter = {
                 init: vi.fn(),
-                /* @ts-ignore */
+                /* @ts-expect-error Should be good */
                 pushLog: vi.fn(log => logs.push(log)),
                 flush: vi.fn(() => Promise.resolve()),
             };
@@ -357,7 +357,7 @@ describe('Modules - Logger - TriFrostRootLogger', () => {
         it('Filters out non-span-aware exporters', () => {
             const exp: TriFrostLoggerExporter = {
                 init: vi.fn(),
-                /* @ts-ignore */
+                /* @ts-expect-error Should be good */
                 pushLog: vi.fn(log => logs.push(log)),
                 flush: vi.fn(() => Promise.resolve()),
             };

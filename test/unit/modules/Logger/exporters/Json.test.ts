@@ -105,15 +105,17 @@ describe('Modules - Logger - Exporters - Json', () => {
                     data: {extra: 'info'},
                 });
 
-                expect(spies[level]).toHaveBeenCalledWith(JSON.stringify({
-                    message: 'Test message',
-                    time: fixedDate.toISOString(),
-                    level,
-                    trace_id: 'trace-123',
-                    ctx: {user: '***'},
-                    data: {extra: 'info'},
-                    global: {service: '***'},
-                }));
+                expect(spies[level]).toHaveBeenCalledWith(
+                    JSON.stringify({
+                        message: 'Test message',
+                        time: fixedDate.toISOString(),
+                        level,
+                        trace_id: 'trace-123',
+                        ctx: {user: '***'},
+                        data: {extra: 'info'},
+                        global: {service: '***'},
+                    }),
+                );
             });
 
             it('Scrambles deep values in ctx, data, and global using wildcards', async () => {
@@ -137,21 +139,23 @@ describe('Modules - Logger - Exporters - Json', () => {
                     },
                 });
 
-                expect(spies[level]).toHaveBeenCalledWith(JSON.stringify({
-                    message: 'Test message',
-                    time: fixedDate.toISOString(),
-                    level,
-                    ctx: {
-                        session: {token: '***'},
-                    },
-                    data: {
-                        user: {token: '***'},
-                    },
-                    global: {
-                        service: 'api',
-                        auth: {token: '***'},
-                    },
-                }));
+                expect(spies[level]).toHaveBeenCalledWith(
+                    JSON.stringify({
+                        message: 'Test message',
+                        time: fixedDate.toISOString(),
+                        level,
+                        ctx: {
+                            session: {token: '***'},
+                        },
+                        data: {
+                            user: {token: '***'},
+                        },
+                        global: {
+                            service: 'api',
+                            auth: {token: '***'},
+                        },
+                    }),
+                );
             });
 
             it('Does not scramble any values if omit is empty array', async () => {
@@ -171,14 +175,16 @@ describe('Modules - Logger - Exporters - Json', () => {
                     data: {token: 'xyz789'},
                 });
 
-                expect(spies[level]).toHaveBeenCalledWith(JSON.stringify({
-                    message: 'Test message',
-                    time: fixedDate.toISOString(),
-                    level,
-                    ctx: {token: 'abc123'},
-                    data: {token: 'xyz789'},
-                    global: {service: 'api', token: '123abc'},
-                }));
+                expect(spies[level]).toHaveBeenCalledWith(
+                    JSON.stringify({
+                        message: 'Test message',
+                        time: fixedDate.toISOString(),
+                        level,
+                        ctx: {token: 'abc123'},
+                        data: {token: 'xyz789'},
+                        global: {service: 'api', token: '123abc'},
+                    }),
+                );
             });
 
             it('Only scrambles keys that exactly match (case-sensitive)', async () => {
@@ -194,28 +200,26 @@ describe('Modules - Logger - Exporters - Json', () => {
                     ctx: {Token: 'ShouldRemain', token: 'ShouldScramble'},
                 });
 
-                expect(spies[level]).toHaveBeenCalledWith(JSON.stringify({
-                    message: 'Test message',
-                    time: fixedDate.toISOString(),
-                    level,
-                    ctx: {
-                        Token: 'ShouldRemain',
-                        token: '***',
-                    },
-                    global: {
-                        Token: 'ShouldRemain',
-                    },
-                }));
+                expect(spies[level]).toHaveBeenCalledWith(
+                    JSON.stringify({
+                        message: 'Test message',
+                        time: fixedDate.toISOString(),
+                        level,
+                        ctx: {
+                            Token: 'ShouldRemain',
+                            token: '***',
+                        },
+                        global: {
+                            Token: 'ShouldRemain',
+                        },
+                    }),
+                );
             });
 
             it('Sink receives fully scrambled payload according to omit rules', async () => {
                 const sink = vi.fn();
                 const exporter = new JsonExporter({
-                    omit: [
-                        {global: 'password'},
-                        {global: 'token'},
-                        'secret',
-                    ],
+                    omit: [{global: 'password'}, {global: 'token'}, 'secret'],
                     sink,
                 });
 

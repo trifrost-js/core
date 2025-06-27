@@ -8,11 +8,7 @@ import {
     normalizeMiddleware,
 } from '../../../lib/routing/util';
 import CONSTANTS from '../../constants';
-import {
-    Sym_TriFrostDescription,
-    Sym_TriFrostFingerPrint,
-    Sym_TriFrostName,
-} from '../../../lib';
+import {Sym_TriFrostDescription, Sym_TriFrostFingerPrint, Sym_TriFrostName} from '../../../lib';
 
 describe('routing - util', () => {
     describe('isValidHandler', () => {

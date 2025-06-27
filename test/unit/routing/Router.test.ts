@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import {describe, it, expect, beforeEach, vi} from 'vitest';
 import {Router} from '../../../lib/routing/Router';
 import {RouteTree} from '../../../lib/routing/Tree';
@@ -22,63 +21,78 @@ describe('routing - Router', () => {
         it('Throws on invalid path', () => {
             for (const el of CONSTANTS.NOT_STRING) {
                 if (el === undefined) continue;
-                expect(() => new Router({
-                    ...EXAMPLE_CONFIG,
-                    path: el as string,
-                })).toThrowError(/TriFrostRouter@ctor: Path is invalid/);
+                expect(
+                    () =>
+                        new Router({
+                            ...EXAMPLE_CONFIG,
+                            path: el as string,
+                        }),
+                ).toThrowError(/TriFrostRouter@ctor: Path is invalid/);
             }
         });
 
         it('Throws on invalid timeout', () => {
             for (const el of [...CONSTANTS.NOT_INTEGER, 0, -10, -999, 1.5]) {
                 if (el === undefined || el === null) continue;
-                expect(() => new Router({
-                    ...EXAMPLE_CONFIG,
-                    timeout: el as number,
-                })).toThrowError(/TriFrostRouter@ctor: Timeout is invalid/);
+                expect(
+                    () =>
+                        new Router({
+                            ...EXAMPLE_CONFIG,
+                            timeout: el as number,
+                        }),
+                ).toThrowError(/TriFrostRouter@ctor: Timeout is invalid/);
             }
         });
 
         it('Throws on invalid ratelimit', () => {
-            for (const el of [
-                ...CONSTANTS.NOT_OBJECT,
-                ...[...CONSTANTS.NOT_FUNCTION].map(val => ({limit: val})),
-            ]) {
+            for (const el of [...CONSTANTS.NOT_OBJECT, ...[...CONSTANTS.NOT_FUNCTION].map(val => ({limit: val}))]) {
                 if (el === undefined || el === null) continue;
-                expect(() => new Router({
-                    ...EXAMPLE_CONFIG,
-                    rateLimit: el as TriFrostRateLimit,
-                })).toThrowError(/TriFrostRouter@ctor: RateLimit is invalid/);
+                expect(
+                    () =>
+                        new Router({
+                            ...EXAMPLE_CONFIG,
+                            rateLimit: el as TriFrostRateLimit,
+                        }),
+                ).toThrowError(/TriFrostRouter@ctor: RateLimit is invalid/);
             }
         });
 
         it('Throws on invalid tree', () => {
             for (const el of CONSTANTS.NOT_OBJECT) {
                 if (el === undefined) continue;
-                expect(() => new Router({
-                    ...EXAMPLE_CONFIG,
-                    tree: el as RouteTree,
-                })).toThrowError(/TriFrostRouter@ctor: Tree is invalid/);
+                expect(
+                    () =>
+                        new Router({
+                            ...EXAMPLE_CONFIG,
+                            tree: el as RouteTree,
+                        }),
+                ).toThrowError(/TriFrostRouter@ctor: Tree is invalid/);
             }
         });
 
         it('Throws on invalid bodyparser', () => {
             for (const el of CONSTANTS.NOT_OBJECT) {
                 if (el === null) continue;
-                expect(() => new Router({
-                    ...EXAMPLE_CONFIG,
-                    bodyParser: el as any,
-                })).toThrowError(/TriFrostRouter@ctor: BodyParser is invalid/);
+                expect(
+                    () =>
+                        new Router({
+                            ...EXAMPLE_CONFIG,
+                            bodyParser: el as any,
+                        }),
+                ).toThrowError(/TriFrostRouter@ctor: BodyParser is invalid/);
             }
         });
 
         it('Throws on invalid middleware array', () => {
             for (const el of CONSTANTS.NOT_ARRAY) {
                 if (el === undefined) continue;
-                expect(() => new Router({
-                    ...EXAMPLE_CONFIG,
-                    middleware: el as TriFrostMiddleware[],
-                })).toThrowError(/TriFrostRouter@ctor: Middleware is invalid/);
+                expect(
+                    () =>
+                        new Router({
+                            ...EXAMPLE_CONFIG,
+                            middleware: el as TriFrostMiddleware[],
+                        }),
+                ).toThrowError(/TriFrostRouter@ctor: Middleware is invalid/);
             }
         });
 
@@ -108,7 +122,7 @@ describe('routing - Router', () => {
             const r2 = new Router({...EXAMPLE_CONFIG, path: '/helloWorld'});
             expect(r2.path).toBe('/helloWorld');
             expect(() => {
-                /* @ts-ignore This is what we're testing */
+                /* @ts-expect-error This is what we're testing */
                 r2.path = '/hacked';
             }).toThrow();
             expect(r2.path).toBe('/helloWorld');
@@ -128,7 +142,7 @@ describe('routing - Router', () => {
             const r2 = new Router({...EXAMPLE_CONFIG, timeout: 9999});
             expect(r2.timeout).toBe(9999);
             expect(() => {
-                /* @ts-ignore This is what we're testing */
+                /* @ts-expect-error This is what we're testing */
                 r2.timeout = -1000;
             }).toThrow();
             expect(r2.timeout).toBe(9999);
@@ -171,13 +185,7 @@ describe('routing - Router', () => {
                 bodyParser: null,
             });
 
-            for (const el of [
-                ...CONSTANTS.NOT_FUNCTION,
-                ...CONSTANTS.NOT_INTEGER,
-                0,
-                -5,
-                1.2,
-            ]) {
+            for (const el of [...CONSTANTS.NOT_FUNCTION, ...CONSTANTS.NOT_INTEGER, 0, -5, 1.2]) {
                 if (typeof el === 'function' || (Number.isInteger(el) && (el as number) > 0)) continue;
                 expect(() => router.limit(el as any)).toThrow(/TriFrostRouter@limit: Invalid limit/);
             }
@@ -233,12 +241,14 @@ describe('routing - Router', () => {
                     description: null,
                     fingerprint: null,
                     handler: m1,
-                }, {
+                },
+                {
                     name: 'spy',
                     description: null,
                     fingerprint: null,
                     handler: dummyMiddleware,
-                }, {
+                },
+                {
                     name: 'spy',
                     description: null,
                     fingerprint: null,
@@ -267,18 +277,22 @@ describe('routing - Router', () => {
             const getRoute = tree.stack.find(r => r.path === '/api/multi' && r.method === 'GET');
             const postRoute = tree.stack.find(r => r.path === '/api/multi' && r.method === 'POST');
 
-            expect(getRoute?.middleware).toEqual([{
-                name: 'spy',
-                description: null,
-                fingerprint: null,
-                handler: dummyMiddleware,
-            }]);
-            expect(postRoute?.middleware).toEqual([{
-                name: 'spy',
-                description: null,
-                fingerprint: null,
-                handler: dummyMiddleware,
-            }]);
+            expect(getRoute?.middleware).toEqual([
+                {
+                    name: 'spy',
+                    description: null,
+                    fingerprint: null,
+                    handler: dummyMiddleware,
+                },
+            ]);
+            expect(postRoute?.middleware).toEqual([
+                {
+                    name: 'spy',
+                    description: null,
+                    fingerprint: null,
+                    handler: dummyMiddleware,
+                },
+            ]);
         });
     });
 
@@ -293,14 +307,17 @@ describe('routing - Router', () => {
         it('Throws if not passed a valid body parser in ctor', () => {
             for (const el of CONSTANTS.NOT_OBJECT) {
                 if (el === null) continue;
-                expect(() => router = new Router({
-                    path: '/api',
-                    timeout: null,
-                    tree,
-                    middleware: [],
-                    rateLimit: null,
-                    bodyParser: el as any,
-                })).toThrowError(/TriFrostRouter@ctor: BodyParser is invalid/);
+                expect(
+                    () =>
+                        (router = new Router({
+                            path: '/api',
+                            timeout: null,
+                            tree,
+                            middleware: [],
+                            rateLimit: null,
+                            bodyParser: el as any,
+                        })),
+                ).toThrowError(/TriFrostRouter@ctor: BodyParser is invalid/);
             }
         });
 
@@ -509,10 +526,7 @@ describe('routing - Router', () => {
         });
 
         it('Throws on invalid group handler', () => {
-            for (const el of [
-                ...CONSTANTS.NOT_FUNCTION,
-                ...[...CONSTANTS.NOT_FUNCTION].map(val => ({fn: val})),
-            ]) {
+            for (const el of [...CONSTANTS.NOT_FUNCTION, ...[...CONSTANTS.NOT_FUNCTION].map(val => ({fn: val}))]) {
                 expect(() => {
                     router.group('/bad', el as any);
                 }).toThrow(/TriFrostRouter@group: Invalid handler/);
@@ -538,12 +552,12 @@ describe('routing - Router', () => {
         });
 
         it('Handles group() with config object and timeout', () => {
-            const groupHandler = vi.fn((r:Router) => {
+            const groupHandler = vi.fn((r: Router) => {
                 r.get('/inside', vi.fn());
             });
 
             router.group('/admin', {
-                /* @ts-ignore */
+                /* @ts-expect-error Should be good */
                 fn: groupHandler,
                 timeout: 3000,
             });
@@ -577,18 +591,20 @@ describe('routing - Router', () => {
 
             const stack = tree.stack;
             expect(stack.length).toBe(1);
-            expect(stack).toEqual([{
-                path: '/api/*',
-                kind: 'notfound',
-                fn: handler,
-                timeout: null,
-                middleware: [],
-                method: 'GET', /* This is a stub */
-                bodyParser: null,
-                name: 'notfound',
-                description: '404 Not Found Handler',
-                meta: null,
-            }]);
+            expect(stack).toEqual([
+                {
+                    path: '/api/*',
+                    kind: 'notfound',
+                    fn: handler,
+                    timeout: null,
+                    middleware: [],
+                    method: 'GET' /* This is a stub */,
+                    bodyParser: null,
+                    name: 'notfound',
+                    description: '404 Not Found Handler',
+                    meta: null,
+                },
+            ]);
         });
 
         it('Applies router-level middleware', () => {
@@ -607,21 +623,23 @@ describe('routing - Router', () => {
 
             const handler = vi.fn();
             router_with_mware.onNotFound(handler);
-            expect(tree_with_mware.stack).toEqual([{
-                path: '/api/*',
-                kind: 'notfound',
-                fn: handler,
-                timeout: null,
-                middleware: [
-                    {name: 'anonymous_mware', description: null, fingerprint: null, handler: m1},
-                    {name: 'anonymous_mware', description: null, fingerprint: null, handler: m2},
-                ],
-                method: 'GET', /* This is a stub */
-                bodyParser: null,
-                name: 'notfound',
-                description: '404 Not Found Handler',
-                meta: null,
-            }]);
+            expect(tree_with_mware.stack).toEqual([
+                {
+                    path: '/api/*',
+                    kind: 'notfound',
+                    fn: handler,
+                    timeout: null,
+                    middleware: [
+                        {name: 'anonymous_mware', description: null, fingerprint: null, handler: m1},
+                        {name: 'anonymous_mware', description: null, fingerprint: null, handler: m2},
+                    ],
+                    method: 'GET' /* This is a stub */,
+                    bodyParser: null,
+                    name: 'notfound',
+                    description: '404 Not Found Handler',
+                    meta: null,
+                },
+            ]);
         });
 
         it('Throws on non-function handler', () => {
@@ -656,18 +674,20 @@ describe('routing - Router', () => {
 
             const stack = tree.stack;
             expect(stack.length).toBe(1);
-            expect(stack).toEqual([{
-                path: '/api/*',
-                kind: 'error',
-                fn: handler,
-                timeout: null,
-                middleware: [],
-                method: 'GET', /* This is a stub */
-                bodyParser: null,
-                name: 'error',
-                description: 'Error Handler',
-                meta: null,
-            }]);
+            expect(stack).toEqual([
+                {
+                    path: '/api/*',
+                    kind: 'error',
+                    fn: handler,
+                    timeout: null,
+                    middleware: [],
+                    method: 'GET' /* This is a stub */,
+                    bodyParser: null,
+                    name: 'error',
+                    description: 'Error Handler',
+                    meta: null,
+                },
+            ]);
         });
 
         it('Applies router-level middleware', () => {
@@ -686,21 +706,23 @@ describe('routing - Router', () => {
 
             const handler = vi.fn();
             router_with_mware.onError(handler);
-            expect(tree_with_mware.stack).toEqual([{
-                path: '/api/*',
-                kind: 'error',
-                fn: handler,
-                timeout: null,
-                middleware: [
-                    {name: 'anonymous_mware', description: null, fingerprint: null, handler: m1},
-                    {name: 'anonymous_mware', description: null, fingerprint: null, handler: m2},
-                ],
-                method: 'GET', /* This is a stub */
-                bodyParser: null,
-                name: 'error',
-                description: 'Error Handler',
-                meta: null,
-            }]);
+            expect(tree_with_mware.stack).toEqual([
+                {
+                    path: '/api/*',
+                    kind: 'error',
+                    fn: handler,
+                    timeout: null,
+                    middleware: [
+                        {name: 'anonymous_mware', description: null, fingerprint: null, handler: m1},
+                        {name: 'anonymous_mware', description: null, fingerprint: null, handler: m2},
+                    ],
+                    method: 'GET' /* This is a stub */,
+                    bodyParser: null,
+                    name: 'error',
+                    description: 'Error Handler',
+                    meta: null,
+                },
+            ]);
         });
 
         it('Throws on non-function handler', () => {
@@ -751,17 +773,19 @@ describe('routing - Router', () => {
                 description: null,
                 meta: null,
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/api/users',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/api/users',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/api/users',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/api/users',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
             expect(stack[2]).toEqual({
                 path: '/api/users',
                 method: 'HEAD',
@@ -828,17 +852,19 @@ describe('routing - Router', () => {
                 description: null,
                 meta: null,
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/api/secure',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/api/secure',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/api/secure',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/api/secure',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
             expect(stack[2]).toEqual({
                 path: '/api/secure',
                 method: 'HEAD',
@@ -923,17 +949,19 @@ describe('routing - Router', () => {
                 description: 'With meta',
                 meta: {tag: 'test'},
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/api/meta',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/api/meta',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/api/meta',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/api/meta',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
             expect(stack[2]).toEqual({
                 path: '/api/meta',
                 method: 'HEAD',
@@ -983,17 +1011,19 @@ describe('routing - Router', () => {
                 description: null,
                 meta: null,
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/hello/test',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/hello/test',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/hello/test',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/hello/test',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
             expect(stack[2]).toEqual({
                 path: '/hello/test',
                 method: 'HEAD',
@@ -1042,17 +1072,19 @@ describe('routing - Router', () => {
                 description: null,
                 meta: null,
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/with-mware',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/with-mware',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/with-mware',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/with-mware',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
             expect(stack[2]).toEqual({
                 path: '/with-mware',
                 method: 'HEAD',
@@ -1078,10 +1110,7 @@ describe('routing - Router', () => {
         });
 
         it('Throws on invalid handler', () => {
-            for (const el of [
-                ...CONSTANTS.NOT_FUNCTION,
-                ...[...CONSTANTS.NOT_FUNCTION].map(val => ({fn: val})),
-            ]) {
+            for (const el of [...CONSTANTS.NOT_FUNCTION, ...[...CONSTANTS.NOT_FUNCTION].map(val => ({fn: val}))]) {
                 expect(() => router.get('/bad', el as any)).toThrow(/TriFrostRouter@get: Invalid handler/);
             }
         });
@@ -1111,17 +1140,19 @@ describe('routing - Router', () => {
                 description: 'A test GET route',
                 meta: {tag: 'test'},
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/hello/meta',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/hello/meta',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/hello/meta',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/hello/meta',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
             expect(stack[2]).toEqual({
                 path: '/hello/meta',
                 method: 'HEAD',
@@ -1160,17 +1191,19 @@ describe('routing - Router', () => {
                 description: null,
                 meta: null,
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/hello/chained',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/hello/chained',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/hello/chained',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/hello/chained',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
             expect(stack[2]).toEqual({
                 path: '/hello/chained',
                 method: 'HEAD',
@@ -1231,17 +1264,19 @@ describe('routing - Router', () => {
                 description: null,
                 meta: null,
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/hello/test',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/hello/test',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/hello/test',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/hello/test',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
         });
 
         it('Applies router-level middleware', () => {
@@ -1278,17 +1313,19 @@ describe('routing - Router', () => {
                 description: null,
                 meta: null,
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/with-mware',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/with-mware',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/with-mware',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/with-mware',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
         });
 
         it('Throws on invalid path', () => {
@@ -1299,10 +1336,7 @@ describe('routing - Router', () => {
         });
 
         it('Throws on invalid handler', () => {
-            for (const el of [
-                ...CONSTANTS.NOT_FUNCTION,
-                ...[...CONSTANTS.NOT_FUNCTION].map(val => ({fn: val})),
-            ]) {
+            for (const el of [...CONSTANTS.NOT_FUNCTION, ...[...CONSTANTS.NOT_FUNCTION].map(val => ({fn: val}))]) {
                 expect(() => router.post('/bad', el as any)).toThrow(/TriFrostRouter@post: Invalid handler/);
             }
         });
@@ -1332,17 +1366,19 @@ describe('routing - Router', () => {
                 description: 'A test POST route',
                 meta: {tag: 'test'},
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/hello/meta',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/hello/meta',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/hello/meta',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/hello/meta',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
         });
 
         it('Handles chained use() + post()', () => {
@@ -1369,17 +1405,19 @@ describe('routing - Router', () => {
                 description: null,
                 meta: null,
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/hello/chained',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/hello/chained',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/hello/chained',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/hello/chained',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
         });
 
         it('Applies router-level bodyParser to POST route', () => {
@@ -1426,17 +1464,19 @@ describe('routing - Router', () => {
                 description: null,
                 meta: null,
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/hello/test',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/hello/test',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/hello/test',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/hello/test',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
         });
 
         it('Applies router-level middleware', () => {
@@ -1473,17 +1513,19 @@ describe('routing - Router', () => {
                 description: null,
                 meta: null,
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/with-mware',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/with-mware',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/with-mware',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/with-mware',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
         });
 
         it('Throws on invalid path', () => {
@@ -1494,10 +1536,7 @@ describe('routing - Router', () => {
         });
 
         it('Throws on invalid handler', () => {
-            for (const el of [
-                ...CONSTANTS.NOT_FUNCTION,
-                ...[...CONSTANTS.NOT_FUNCTION].map(val => ({fn: val})),
-            ]) {
+            for (const el of [...CONSTANTS.NOT_FUNCTION, ...[...CONSTANTS.NOT_FUNCTION].map(val => ({fn: val}))]) {
                 expect(() => router.put('/bad', el as any)).toThrow(/TriFrostRouter@put: Invalid handler/);
             }
         });
@@ -1527,17 +1566,19 @@ describe('routing - Router', () => {
                 description: 'A test PUT route',
                 meta: {tag: 'test'},
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/hello/meta',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/hello/meta',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/hello/meta',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/hello/meta',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
         });
 
         it('Handles chained use() + put()', () => {
@@ -1564,17 +1605,19 @@ describe('routing - Router', () => {
                 description: null,
                 meta: null,
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/hello/chained',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/hello/chained',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/hello/chained',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/hello/chained',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
         });
 
         it('Applies router-level bodyParser to PUT route', () => {
@@ -1621,17 +1664,19 @@ describe('routing - Router', () => {
                 description: null,
                 meta: null,
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/hello/test',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/hello/test',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/hello/test',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/hello/test',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
         });
 
         it('Applies router-level middleware', () => {
@@ -1668,17 +1713,19 @@ describe('routing - Router', () => {
                 description: null,
                 meta: null,
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/with-mware',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/with-mware',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/with-mware',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/with-mware',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
         });
 
         it('Throws on invalid path', () => {
@@ -1689,10 +1736,7 @@ describe('routing - Router', () => {
         });
 
         it('Throws on invalid handler', () => {
-            for (const el of [
-                ...CONSTANTS.NOT_FUNCTION,
-                ...[...CONSTANTS.NOT_FUNCTION].map(val => ({fn: val})),
-            ]) {
+            for (const el of [...CONSTANTS.NOT_FUNCTION, ...[...CONSTANTS.NOT_FUNCTION].map(val => ({fn: val}))]) {
                 expect(() => router.patch('/bad', el as any)).toThrow(/TriFrostRouter@patch: Invalid handler/);
             }
         });
@@ -1722,17 +1766,19 @@ describe('routing - Router', () => {
                 description: 'A test PATCH route',
                 meta: {tag: 'test'},
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/hello/meta',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/hello/meta',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/hello/meta',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/hello/meta',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
         });
 
         it('Handles chained use() + patch()', () => {
@@ -1759,17 +1805,19 @@ describe('routing - Router', () => {
                 description: null,
                 meta: null,
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/hello/chained',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/hello/chained',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/hello/chained',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/hello/chained',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
         });
 
         it('Applies router-level bodyParser to PATCH route', () => {
@@ -1816,17 +1864,19 @@ describe('routing - Router', () => {
                 description: null,
                 meta: null,
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/hello/test',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/hello/test',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/hello/test',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/hello/test',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
         });
 
         it('Applies router-level middleware', () => {
@@ -1863,17 +1913,19 @@ describe('routing - Router', () => {
                 description: null,
                 meta: null,
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/with-mware',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/with-mware',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/with-mware',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/with-mware',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
         });
 
         it('Throws on invalid path', () => {
@@ -1884,10 +1936,7 @@ describe('routing - Router', () => {
         });
 
         it('Throws on invalid handler', () => {
-            for (const el of [
-                ...CONSTANTS.NOT_FUNCTION,
-                ...[...CONSTANTS.NOT_FUNCTION].map(val => ({fn: val})),
-            ]) {
+            for (const el of [...CONSTANTS.NOT_FUNCTION, ...[...CONSTANTS.NOT_FUNCTION].map(val => ({fn: val}))]) {
                 expect(() => router.del('/bad', el as any)).toThrow(/TriFrostRouter@del: Invalid handler/);
             }
         });
@@ -1917,17 +1966,19 @@ describe('routing - Router', () => {
                 description: 'A test DELETE route',
                 meta: {tag: 'test'},
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/hello/meta',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/hello/meta',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/hello/meta',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/hello/meta',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
         });
 
         it('Handles chained use() + del()', () => {
@@ -1954,17 +2005,19 @@ describe('routing - Router', () => {
                 description: null,
                 meta: null,
             });
-            expect(stack[1]).toEqual(expect.objectContaining({
-                path: '/hello/chained',
-                method: 'OPTIONS',
-                kind: 'options',
-                timeout: null,
-                middleware: [],
-                bodyParser: null,
-                name: 'OPTIONS_/hello/chained',
-                description: 'Auto-generated OPTIONS handler',
-                meta: null,
-            }));
+            expect(stack[1]).toEqual(
+                expect.objectContaining({
+                    path: '/hello/chained',
+                    method: 'OPTIONS',
+                    kind: 'options',
+                    timeout: null,
+                    middleware: [],
+                    bodyParser: null,
+                    name: 'OPTIONS_/hello/chained',
+                    description: 'Auto-generated OPTIONS handler',
+                    meta: null,
+                }),
+            );
         });
 
         it('Applies router-level bodyParser to DELETE route', () => {
@@ -2025,17 +2078,19 @@ describe('routing - Router', () => {
 
             const stack = tree.stack;
             const summary = stack.map(r => `${r.method} ${r.path}`);
-            expect(summary).toEqual(expect.arrayContaining([
-                'GET /api/users',
-                'HEAD /api/users',
-                'POST /api/users',
-                'PUT /api/users/:id',
-                'GET /api/admin/dashboard',
-                'HEAD /api/admin/dashboard',
-                'GET /api/products',
-                'HEAD /api/products',
-                'POST /api/products',
-            ]));
+            expect(summary).toEqual(
+                expect.arrayContaining([
+                    'GET /api/users',
+                    'HEAD /api/users',
+                    'POST /api/users',
+                    'PUT /api/users/:id',
+                    'GET /api/admin/dashboard',
+                    'HEAD /api/admin/dashboard',
+                    'GET /api/products',
+                    'HEAD /api/products',
+                    'POST /api/products',
+                ]),
+            );
 
             /* Check middleware chains */
             const getUsers = stack.find(r => r.path === '/api/users' && r.method === 'GET');

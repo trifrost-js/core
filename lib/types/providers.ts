@@ -9,11 +9,11 @@ export interface TriFrostCFKVNamespace {
     get(key: string, type: 'arrayBuffer'): Promise<ArrayBuffer | null>;
     get(key: string, type: 'stream'): Promise<ReadableStream | null>;
 
-    list(options?:{
-        prefix?:string,
-        limit?:number,
-        cursor?:string
-    }):Promise<{keys:{name:string}[], list_complete:boolean, cursor?:string}>;
+    list(options?: {
+        prefix?: string;
+        limit?: number;
+        cursor?: string;
+    }): Promise<{keys: {name: string}[]; list_complete: boolean; cursor?: string}>;
 
     put(key: string, value: string | ReadableStream | ArrayBuffer, options?: KVNamespacePutOptions): Promise<void>;
 
@@ -21,10 +21,9 @@ export interface TriFrostCFKVNamespace {
 }
 
 export interface TriFrostCFFetcher {
-    fetch: (request: Request|string, init?: RequestInit) => Promise<Response>;
+    fetch: (request: Request | string, init?: RequestInit) => Promise<Response>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TriFrostCFDurableObjectId {}
 
 export interface TriFrostCFDurableObjectStub {
@@ -41,8 +40,8 @@ export interface TriFrostCFDurableObjectNamespace {
  */
 
 export interface TriFrostRedis {
-    get: (key: string) => Promise<string|null>;
+    get: (key: string) => Promise<string | null>;
     set: (key: string, value: string, ...args: any[]) => Promise<void>;
-    del: (...keys:string[]) => Promise<void>;
-    scan: (cursor:string, ...args:any[]) => Promise<[string, string[]]>;
+    del: (...keys: string[]) => Promise<void>;
+    scan: (cursor: string, ...args: any[]) => Promise<[string, string[]]>;
 }

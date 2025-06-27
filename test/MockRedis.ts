@@ -1,7 +1,6 @@
 import {type TriFrostRedis} from '../lib/types/providers';
 
 class MockRedis implements TriFrostRedis {
-
     map: Map<string, [string, unknown]> = new Map();
     calls: [string, unknown][] = [];
 
@@ -30,7 +29,7 @@ class MockRedis implements TriFrostRedis {
         }
 
         const rgx = new RegExp('^' + match.replace(/\*/g, '.*') + '$');
-        const keys:string[] = [];
+        const keys: string[] = [];
         for (const k of this.map.keys()) {
             if (rgx.test(k)) keys.push(k);
         }
@@ -42,16 +41,16 @@ class MockRedis implements TriFrostRedis {
         return [nextCursor, keys.slice(start, next)];
     }
 
-    async del(...keys:string[]): Promise<void> {
+    async del(...keys: string[]): Promise<void> {
         this.calls.push(['del', keys]);
         for (let i = 0; i < keys.length; i++) this.map.delete(keys[i]);
     }
 
-    get isEmpty () {
+    get isEmpty() {
         return this.calls.length === 0;
     }
 
-    reset () {
+    reset() {
         this.calls = [];
         this.map = new Map();
     }
@@ -59,7 +58,6 @@ class MockRedis implements TriFrostRedis {
     debug() {
         return Object.fromEntries(this.map.entries());
     }
-
 }
 
 export {MockRedis};

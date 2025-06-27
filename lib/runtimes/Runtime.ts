@@ -4,7 +4,7 @@ import {WorkerdRuntime} from './Workerd/Runtime';
 /**
  * Runtime detector function which returns a promise for the current runtime
  */
-export async function getRuntime (): Promise<TriFrostRuntime> {
+export async function getRuntime(): Promise<TriFrostRuntime> {
     /* Workerd */
     if (typeof (globalThis as {WorkerGlobalScope?: Record<string, unknown>}).WorkerGlobalScope !== 'undefined') {
         return new WorkerdRuntime();

@@ -1,17 +1,10 @@
 import {Context} from '../../Context';
 import {type TriFrostRootLogger} from '../../modules/Logger';
 import {type TriFrostContextConfig} from '../../types/context';
-import {
-    HttpMethods,
-    HttpMethodToNormal,
-    type HttpStatusCode,
-} from '../../types/constants';
+import {HttpMethods, HttpMethodToNormal, type HttpStatusCode} from '../../types/constants';
 import {type TriFrostRouteMatch} from '../../types/routing';
 import {parseBody} from '../../utils/BodyParser/Uint8Array';
-import {
-    type IncomingMessage,
-    type ServerResponse,
-} from './types';
+import {type IncomingMessage, type ServerResponse} from './types';
 import {DEFAULT_BODY_PARSER_OPTIONS} from '../../utils/BodyParser/types';
 
 const encoder = new TextEncoder();
@@ -21,7 +14,7 @@ const encoder = new TextEncoder();
  *
  * @param {IncomingMessage} req - Incoming Request
  */
-async function loadBody (req:IncomingMessage): Promise<Uint8Array> {
+async function loadBody(req: IncomingMessage): Promise<Uint8Array> {
     return new Promise((resolve, reject) => {
         const chunks: Buffer[] = [];
         req.on('data', chunk => chunks.push(Buffer.from(chunk)));
@@ -31,32 +24,31 @@ async function loadBody (req:IncomingMessage): Promise<Uint8Array> {
 }
 
 export class NodeContext extends Context {
-
     /* Node Apis */
-    #node:{
-        Readable: typeof import('node:stream')['Readable'];
-        statSync: typeof import('node:fs')['statSync'];
-        createReadStream: typeof import('node:fs')['createReadStream'];
-        pipeline: typeof import('node:stream/promises')['pipeline'];
+    #node: {
+        Readable: (typeof import('node:stream'))['Readable'];
+        statSync: (typeof import('node:fs'))['statSync'];
+        createReadStream: (typeof import('node:fs'))['createReadStream'];
+        pipeline: (typeof import('node:stream/promises'))['pipeline'];
     };
 
     /* Incoming Message */
-    #node_req:IncomingMessage;
+    #node_req: IncomingMessage;
 
     /* Outgoing Response */
-    #node_res:ServerResponse;
+    #node_res: ServerResponse;
 
-    constructor (
-        cfg:TriFrostContextConfig,
-        logger:TriFrostRootLogger,
+    constructor(
+        cfg: TriFrostContextConfig,
+        logger: TriFrostRootLogger,
         nodeApis: {
-            Readable: typeof import('node:stream')['Readable'];
-            statSync: typeof import('node:fs')['statSync'];
-            createReadStream: typeof import('node:fs')['createReadStream'];
-            pipeline: typeof import('node:stream/promises')['pipeline'];
+            Readable: (typeof import('node:stream'))['Readable'];
+            statSync: (typeof import('node:fs'))['statSync'];
+            createReadStream: (typeof import('node:fs'))['createReadStream'];
+            pipeline: (typeof import('node:stream/promises'))['pipeline'];
         },
-        req:IncomingMessage,
-        res:ServerResponse
+        req: IncomingMessage,
+        res: ServerResponse,
     ) {
         /* Hydrate headers */
         const headers: Record<string, string> = {};
@@ -82,7 +74,7 @@ export class NodeContext extends Context {
     /**
      * Initializes the context, this happens when a route is matched and tied to this context.
      */
-    async init (val:TriFrostRouteMatch) {
+    async init(val: TriFrostRouteMatch) {
         await super.init(val, async () => {
             const raw_body = await loadBody(this.#node_req);
             return parseBody(this, raw_body, val.route.bodyParser || DEFAULT_BODY_PARSER_OPTIONS);
@@ -94,7 +86,7 @@ export class NodeContext extends Context {
      *
      * @param {string} path - Path to the file
      */
-    async getStream (path: string) {
+    async getStream(path: string) {
         try {
             const stat = this.#node.statSync(path);
             if (!stat || stat.size <= 0) return null;
@@ -113,7 +105,7 @@ export class NodeContext extends Context {
      * @param {unknown} stream - Stream to respond with
      * @param {number|null} size - Size of the stream
      */
-    protected stream (stream:unknown, size: number|null = null) {
+    protected stream(stream: unknown, size: number | null = null) {
         /* If already locked do nothing */
         if (this.isLocked) return;
 
@@ -122,7 +114,7 @@ export class NodeContext extends Context {
             if (stream instanceof ReadableStream) {
                 const reader = stream.getReader();
                 stream = new this.#node.Readable({
-                    async read () {
+                    async read() {
                         const {value, done} = await reader.read();
                         if (done) return this.push(null);
                         this.push(value);
@@ -144,10 +136,7 @@ export class NodeContext extends Context {
         super.stream(stream, size);
 
         /* Write headers */
-        this.#node_res.writeHead(
-            this.res_code,
-            this.res_headers
-        );
+        this.#node_res.writeHead(this.res_code, this.res_headers);
 
         /* Write cookies */
         this.#writeCookies();
@@ -158,23 +147,22 @@ export class NodeContext extends Context {
                 (stream as import('node:stream').Readable).destroy?.();
                 break;
             default: {
-                this.#node.pipeline(
-                    (stream as import('node:stream').Readable),
-                    this.#node_res as unknown as NodeJS.WritableStream
-                ).catch(err => {
-                    switch (err.code)  {
-                        case 'ERR_STREAM_PREMATURE_CLOSE': /* Stream closed by client (eg: browser refresh) */
-                        case 'ERR_STREAM_DESTROYED': /* Stream destroyed manually */
-                        case 'ECONNRESET': /* Unexpected socket close, usually by client */
-                        case 'EPIPE': /* Client closed connection mid-stream */
-                            this.logger.debug('NodeContext@stream: Stream aborted', {msg: err.message});
-                            break;
-                        default: {
-                            this.logger.error('NodeContext@stream: Failed to stream', {msg: err.message});
-                            this.#node_res.destroy(err);
+                this.#node
+                    .pipeline(stream as import('node:stream').Readable, this.#node_res as unknown as NodeJS.WritableStream)
+                    .catch(err => {
+                        switch (err.code) {
+                            case 'ERR_STREAM_PREMATURE_CLOSE': /* Stream closed by client (eg: browser refresh) */
+                            case 'ERR_STREAM_DESTROYED': /* Stream destroyed manually */
+                            case 'ECONNRESET': /* Unexpected socket close, usually by client */
+                            case 'EPIPE' /* Client closed connection mid-stream */:
+                                this.logger.debug('NodeContext@stream: Stream aborted', {msg: err.message});
+                                break;
+                            default: {
+                                this.logger.error('NodeContext@stream: Failed to stream', {msg: err.message});
+                                this.#node_res.destroy(err);
+                            }
                         }
-                    }
-                });
+                    });
                 break;
             }
         }
@@ -185,7 +173,7 @@ export class NodeContext extends Context {
      *
      * @param {HttpStatusCode?} status - Status to abort with (defaults to 503)
      */
-    abort (status?:HttpStatusCode) {
+    abort(status?: HttpStatusCode) {
         if (this.isLocked) return;
 
         super.abort(status);
@@ -194,16 +182,13 @@ export class NodeContext extends Context {
         this.#writeCookies();
 
         /* Write other headers and status */
-        this.#node_res.writeHead(
-            this.res_code,
-            this.res_headers
-        ).end();
+        this.#node_res.writeHead(this.res_code, this.res_headers).end();
     }
 
     /**
      * End the request and respond to callee
      */
-    end () {
+    end() {
         if (this.isLocked) return;
 
         super.end();
@@ -213,12 +198,8 @@ export class NodeContext extends Context {
 
         switch (this.method) {
             case HttpMethods.HEAD:
-                this.res_headers['Content-Length'] = typeof this.res_body === 'string'
-                    ? '' + encoder.encode(this.res_body).length
-                    : '0';
-                this.#node_res
-                    .writeHead(this.res_code, this.res_headers)
-                    .end();
+                this.res_headers['Content-Length'] = typeof this.res_body === 'string' ? '' + encoder.encode(this.res_body).length : '0';
+                this.#node_res.writeHead(this.res_code, this.res_headers).end();
                 break;
             default:
                 this.#node_res
@@ -231,7 +212,7 @@ export class NodeContext extends Context {
     /**
      * Run jobs after the response has gone out
      */
-    runAfter () {
+    runAfter() {
         const hooks = this.afterHooks;
         if (!hooks.length) return;
 
@@ -246,23 +227,22 @@ export class NodeContext extends Context {
         });
     }
 
-/**
- * MARK: Protected
- */
+    /**
+     * MARK: Protected
+     */
 
-    protected getIP ():string|null {
+    protected getIP(): string | null {
         return this.#node_req.connection?.socket?.remoteAddress ?? this.#node_req.socket?.remoteAddress ?? null;
     }
 
-/**
- * MARK: Private
- */
+    /**
+     * MARK: Private
+     */
 
-    #writeCookies () {
+    #writeCookies() {
         if (!this.$cookies) return;
         const outgoing = this.$cookies.outgoing;
         if (!outgoing.length) return;
         this.#node_res.setHeader('Set-Cookie', outgoing);
     }
-
 }

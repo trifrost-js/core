@@ -8,11 +8,7 @@ import {
 } from '../../../lib/middleware/CacheControl';
 import {MockContext} from '../../MockContext';
 import CONSTANTS from '../../constants';
-import {
-    Sym_TriFrostDescription,
-    Sym_TriFrostName,
-    Sym_TriFrostFingerPrint,
-} from '../../../lib/types/constants';
+import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostFingerPrint} from '../../../lib/types/constants';
 
 describe('Middleware - CacheControl', () => {
     it('Returns a function that is non-async', () => {
@@ -78,9 +74,7 @@ describe('Middleware - CacheControl', () => {
             mustRevalidate: true,
             proxyRevalidate: true,
         })(ctx);
-        expect(ctx.headers['Cache-Control']).toBe(
-            'public, max-age=300, s-maxage=600, immutable, must-revalidate, proxy-revalidate'
-        );
+        expect(ctx.headers['Cache-Control']).toBe('public, max-age=300, s-maxage=600, immutable, must-revalidate, proxy-revalidate');
     });
 
     it('Ignores invalid type', () => {

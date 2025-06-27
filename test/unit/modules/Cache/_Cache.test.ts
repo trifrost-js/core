@@ -44,7 +44,7 @@ describe('Modules - Cache - TriFrostCache', () => {
         it('Throws if not passed a valid store', async () => {
             for (const el of CONSTANTS.NOT_FUNCTION) {
                 if (isObject(el)) continue;
-                /* @ts-ignore This is what we're testing */
+                /* @ts-expect-error Should be good */
                 expect(() => new TriFrostCache({store: el})).toThrow(/TriFrostCache: Expected a store initializer/);
             }
         });
@@ -52,14 +52,14 @@ describe('Modules - Cache - TriFrostCache', () => {
         it('Accepts an already-resolved store directly', () => {
             const direct = new TriFrostCache({store});
             direct.init({env: true});
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(direct.resolvedStore).toBe(store);
         });
-    
+
         it('Throws if store is not object or function', () => {
             for (const el of [...CONSTANTS.NOT_OBJECT_WITH_EMPTY, ...CONSTANTS.NOT_FUNCTION]) {
                 if (typeof el === 'function' || typeof el === 'object') continue;
-                /* @ts-ignore */
+                /* @ts-expect-error Should be good */
                 expect(() => new TriFrostCache({store: el})).toThrow(/TriFrostCache: Expected a store initializer/);
             }
         });
@@ -148,7 +148,7 @@ describe('Modules - Cache - TriFrostCache', () => {
         });
 
         it('Does not cache if result is undefined', async () => {
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             const result = await cache.wrap('undef', async () => {});
             expect(result).toBe(undefined);
             expect(await cache.get('undef')).toBe(null);
@@ -183,36 +183,42 @@ describe('Modules - Cache - TriFrostCache', () => {
         beforeEach(() => {
             cache.init({env: true});
         });
-    
+
         it('Spawns a new cache instance with a spawned store', () => {
-            const spawnMock = vi.fn().mockImplementation(ctx => ({
-                ...mockStore(),
-                name: 'SpawnedMockStore',
-                ctx: ctx,
-            } as unknown as Store));
+            const spawnMock = vi.fn().mockImplementation(
+                ctx =>
+                    ({
+                        ...mockStore(),
+                        name: 'SpawnedMockStore',
+                        ctx: ctx,
+                    }) as unknown as Store,
+            );
             store.spawn = spawnMock;
-    
+
             const ctx = {env: {env: true}, logger: {}} as any;
             const scoped = (cache as any).spawn(ctx);
-    
+
             expect(scoped).toBeInstanceOf(TriFrostCache);
             expect(spawnMock).toHaveBeenCalledWith(ctx);
         });
-    
+
         it('Spawns from unresolved cache and resolves using ctx.env', () => {
             const rawStore = mockStore();
             const lazyCache = new TriFrostCache({
                 store: () => rawStore,
             });
-    
-            rawStore.spawn = vi.fn().mockImplementation(() => ({
-                ...mockStore(),
-                name: 'LazySpawned',
-            } as unknown as Store));
-    
+
+            rawStore.spawn = vi.fn().mockImplementation(
+                () =>
+                    ({
+                        ...mockStore(),
+                        name: 'LazySpawned',
+                    }) as unknown as Store,
+            );
+
             const ctx = {env: {env: true}, logger: {}} as any;
             const spawned = (lazyCache as any).spawn(ctx);
-    
+
             expect(spawned).toBeInstanceOf(TriFrostCache);
             expect(rawStore.spawn).toHaveBeenCalledWith(ctx);
         });
@@ -220,26 +226,26 @@ describe('Modules - Cache - TriFrostCache', () => {
         describe('Spawned Store: behavioral', () => {
             let baseStore: Store;
             let spawnCache: TriFrostCache<{env: boolean}>;
-        
+
             beforeEach(() => {
                 baseStore = mockStore();
                 spawnCache = new TriFrostCache({store: baseStore});
             });
-        
+
             it('should set and get using spawned cache', async () => {
                 const ctx = {env: {env: true}} as any;
                 const spawned = (spawnCache as any).spawn(ctx);
                 spawned.init(ctx.env);
-        
+
                 await spawned.set('hello', 'world');
                 expect(await spawned.get('hello')).toBe('world');
             });
-        
+
             it('should delete values using spawned cache', async () => {
                 const ctx = {env: {env: true}} as any;
                 const spawned = (spawnCache as any).spawn(ctx);
                 spawned.init(ctx.env);
-        
+
                 await spawned.set('bye', 'world');
                 await spawned.del('bye');
                 expect(await spawned.get('bye')).toBe(null);

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-
 import {type Router} from '../../../routing/Router';
 import {MimeTypes} from '../../../types';
 import {setActiveCtx} from '../ctx/use';
@@ -11,14 +9,10 @@ export function mount<
     V extends Record<string, string> = {},
     T extends Record<string, any> = {},
     R extends Record<string, Record<string, unknown>> = {},
-    B extends Record<string, string> = {}
-> (
-    router:Router,
-    path:string,
-    module:CssInstance<V, T, R, B>
-) {
+    B extends Record<string, string> = {},
+>(router: Router, path: string, module: CssInstance<V, T, R, B>) {
     /* We cache root content in mem*/
-    let content:string;
+    let content: string;
 
     /* Set mount path on module */
     module.setMountPath(path);
@@ -42,9 +36,7 @@ export function mount<
         return ctx.text(
             content,
             /* If not in dev mode add cache control */
-            !isDevMode(ctx.env)
-                ? {status: 200, cacheControl: {type: 'public', maxage: 86400, immutable: true}}
-                : {status: 200}
+            !isDevMode(ctx.env) ? {status: 200, cacheControl: {type: 'public', maxage: 86400, immutable: true}} : {status: 200},
         );
     });
 }

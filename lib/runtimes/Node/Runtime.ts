@@ -1,51 +1,40 @@
 import {isIntBetween} from '@valkyriestudios/utils/number';
-import {
-    ConsoleExporter,
-    type TriFrostRootLogger,
-} from '../../modules/Logger';
-import {
-    type TriFrostRuntime,
-    type TriFrostRuntimeOnIncoming,
-    type TriFrostRuntimeBootOptions,
-} from '../types';
+import {ConsoleExporter, type TriFrostRootLogger} from '../../modules/Logger';
+import {type TriFrostRuntime, type TriFrostRuntimeOnIncoming, type TriFrostRuntimeBootOptions} from '../types';
 import {NodeContext} from './Context';
-import {
-    type IncomingMessage,
-    type ServerResponse,
-} from './types';
+import {type IncomingMessage, type ServerResponse} from './types';
 import {determinePort, isDevMode} from '../../utils/Generic';
 
 export class NodeRuntime implements TriFrostRuntime {
-
     /* Node Http server instance */
-    #server: Awaited<ReturnType<typeof import('node:http')['createServer']>>|null = null;
+    #server: Awaited<ReturnType<(typeof import('node:http'))['createServer']>> | null = null;
 
     /* Global logger instance when runtime has started */
-    #logger: TriFrostRootLogger|null = null;
+    #logger: TriFrostRootLogger | null = null;
 
     /* Incoming handler which is to be called by the runtime when an incoming request happens */
-    #onIncoming: TriFrostRuntimeOnIncoming|null = null;
+    #onIncoming: TriFrostRuntimeOnIncoming | null = null;
 
-/**
- * MARK: Runtime Implementation
- */
+    /**
+     * MARK: Runtime Implementation
+     */
 
     exports = null;
 
-    get name () {
+    get name() {
         return 'Node';
     }
 
-    get version () {
+    get version() {
         return process.version || 'N/A';
     }
 
-    async boot (opts:TriFrostRuntimeBootOptions):Promise<void> {
-        let Readable:typeof import('node:stream')['Readable'];
-        let createServer: typeof import('node:http')['createServer'];
-        let statSync:typeof import('node:fs')['statSync'];
-        let createReadStream:typeof import('node:fs')['createReadStream'];
-        let pipeline: typeof import('node:stream/promises')['pipeline'];
+    async boot(opts: TriFrostRuntimeBootOptions): Promise<void> {
+        let Readable: (typeof import('node:stream'))['Readable'];
+        let createServer: (typeof import('node:http'))['createServer'];
+        let statSync: (typeof import('node:fs'))['statSync'];
+        let createReadStream: (typeof import('node:fs'))['createReadStream'];
+        let pipeline: (typeof import('node:stream/promises'))['pipeline'];
 
         try {
             ({Readable} = await import('node:stream'));
@@ -84,39 +73,31 @@ export class NodeRuntime implements TriFrostRuntime {
             const cfg = {
                 trustProxy: false,
                 ...opts.cfg,
-                env: {...process.env || {}, ...opts.cfg.env},
+                env: {...(process.env || {}), ...opts.cfg.env},
             };
 
             /* Create new server instance */
-            this.#server = createServer(async (req, res) => this.#onIncoming!(new NodeContext(
-                cfg,
-                opts.logger,
-                apis,
-                req as IncomingMessage,
-                res as ServerResponse
-            )));
+            this.#server = createServer(async (req, res) =>
+                this.#onIncoming!(new NodeContext(cfg, opts.logger, apis, req as IncomingMessage, res as ServerResponse)),
+            );
 
             /* Listen on the provided port, resolve if succeeds, reject if fails */
-            this.#server!
-                .listen(determinePort(cfg.env, opts.cfg.port || null), () => {
-                    this.#logger!.debug(`NodeRuntime@boot: Listening on port ${opts.cfg.port}`);
-                    return resolve();
-                })
-                .on('error', () => {
-                    this.#server = null;
-                    this.#onIncoming = null;
-                    return reject(new Error(`NodeRuntime@boot: Failed to listen on port ${opts.cfg.port}`));
-                });
+            this.#server!.listen(determinePort(cfg.env, opts.cfg.port || null), () => {
+                this.#logger!.debug(`NodeRuntime@boot: Listening on port ${opts.cfg.port}`);
+                return resolve();
+            }).on('error', () => {
+                this.#server = null;
+                this.#onIncoming = null;
+                return reject(new Error(`NodeRuntime@boot: Failed to listen on port ${opts.cfg.port}`));
+            });
         });
     }
 
-    defaultExporter (env:Record<string, unknown>) {
-        return isDevMode(env)
-            ? new ConsoleExporter()
-            : new ConsoleExporter({include: ['trace_id']});
+    defaultExporter(env: Record<string, unknown>) {
+        return isDevMode(env) ? new ConsoleExporter() : new ConsoleExporter({include: ['trace_id']});
     }
 
-    async shutdown () {
+    async shutdown() {
         if (!this.#server) return;
         this.#logger!.debug('NodeRuntime@shutdown');
         await new Promise<void>(resolve => this.#server!.close(() => resolve()));
@@ -124,5 +105,4 @@ export class NodeRuntime implements TriFrostRuntime {
         this.#onIncoming = null;
         this.#logger = null;
     }
-
 }

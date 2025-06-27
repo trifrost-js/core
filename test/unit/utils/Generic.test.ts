@@ -1,12 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {
-    hexId,
-    isDevMode,
-    determineDebug,
-    determineName,
-    determineVersion,
-    determinePort,
-} from '../../../lib/utils/Generic';
+import {hexId, isDevMode, determineDebug, determineName, determineVersion, determinePort} from '../../../lib/utils/Generic';
 import CONSTANTS from '../../constants';
 
 describe('Utils - Generic', () => {
@@ -176,18 +169,22 @@ describe('Utils - Generic', () => {
 
         describe('Multiple ports', () => {
             it('Prefers TRIFROST_PORT over SERVICE_PORT', () => {
-                expect(determinePort({
-                    TRIFROST_PORT: '9999',
-                    SERVICE_PORT: '8888',
-                    PORT: '7777',
-                })).toBe(9999);
+                expect(
+                    determinePort({
+                        TRIFROST_PORT: '9999',
+                        SERVICE_PORT: '8888',
+                        PORT: '7777',
+                    }),
+                ).toBe(9999);
             });
 
             it('Prefers SERVICE_PORT over PORT', () => {
-                expect(determinePort({
-                    SERVICE_PORT: '8888',
-                    PORT: '7777',
-                })).toBe(8888);
+                expect(
+                    determinePort({
+                        SERVICE_PORT: '8888',
+                        PORT: '7777',
+                    }),
+                ).toBe(8888);
             });
         });
 

@@ -4,7 +4,7 @@ class MockKV implements TriFrostCFKVNamespace {
     map: Map<string, [string, unknown]> = new Map();
     calls: [string, unknown][] = [];
 
-    async get <T = unknown>(key:string, type:'json' | 'text' | 'arrayBuffer' | 'stream' = 'json'):Promise<T|null> {
+    async get<T = unknown>(key: string, type: 'json' | 'text' | 'arrayBuffer' | 'stream' = 'json'): Promise<T | null> {
         this.calls.push(['get', [key, type]]);
         const raw = this.map.get(key);
         if (!raw) return null;
@@ -24,20 +24,24 @@ class MockKV implements TriFrostCFKVNamespace {
         return raw as unknown as T;
     }
 
-    async put(key:string, value:string|ReadableStream|ArrayBuffer, options?:{expiration?:number; expirationTtl?:number}):Promise<void> {
+    async put(
+        key: string,
+        value: string | ReadableStream | ArrayBuffer,
+        options?: {expiration?: number; expirationTtl?: number},
+    ): Promise<void> {
         this.calls.push(['put', [key, value, options]]);
         if (typeof value !== 'string') throw new Error('MockKV only supports string values for now');
         this.map.set(key, [value, options]);
     }
 
-    async list(
-        options?:{prefix?:string; limit?:number; cursor?:string}
-    ): Promise<{keys:{name:string}[]; list_complete:boolean; cursor?:string}> {
+    async list(options?: {
+        prefix?: string;
+        limit?: number;
+        cursor?: string;
+    }): Promise<{keys: {name: string}[]; list_complete: boolean; cursor?: string}> {
         const prefix = options?.prefix ?? '';
-        const matching = [...this.map.keys()]
-            .filter(key => key.startsWith(prefix))
-            .map(name => ({ name }));
-    
+        const matching = [...this.map.keys()].filter(key => key.startsWith(prefix)).map(name => ({name}));
+
         this.calls.push(['list', [options]]);
         return {
             keys: matching,
@@ -46,16 +50,16 @@ class MockKV implements TriFrostCFKVNamespace {
         };
     }
 
-    async delete (key:string):Promise<void> {
+    async delete(key: string): Promise<void> {
         this.calls.push(['delete', [key]]);
         this.map.delete(key);
     }
 
-    get isEmpty () {
+    get isEmpty() {
         return this.calls.length === 0;
     }
 
-    reset () {
+    reset() {
         this.calls = [];
         this.map = new Map();
     }

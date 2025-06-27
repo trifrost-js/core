@@ -1,13 +1,9 @@
-import {
-    type TriFrostCFDurableObjectNamespace,
-    type TriFrostCFDurableObjectId,
-} from '../lib/types/providers';
-  
+import {type TriFrostCFDurableObjectNamespace, type TriFrostCFDurableObjectId} from '../lib/types/providers';
+
 class MockDurableObjectId implements TriFrostCFDurableObjectId {
-    
     name: string;
-    
-    constructor(name:string) {
+
+    constructor(name: string) {
         this.name = name;
     }
 
@@ -15,19 +11,18 @@ class MockDurableObjectId implements TriFrostCFDurableObjectId {
         return `mock-id:${this.name}`;
     }
 }
-  
-class MockDurableObjectStub {
 
-    calls:[string, RequestInit|undefined][] = [];
+class MockDurableObjectStub {
+    calls: [string, RequestInit | undefined][] = [];
 
     map = new Map<string, unknown>();
-  
-    async fetch(url:string, init?:RequestInit):Promise<Response> {
+
+    async fetch(url: string, init?: RequestInit): Promise<Response> {
         const u = new URL(url);
         const key = u.searchParams.get('key')!;
         const method = init?.method ?? 'GET';
         this.calls.push([url, init]);
-  
+
         switch (method) {
             case 'GET': {
                 const val = this.map.get(key);
@@ -49,7 +44,7 @@ class MockDurableObjectStub {
                 return new Response(null, {status: 405});
         }
     }
-  
+
     reset() {
         this.calls = [];
         this.map.clear();
@@ -58,31 +53,28 @@ class MockDurableObjectStub {
     get isEmpty() {
         return this.calls.length === 0;
     }
-  
-    debug () {
+
+    debug() {
         return Object.fromEntries(this.map.entries());
     }
-
 }
-  
-class MockDurableObjectNamespace implements TriFrostCFDurableObjectNamespace {
 
+class MockDurableObjectNamespace implements TriFrostCFDurableObjectNamespace {
     instances = new Map<string, MockDurableObjectStub>();
-  
-    idFromName (name:string):TriFrostCFDurableObjectId {
+
+    idFromName(name: string): TriFrostCFDurableObjectId {
         return new MockDurableObjectId(name);
     }
-  
-    get (id:TriFrostCFDurableObjectId):MockDurableObjectStub {
+
+    get(id: TriFrostCFDurableObjectId): MockDurableObjectStub {
         const name = id.toString();
         if (!this.instances.has(name)) this.instances.set(name, new MockDurableObjectStub());
         return this.instances.get(name)!;
     }
-  
-    reset () {
+
+    reset() {
         this.instances.clear();
     }
-
 }
-  
+
 export {MockDurableObjectNamespace, MockDurableObjectStub};

@@ -1,16 +1,9 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type,max-statements,complexity */
-
 import {isNeArray} from '@valkyriestudios/utils/array';
 import {isBoolean} from '@valkyriestudios/utils/boolean';
 import {isIntGte} from '@valkyriestudios/utils/number';
 import {isObject} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
-import {
-    HttpMethods,
-    Sym_TriFrostDescription,
-    Sym_TriFrostFingerPrint,
-    Sym_TriFrostName,
-} from '../types/constants';
+import {HttpMethods, Sym_TriFrostDescription, Sym_TriFrostFingerPrint, Sym_TriFrostName} from '../types/constants';
 import {type TriFrostContext} from '../types/context';
 
 /* Specific symbol attached to cors mware to identify them by */
@@ -19,11 +12,11 @@ export const Sym_TriFrostMiddlewareCors = Symbol('TriFrost.Middleware.Cors');
 const METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'CONNECT', 'TRACE'] as const;
 const METHODSSet = new Set(METHODS);
 
-type TriFrostCorsOriginFunction = (origin:string|null) => string|null;
+type TriFrostCorsOriginFunction = (origin: string | null) => string | null;
 
 export type TriFrostCorsOptions = {
-    origin?: string|string[]|TriFrostCorsOriginFunction;
-    methods?: ((typeof METHODS)[number])[] | '*';
+    origin?: string | string[] | TriFrostCorsOriginFunction;
+    methods?: (typeof METHODS)[number][] | '*';
     headers?: string[];
     expose?: string[];
     credentials?: boolean;
@@ -34,7 +27,7 @@ export type TriFrostCorsConfig = {
     /**
      * (Default=true) Merge with the defaults (true) or not (false)
      */
-    use_defaults?:boolean;
+    use_defaults?: boolean;
 };
 
 /**
@@ -61,17 +54,16 @@ const CorsDefaults: TriFrostCorsOptions = {
  * @see credentials - https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Allow-Credentials
  * @see maxage - https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Max-Age
  */
-export function Cors <
-    Env extends Record<string, any> = {},
-    State extends Record<string, unknown> = {},
-> (options: TriFrostCorsOptions = {}, config?:TriFrostCorsConfig) {
+export function Cors<Env extends Record<string, any> = {}, State extends Record<string, unknown> = {}>(
+    options: TriFrostCorsOptions = {},
+    config?: TriFrostCorsConfig,
+) {
     const use_defaults = !isBoolean(config?.use_defaults) ? true : config.use_defaults;
-    const {origin, methods, headers, expose, credentials, maxage} = use_defaults === true
-        ? {...CorsDefaults, ...isObject(options) && options}
-        : isObject(options) ? options : {};
+    const {origin, methods, headers, expose, credentials, maxage} =
+        use_defaults === true ? {...CorsDefaults, ...(isObject(options) && options)} : isObject(options) ? options : {};
 
-    let originWhiteList:Set<string>|null = null;
-    let originFn:TriFrostCorsOriginFunction|null = null;
+    let originWhiteList: Set<string> | null = null;
+    let originFn: TriFrostCorsOriginFunction | null = null;
 
     const computed: Record<string, string> = {Vary: 'Origin'};
 
@@ -139,7 +131,7 @@ export function Cors <
     }
 
     /* Baseline Middleware function */
-    const mware = function TriFrostCorsMiddleware (ctx:TriFrostContext<Env, State>):TriFrostContext<Env, State>|void {
+    const mware = function TriFrostCorsMiddleware(ctx: TriFrostContext<Env, State>): TriFrostContext<Env, State> | void {
         /* Add computed headers */
         ctx.setHeaders(computed);
 

@@ -1,20 +1,8 @@
 import {describe, it, expect} from 'vitest';
-import {
-    DurableObjectCache,
-    DurableObjectRateLimit,
-} from '../../../lib/storage/DurableObject';
-import {
-    KVCache,
-    KVRateLimit,
-} from '../../../lib/storage/KV';
-import {
-    MemoryCache,
-    MemoryRateLimit,
-} from '../../../lib/storage/Memory';
-import {
-    RedisCache,
-    RedisRateLimit,
-} from '../../../lib/storage/Redis';
+import {DurableObjectCache, DurableObjectRateLimit} from '../../../lib/storage/DurableObject';
+import {KVCache, KVRateLimit} from '../../../lib/storage/KV';
+import {MemoryCache, MemoryRateLimit} from '../../../lib/storage/Memory';
+import {RedisCache, RedisRateLimit} from '../../../lib/storage/Redis';
 import * as Storage from '../../../lib/storage';
 
 describe('Modules - Storage', () => {

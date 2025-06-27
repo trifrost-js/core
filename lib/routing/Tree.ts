@@ -1,14 +1,8 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-
 import {LRU} from '@valkyriestudios/utils/caching';
 import {Sym_TriFrostMiddlewareCors} from '../middleware/Cors';
 import {type TriFrostRoute, type TriFrostRouteMatch} from '../types/routing';
 import {type TriFrostContext} from '../types/context';
-import {
-    type HttpMethod,
-    HttpMethods,
-    HttpMethodsSet,
-} from '../types/constants';
+import {type HttpMethod, HttpMethods, HttpMethodsSet} from '../types/constants';
 import {normalizeMiddleware} from './util';
 
 /**
@@ -18,22 +12,22 @@ import {normalizeMiddleware} from './util';
  * - param matches (:id)
  * - wildcard matches (*)
  */
-type TrieNode <Env extends Record<string, any> = {}> = {
-    param_name: string|null;
-    children:Record<string, TrieNode<Env>>;
-    param_child: TrieNode<Env>|null;
-    wildcard_child: TrieNode<Env>|null;
+type TrieNode<Env extends Record<string, any> = {}> = {
+    param_name: string | null;
+    children: Record<string, TrieNode<Env>>;
+    param_child: TrieNode<Env> | null;
+    wildcard_child: TrieNode<Env> | null;
     methods: Record<HttpMethod, TriFrostRoute<Env>>;
-}
+};
 
-function isValidPath (val:unknown):val is string {
+function isValidPath(val: unknown): val is string {
     return typeof val === 'string' && val.length > 0 && val[0] === '/';
 }
 
 /**
  * Factory for a blank trie node
  */
-function blankTrieNode <Env extends Record<string, any> = {}> () {
+function blankTrieNode<Env extends Record<string, any> = {}>() {
     return {
         children: Object.create(null),
         param_child: null,
@@ -49,12 +43,9 @@ function blankTrieNode <Env extends Record<string, any> = {}> () {
  * @param {string} path - Path the options route is for
  * @param {TriFrostRoute[]} routes - Routes array for this path
  */
-function createOptionsRoute <Env extends Record<string, any>> (
-    path: string,
-    routes:TriFrostRoute<Env>[]
-): TriFrostRoute<Env> {
-    const methods:HttpMethod[]|string = [HttpMethods.OPTIONS];
-    let cors_mware:ReturnType<typeof normalizeMiddleware<Env>>[number]|null = null;
+function createOptionsRoute<Env extends Record<string, any>>(path: string, routes: TriFrostRoute<Env>[]): TriFrostRoute<Env> {
+    const methods: HttpMethod[] | string = [HttpMethods.OPTIONS];
+    let cors_mware: ReturnType<typeof normalizeMiddleware<Env>>[number] | null = null;
     for (let i = 0; i < routes.length; i++) {
         const route = routes[i];
 
@@ -74,7 +65,7 @@ function createOptionsRoute <Env extends Record<string, any>> (
         method: HttpMethods.OPTIONS,
         kind: 'options',
         path,
-        fn: (ctx:TriFrostContext<Env>) => {
+        fn: (ctx: TriFrostContext<Env>) => {
             ctx.setHeaders({Allow: methods.join(', '), Vary: 'Origin'});
             ctx.status(204);
         },
@@ -91,8 +82,7 @@ function createOptionsRoute <Env extends Record<string, any>> (
  * Trie-based route tree: Builds a prefix tree of path segments.
  */
 class TrieRouteTree<Env extends Record<string, any> = {}> {
-
-    root:TrieNode<Env> = blankTrieNode<Env>();
+    root: TrieNode<Env> = blankTrieNode<Env>();
 
     /**
      * Adds a route into the trie, segment by segment.
@@ -100,7 +90,7 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
      * @param {TriFrostRoute<Env>} route - Route to add
      * @param {boolean} no_options - Set to true to not add options route
      */
-    add (route:TriFrostRoute<Env>, no_options:boolean = false) {
+    add(route: TriFrostRoute<Env>, no_options: boolean = false) {
         let node = this.root;
         const segments = route.path.split('/');
         for (let i = 0; i < segments.length; i++) {
@@ -137,7 +127,7 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
      * @param {HttpMethod} method - HTTP method to match
      * @param {string} path - Path to find the match for
      */
-    match (method:HttpMethod, path:string):TriFrostRouteMatch<Env>|null {
+    match(method: HttpMethod, path: string): TriFrostRouteMatch<Env> | null {
         const params = {};
         const matched = this.search(this.root, path.split('/'), 0, params, method);
         return matched ? {route: matched, path: matched.path, params} : null;
@@ -147,13 +137,10 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
      * Recursively collects all registered routes
      * @note This is used for debugging/tests and as such does not need to be highly optimized
      */
-    get stack (): TriFrostRoute<Env>[] {
+    get stack(): TriFrostRoute<Env>[] {
         const collected: TriFrostRoute<Env>[] = [];
 
-        const recurse = (
-            node: TrieNode<Env>,
-            pathSegments: string[]
-        ) => {
+        const recurse = (node: TrieNode<Env>, pathSegments: string[]) => {
             for (const method in node.methods) {
                 collected.push(node.methods[method as HttpMethod]);
             }
@@ -184,13 +171,13 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
      * @param {Record<string, string>} params_acc - Parameter accumulator (built up as we go)
      * @param {HttpMethod} method - HTTP method being matched
      */
-    private search (
+    private search(
         node: TrieNode<Env>,
         segments: string[],
         segment_idx: number,
         params_acc: Record<string, string>,
-        method: HttpMethod
-    ): TriFrostRoute<Env>|null {
+        method: HttpMethod,
+    ): TriFrostRoute<Env> | null {
         if (segment_idx === segments.length) {
             return node.methods[method] || null;
         }
@@ -219,35 +206,30 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
 
         return null;
     }
-
 }
 
 export class RouteTree<Env extends Record<string, any> = {}> {
+    protected static: Record<string, Record<HttpMethod, TriFrostRoute<Env>>> = Object.create(null);
 
-    protected static:Record<
-        string,
-        Record<HttpMethod, TriFrostRoute<Env>>
-    > = Object.create(null);
-
-    protected dynamic:{
-        lru: LRU<{v: TriFrostRouteMatch<Env>|null}>;
+    protected dynamic: {
+        lru: LRU<{v: TriFrostRouteMatch<Env> | null}>;
         tree: TrieRouteTree<Env>;
     } = {lru: new LRU({max_size: 250}), tree: new TrieRouteTree()};
 
-    protected notfound:{
-        lru: LRU<{v: TriFrostRouteMatch<Env>|null}>;
+    protected notfound: {
+        lru: LRU<{v: TriFrostRouteMatch<Env> | null}>;
         tree: TrieRouteTree<Env>;
     } = {lru: new LRU({max_size: 250}), tree: new TrieRouteTree()};
 
-    protected error:{
-        lru: LRU<{v: TriFrostRouteMatch<Env>|null}>;
+    protected error: {
+        lru: LRU<{v: TriFrostRouteMatch<Env> | null}>;
         tree: TrieRouteTree<Env>;
     } = {lru: new LRU({max_size: 250}), tree: new TrieRouteTree()};
 
     /**
      * Stack getter used for testing/debugging
      */
-    get stack (): TriFrostRoute<Env>[] {
+    get stack(): TriFrostRoute<Env>[] {
         return [
             ...Object.values(this.static).flatMap(obj => Object.values(obj)),
             ...this.dynamic.tree.stack,
@@ -259,7 +241,7 @@ export class RouteTree<Env extends Record<string, any> = {}> {
     /**
      * Clears all stored routes
      */
-    reset () {
+    reset() {
         this.static = Object.create(null);
         this.dynamic = {lru: new LRU({max_size: 250}), tree: new TrieRouteTree()};
         this.notfound = {lru: new LRU({max_size: 250}), tree: new TrieRouteTree()};
@@ -275,7 +257,7 @@ export class RouteTree<Env extends Record<string, any> = {}> {
      *
      * @param {MethodRouteDefinition<Env>} route - Route to add
      */
-    add (route:TriFrostRoute<Env>) {
+    add(route: TriFrostRoute<Env>) {
         if (!isValidPath(route?.path)) throw new Error('RouteTree@add: invalid path');
         if (typeof route.fn !== 'function') throw new Error('RouteTree@add: route.fn must be a function');
         if (!HttpMethodsSet.has(route.method)) throw new Error('RouteTree@add: method is not valid');
@@ -295,7 +277,7 @@ export class RouteTree<Env extends Record<string, any> = {}> {
      * @param {HttpMethod} method - HTTP Verb (GET, DELETE, POST, ...)
      * @param {string} path - Path to look for
      */
-    match (method:HttpMethod, path:string):TriFrostRouteMatch<Env>|null {
+    match(method: HttpMethod, path: string): TriFrostRouteMatch<Env> | null {
         const normalized = path === '' ? '/' : path;
 
         /* Check static routes */
@@ -314,12 +296,12 @@ export class RouteTree<Env extends Record<string, any> = {}> {
      * MARK: Not Found
      */
 
-    addNotFound (route:Omit<TriFrostRoute<Env>, 'method'>) {
+    addNotFound(route: Omit<TriFrostRoute<Env>, 'method'>) {
         if (!isValidPath(route?.path)) throw new Error('RouteTree@addNotFound: invalid path');
         this.notfound.tree.add({...route, method: 'GET'}, true);
     }
 
-    matchNotFound (path:string): TriFrostRouteMatch<Env>|null {
+    matchNotFound(path: string): TriFrostRouteMatch<Env> | null {
         const cached = this.notfound.lru.get(path);
         if (cached) return cached.v;
 
@@ -332,12 +314,12 @@ export class RouteTree<Env extends Record<string, any> = {}> {
      * MARK: Error
      */
 
-    addError (route:Omit<TriFrostRoute<Env>, 'method'>) {
+    addError(route: Omit<TriFrostRoute<Env>, 'method'>) {
         if (!isValidPath(route?.path)) throw new Error('RouteTree@addError: invalid path');
         this.error.tree.add({...route, method: 'GET'}, true);
     }
 
-    matchError (path:string):TriFrostRouteMatch<Env>|null {
+    matchError(path: string): TriFrostRouteMatch<Env> | null {
         const cached = this.error.lru.get(path);
         if (cached) return cached.v;
 
@@ -345,5 +327,4 @@ export class RouteTree<Env extends Record<string, any> = {}> {
         this.error.lru.set(path, {v: matched});
         return matched;
     }
-
 }

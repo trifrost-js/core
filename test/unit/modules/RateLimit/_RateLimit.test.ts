@@ -26,7 +26,7 @@ const mockStore = () => {
         data: new Map<string, any>(),
         calls: [] as any[],
     };
-    return mock as unknown as Store & {calls:string[]};
+    return mock as unknown as Store & {calls: string[]};
 };
 
 describe('Modules - RateLimit - TriFrostRateLimit', () => {
@@ -38,11 +38,8 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
 
     describe('init', () => {
         it('Should throw if not provided a store', () => {
-            for (const el of [
-                ...CONSTANTS.NOT_OBJECT_WITH_EMPTY,
-                ...[...CONSTANTS.NOT_FUNCTION].map(val => ({store: val})),
-            ]) {
-                /* @ts-ignore */
+            for (const el of [...CONSTANTS.NOT_OBJECT_WITH_EMPTY, ...[...CONSTANTS.NOT_FUNCTION].map(val => ({store: val}))]) {
+                /* @ts-expect-error Should be good */
                 expect(() => new TriFrostRateLimit(el)).toThrow(/TriFrostRateLimit: Expected a store initializer/);
             }
         });
@@ -51,14 +48,14 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
             const rl = new TriFrostRateLimit({store: () => store});
             const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
             const mw = rl.limit(2);
-            const now = Math.floor(Date.now()/1000);
+            const now = Math.floor(Date.now() / 1000);
             await mw(ctx);
             expect(ctx.statusCode).not.toBe(429);
             expect(rl.strategy).toBe('fixed');
             expect(rl.window).toBe(60);
             expect(store.calls).toEqual([
                 ['get:127.0.0.1:route:GET'],
-                ['set:127.0.0.1:route:GET', {amt:1, reset: now+rl.window}, {ttl: 60}],
+                ['set:127.0.0.1:route:GET', {amt: 1, reset: now + rl.window}, {ttl: 60}],
             ]);
         });
 
@@ -69,15 +66,12 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
             });
             const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
             const mw = rl.limit(2);
-            const now = Math.floor(Date.now()/1000);
+            const now = Math.floor(Date.now() / 1000);
             await mw(ctx);
             expect(ctx.statusCode).not.toBe(429);
             expect(rl.strategy).toBe('sliding');
             expect(rl.window).toBe(60);
-            expect(store.calls).toEqual([
-                ['get:127.0.0.1:route:GET'],
-                ['set:127.0.0.1:route:GET', [now], {ttl: 60}],
-            ]);
+            expect(store.calls).toEqual([['get:127.0.0.1:route:GET'], ['set:127.0.0.1:route:GET', [now], {ttl: 60}]]);
         });
 
         it('Throws for invalid limit types', async () => {
@@ -128,7 +122,7 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
         it('Sets rate limit headers when enabled', async () => {
             const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
             const rl = new TriFrostRateLimit({window: 1, store: () => store});
-            const now = Math.floor(Date.now()/1000);
+            const now = Math.floor(Date.now() / 1000);
             const mw = rl.limit(1);
             await mw(ctx);
             await mw(ctx);
@@ -141,7 +135,7 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
             });
             expect(store.calls).toEqual([
                 ['get:127.0.0.1:test:POST'],
-                ['set:127.0.0.1:test:POST', {amt:1, reset:now+rl.window}, {ttl: 1}],
+                ['set:127.0.0.1:test:POST', {amt: 1, reset: now + rl.window}, {ttl: 1}],
                 ['get:127.0.0.1:test:POST'],
             ]);
         });
@@ -150,7 +144,7 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
             const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
             const rl = new TriFrostRateLimit({headers: false, store: () => store});
             const mw = rl.limit(1);
-            const now = Math.floor(Date.now()/1000);
+            const now = Math.floor(Date.now() / 1000);
             await mw(ctx);
             await mw(ctx);
             expect(ctx.statusCode).toBe(429);
@@ -159,7 +153,7 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
             });
             expect(store.calls).toEqual([
                 ['get:127.0.0.1:test:POST'],
-                ['set:127.0.0.1:test:POST', {amt:1, reset:now+rl.window}, {ttl: 60}],
+                ['set:127.0.0.1:test:POST', {amt: 1, reset: now + rl.window}, {ttl: 60}],
                 ['get:127.0.0.1:test:POST'],
             ]);
         });
@@ -168,7 +162,7 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
             const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
             const rl = new TriFrostRateLimit({keygen: el => `ip:${el.ip}`, store: () => store});
             const mw = rl.limit(10);
-            const now = Math.floor(Date.now()/1000);
+            const now = Math.floor(Date.now() / 1000);
             await mw(ctx);
             await mw(ctx);
             expect(ctx.statusCode).toBe(200);
@@ -179,9 +173,9 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
             });
             expect(store.calls).toEqual([
                 ['get:ip:127.0.0.1'],
-                ['set:ip:127.0.0.1', {amt:1, reset: now+rl.window}, {ttl: 60}],
+                ['set:ip:127.0.0.1', {amt: 1, reset: now + rl.window}, {ttl: 60}],
                 ['get:ip:127.0.0.1'],
-                ['set:ip:127.0.0.1', {amt:2, reset: now+rl.window}, {ttl: 60}],
+                ['set:ip:127.0.0.1', {amt: 2, reset: now + rl.window}, {ttl: 60}],
             ]);
         });
 
@@ -190,14 +184,14 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
             const exceeded = vi.fn(el => el.status(400));
             const rl = new TriFrostRateLimit({exceeded, store: () => store});
             const mw = rl.limit(1);
-            const now = Math.floor(Date.now()/1000);
+            const now = Math.floor(Date.now() / 1000);
             await mw(ctx);
             await mw(ctx);
             expect(exceeded).toHaveBeenCalledOnce();
             expect(ctx.statusCode).toBe(400);
             expect(store.calls).toEqual([
                 ['get:127.0.0.1:test:POST'],
-                ['set:127.0.0.1:test:POST', {amt:1, reset:now+rl.window}, {ttl: 60}],
+                ['set:127.0.0.1:test:POST', {amt: 1, reset: now + rl.window}, {ttl: 60}],
                 ['get:127.0.0.1:test:POST'],
             ]);
         });
@@ -215,14 +209,14 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
             for (const [key, key_expected] of Object.entries(expected)) {
                 const rl = new TriFrostRateLimit({keygen: key as any, store: () => store});
                 const mw = rl.limit(1);
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(429);
 
                 expect(store.calls).toEqual([
                     [`get:${key_expected}`],
-                    [`set:${key_expected}`, {amt:1, reset:now+rl.window}, {ttl: 60}],
+                    [`set:${key_expected}`, {amt: 1, reset: now + rl.window}, {ttl: 60}],
                     [`get:${key_expected}`],
                 ]);
                 store.calls = [];
@@ -242,14 +236,14 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
             for (const [key, key_expected] of Object.entries(expected)) {
                 const rl = new TriFrostRateLimit({keygen: key as any, store: () => store});
                 const mw = rl.limit(1);
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(429);
 
                 expect(store.calls).toEqual([
                     [`get:${key_expected}`],
-                    [`set:${key_expected}`, {amt:1, reset:now+rl.window}, {ttl: 60}],
+                    [`set:${key_expected}`, {amt: 1, reset: now + rl.window}, {ttl: 60}],
                     [`get:${key_expected}`],
                 ]);
                 store.calls = [];
@@ -259,19 +253,15 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
         it('Falls back to "unknown" if keygen returns falsy', async () => {
             const rl = new TriFrostRateLimit({
                 store: () => store,
-                keygen: () => undefined as unknown as string, /* Force falsy value */
+                keygen: () => undefined as unknown as string /* Force falsy value */,
             });
 
             const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
             const mw = rl.limit(1);
-            const now = Math.floor(Date.now()/1000);
+            const now = Math.floor(Date.now() / 1000);
             await mw(ctx);
             await mw(ctx);
-            expect(store.calls).toEqual([
-                ['get:unknown'],
-                ['set:unknown', {amt:1, reset:now+rl.window}, {ttl: 60}],
-                ['get:unknown'],
-            ]);
+            expect(store.calls).toEqual([['get:unknown'], ['set:unknown', {amt: 1, reset: now + rl.window}, {ttl: 60}], ['get:unknown']]);
 
             expect(ctx.statusCode).toBe(429);
         });
@@ -335,18 +325,18 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
             /* First request */
             await mw(ctx);
 
-            /* @ts-ignore Manually insert an old timestamp to simulate an aged entry */
-            await rl.resolvedStore.store.set('127.0.0.1:test:POST', [Math.floor(Date.now()/1000) - 2]);
+            /* @ts-expect-error Manually insert an old timestamp to simulate an aged entry */
+            await rl.resolvedStore.store.set('127.0.0.1:test:POST', [Math.floor(Date.now() / 1000) - 2]);
 
             /* Second request triggers pruning of old timestamp */
             await mw(ctx);
 
-            /* @ts-ignore We want to test this */
+            /* @ts-expect-error We want to test this */
             const val = await rl.resolvedStore.store.get('127.0.0.1:test:POST');
 
             expect(Array.isArray(val)).toBe(true);
             expect(val.length).toBe(1); /* old timestamp pruned */
-            expect(val[0]).toBeGreaterThan(Math.floor(Date.now()/1000) - 1); /* only recent timestamp remains */
+            expect(val[0]).toBeGreaterThan(Math.floor(Date.now() / 1000) - 1); /* only recent timestamp remains */
             expect(ctx.statusCode).toBe(200);
         });
     });

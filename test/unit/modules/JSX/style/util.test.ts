@@ -3,31 +3,31 @@ import {toKebab, styleToString, CAMEL_TO_KEBAB_LUT} from '../../../../../lib/mod
 import CONSTANTS from '../../../../constants';
 
 describe('Modules - JSX - style - util', () => {
-    describe('toKebab()', () => {    
+    describe('toKebab()', () => {
         for (const [input, expected] of Object.entries(CAMEL_TO_KEBAB_LUT)) {
             it(`converts ${input} to ${expected}`, () => {
                 expect(toKebab(input)).toBe(expected);
             });
         }
-    
+
         it('Handles vendor-prefixed properties', () => {
             expect(toKebab('webkitTransform')).toBe('-webkit-transform');
             expect(toKebab('mozTransition')).toBe('-moz-transition');
             expect(toKebab('msOverflowStyle')).toBe('-ms-overflow-style');
             expect(toKebab('oAppearance')).toBe('-o-appearance');
         });
-    
+
         it('Returns already-kebab-case strings as-is', () => {
             expect(toKebab('border-radius')).toBe('border-radius');
             expect(toKebab('background-color')).toBe('background-color');
         });
-    
+
         it('Is idempotent (calling twice returns same result)', () => {
             const once = toKebab('paddingTop');
             const twice = toKebab(once);
             expect(twice).toBe(once);
         });
-    
+
         it('Caches results for performance (same reference returned)', () => {
             const result1 = toKebab('marginLeft');
             const result2 = toKebab('marginLeft');
@@ -72,7 +72,7 @@ describe('Modules - JSX - style - util', () => {
 
         it('Unwraps quoted CSS functions', () => {
             expect(styleToString({backgroundImage: '"url(/x.jpg)"'})).toBe('background-image:url(/x.jpg)');
-            expect(styleToString({width: '\'calc(100% - 2rem)\''})).toBe('width:calc(100% - 2rem)');
+            expect(styleToString({width: "'calc(100% - 2rem)'"})).toBe('width:calc(100% - 2rem)');
         });
 
         it('Retains non-function quoted strings', () => {
@@ -92,15 +92,15 @@ describe('Modules - JSX - style - util', () => {
                 width: '"calc(100% - 1rem)"',
                 paddingTop: '1rem',
             });
-        
+
             expect(style).toBe(
-                'display:flex;-webkit-transform:rotate(45deg);opacity:0.9;content:"Test";width:calc(100% - 1rem);padding-top:1rem'
+                'display:flex;-webkit-transform:rotate(45deg);opacity:0.9;content:"Test";width:calc(100% - 1rem);padding-top:1rem',
             );
         });
 
         it('Handles malformed input gracefully', () => {
             for (const el of CONSTANTS.NOT_OBJECT) {
-                /* @ts-ignore This is what we're testing */
+                /* @ts-expect-error This is what we're testing */
                 expect(styleToString(el)).toBe(null);
             }
         });

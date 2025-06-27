@@ -1,20 +1,12 @@
 /// <reference types="bun-types" />
 
 import {isInt, isIntBetween} from '@valkyriestudios/utils/number';
-import {
-    ConsoleExporter,
-    type TriFrostRootLogger,
-} from '../../modules/Logger';
+import {ConsoleExporter, type TriFrostRootLogger} from '../../modules/Logger';
 import {BunContext} from './Context';
-import {
-    type TriFrostRuntime,
-    type TriFrostRuntimeOnIncoming,
-    type TriFrostRuntimeBootOptions,
-} from '../types';
+import {type TriFrostRuntime, type TriFrostRuntimeOnIncoming, type TriFrostRuntimeBootOptions} from '../types';
 import {determinePort, isDevMode} from '../../utils/Generic';
 
 export class BunRuntime implements TriFrostRuntime {
-
     /* Bun Http server instance */
     #server: ReturnType<(typeof import('bun'))['serve']> | null = null;
 
@@ -22,25 +14,25 @@ export class BunRuntime implements TriFrostRuntime {
     #logger: TriFrostRootLogger | null = null;
 
     /* Incoming handler which is to be called by the runtime when an incoming request happens */
-    #onIncoming: TriFrostRuntimeOnIncoming|null = null;
+    #onIncoming: TriFrostRuntimeOnIncoming | null = null;
 
-/**
- * MARK: Runtime Implementation
- */
+    /**
+     * MARK: Runtime Implementation
+     */
 
     exports = null;
 
-    get name () {
+    get name() {
         return 'Bun';
     }
 
-    get version () {
+    get version() {
         return Bun.version || 'N/A';
     }
 
-    async boot (opts:TriFrostRuntimeBootOptions):Promise<void> {
-        let serve: typeof import('bun')['serve'];
-        let file: typeof import('bun')['file'];
+    async boot(opts: TriFrostRuntimeBootOptions): Promise<void> {
+        let serve: (typeof import('bun'))['serve'];
+        let file: (typeof import('bun'))['file'];
 
         try {
             ({serve, file} = await import('bun'));
@@ -75,14 +67,14 @@ export class BunRuntime implements TriFrostRuntime {
         const cfg = {
             trustProxy: false,
             ...opts.cfg,
-            env: {...process.env || {}, ...opts.cfg.env},
+            env: {...(process.env || {}), ...opts.cfg.env},
         };
 
         /* Construct options for serve */
         const serveOpts = {
             port: determinePort(cfg.env, cfg.port || null),
             hostname: cfg.host || '0.0.0.0',
-            fetch: async (req:Request) => {
+            fetch: async (req: Request) => {
                 const ctx = new BunContext(cfg, opts.logger, apis, req);
 
                 try {
@@ -94,11 +86,11 @@ export class BunRuntime implements TriFrostRuntime {
                     return new Response('Internal Server Error', {status: 500});
                 }
             },
-        } as {port:number; hostname: string; fetch: (req:Request) => Promise<Response>; idleTimeout?: number};
+        } as {port: number; hostname: string; fetch: (req: Request) => Promise<Response>; idleTimeout?: number};
 
         /* Use timeout as idleTimeout if configured */
         if (isInt(cfg.timeout)) {
-            const timeout_s = cfg.timeout/1000;
+            const timeout_s = cfg.timeout / 1000;
             /* Ensure timeout stays within 255 seconds as bun limitation */
             serveOpts.idleTimeout = isIntBetween(timeout_s, 0, 255) ? timeout_s : 255;
         }
@@ -109,13 +101,11 @@ export class BunRuntime implements TriFrostRuntime {
         this.#logger!.debug(`BunRuntime@boot: Listening on port ${opts.cfg.port}`);
     }
 
-    defaultExporter (env:Record<string, unknown>) {
-        return isDevMode(env)
-            ? new ConsoleExporter()
-            : new ConsoleExporter({include: ['trace_id']});
+    defaultExporter(env: Record<string, unknown>) {
+        return isDevMode(env) ? new ConsoleExporter() : new ConsoleExporter({include: ['trace_id']});
     }
 
-    async shutdown () {
+    async shutdown() {
         if (!this.#server) return;
         this.#logger!.debug('BunRuntime@shutdown');
         this.#server!.stop();
@@ -123,5 +113,4 @@ export class BunRuntime implements TriFrostRuntime {
         this.#onIncoming = null;
         this.#logger = null;
     }
-
 }

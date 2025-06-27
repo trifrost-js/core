@@ -3,7 +3,6 @@ import {nonce} from '../ctx/nonce';
 import {ATOMIC_GLOBAL, ATOMIC_VM_BEFORE, ATOMIC_VM_AFTER, GLOBAL_HYDRATED_NAME, GLOBAL_DATA_REACTOR_NAME} from './atomic';
 
 export class ScriptEngine {
-
     /* Map storing the function bodies by id */
     protected map_fn = new Map<string, string>();
 
@@ -11,30 +10,30 @@ export class ScriptEngine {
     protected map_data = new Map<string, string>();
 
     /* Whether or not TriFrost atomic is enabled */
-    protected atomic_enabled:boolean = false;
+    protected atomic_enabled: boolean = false;
 
     /* Whether or not the Engine instance is in charge of root rendering */
-    protected root_renderer:boolean = false;
+    protected root_renderer: boolean = false;
 
     /* Mount path for root styles */
-    protected mount_path:string|null = null;
+    protected mount_path: string | null = null;
 
-    setAtomic (is_atomic:boolean) {
+    setAtomic(is_atomic: boolean) {
         this.atomic_enabled = is_atomic === true;
     }
 
-    setRoot (is_root:boolean) {
+    setRoot(is_root: boolean) {
         this.root_renderer = is_root === true;
     }
 
-    register (fn:string, data:string|null) {
+    register(fn: string, data: string | null) {
         let fn_id = this.map_fn.get(fn);
         if (!fn_id) {
             fn_id = hexId(8);
             this.map_fn.set(fn, fn_id);
         }
 
-        let data_id:string|null = null;
+        let data_id: string | null = null;
         if (data) {
             data_id = this.map_data.get(data) || null;
             if (!data_id) {
@@ -49,7 +48,7 @@ export class ScriptEngine {
     /**
      * Flushes the script registry into a string
      */
-    flush ():string {
+    flush(): string {
         if (this.map_fn.size === 0 && !this.atomic_enabled) return '';
 
         /* Start script */
@@ -105,12 +104,10 @@ export class ScriptEngine {
         }
 
         const n_nonce = nonce();
-        return n_nonce
-            ? '<script nonce="' + n_nonce + '">' + out + '</script>'
-            : '<script>' + out + '</script>';
+        return n_nonce ? '<script nonce="' + n_nonce + '">' + out + '</script>' : '<script>' + out + '</script>';
     }
 
-    inject (html:string):string {
+    inject(html: string): string {
         if (typeof html !== 'string') return '';
 
         const bodyIdx = html.indexOf('</body>');
@@ -126,12 +123,10 @@ export class ScriptEngine {
 
         const injection = mount_script + this.flush();
 
-        return bodyIdx >= 0
-            ? html.slice(0, bodyIdx) + injection + html.slice(bodyIdx)
-            : html + injection;
+        return bodyIdx >= 0 ? html.slice(0, bodyIdx) + injection + html.slice(bodyIdx) : html + injection;
     }
 
-    reset (): void {
+    reset(): void {
         this.map_data = new Map();
         this.map_fn = new Map();
     }
@@ -141,8 +136,7 @@ export class ScriptEngine {
      *
      * @param {string} path - Mount path for client root scripts
      */
-    setMountPath (path:string) {
+    setMountPath(path: string) {
         this.mount_path = path;
     }
-
 }

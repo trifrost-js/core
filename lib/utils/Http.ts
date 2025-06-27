@@ -1,31 +1,181 @@
 const enc = new TextEncoder();
 
-/* eslint-disable array-element-newline */
 export const TRANSLITERATOR: Record<string, string> = {
     /* German */
-    Ä: 'A', Ö: 'O', Ü: 'U', ö: 'o', ß: 'ss',
+    Ä: 'A',
+    Ö: 'O',
+    Ü: 'U',
+    ö: 'o',
+    ß: 'ss',
     /* French / Latin */
-    à: 'a', á: 'a', â: 'a', ä: 'a', æ: 'ae', ç: 'c', é: 'e', è: 'e', ê: 'e', ë: 'e',
-    î: 'i', ï: 'i', ô: 'o', œ: 'oe', ù: 'u', û: 'u', ü: 'u', ÿ: 'y', ñ: 'n',
+    à: 'a',
+    á: 'a',
+    â: 'a',
+    ä: 'a',
+    æ: 'ae',
+    ç: 'c',
+    é: 'e',
+    è: 'e',
+    ê: 'e',
+    ë: 'e',
+    î: 'i',
+    ï: 'i',
+    ô: 'o',
+    œ: 'oe',
+    ù: 'u',
+    û: 'u',
+    ü: 'u',
+    ÿ: 'y',
+    ñ: 'n',
     /* Nordic */
-    Å: 'A', å: 'a', Ø: 'O', ø: 'o', Æ: 'Ae',
+    Å: 'A',
+    å: 'a',
+    Ø: 'O',
+    ø: 'o',
+    Æ: 'Ae',
     /* Central / Eastern European */
-    ą: 'a', ć: 'c', ę: 'e', ł: 'l', ń: 'n', ś: 's', ź: 'z', ż: 'z', Ć: 'C', Ł: 'L', Ś: 'S', Ź: 'Z', Ż: 'Z',
+    ą: 'a',
+    ć: 'c',
+    ę: 'e',
+    ł: 'l',
+    ń: 'n',
+    ś: 's',
+    ź: 'z',
+    ż: 'z',
+    Ć: 'C',
+    Ł: 'L',
+    Ś: 'S',
+    Ź: 'Z',
+    Ż: 'Z',
     /* Cyrillic (RU/BG/UA common subset) */
-    А: 'A', а: 'a', Б: 'B', б: 'b', В: 'V', в: 'v', Г: 'G', г: 'g', Д: 'D', д: 'd', Е: 'E', е: 'e', Ё: 'E', ё: 'e',
-    Ж: 'Zh', ж: 'zh', З: 'Z', з: 'z', И: 'I', и: 'i', Й: 'Y', й: 'y', К: 'K', к: 'k', Л: 'L', л: 'l', М: 'M',
-    м: 'm', Н: 'N', н: 'n', О: 'O', о: 'o', П: 'P', п: 'p', Р: 'R', р: 'r', С: 'S', с: 's', Т: 'T', т: 't', У: 'U',
-    у: 'u', Ф: 'F', ф: 'f', Х: 'Kh', х: 'kh', Ц: 'Ts', ц: 'ts', Ч: 'Ch', ч: 'ch', Ш: 'Sh', ш: 'sh', Щ: 'Shch',
-    щ: 'shch', Ъ: '', ъ: '', Ы: 'Y', ы: 'y', Ь: '', ь: '', Э: 'E', э: 'e', Ю: 'Yu', ю: 'yu', Я: 'Ya', я: 'ya',
+    А: 'A',
+    а: 'a',
+    Б: 'B',
+    б: 'b',
+    В: 'V',
+    в: 'v',
+    Г: 'G',
+    г: 'g',
+    Д: 'D',
+    д: 'd',
+    Е: 'E',
+    е: 'e',
+    Ё: 'E',
+    ё: 'e',
+    Ж: 'Zh',
+    ж: 'zh',
+    З: 'Z',
+    з: 'z',
+    И: 'I',
+    и: 'i',
+    Й: 'Y',
+    й: 'y',
+    К: 'K',
+    к: 'k',
+    Л: 'L',
+    л: 'l',
+    М: 'M',
+    м: 'm',
+    Н: 'N',
+    н: 'n',
+    О: 'O',
+    о: 'o',
+    П: 'P',
+    п: 'p',
+    Р: 'R',
+    р: 'r',
+    С: 'S',
+    с: 's',
+    Т: 'T',
+    т: 't',
+    У: 'U',
+    у: 'u',
+    Ф: 'F',
+    ф: 'f',
+    Х: 'Kh',
+    х: 'kh',
+    Ц: 'Ts',
+    ц: 'ts',
+    Ч: 'Ch',
+    ч: 'ch',
+    Ш: 'Sh',
+    ш: 'sh',
+    Щ: 'Shch',
+    щ: 'shch',
+    Ъ: '',
+    ъ: '',
+    Ы: 'Y',
+    ы: 'y',
+    Ь: '',
+    ь: '',
+    Э: 'E',
+    э: 'e',
+    Ю: 'Yu',
+    ю: 'yu',
+    Я: 'Ya',
+    я: 'ya',
     /* Greek */
-    Α: 'A', α: 'a', Β: 'V', β: 'v', Γ: 'G', γ: 'g', Δ: 'D', δ: 'd', Ε: 'E', ε: 'e', Ζ: 'Z', ζ: 'z', Η: 'I',
-    η: 'i', Θ: 'Th', θ: 'th', Ι: 'I', ι: 'i', Κ: 'K', κ: 'k', Λ: 'L', λ: 'l', Μ: 'M', μ: 'm', Ν: 'N', ν: 'n',
-    Ξ: 'X', ξ: 'x', Ο: 'O', ο: 'o', Π: 'P', π: 'p', Ρ: 'R', ρ: 'r', Σ: 'S', σ: 's', ς: 's', Τ: 'T', τ: 't', Υ: 'Y', υ: 'y',
-    Φ: 'F', φ: 'f', Χ: 'Ch', χ: 'ch', Ψ: 'Ps', ψ: 'ps', Ω: 'O', ω: 'o',
+    Α: 'A',
+    α: 'a',
+    Β: 'V',
+    β: 'v',
+    Γ: 'G',
+    γ: 'g',
+    Δ: 'D',
+    δ: 'd',
+    Ε: 'E',
+    ε: 'e',
+    Ζ: 'Z',
+    ζ: 'z',
+    Η: 'I',
+    η: 'i',
+    Θ: 'Th',
+    θ: 'th',
+    Ι: 'I',
+    ι: 'i',
+    Κ: 'K',
+    κ: 'k',
+    Λ: 'L',
+    λ: 'l',
+    Μ: 'M',
+    μ: 'm',
+    Ν: 'N',
+    ν: 'n',
+    Ξ: 'X',
+    ξ: 'x',
+    Ο: 'O',
+    ο: 'o',
+    Π: 'P',
+    π: 'p',
+    Ρ: 'R',
+    ρ: 'r',
+    Σ: 'S',
+    σ: 's',
+    ς: 's',
+    Τ: 'T',
+    τ: 't',
+    Υ: 'Y',
+    υ: 'y',
+    Φ: 'F',
+    φ: 'f',
+    Χ: 'Ch',
+    χ: 'ch',
+    Ψ: 'Ps',
+    ψ: 'ps',
+    Ω: 'O',
+    ω: 'o',
     /* Turkish */
-    ğ: 'g', Ğ: 'G', ş: 's', Ş: 'S', İ: 'I', ı: 'i',
+    ğ: 'g',
+    Ğ: 'G',
+    ş: 's',
+    Ş: 'S',
+    İ: 'I',
+    ı: 'i',
     /* Symbols */
-    '©': '(c)', '®': '(r)', '™': '(tm)', '℠': '(sm)',
+    '©': '(c)',
+    '®': '(r)',
+    '™': '(tm)',
+    '℠': '(sm)',
 };
 
 /**
@@ -40,7 +190,7 @@ export const TRANSLITERATOR: Record<string, string> = {
  *
  * @param {string} val - Name to encode
  */
-export function encodeFilename (val:string):{ascii:string; encoded:string} {
+export function encodeFilename(val: string): {ascii: string; encoded: string} {
     if (typeof val !== 'string') return {ascii: '', encoded: ''};
 
     let ascii = '';
@@ -50,15 +200,11 @@ export function encodeFilename (val:string):{ascii:string; encoded:string} {
         const char = val[i];
 
         /* Skip newlines and control chars */
-        if (
-            code >= 0x20 &&
-            code !== 0x7F &&
-            char !== '"'
-        ) {
+        if (code >= 0x20 && code !== 0x7f && char !== '"') {
             /* ASCII: skip \ and ' */
-            if (code <= 0x7E && char !== '\\' && char !== '\'') {
+            if (code <= 0x7e && char !== '\\' && char !== "'") {
                 ascii += char;
-            } else if (code > 0x7E) {
+            } else if (code > 0x7e) {
                 ascii += TRANSLITERATOR[char] || '';
             }
 
@@ -66,7 +212,7 @@ export function encodeFilename (val:string):{ascii:string; encoded:string} {
                 case '*':
                     encoded += '%2A';
                     break;
-                case '\'':
+                case "'":
                     encoded += '%27';
                     break;
                 case '(':
@@ -96,7 +242,7 @@ export function encodeFilename (val:string):{ascii:string; encoded:string} {
  *
  * @param {string} url - URL to extract path and query from
  */
-export function extractPartsFromUrl (url:string):{path:string; query:string} {
+export function extractPartsFromUrl(url: string): {path: string; query: string} {
     if (typeof url !== 'string') return {path: '', query: ''};
 
     /* Strip fragment */
@@ -109,9 +255,7 @@ export function extractPartsFromUrl (url:string):{path:string; query:string} {
 
     /* If no path but query exists right after domain */
     if (path_idx === -1) {
-        return query_idx > proto_idx
-            ? {path: '/', query: url.slice(query_idx + 1)}
-            : {path: '/', query: ''};
+        return query_idx > proto_idx ? {path: '/', query: url.slice(query_idx + 1)} : {path: '/', query: ''};
     } else {
         return query_idx === -1
             ? {path: url.slice(path_idx), query: ''}
@@ -121,34 +265,105 @@ export function extractPartsFromUrl (url:string):{path:string; query:string} {
 
 const MULTI_SEGMENT_TLDS = new Set([
     /* United Kingdom */
-    'co.uk', 'ac.uk', 'gov.uk', 'org.uk', 'net.uk', 'ltd.uk', 'plc.uk',
-    'me.uk', 'nhs.uk', 'sch.uk',
+    'co.uk',
+    'ac.uk',
+    'gov.uk',
+    'org.uk',
+    'net.uk',
+    'ltd.uk',
+    'plc.uk',
+    'me.uk',
+    'nhs.uk',
+    'sch.uk',
     /* Australia */
-    'com.au', 'net.au', 'org.au', 'edu.au', 'gov.au', 'id.au', 'asn.au',
+    'com.au',
+    'net.au',
+    'org.au',
+    'edu.au',
+    'gov.au',
+    'id.au',
+    'asn.au',
     /* Brazil */
-    'com.br', 'net.br', 'org.br', 'gov.br', 'mil.br', 'edu.br',
+    'com.br',
+    'net.br',
+    'org.br',
+    'gov.br',
+    'mil.br',
+    'edu.br',
     /* China */
-    'com.cn', 'net.cn', 'gov.cn', 'org.cn', 'edu.cn',
+    'com.cn',
+    'net.cn',
+    'gov.cn',
+    'org.cn',
+    'edu.cn',
     /* Hong Kong */
-    'com.hk', 'edu.hk', 'gov.hk', 'idv.hk', 'net.hk', 'org.hk',
+    'com.hk',
+    'edu.hk',
+    'gov.hk',
+    'idv.hk',
+    'net.hk',
+    'org.hk',
     /* Japan */
-    'co.jp', 'ne.jp', 'or.jp', 'go.jp', 'ac.jp', 'ad.jp', 'ed.jp',
+    'co.jp',
+    'ne.jp',
+    'or.jp',
+    'go.jp',
+    'ac.jp',
+    'ad.jp',
+    'ed.jp',
     /* South Korea */
-    'co.kr', 'ne.kr', 'or.kr', 're.kr', 'go.kr', 'mil.kr', 'ac.kr',
+    'co.kr',
+    'ne.kr',
+    'or.kr',
+    're.kr',
+    'go.kr',
+    'mil.kr',
+    'ac.kr',
     /* Taiwan */
-    'com.tw', 'net.tw', 'org.tw', 'edu.tw', 'gov.tw', 'mil.tw',
+    'com.tw',
+    'net.tw',
+    'org.tw',
+    'edu.tw',
+    'gov.tw',
+    'mil.tw',
     /* India */
-    'co.in', 'net.in', 'org.in', 'firm.in', 'gen.in', 'ind.in',
+    'co.in',
+    'net.in',
+    'org.in',
+    'firm.in',
+    'gen.in',
+    'ind.in',
     /* New Zealand */
-    'co.nz', 'net.nz', 'org.nz', 'govt.nz', 'ac.nz', 'geek.nz', 'maori.nz', 'iwi.nz',
+    'co.nz',
+    'net.nz',
+    'org.nz',
+    'govt.nz',
+    'ac.nz',
+    'geek.nz',
+    'maori.nz',
+    'iwi.nz',
     /* Singapore */
-    'com.sg', 'net.sg', 'org.sg', 'edu.sg', 'gov.sg', 'per.sg',
+    'com.sg',
+    'net.sg',
+    'org.sg',
+    'edu.sg',
+    'gov.sg',
+    'per.sg',
     /* South Africa */
-    'co.za', 'net.za', 'org.za', 'gov.za',
+    'co.za',
+    'net.za',
+    'org.za',
+    'gov.za',
     /* Canada */
     'gc.ca',
     /* US Federal */
-    'ci.us', 'lib.tx.us', 'k12.tx.us', 'cc.ca.us', 'state.ca.us', 'pvt.k12.ma.us', 'cog.va.us',
+    'ci.us',
+    'lib.tx.us',
+    'k12.tx.us',
+    'cc.ca.us',
+    'state.ca.us',
+    'pvt.k12.ma.us',
+    'cog.va.us',
 ]);
 
 const RGX_DOMAIN = /^(?:https?:\/\/)?(?:www\d?\.)?((?:[\w-]+\.)+[\w-]+)(?::\d+)?(?:\/|$)/i;
@@ -166,14 +381,8 @@ const RGX_DOMAIN_IP = /^[\d.:]+$/;
  * - "localhost" → null
  * - "192.168.0.1" → null
  */
-export function extractDomainFromHost (raw:string|null):string|null {
-    if (
-        typeof raw !== 'string' ||
-        !raw.length ||
-        raw === 'localhost' ||
-        RGX_DOMAIN_IP.test(raw) ||
-        raw[0] === '['
-    ) return null;
+export function extractDomainFromHost(raw: string | null): string | null {
+    if (typeof raw !== 'string' || !raw.length || raw === 'localhost' || RGX_DOMAIN_IP.test(raw) || raw[0] === '[') return null;
 
     /* Verify domain */
     const match = (raw[raw.length - 1] === '.' ? raw.slice(0, -1) : raw).match(RGX_DOMAIN);
@@ -183,7 +392,5 @@ export function extractDomainFromHost (raw:string|null):string|null {
     const len = parts.length;
     const last_two = parts[len - 2] + '.' + parts[len - 1];
 
-    return MULTI_SEGMENT_TLDS.has(last_two) && len > 2
-        ? parts[len - 3] + '.' + last_two
-        : last_two;
+    return MULTI_SEGMENT_TLDS.has(last_two) && len > 2 ? parts[len - 3] + '.' + last_two : last_two;
 }

@@ -1,30 +1,26 @@
 import {type Store} from '../../../storage/_Storage';
-import {
-    type TriFrostRateLimitObject,
-    type TriFrostRateLimitStrategizedStore,
-} from './_Strategy';
+import {type TriFrostRateLimitObject, type TriFrostRateLimitStrategizedStore} from './_Strategy';
 
 export class Sliding implements TriFrostRateLimitStrategizedStore {
+    #window: number;
 
-    #window:number;
+    #store: Store<number[]>;
 
-    #store:Store<number[]>;
-
-    constructor (window: number = 60, store:Store<number[]>) {
+    constructor(window: number = 60, store: Store<number[]>) {
         this.#window = window;
         this.#store = store;
     }
 
-    protected get store ():Store|null {
+    protected get store(): Store | null {
         return this.#store;
     }
 
-    async consume (key: string, limit: number): Promise<TriFrostRateLimitObject> {
-        const now = Math.floor(Date.now()/1000);
-        const timestamps = await this.#store.get(key) || [];
+    async consume(key: string, limit: number): Promise<TriFrostRateLimitObject> {
+        const now = Math.floor(Date.now() / 1000);
+        const timestamps = (await this.#store.get(key)) || [];
 
         /* Prune ONLY the first entry if it's outside the window */
-        if (timestamps.length && timestamps[0] < (now - this.#window)) timestamps.shift();
+        if (timestamps.length && timestamps[0] < now - this.#window) timestamps.shift();
 
         /* Push the current timestamp */
         timestamps.push(now);
@@ -41,8 +37,7 @@ export class Sliding implements TriFrostRateLimitStrategizedStore {
         return {amt: timestamps.length, reset};
     }
 
-    async stop () {
+    async stop() {
         await this.#store.stop();
     }
-
 }

@@ -1,45 +1,36 @@
 /// <reference types="@cloudflare/workers-types" />
 
-import {
-    type TriFrostRootLogger,
-    ConsoleExporter,
-    JsonExporter,
-} from '../../modules/Logger';
+import {type TriFrostRootLogger, ConsoleExporter, JsonExporter} from '../../modules/Logger';
 import {isDevMode} from '../../utils/Generic';
-import {
-    type TriFrostRuntime,
-    type TriFrostRuntimeOnIncoming,
-    type TriFrostRuntimeBootOptions,
-} from '../types';
+import {type TriFrostRuntime, type TriFrostRuntimeOnIncoming, type TriFrostRuntimeBootOptions} from '../types';
 import {WorkerdContext} from './Context';
 
 export class WorkerdRuntime implements TriFrostRuntime {
-
     /* Global logger instance when runtime has started */
-    #logger: TriFrostRootLogger|null = null;
+    #logger: TriFrostRootLogger | null = null;
 
     /* Runtime Start Options */
     #cfg: TriFrostRuntimeBootOptions['cfg'] | null = null;
 
     /* Runtime-Enriched Config */
-    #runtimeCfg: TriFrostRuntimeBootOptions['cfg']|null = null;
+    #runtimeCfg: TriFrostRuntimeBootOptions['cfg'] | null = null;
 
     /* Incoming handler which is to be called by the runtime when an incoming request happens */
-    #onIncoming: TriFrostRuntimeOnIncoming|null = null;
+    #onIncoming: TriFrostRuntimeOnIncoming | null = null;
 
-/**
- * MARK: Workerd handlers
- */
+    /**
+     * MARK: Workerd handlers
+     */
 
     exports = {
-        fetch: async (request:Request, env:any, cloudflareCtx:ExecutionContext) => {
+        fetch: async (request: Request, env: any, cloudflareCtx: ExecutionContext) => {
             if (!this.#onIncoming) return;
 
             /* JIT Runtime config resolution */
             if (!this.#runtimeCfg) {
                 this.#runtimeCfg = {
                     ...this.#cfg,
-                    env: {...env, ...this.#cfg!.env || {}},
+                    env: {...env, ...(this.#cfg!.env || {})},
                 } as TriFrostRuntimeBootOptions['cfg'];
             }
 
@@ -57,19 +48,19 @@ export class WorkerdRuntime implements TriFrostRuntime {
         },
     };
 
-/**
- * MARK: Runtime Implementation
- */
+    /**
+     * MARK: Runtime Implementation
+     */
 
-    get name () {
+    get name() {
         return 'Workerd';
     }
 
-    get version () {
+    get version() {
         return null;
     }
 
-    async boot (opts: TriFrostRuntimeBootOptions): Promise<void> {
+    async boot(opts: TriFrostRuntimeBootOptions): Promise<void> {
         /* Set onIncoming handler */
         this.#onIncoming = opts.onIncoming;
 
@@ -86,11 +77,11 @@ export class WorkerdRuntime implements TriFrostRuntime {
         this.#logger!.debug('WorkerdRuntime@boot');
     }
 
-    defaultExporter (env:Record<string, unknown>) {
+    defaultExporter(env: Record<string, unknown>) {
         return isDevMode(env) ? new ConsoleExporter() : new JsonExporter();
     }
 
-    async shutdown () {
+    async shutdown() {
         if (!this.#onIncoming) return;
 
         this.#logger!.debug('WorkerdRuntime@stop');
@@ -104,5 +95,4 @@ export class WorkerdRuntime implements TriFrostRuntime {
         /* Clear global config */
         this.#cfg = null;
     }
-
 }

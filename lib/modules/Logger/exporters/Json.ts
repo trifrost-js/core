@@ -1,16 +1,8 @@
 /* eslint-disable no-console */
 
 import {deepFreeze} from '@valkyriestudios/utils/deep';
-import {
-    type TriFrostLoggerLogPayload,
-    type TriFrostLoggerExporter,
-    type TriFrostLogLevel,
-} from '../types';
-import {
-    createScrambler,
-    OMIT_PRESETS,
-    type ScramblerValue,
-} from '../../../utils/Scrambler';
+import {type TriFrostLoggerLogPayload, type TriFrostLoggerExporter, type TriFrostLogLevel} from '../types';
+import {createScrambler, OMIT_PRESETS, type ScramblerValue} from '../../../utils/Scrambler';
 
 type JsonExporterEntry = {
     time: string;
@@ -23,26 +15,22 @@ type JsonExporterEntry = {
     data: Record<string, unknown>;
     global: Record<string, unknown>;
 };
-type JsonExporterSink = (entry:JsonExporterEntry) => void;
+type JsonExporterSink = (entry: JsonExporterEntry) => void;
 
 export class JsonExporter implements TriFrostLoggerExporter {
-
-    #global_attrs:Record<string, unknown>|null = null;
+    #global_attrs: Record<string, unknown> | null = null;
 
     /**
      * Scrambler based on omit pattern provided
      */
-    #scramble:ReturnType<typeof createScrambler>;
+    #scramble: ReturnType<typeof createScrambler>;
 
     /**
      * Sink for the json entries, if not defined will be console
      */
-    #sink:JsonExporterSink|null = null;
+    #sink: JsonExporterSink | null = null;
 
-    constructor (options?:{
-        omit?:ScramblerValue[];
-        sink?:JsonExporterSink;
-    }) {
+    constructor(options?: {omit?: ScramblerValue[]; sink?: JsonExporterSink}) {
         /* Configure scrambler */
         this.#scramble = createScrambler({
             checks: Array.isArray(options?.omit) ? deepFreeze([...options.omit]) : OMIT_PRESETS.default,
@@ -52,11 +40,11 @@ export class JsonExporter implements TriFrostLoggerExporter {
         if (typeof options?.sink === 'function') this.#sink = options.sink;
     }
 
-    init (global_attrs:Record<string, unknown>) {
+    init(global_attrs: Record<string, unknown>) {
         this.#global_attrs = this.#scramble(global_attrs);
     }
 
-    async pushLog (log: TriFrostLoggerLogPayload): Promise<void> {
+    async pushLog(log: TriFrostLoggerLogPayload): Promise<void> {
         const entry = this.#scramble({
             message: log.message,
         }) as JsonExporterEntry;
@@ -89,8 +77,7 @@ export class JsonExporter implements TriFrostLoggerExporter {
         }
     }
 
-    async flush (): Promise<void> {
-		/* No-Op for Json console exporter */
+    async flush(): Promise<void> {
+        /* No-Op for Json console exporter */
     }
-
 }

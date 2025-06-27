@@ -8,7 +8,7 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
     const fixedTimeNano = fixedDate.getTime() * 1_000_000;
 
     beforeEach(() => {
-        /* @ts-ignore */
+        /* @ts-expect-error Should be good */
         fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ok: true});
     });
 
@@ -37,25 +37,31 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                resourceLogs: [{
-                    resource: {
-                        attributes: [{key: 'service', value: {stringValue: 'test-service'}}],
+                resourceLogs: [
+                    {
+                        resource: {
+                            attributes: [{key: 'service', value: {stringValue: 'test-service'}}],
+                        },
+                        scopeLogs: [
+                            {
+                                scope: {name: 'trifrost.logger', version: '1.0.0'},
+                                logRecords: [
+                                    {
+                                        timeUnixNano: fixedTimeNano,
+                                        severityText: 'INFO',
+                                        body: {stringValue: 'Test log'},
+                                        attributes: [
+                                            {key: 'ctx.user', value: {stringValue: 'alice'}},
+                                            {key: 'data.requestId', value: {stringValue: 'req-1'}},
+                                            {key: 'trace_id', value: {stringValue: 'trace-1'}},
+                                            {key: 'span_id', value: {stringValue: 'span-1'}},
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
                     },
-                    scopeLogs: [{
-                        scope: {name: 'trifrost.logger', version: '1.0.0'},
-                        logRecords: [{
-                            timeUnixNano: fixedTimeNano,
-                            severityText: 'INFO',
-                            body: {stringValue: 'Test log'},
-                            attributes: [
-                                {key: 'ctx.user', value: {stringValue: 'alice'}},
-                                {key: 'data.requestId', value: {stringValue: 'req-1'}},
-                                {key: 'trace_id', value: {stringValue: 'trace-1'}},
-                                {key: 'span_id', value: {stringValue: 'span-1'}},
-                            ],
-                        }],
-                    }],
-                }],
+                ],
             }),
         });
     });
@@ -82,26 +88,30 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                resourceSpans: [{
-                    resource: {
-                        attributes: [{key: 'service', value: {stringValue: 'test-service'}}],
+                resourceSpans: [
+                    {
+                        resource: {
+                            attributes: [{key: 'service', value: {stringValue: 'test-service'}}],
+                        },
+                        scopeSpans: [
+                            {
+                                scope: {name: 'trifrost.logger', version: '1.0.0'},
+                                spans: [
+                                    {
+                                        name: 'span-test',
+                                        traceId: 'trace-2',
+                                        spanId: 'span-2',
+                                        startTimeUnixNano: fixedTimeNano,
+                                        endTimeUnixNano: (fixedDate.getTime() + 500) * 1_000_000,
+                                        attributes: [{key: 'operation', value: {stringValue: 'db-query'}}],
+                                        parentSpanId: 'parent-2',
+                                        status: {code: 1, message: 'OK'},
+                                    },
+                                ],
+                            },
+                        ],
                     },
-                    scopeSpans: [{
-                        scope: {name: 'trifrost.logger', version: '1.0.0'},
-                        spans: [{
-                            name: 'span-test',
-                            traceId: 'trace-2',
-                            spanId: 'span-2',
-                            startTimeUnixNano: fixedTimeNano,
-                            endTimeUnixNano: (fixedDate.getTime() + 500) * 1_000_000,
-                            attributes: [
-                                {key: 'operation', value: {stringValue: 'db-query'}},
-                            ],
-                            parentSpanId: 'parent-2',
-                            status: {code: 1, message: 'OK'},
-                        }],
-                    }],
-                }],
+                ],
             }),
         });
     });
@@ -109,7 +119,7 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
     it('Correctly maps string, int, double, and boolean attributes', async () => {
         const exporter = new OtelHttpExporter({logEndpoint: 'http://mock'});
         exporter.init({service: 'test-service'});
-    
+
         const log: TriFrostLoggerLogPayload = {
             time: fixedDate,
             level: 'info',
@@ -132,7 +142,7 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
                 posinf: Number.NEGATIVE_INFINITY,
             },
         };
-    
+
         await exporter.pushLog(log);
         await exporter.flush();
 
@@ -143,9 +153,7 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
                 resourceLogs: [
                     {
                         resource: {
-                            attributes: [
-                                {key:'service', value: {stringValue: 'test-service'}},
-                            ],
+                            attributes: [{key: 'service', value: {stringValue: 'test-service'}}],
                         },
                         scopeLogs: [
                             {
@@ -180,7 +188,7 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
     it('Serializes nested objects and arrays as stringValue', async () => {
         const exporter = new OtelHttpExporter({logEndpoint: 'http://mock'});
         exporter.init({service: 'test-service'});
-    
+
         const log: TriFrostLoggerLogPayload = {
             time: fixedDate,
             level: 'info',
@@ -194,31 +202,33 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
                 mixedArray: [{a: 1}, {b: 2}],
             },
         };
-    
+
         await exporter.pushLog(log);
         await exporter.flush();
-    
+
         const sentBody = JSON.parse(fetchSpy.mock.calls[0][1].body);
         const attrs = sentBody.resourceLogs[0].scopeLogs[0].logRecords[0].attributes;
-    
-        expect(attrs).toEqual(expect.arrayContaining([
-            {
-                key: 'ctx.nestedObj',
-                value: {stringValue: JSON.stringify({key1: 'val1', key2: 2})},
-            },
-            {
-                key: 'ctx.arrayProp',
-                value: {stringValue: JSON.stringify([1, 2, 3, 'four'])},
-            },
-            {
-                key: 'data.deepNested',
-                value: {stringValue: JSON.stringify({inner: {flag: true}})},
-            },
-            {
-                key: 'data.mixedArray',
-                value: {stringValue: JSON.stringify([{a: 1}, {b: 2}])},
-            },
-        ]));
+
+        expect(attrs).toEqual(
+            expect.arrayContaining([
+                {
+                    key: 'ctx.nestedObj',
+                    value: {stringValue: JSON.stringify({key1: 'val1', key2: 2})},
+                },
+                {
+                    key: 'ctx.arrayProp',
+                    value: {stringValue: JSON.stringify([1, 2, 3, 'four'])},
+                },
+                {
+                    key: 'data.deepNested',
+                    value: {stringValue: JSON.stringify({inner: {flag: true}})},
+                },
+                {
+                    key: 'data.mixedArray',
+                    value: {stringValue: JSON.stringify([{a: 1}, {b: 2}])},
+                },
+            ]),
+        );
     });
 
     it('applies omit keys on span payload', async () => {
@@ -243,9 +253,7 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
         const sentBody = JSON.parse(fetchSpy.mock.calls[0][1].body);
         const spanAttrs = sentBody.resourceSpans[0].scopeSpans[0].spans[0].attributes;
 
-        expect(spanAttrs).toEqual(expect.arrayContaining([
-            {key: 'operation', value: {stringValue: 'query'}},
-        ]));
+        expect(spanAttrs).toEqual(expect.arrayContaining([{key: 'operation', value: {stringValue: 'query'}}]));
         expect(spanAttrs.find(a => a.key === 'internalNote')).toEqual({key: 'internalNote', value: {stringValue: '***'}});
     });
 
@@ -285,9 +293,9 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
             logEndpoint: 'http://mock',
             omit: [{global: 'password'}],
         });
-    
+
         exporter.init({service: 'test-service'});
-    
+
         await exporter.pushLog({
             time: fixedDate,
             level: 'info',
@@ -300,69 +308,62 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
             },
         });
         await exporter.flush();
-    
-        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body)
-            .resourceLogs[0]
-            .scopeLogs[0]
-            .logRecords[0]
-            .attributes;
-    
-        expect(attrs).toEqual(expect.arrayContaining([
-            {key: 'ctx.user', value: {stringValue: JSON.stringify({name: 'alice', password: '***'})}},
-            {key: 'data.db', value: {stringValue: JSON.stringify({password: '***', host: 'localhost'})}},
-        ]));
+
+        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body).resourceLogs[0].scopeLogs[0].logRecords[0].attributes;
+
+        expect(attrs).toEqual(
+            expect.arrayContaining([
+                {key: 'ctx.user', value: {stringValue: JSON.stringify({name: 'alice', password: '***'})}},
+                {key: 'data.db', value: {stringValue: JSON.stringify({password: '***', host: 'localhost'})}},
+            ]),
+        );
     });
-    
+
     it('Scrambles global init attributes using omit', async () => {
         const exporter = new OtelHttpExporter({
             logEndpoint: 'http://mock',
             omit: ['secret'],
         });
-    
+
         exporter.init({service: 'logger', secret: 'hidden'});
-    
+
         await exporter.pushLog({
             time: fixedDate,
             level: 'info',
             message: 'global scramble',
         } as TriFrostLoggerLogPayload);
-    
+
         await exporter.flush();
-    
-        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body)
-            .resourceLogs[0]
-            .resource
-            .attributes;
-    
-        expect(attrs).toEqual(expect.arrayContaining([
-            {key: 'service', value: {stringValue: 'logger'}},
-            {key: 'secret', value: {stringValue: '***'}},
-        ]));
+
+        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body).resourceLogs[0].resource.attributes;
+
+        expect(attrs).toEqual(
+            expect.arrayContaining([
+                {key: 'service', value: {stringValue: 'logger'}},
+                {key: 'secret', value: {stringValue: '***'}},
+            ]),
+        );
     });
-    
+
     it('Does not scramble if omit list is empty', async () => {
         const exporter = new OtelHttpExporter({
             logEndpoint: 'http://mock',
             omit: [],
         });
-    
+
         exporter.init({service: 'logger', secret: 'should-not-scramble'});
-    
+
         await exporter.pushLog({
             time: fixedDate,
             level: 'info',
             message: 'no scramble',
             ctx: {secret: 'also-raw'},
         });
-    
+
         await exporter.flush();
-    
-        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body)
-            .resourceLogs[0]
-            .scopeLogs[0]
-            .logRecords[0]
-            .attributes;
-    
+
+        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body).resourceLogs[0].scopeLogs[0].logRecords[0].attributes;
+
         expect(attrs.find(a => a.key === 'ctx.secret')?.value.stringValue).toBe('also-raw');
     });
 
@@ -420,25 +421,25 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
 
     it('retries on fetch failure and respects maxRetries', async () => {
         const errorResponse = {ok: false, status: 500};
-        /* @ts-ignore */
+        /* @ts-expect-error Should be good */
         const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(errorResponse);
-    
+
         const exporter = new OtelHttpExporter({
             logEndpoint: 'http://mock',
             maxRetries: 2,
         });
         exporter.init({service: 'test-service'});
-    
+
         await exporter.pushLog({
             time: fixedDate,
             level: 'error',
             message: 'Retry test',
         } as TriFrostLoggerLogPayload);
         await exporter.flush();
-    
+
         expect(fetchMock).toHaveBeenCalledTimes(2); /* initial + 1 retry */
     });
-    
+
     it('automatically flushes logs when hitting maxBatchSize', async () => {
         const exporter = new OtelHttpExporter({
             logEndpoint: 'http://mock',
@@ -452,7 +453,7 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
             message: 'Log 1',
         } as TriFrostLoggerLogPayload);
         expect(fetchSpy).not.toHaveBeenCalled();
-    
+
         await exporter.pushLog({
             time: fixedDate,
             level: 'info',
@@ -460,7 +461,7 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
         } as TriFrostLoggerLogPayload); /* should trigger flush */
         expect(fetchSpy).toHaveBeenCalled();
     });
-    
+
     it('automatically flushes spans when hitting maxBatchSize', async () => {
         const exporter = new OtelHttpExporter({
             logEndpoint: 'http://mock',
@@ -477,7 +478,7 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
             ctx: {},
         });
         expect(fetchSpy).not.toHaveBeenCalled();
-    
+
         await exporter.pushSpan({
             name: 'span2',
             traceId: 'trace2',
@@ -494,9 +495,9 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
             logEndpoint: 'http://mock',
             omit: [{global: 'password'}],
         });
-    
+
         exporter.init({service: 'tracer'});
-    
+
         await exporter.pushSpan({
             name: 'span-nested-ctx',
             traceId: 'trace-x',
@@ -510,36 +511,34 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
                 },
             },
         });
-    
+
         await exporter.flush();
-    
-        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body)
-            .resourceSpans[0]
-            .scopeSpans[0]
-            .spans[0]
-            .attributes;
-    
-        expect(attrs).toEqual(expect.arrayContaining([
-            {
-                key: 'auth',
-                value: {
-                    stringValue: JSON.stringify({
-                        user: 'bob',
-                        password: '***',
-                    }),
+
+        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body).resourceSpans[0].scopeSpans[0].spans[0].attributes;
+
+        expect(attrs).toEqual(
+            expect.arrayContaining([
+                {
+                    key: 'auth',
+                    value: {
+                        stringValue: JSON.stringify({
+                            user: 'bob',
+                            password: '***',
+                        }),
+                    },
                 },
-            },
-        ]));
+            ]),
+        );
     });
-    
+
     it('Scrambles resource attributes during init for spans', async () => {
         const exporter = new OtelHttpExporter({
             logEndpoint: 'http://mock',
             omit: ['secret'],
         });
-    
+
         exporter.init({service: 'tracing', secret: 'top-secret'});
-    
+
         await exporter.pushSpan({
             name: 'init-span',
             traceId: 'trace-y',
@@ -548,28 +547,27 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
             end: fixedDate.getTime() + 100,
             ctx: {},
         });
-    
+
         await exporter.flush();
-    
-        const resAttrs = JSON.parse(fetchSpy.mock.calls[0][1].body)
-            .resourceSpans[0]
-            .resource
-            .attributes;
-    
-        expect(resAttrs).toEqual(expect.arrayContaining([
-            {key: 'service', value: {stringValue: 'tracing'}},
-            {key: 'secret', value: {stringValue: '***'}},
-        ]));
+
+        const resAttrs = JSON.parse(fetchSpy.mock.calls[0][1].body).resourceSpans[0].resource.attributes;
+
+        expect(resAttrs).toEqual(
+            expect.arrayContaining([
+                {key: 'service', value: {stringValue: 'tracing'}},
+                {key: 'secret', value: {stringValue: '***'}},
+            ]),
+        );
     });
-    
+
     it('Does not scramble span.ctx if omit is empty', async () => {
         const exporter = new OtelHttpExporter({
             logEndpoint: 'http://mock',
             omit: [],
         });
-    
+
         exporter.init({});
-    
+
         await exporter.pushSpan({
             name: 'unmasked-span',
             traceId: 'trace-z',
@@ -581,18 +579,16 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
                 token: 'visible',
             },
         });
-    
+
         await exporter.flush();
-    
-        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body)
-            .resourceSpans[0]
-            .scopeSpans[0]
-            .spans[0]
-            .attributes;
-    
-        expect(attrs).toEqual(expect.arrayContaining([
-            {key: 'user', value: {stringValue: 'alice'}},
-            {key: 'token', value: {stringValue: 'visible'}},
-        ]));
+
+        const attrs = JSON.parse(fetchSpy.mock.calls[0][1].body).resourceSpans[0].scopeSpans[0].spans[0].attributes;
+
+        expect(attrs).toEqual(
+            expect.arrayContaining([
+                {key: 'user', value: {stringValue: 'alice'}},
+                {key: 'token', value: {stringValue: 'visible'}},
+            ]),
+        );
     });
 });

@@ -5,7 +5,7 @@ import {MockContext} from '../../../MockContext';
 import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostFingerPrint} from '../../../../lib/types/constants';
 import CONSTANTS from '../../../constants';
 
-const makeCtx = (cookieVal?: string|null) => {
+const makeCtx = (cookieVal?: string | null) => {
     const ctx = new MockContext();
     ctx.cookies.get = vi.fn(() => cookieVal);
     ctx.cookies.verify = vi.fn(() => cookieVal);
@@ -15,28 +15,34 @@ const makeCtx = (cookieVal?: string|null) => {
 describe('Middleware - Auth - SessionCookie', () => {
     it('Throws if no cookie name provided', () => {
         for (const el of CONSTANTS.NOT_STRING) {
-            expect(() => SessionCookieAuth({
-                cookie: el as any,
-                secret: {val: 'secret'},
-            })).toThrow(/TriFrostMiddleware@SessionCookieAuth: A cookie name must be provided/);
+            expect(() =>
+                SessionCookieAuth({
+                    cookie: el as any,
+                    secret: {val: 'secret'},
+                }),
+            ).toThrow(/TriFrostMiddleware@SessionCookieAuth: A cookie name must be provided/);
         }
     });
 
     it('Throws if no secret provided', () => {
         for (const el of CONSTANTS.NOT_STRING) {
             if (typeof el === 'function') continue;
-            expect(() => SessionCookieAuth({
-                cookie: 'session',
-                secret: {val: el as any},
-            })).toThrow(/TriFrostMiddleware@SessionCookieAuth: A secret must be provided/);
+            expect(() =>
+                SessionCookieAuth({
+                    cookie: 'session',
+                    secret: {val: el as any},
+                }),
+            ).toThrow(/TriFrostMiddleware@SessionCookieAuth: A secret must be provided/);
         }
 
         for (const el of CONSTANTS.NOT_FUNCTION) {
             if (typeof el === 'string') continue;
-            expect(() => SessionCookieAuth({
-                cookie: 'session',
-                secret: {val: el as any},
-            })).toThrow(/TriFrostMiddleware@SessionCookieAuth: A secret must be provided/);
+            expect(() =>
+                SessionCookieAuth({
+                    cookie: 'session',
+                    secret: {val: el as any},
+                }),
+            ).toThrow(/TriFrostMiddleware@SessionCookieAuth: A secret must be provided/);
         }
     });
 

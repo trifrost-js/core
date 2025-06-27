@@ -14,7 +14,7 @@ describe('Modules - Logger - Logger', () => {
 
     const mockExporter: TriFrostLoggerExporter = {
         init: vi.fn(),
-        /* @ts-ignore */
+        /* @ts-expect-error Should be good */
         pushLog: vi.fn(log => logs.push(log)),
         pushSpan: vi.fn(span => spans.push(span)),
         flush: vi.fn(() => {
@@ -100,9 +100,7 @@ describe('Modules - Logger - Logger', () => {
         });
     });
 
-    describe.each([
-        ['info'], ['log'], ['warn'],
-    ])('%s()', level => {
+    describe.each([['info'], ['log'], ['warn']])('%s()', level => {
         it(`pushes a log at ${level} level`, () => {
             const logger = new Logger({debug: true, exporters: [mockExporter], spanAwareExporters: []});
             logger[level]('message', {level});

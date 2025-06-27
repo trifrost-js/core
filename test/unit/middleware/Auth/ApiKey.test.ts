@@ -5,26 +5,31 @@ import {MockContext} from '../../../MockContext';
 import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostFingerPrint} from '../../../../lib/types/constants';
 import CONSTANTS from '../../../constants';
 
-const makeCtx = (headers: Record<string, string> = {}, queryStr: string = '') => new MockContext({
-    headers,
-    query: queryStr,
-});
+const makeCtx = (headers: Record<string, string> = {}, queryStr: string = '') =>
+    new MockContext({
+        headers,
+        query: queryStr,
+    });
 
 describe('Middleware - Auth - ApiKey', () => {
     it('Throws if validate is not provided or invalid', () => {
         for (const el of CONSTANTS.NOT_FUNCTION) {
-            expect(() => ApiKeyAuth({
-                apiKey: {header: 'x-api-key'},
-                validate: el as any,
-            })).toThrowError(/A validate function must be provided/);
+            expect(() =>
+                ApiKeyAuth({
+                    apiKey: {header: 'x-api-key'},
+                    validate: el as any,
+                }),
+            ).toThrowError(/A validate function must be provided/);
         }
     });
 
     it('Throws if neither apiKey.header nor apiKey.query is provided', () => {
-        expect(() => ApiKeyAuth({
-            apiKey: {},
-            validate: vi.fn(),
-        })).toThrowError(/You must configure apiKey header or query/);
+        expect(() =>
+            ApiKeyAuth({
+                apiKey: {},
+                validate: vi.fn(),
+            }),
+        ).toThrowError(/You must configure apiKey header or query/);
     });
 
     it('Returns 401 if apiKey is missing', async () => {
@@ -125,10 +130,12 @@ describe('Middleware - Auth - ApiKey', () => {
 
     it('Throws if apiKey config has no valid header or query string', () => {
         for (const badVal of CONSTANTS.NOT_STRING_WITH_EMPTY) {
-            expect(() => ApiKeyAuth({
-                apiKey: {header: badVal as any, query: badVal as any},
-                validate: vi.fn(),
-            })).toThrowError(/You must configure apiKey header or query/);
+            expect(() =>
+                ApiKeyAuth({
+                    apiKey: {header: badVal as any, query: badVal as any},
+                    validate: vi.fn(),
+                }),
+            ).toThrowError(/You must configure apiKey header or query/);
         }
     });
 

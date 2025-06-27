@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars,class-methods-use-this,max-classes-per-file */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import {sleep} from '@valkyriestudios/utils/function';
 import {isObject} from '@valkyriestudios/utils/object';
@@ -10,12 +10,10 @@ describe('Modules - Cache - Utils', () => {
     describe('@cache', () => {
         it('Returns original method result if no cache present anywhere', async () => {
             class Example {
-
                 @cache('no-cache')
-                async get () {
+                async get() {
                     return 'raw';
                 }
-            
             }
 
             const inst = new Example();
@@ -25,14 +23,12 @@ describe('Modules - Cache - Utils', () => {
         it('Uses ctx.cache if present and functional', async () => {
             const getFn = vi.fn(() => null);
             const setFn = vi.fn();
-            
-            class Example {
 
+            class Example {
                 @cache('ctx-key')
-                async get (_ctx: any) {
+                async get(_ctx: any) {
                     return 'fetched';
                 }
-            
             }
 
             const inst = new Example();
@@ -46,14 +42,12 @@ describe('Modules - Cache - Utils', () => {
             const setFn = vi.fn();
 
             class Example {
-
                 cache = {get: getFn, set: setFn};
 
                 @cache('this-key')
-                async get () {
+                async get() {
                     return 'hit';
                 }
-            
             }
 
             const inst = new Example();
@@ -67,14 +61,12 @@ describe('Modules - Cache - Utils', () => {
             const setFn = vi.fn();
 
             class Example {
-
                 ctx = {cache: {get: getFn, set: setFn}};
 
                 @cache('deep-key')
-                async get () {
+                async get() {
                     return 'nested';
                 }
-            
             }
 
             const inst = new Example();
@@ -88,14 +80,12 @@ describe('Modules - Cache - Utils', () => {
             const setFn = vi.fn();
 
             class Example {
-
                 cache = {get: getFn, set: setFn};
 
                 @cache('exists-key')
-                async get () {
+                async get() {
                     return 'should-not-run';
                 }
-            
             }
 
             const inst = new Example();
@@ -109,12 +99,10 @@ describe('Modules - Cache - Utils', () => {
             const keyFn = vi.fn(ctx => `dynamic:${ctx.userId}`);
 
             class Example {
-
                 @cache(keyFn)
-                async get (ctx: any) {
+                async get(ctx: any) {
                     return `result-for-${ctx.userId}`;
                 }
-            
             }
 
             const inst = new Example();
@@ -129,14 +117,12 @@ describe('Modules - Cache - Utils', () => {
             const setFn = vi.fn();
 
             class Example {
-
                 cache = {get: getFn, set: setFn};
 
                 @cache(undefined as any)
-                async get () {
+                async get() {
                     return 'fallback';
                 }
-            
             }
 
             const inst = new Example();
@@ -150,14 +136,12 @@ describe('Modules - Cache - Utils', () => {
             const setFn = vi.fn();
 
             class Example {
-
                 cache = {get: getFn, set: setFn};
 
                 @cache('skip-key')
-                async get () {
+                async get() {
                     return cacheSkip('raw-value');
                 }
-            
             }
 
             const inst = new Example();
@@ -170,14 +154,12 @@ describe('Modules - Cache - Utils', () => {
             const setFn = vi.fn();
 
             class Example {
-
                 cache = {get: getFn, set: setFn};
 
                 @cache('null-key')
-                async get () {
+                async get() {
                     return null;
                 }
-            
             }
 
             const inst = new Example();
@@ -190,14 +172,12 @@ describe('Modules - Cache - Utils', () => {
             const setFn = vi.fn();
 
             class Example {
-
                 cache = {get: getFn, set: setFn};
 
                 @cache('ttl-key', {ttl: 180})
-                async get () {
+                async get() {
                     return 'with-ttl';
                 }
-            
             }
 
             const inst = new Example();
@@ -210,16 +190,14 @@ describe('Modules - Cache - Utils', () => {
             const setFn = vi.fn();
 
             class Example {
-
                 value = 9;
 
                 cache = {get: getFn, set: setFn};
 
                 @cache('bound-key')
-                async get () {
+                async get() {
                     return this.value;
                 }
-            
             }
 
             const inst = new Example();
@@ -231,15 +209,13 @@ describe('Modules - Cache - Utils', () => {
             const setFn = vi.fn();
 
             class Example {
-
                 cache = {get: getFn, set: setFn};
 
                 @cache('delay-key')
-                async get () {
+                async get() {
                     await sleep(10);
                     return 'async-value';
                 }
-            
             }
 
             const inst = new Example();
@@ -252,12 +228,10 @@ describe('Modules - Cache - Utils', () => {
             const setFn = vi.fn();
 
             class Example {
-
                 @cache('multi-arg')
-                async add (_ctx:any, a: number, b: number) {
+                async add(_ctx: any, a: number, b: number) {
                     return a + b;
                 }
-            
             }
 
             const inst = new Example();
@@ -271,14 +245,12 @@ describe('Modules - Cache - Utils', () => {
             const setFn = vi.fn();
 
             class Example {
-
                 cache = {get: getFn, set: setFn};
 
                 @cache('undef-key')
-                async get () {
+                async get() {
                     return undefined;
                 }
-            
             }
 
             const inst = new Example();
@@ -288,36 +260,31 @@ describe('Modules - Cache - Utils', () => {
 
         it('Marks method as wrapped with Sym_TriFrostCached', () => {
             class Example {
-                
                 @cache('mark')
-                async fetch () {
-                }
-
+                async fetch() {}
             }
-        
+
             const inst = new Example();
             expect(Reflect.get(inst.fetch, Sym_TriFrostCached)).toBe(true);
         });
-        
+
         it('Skips re-decoration if already wrapped', async () => {
             const getFn = vi.fn(() => null);
             const setFn = vi.fn();
-        
-            class Example {
 
+            class Example {
                 cache = {get: getFn, set: setFn};
-        
+
                 @cache('redundant')
                 @cache('first')
-                async fetch (_ctx?: unknown) {
+                async fetch(_ctx?: unknown) {
                     return 'safe';
                 }
-
             }
-        
+
             const inst = new Example();
             const result = await inst.fetch();
-        
+
             expect(result).toBe('safe');
             expect(getFn).toHaveBeenCalledWith('first');
             expect(Reflect.get(inst.fetch, Sym_TriFrostCached)).toBe(true);
@@ -330,20 +297,20 @@ describe('Modules - Cache - Utils', () => {
         it('Preserves original value', () => {
             const obj = {user: 1};
             const result = cacheSkip(obj);
-            /* @ts-ignore The return type of cacheSkip is ON PURPOSE the type of the original value */
+            /* @ts-expect-error The return type of cacheSkip is ON PURPOSE the type of the original value */
             expect(result.value).toBe(obj);
         });
 
         it('Allows passing primitives', () => {
             for (const el of [null, undefined, 1, true, false, 'hello', 0.999]) {
-                /* @ts-ignore The return type of cacheSkip is ON PURPOSE the type of the original value */
+                /* @ts-expect-error The return type of cacheSkip is ON PURPOSE the type of the original value */
                 expect(cacheSkip(el).value).toEqual(el);
             }
         });
 
         it('Attaches Sym_TriFrostSkipCache to result', () => {
             const result = cacheSkip(123);
-            /* @ts-ignore The return type of cacheSkip is ON PURPOSE the type of the original value */
+            /* @ts-expect-error The return type of cacheSkip is ON PURPOSE the type of the original value */
             expect(Reflect.get(result, Sym_TriFrostSkipCache)).toBe(true);
         });
 
@@ -496,8 +463,7 @@ describe('Modules - Cache - Utils', () => {
             const fn = vi.fn(() => 'fallback');
 
             const badKey = () => null;
-            /* @ts-ignore this is what we're testing */
-            const wrapped = cacheFn(badKey)(fn);
+            const wrapped = cacheFn(badKey as any)(fn);
             expect(await wrapped({cache: {get: getFn, set: setFn}})).toBe('fallback');
             expect(getFn).not.toHaveBeenCalled();
             expect(setFn).not.toHaveBeenCalled();
@@ -510,7 +476,7 @@ describe('Modules - Cache - Utils', () => {
             const obj = {
                 value: 123,
                 cache: {get: getFn, set: setFn},
-                fn () {
+                fn() {
                     return this.value;
                 },
             };
@@ -566,10 +532,10 @@ describe('Modules - Cache - Utils', () => {
             const getFn = vi.fn();
             const setFn = vi.fn();
             const fn = vi.fn(() => 'bypass');
-        
+
             /* @ts-expect-error intentionally passing invalid key type to trigger null branch */
             const wrapped = cacheFn(12345)(fn);
-        
+
             expect(await wrapped({cache: {get: getFn, set: setFn}})).toBe('bypass');
             expect(fn).toHaveBeenCalledOnce();
             expect(getFn).not.toHaveBeenCalled();
@@ -580,32 +546,32 @@ describe('Modules - Cache - Utils', () => {
             const getFn = vi.fn();
             const setFn = vi.fn();
             const fn = vi.fn(() => 'no-args');
-        
+
             const wrapped = cacheFn('no-args-key')(fn);
-        
+
             // Bind a context with cache, but call with no arguments
             expect(await wrapped.call({cache: {get: getFn, set: setFn}})).toBe('no-args');
             expect(fn).toHaveBeenCalledOnce();
             expect(getFn).toHaveBeenCalledWith('no-args-key');
             expect(setFn).toHaveBeenCalledWith('no-args-key', 'no-args', undefined);
-        });        
+        });
 
         it('Marks function as wrapped with Sym_TriFrostCached', () => {
             const fn = () => {};
             const wrapped = cacheFn('marker')(fn);
             expect(Reflect.get(wrapped, Sym_TriFrostCached)).toBe(true);
         });
-        
+
         it('Skips re-wrapping if already wrapped', async () => {
             const getFn = vi.fn(() => null);
             const setFn = vi.fn();
-        
+
             const inner = cacheFn('once')(() => 'first');
             const double = cacheFn('twice')(inner);
-        
+
             const ctx = {cache: {get: getFn, set: setFn}};
             const result = await double(ctx);
-        
+
             expect(result).toBe('first');
             expect(double).toBe(inner);
             expect(Reflect.get(double, Sym_TriFrostCached)).toBe(true);

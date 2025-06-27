@@ -10,7 +10,7 @@ import {MockContext} from '../../MockContext';
 import CONSTANTS from '../../constants';
 
 describe('Storage - Redis', () => {
-    let redis:MockRedis;
+    let redis: MockRedis;
 
     beforeEach(() => {
         redis = new MockRedis();
@@ -37,9 +37,7 @@ describe('Storage - Redis', () => {
             it('Returns null for missing keys', async () => {
                 const result = await store.get('not-set');
                 expect(result).toBeNull();
-                expect(redis.calls).toEqual([
-                    ['get', ['not-set']],
-                ]);
+                expect(redis.calls).toEqual([['get', ['not-set']]]);
             });
 
             it('Returns parsed object if present', async () => {
@@ -112,7 +110,9 @@ describe('Storage - Redis', () => {
                     get: async () => {
                         throw new Error('Redis failure');
                     },
-                } as any).spawn(ctx).get('foo');
+                } as any)
+                    .spawn(ctx)
+                    .get('foo');
                 expect(result).toBeNull();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {key: 'foo'});
             });
@@ -121,31 +121,23 @@ describe('Storage - Redis', () => {
         describe('set', () => {
             it('Stores object with default TTL', async () => {
                 await store.set('foo', {a: 1});
-                expect(redis.calls).toEqual([
-                    ['set', ['foo', '{"a":1}', ['EX', 60]]],
-                ]);
+                expect(redis.calls).toEqual([['set', ['foo', '{"a":1}', ['EX', 60]]]]);
             });
 
             it('Stores array with default TTL', async () => {
                 await store.set('arr', [1, 2, 3]);
-                expect(redis.calls).toEqual([
-                    ['set', ['arr', '[1,2,3]', ['EX', 60]]],
-                ]);
+                expect(redis.calls).toEqual([['set', ['arr', '[1,2,3]', ['EX', 60]]]]);
             });
 
             it('Respects custom TTL', async () => {
                 await store.set('foo', {x: 2}, {ttl: 120});
-                expect(redis.calls).toEqual([
-                    ['set', ['foo', '{"x":2}', ['EX', 120]]],
-                ]);
+                expect(redis.calls).toEqual([['set', ['foo', '{"x":2}', ['EX', 120]]]]);
             });
 
             it('Falls back to TTL = 60 if invalid', async () => {
                 for (const el of [...CONSTANTS.NOT_INTEGER, 0, -1, 10.5]) {
                     await store.set('fallback', {y: 1}, {ttl: el as number});
-                    expect(redis.calls).toEqual([
-                        ['set', ['fallback', '{"y":1}', ['EX', 60]]],
-                    ]);
+                    expect(redis.calls).toEqual([['set', ['fallback', '{"y":1}', ['EX', 60]]]]);
                     redis.reset();
                 }
             });
@@ -197,12 +189,16 @@ describe('Storage - Redis', () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
 
-                await expect(new RedisStore({
-                    ...redis,
-                    set: async () => {
-                        throw new Error('fail-set');
-                    },
-                } as any).spawn(ctx).set('foo', {x: 1})).resolves.toBeUndefined();
+                await expect(
+                    new RedisStore({
+                        ...redis,
+                        set: async () => {
+                            throw new Error('fail-set');
+                        },
+                    } as any)
+                        .spawn(ctx)
+                        .set('foo', {x: 1}),
+                ).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {
                     key: 'foo',
                     value: {x: 1},
@@ -223,9 +219,7 @@ describe('Storage - Redis', () => {
 
             it('Does nothing for missing key', async () => {
                 await store.del('ghost');
-                expect(redis.calls).toEqual([
-                    ['del', ['ghost']],
-                ]);
+                expect(redis.calls).toEqual([['del', ['ghost']]]);
             });
 
             it('Deletes all keys matching prefix', async () => {
@@ -320,12 +314,16 @@ describe('Storage - Redis', () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
 
-                await expect(new RedisStore({
-                    ...redis,
-                    del: async () => {
-                        throw new Error('bad delete');
-                    },
-                } as any).spawn(ctx).del('key123')).resolves.toBeUndefined();
+                await expect(
+                    new RedisStore({
+                        ...redis,
+                        del: async () => {
+                            throw new Error('bad delete');
+                        },
+                    } as any)
+                        .spawn(ctx)
+                        .del('key123'),
+                ).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: 'key123'});
             });
 
@@ -333,12 +331,16 @@ describe('Storage - Redis', () => {
                 const ctx = new MockContext();
                 const spy = vi.spyOn(ctx.logger, 'error');
 
-                await expect(new RedisStore({
-                    ...redis,
-                    delPrefixed: async () => {
-                        throw new Error('delPrefixed boom');
-                    },
-                } as any).spawn(ctx).del({prefix: 'x.'})).resolves.toBeUndefined();
+                await expect(
+                    new RedisStore({
+                        ...redis,
+                        delPrefixed: async () => {
+                            throw new Error('delPrefixed boom');
+                        },
+                    } as any)
+                        .spawn(ctx)
+                        .del({prefix: 'x.'}),
+                ).resolves.toBeUndefined();
                 expect(spy).toHaveBeenCalledWith(expect.any(Error), {val: {prefix: 'x.'}});
             });
         });
@@ -360,37 +362,28 @@ describe('Storage - Redis', () => {
 
         describe('init', () => {
             it('Should throw if not provided a store', () => {
-                for (const el of [
-                    ...CONSTANTS.NOT_OBJECT_WITH_EMPTY,
-                    ...[...CONSTANTS.NOT_FUNCTION].map(val => ({store: val})),
-                ]) {
-                    /* @ts-ignore */
+                for (const el of [...CONSTANTS.NOT_OBJECT_WITH_EMPTY, ...[...CONSTANTS.NOT_FUNCTION].map(val => ({store: val}))]) {
+                    /* @ts-expect-error Should be good */
                     expect(() => new RedisCache(el)).toThrow(/RedisCache: Expected a store initializer/);
                 }
             });
 
             it('Throws on get before init', async () => {
-                await expect(cache.get('x'))
-                    .rejects
-                    .toThrow(/TriFrostCache@get: Cache needs to be initialized first/);
+                await expect(cache.get('x')).rejects.toThrow(/TriFrostCache@get: Cache needs to be initialized first/);
             });
 
             it('Throws on set before init', async () => {
-                await expect(cache.set('x', {fail: true}))
-                    .rejects
-                    .toThrow(/TriFrostCache@set: Cache needs to be initialized first/);
+                await expect(cache.set('x', {fail: true})).rejects.toThrow(/TriFrostCache@set: Cache needs to be initialized first/);
             });
 
             it('Throws on delete before init', async () => {
-                await expect(cache.del('x'))
-                    .rejects
-                    .toThrow(/TriFrostCache@del: Cache needs to be initialized first/);
+                await expect(cache.del('x')).rejects.toThrow(/TriFrostCache@del: Cache needs to be initialized first/);
             });
 
             it('Throws on wrap before init', async () => {
-                await expect(cache.wrap('x', async () => ({computed: true})))
-                    .rejects
-                    .toThrow(/TriFrostCache@wrap: Cache needs to be initialized first/);
+                await expect(cache.wrap('x', async () => ({computed: true}))).rejects.toThrow(
+                    /TriFrostCache@wrap: Cache needs to be initialized first/,
+                );
             });
 
             it('Does not throw on stop before init', async () => {
@@ -437,7 +430,7 @@ describe('Storage - Redis', () => {
                 await redis.set('arr', JSON.stringify({v: [1, 2, 3]}));
                 expect(await cache.get('arr')).toEqual([1, 2, 3]);
                 expect(redis.calls).toEqual([
-                    ['set', ['arr', JSON.stringify({v: [1,2,3]}), []]],
+                    ['set', ['arr', JSON.stringify({v: [1, 2, 3]}), []]],
                     ['get', ['arr']],
                 ]);
             });
@@ -458,9 +451,7 @@ describe('Storage - Redis', () => {
                 const spy = vi.spyOn(redis, 'get');
                 await cache.get('key');
                 expect(spy).toHaveBeenCalledWith('key');
-                expect(redis.calls).toEqual([
-                    ['get', ['key']],
-                ]);
+                expect(redis.calls).toEqual([['get', ['key']]]);
             });
         });
 
@@ -470,10 +461,8 @@ describe('Storage - Redis', () => {
             });
 
             it('Throws if provided undefined', async () => {
-                /* @ts-ignore This is what we're testing */
-                await expect(cache.set('x'))
-                    .rejects
-                    .toThrow(/TriFrostCache@set: Value can not be undefined/);
+                /* @ts-expect-error Should be good */
+                await expect(cache.set('x')).rejects.toThrow(/TriFrostCache@set: Value can not be undefined/);
                 expect(redis.isEmpty);
             });
 
@@ -509,10 +498,7 @@ describe('Storage - Redis', () => {
 
             it('Respects TTL', async () => {
                 await cache.set('with-ttl', {v: 9}, {ttl: 120});
-                expect(redis.calls.at(-1)).toEqual([
-                    'set',
-                    ['with-ttl', JSON.stringify({v: {v: 9}}), ['EX', 120]],
-                ]);
+                expect(redis.calls.at(-1)).toEqual(['set', ['with-ttl', JSON.stringify({v: {v: 9}}), ['EX', 120]]]);
             });
 
             it('Delegates to internal store.set', async () => {
@@ -572,7 +558,7 @@ describe('Storage - Redis', () => {
             });
 
             it('Computes and does not store anything if function returns nada', async () => {
-                /* @ts-ignore this is what we're testing */
+                /* @ts-expect-error Should be good */
                 const result = await cache.wrap('noret', async () => {});
                 expect(result).toEqual(undefined);
                 expect(await cache.get('noret')).toEqual(null);
@@ -593,11 +579,7 @@ describe('Storage - Redis', () => {
             });
 
             it('Respects TTL during wrap', async () => {
-                const result = await cache.wrap(
-                    'with-ttl',
-                    async () => ({cached: true}),
-                    {ttl: 80}
-                );
+                const result = await cache.wrap('with-ttl', async () => ({cached: true}), {ttl: 80});
                 expect(result).toEqual({cached: true});
                 expect(redis.calls).toEqual([
                     ['get', ['with-ttl']],
@@ -621,12 +603,7 @@ describe('Storage - Redis', () => {
                 const putSpy = vi.spyOn(redis, 'set');
                 await cache.wrap('combo', async () => ({cool: true}), {ttl: 99});
                 expect(getSpy).toHaveBeenCalledWith('combo');
-                expect(putSpy).toHaveBeenCalledWith(
-                    'combo',
-                    JSON.stringify({v: {cool: true}}),
-                    'EX',
-                    99
-                );
+                expect(putSpy).toHaveBeenCalledWith('combo', JSON.stringify({v: {cool: true}}), 'EX', 99);
                 expect(redis.calls).toEqual([
                     ['get', ['combo']],
                     ['set', ['combo', JSON.stringify({v: {cool: true}}), ['EX', 99]]],
@@ -649,11 +626,8 @@ describe('Storage - Redis', () => {
     describe('RateLimit', () => {
         describe('init', () => {
             it('Should throw if not provided a store', () => {
-                for (const el of [
-                    ...CONSTANTS.NOT_OBJECT_WITH_EMPTY,
-                    ...[...CONSTANTS.NOT_FUNCTION].map(val => ({store: val})),
-                ]) {
-                    /* @ts-ignore */
+                for (const el of [...CONSTANTS.NOT_OBJECT_WITH_EMPTY, ...[...CONSTANTS.NOT_FUNCTION].map(val => ({store: val}))]) {
+                    /* @ts-expect-error Should be good */
                     expect(() => new RedisRateLimit(el)).toThrow(/RedisRateLimit: Expected a store initializer/);
                 }
             });
@@ -662,14 +636,14 @@ describe('Storage - Redis', () => {
                 const rl = new RedisRateLimit({store: () => redis});
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
                 const mw = rl.limit(2);
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 expect(ctx.statusCode).not.toBe(429);
                 expect(rl.strategy).toBe('fixed');
                 expect(rl.window).toBe(60);
                 expect(redis.calls).toEqual([
                     ['get', ['127.0.0.1:route:GET']],
-                    ['set', ['127.0.0.1:route:GET', `{"amt":1,"reset":${now+rl.window}}`, ['EX', 60]]],
+                    ['set', ['127.0.0.1:route:GET', `{"amt":1,"reset":${now + rl.window}}`, ['EX', 60]]],
                 ]);
             });
 
@@ -680,7 +654,7 @@ describe('Storage - Redis', () => {
                 });
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
                 const mw = rl.limit(2);
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 expect(ctx.statusCode).not.toBe(429);
                 expect(rl.strategy).toBe('sliding');
@@ -729,7 +703,7 @@ describe('Storage - Redis', () => {
             it('Sets rate limit headers when enabled', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new RedisRateLimit({window: 1, store: () => redis});
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
                 const mw = rl.limit(1);
                 await mw(ctx);
                 await mw(ctx);
@@ -742,7 +716,7 @@ describe('Storage - Redis', () => {
                 });
                 expect(redis.calls).toEqual([
                     ['get', ['127.0.0.1:test:POST']],
-                    ['set', ['127.0.0.1:test:POST', `{"amt":1,"reset":${now+rl.window}}`, ['EX', 1]]],
+                    ['set', ['127.0.0.1:test:POST', `{"amt":1,"reset":${now + rl.window}}`, ['EX', 1]]],
                     ['get', ['127.0.0.1:test:POST']],
                 ]);
             });
@@ -751,7 +725,7 @@ describe('Storage - Redis', () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new RedisRateLimit({headers: false, store: () => redis});
                 const mw = rl.limit(1);
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(429);
@@ -760,7 +734,7 @@ describe('Storage - Redis', () => {
                 });
                 expect(redis.calls).toEqual([
                     ['get', ['127.0.0.1:test:POST']],
-                    ['set', ['127.0.0.1:test:POST', `{"amt":1,"reset":${now+rl.window}}`, ['EX', 60]]],
+                    ['set', ['127.0.0.1:test:POST', `{"amt":1,"reset":${now + rl.window}}`, ['EX', 60]]],
                     ['get', ['127.0.0.1:test:POST']],
                 ]);
             });
@@ -769,7 +743,7 @@ describe('Storage - Redis', () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new RedisRateLimit({keygen: el => `ip:${el.ip}`, store: () => redis});
                 const mw = rl.limit(10);
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(200);
@@ -780,9 +754,9 @@ describe('Storage - Redis', () => {
                 });
                 expect(redis.calls).toEqual([
                     ['get', ['ip:127.0.0.1']],
-                    ['set', ['ip:127.0.0.1', `{"amt":1,"reset":${now+rl.window}}`, ['EX', 60]]],
+                    ['set', ['ip:127.0.0.1', `{"amt":1,"reset":${now + rl.window}}`, ['EX', 60]]],
                     ['get', ['ip:127.0.0.1']],
-                    ['set', ['ip:127.0.0.1', `{"amt":2,"reset":${now+rl.window}}`, ['EX', 60]]],
+                    ['set', ['ip:127.0.0.1', `{"amt":2,"reset":${now + rl.window}}`, ['EX', 60]]],
                 ]);
             });
 
@@ -791,14 +765,14 @@ describe('Storage - Redis', () => {
                 const exceeded = vi.fn(el => el.status(400));
                 const rl = new RedisRateLimit({exceeded, store: () => redis});
                 const mw = rl.limit(1);
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 await mw(ctx);
                 expect(exceeded).toHaveBeenCalledOnce();
                 expect(ctx.statusCode).toBe(400);
                 expect(redis.calls).toEqual([
                     ['get', ['127.0.0.1:test:POST']],
-                    ['set', ['127.0.0.1:test:POST', `{"amt":1,"reset":${now+rl.window}}`, ['EX', 60]]],
+                    ['set', ['127.0.0.1:test:POST', `{"amt":1,"reset":${now + rl.window}}`, ['EX', 60]]],
                     ['get', ['127.0.0.1:test:POST']],
                 ]);
             });
@@ -816,14 +790,14 @@ describe('Storage - Redis', () => {
                 for (const [key, key_expected] of Object.entries(expected)) {
                     const rl = new RedisRateLimit({keygen: key as any, store: () => redis});
                     const mw = rl.limit(1);
-                    const now = Math.floor(Date.now()/1000);
+                    const now = Math.floor(Date.now() / 1000);
                     await mw(ctx);
                     await mw(ctx);
                     expect(ctx.statusCode).toBe(429);
 
                     expect(redis.calls).toEqual([
                         ['get', [key_expected]],
-                        ['set', [key_expected, `{"amt":1,"reset":${now+rl.window}}`, ['EX', 60]]],
+                        ['set', [key_expected, `{"amt":1,"reset":${now + rl.window}}`, ['EX', 60]]],
                         ['get', [key_expected]],
                     ]);
                     redis.reset();
@@ -843,14 +817,14 @@ describe('Storage - Redis', () => {
                 for (const [key, key_expected] of Object.entries(expected)) {
                     const rl = new RedisRateLimit({keygen: key as any, store: () => redis});
                     const mw = rl.limit(1);
-                    const now = Math.floor(Date.now()/1000);
+                    const now = Math.floor(Date.now() / 1000);
                     await mw(ctx);
                     await mw(ctx);
                     expect(ctx.statusCode).toBe(429);
 
                     expect(redis.calls).toEqual([
                         ['get', [key_expected]],
-                        ['set', [key_expected, `{"amt":1,"reset":${now+rl.window}}`, ['EX', 60]]],
+                        ['set', [key_expected, `{"amt":1,"reset":${now + rl.window}}`, ['EX', 60]]],
                         ['get', [key_expected]],
                     ]);
                     redis.reset();
@@ -860,17 +834,17 @@ describe('Storage - Redis', () => {
             it('Falls back to "unknown" if keygen returns falsy', async () => {
                 const rl = new RedisRateLimit({
                     store: () => redis,
-                    keygen: () => undefined as unknown as string, /* Force falsy value */
+                    keygen: () => undefined as unknown as string /* Force falsy value */,
                 });
 
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const mw = rl.limit(1);
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 await mw(ctx);
                 expect(redis.calls).toEqual([
                     ['get', ['unknown']],
-                    ['set', ['unknown', `{"amt":1,"reset":${now+rl.window}}`, ['EX', 60]]],
+                    ['set', ['unknown', `{"amt":1,"reset":${now + rl.window}}`, ['EX', 60]]],
                     ['get', ['unknown']],
                 ]);
 
@@ -936,18 +910,18 @@ describe('Storage - Redis', () => {
                 /* First request */
                 await mw(ctx);
 
-                /* @ts-ignore Manually insert an old timestamp to simulate an aged entry */
-                await rl.resolvedStore.store.set('127.0.0.1:test:POST', [Math.floor(Date.now()/1000) - 2]);
+                /* @ts-expect-error Manually insert an old timestamp to simulate an aged entry */
+                await rl.resolvedStore.store.set('127.0.0.1:test:POST', [Math.floor(Date.now() / 1000) - 2]);
 
                 /* Second request triggers pruning of old timestamp */
                 await mw(ctx);
 
-                /* @ts-ignore We want to test this */
+                /* @ts-expect-error Should be good */
                 const val = await rl.resolvedStore.store.get('127.0.0.1:test:POST');
 
                 expect(Array.isArray(val)).toBe(true);
                 expect(val.length).toBe(1); /* old timestamp pruned */
-                expect(val[0]).toBeGreaterThan(Math.floor(Date.now()/1000) - 1); /* only recent timestamp remains */
+                expect(val[0]).toBeGreaterThan(Math.floor(Date.now() / 1000) - 1); /* only recent timestamp remains */
                 expect(ctx.statusCode).toBe(200);
             });
         });

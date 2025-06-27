@@ -1,8 +1,8 @@
 const KEBAB_REGEX = /[A-Z]/g;
 const KEBAB_VENDOR_REGEX = /^(webkit|moz|ms|o)([A-Z])/;
 
-/* eslint-disable-next-line max-len */
-const RGX_FUNCTION = /\b(blur|brightness|calc|clamp|contrast|counter|counters|drop-shadow|env|fit-content|grayscale|hsl|hsla|invert|max|min|opacity|repeat|rgb|rgba|rotate|saturate|scale|sepia|translate|url|var)\(/i;
+const RGX_FUNCTION =
+    /\b(blur|brightness|calc|clamp|contrast|counter|counters|drop-shadow|env|fit-content|grayscale|hsl|hsla|invert|max|min|opacity|repeat|rgb|rgba|rotate|saturate|scale|sepia|translate|url|var)\(/i;
 
 /**
  * Known HTML Tags
@@ -211,7 +211,7 @@ export const CAMEL_TO_KEBAB_LUT: Record<string, string> = {
  *
  * @param {string} key - string to convert
  */
-export function toKebab (key:string):string {
+export function toKebab(key: string): string {
     if (CAMEL_TO_KEBAB_LUT[key]) return CAMEL_TO_KEBAB_LUT[key];
 
     /* Normalize vendor prefix (e.g. webkitTransform → -webkit-transform) */
@@ -234,23 +234,17 @@ export function toKebab (key:string):string {
  *
  * @param {Record<string, unknown>} obj - Props to render
  */
-export function styleToString (obj:Record<string, unknown>|null):string|null {
+export function styleToString(obj: Record<string, unknown> | null): string | null {
     if (Object.prototype.toString.call(obj) !== '[object Object]') return null;
 
-    let style:string|null = '';
+    let style: string | null = '';
     for (const attr in obj) {
         const attr_val = obj[attr];
-        if (
-            attr_val !== undefined &&
-            attr_val !== null
-        ) {
+        if (attr_val !== undefined && attr_val !== null) {
             let str = typeof attr_val === 'string' ? attr_val : String(attr_val);
 
             /* If wrapped in quotes and contains a CSS function, unwrap it */
-            if (
-                (str[0] === '\'' || str[0] === '"') &&
-                RGX_FUNCTION.test(str)
-            ) str = str.slice(1, -1);
+            if ((str[0] === "'" || str[0] === '"') && RGX_FUNCTION.test(str)) str = str.slice(1, -1);
 
             if (str) style += toKebab(attr) + ':' + str + ';';
         }

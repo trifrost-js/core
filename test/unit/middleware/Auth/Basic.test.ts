@@ -5,16 +5,17 @@ import {MockContext} from '../../../MockContext';
 import {Sym_TriFrostDescription, Sym_TriFrostName, Sym_TriFrostFingerPrint} from '../../../../lib/types/constants';
 import CONSTANTS from '../../../constants';
 
-const makeCtx = (authHeader?: string) => new MockContext({
-    headers: authHeader ? {authorization: authHeader} : {},
-});
+const makeCtx = (authHeader?: string) =>
+    new MockContext({
+        headers: authHeader ? {authorization: authHeader} : {},
+    });
 
 describe('Middleware - Auth - Basic', () => {
     it('Throws if validate is not provided or invalid', () => {
         for (const el of CONSTANTS.NOT_FUNCTION) {
-            expect(
-                () => BasicAuth({validate: el as any})
-            ).toThrowError(/TriFrostMiddleware@BasicAuth: A validate function must be provided/);
+            expect(() => BasicAuth({validate: el as any})).toThrowError(
+                /TriFrostMiddleware@BasicAuth: A validate function must be provided/,
+            );
         }
     });
 

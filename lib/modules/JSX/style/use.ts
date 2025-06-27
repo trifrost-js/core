@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-
 import {LRU} from '@valkyriestudios/utils/caching';
 import {isNeObject, merge} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
@@ -39,43 +37,43 @@ type CSSOptions = {
     inject?: boolean;
 };
 
-export type CssGeneric <Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS> = {
-    (style: Record<string, unknown>, opts?: { inject?: boolean }): string;
+export type CssGeneric<Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS> = {
+    (style: Record<string, unknown>, opts?: {inject?: boolean}): string;
     /* Pseudo Classes */
-    hover:string;
-    active:string;
-    focus:string;
-    focusVibisle:string;
-    focusWithin:string;
-    disabled:string;
-    checked:string;
-    visited:string;
-    firstChild:string;
-    lastChild:string;
-    firstOfType:string;
-    lastOfType:string;
-    empty:string;
+    hover: string;
+    active: string;
+    focus: string;
+    focusVibisle: string;
+    focusWithin: string;
+    disabled: string;
+    checked: string;
+    visited: string;
+    firstChild: string;
+    lastChild: string;
+    firstOfType: string;
+    lastOfType: string;
+    empty: string;
 
     /* Pseudo Elements */
-    before:string;
-    after:string;
-    placeholder:string;
-    selection:string;
+    before: string;
+    after: string;
+    placeholder: string;
+    selection: string;
 
     /* Dynamic Selectors */
-    attr:(name:string, value?:string|number|boolean) => string;
-    attrStartsWith:(name:string, value:string|number|boolean) => string;
-    attrEndsWith:(name:string, value:string|number|boolean) => string;
-    attrContains:(name:string, value:string|number|boolean) => string;
-    nthChild:(i:number|string) => string;
-    nthLastChild:(i:number|string) => string;
-    nthOfType:(i:number|string) => string;
-    nthLastOfType:(i:number|string) => string;
-    not:(selector:string) => string;
-    is:(...selectors:string[]) => string;
-    where:(selector:string) => string;
-    has:(selector:string) => string;
-    dir:(dir:'ltr'|'rtl') => string;
+    attr: (name: string, value?: string | number | boolean) => string;
+    attrStartsWith: (name: string, value: string | number | boolean) => string;
+    attrEndsWith: (name: string, value: string | number | boolean) => string;
+    attrContains: (name: string, value: string | number | boolean) => string;
+    nthChild: (i: number | string) => string;
+    nthLastChild: (i: number | string) => string;
+    nthOfType: (i: number | string) => string;
+    nthLastOfType: (i: number | string) => string;
+    not: (selector: string) => string;
+    is: (...selectors: string[]) => string;
+    where: (selector: string) => string;
+    has: (selector: string) => string;
+    dir: (dir: 'ltr' | 'rtl') => string;
 
     /* Media Queries */
     media: Breakpoints & typeof FIXED_FEATURE_QUERIES;
@@ -84,21 +82,21 @@ export type CssGeneric <Breakpoints extends Record<string, string> = typeof DEFA
     root(style?: Record<string, unknown>): void;
 
     /* Keyframe generator */
-    keyframes(frames:Record<string, Record<string, string|number>>, opts?:CSSOptions):string;
+    keyframes(frames: Record<string, Record<string, string | number>>, opts?: CSSOptions): string;
 };
 
 /**
  * MARK: Active Engine
  */
 
-let active_engine:StyleEngine|null = null;
+let active_engine: StyleEngine | null = null;
 
-export function setActiveStyleEngine <T extends StyleEngine|null> (engine:T):T {
+export function setActiveStyleEngine<T extends StyleEngine | null>(engine: T): T {
     active_engine = engine;
     return engine;
 }
 
-export function getActiveStyleEngine () {
+export function getActiveStyleEngine() {
     return active_engine;
 }
 
@@ -106,7 +104,7 @@ export function getActiveStyleEngine () {
  * MARK: Css Factory
  */
 
-function normalizeSelector (val:string) {
+function normalizeSelector(val: string) {
     switch (val[0]) {
         case '>':
         case '+':
@@ -125,34 +123,22 @@ function normalizeSelector (val:string) {
     }
 }
 
-function normalizeVariable (val:string, prefix:string) {
+function normalizeVariable(val: string, prefix: string) {
     return val[0] === '-' && val[1] === '-' ? val : prefix + val;
 }
 
-function flatten (
-    obj:Record<string, unknown>,
-    parent_query:string = '',
-    parent_selector:string = ''
-):FlattenedRule[] {
-    const result:FlattenedRule[] = [];
-    const base:Record<string, unknown> = {};
-    let base_has:boolean = false;
+function flatten(obj: Record<string, unknown>, parent_query: string = '', parent_selector: string = ''): FlattenedRule[] {
+    const result: FlattenedRule[] = [];
+    const base: Record<string, unknown> = {};
+    let base_has: boolean = false;
 
     for (const key in obj) {
         const val = obj[key];
         if (Object.prototype.toString.call(val) === '[object Object]') {
             if (key[0] === '@') {
-                result.push(...flatten(
-                    val as Record<string, unknown>,
-                    key,
-                    parent_selector
-                ));
+                result.push(...flatten(val as Record<string, unknown>, key, parent_selector));
             } else {
-                result.push(...flatten(
-                    val as Record<string, unknown>,
-                    parent_query,
-                    parent_selector + normalizeSelector(key)
-                ));
+                result.push(...flatten(val as Record<string, unknown>, parent_query, parent_selector + normalizeSelector(key)));
             }
         } else if (val !== undefined && val !== null) {
             base[normalizeSelector(key)] = val;
@@ -176,17 +162,17 @@ function flatten (
  *
  * @returns {CssGeneric}
  */
-function cssFactory <
-    Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS
-> (breakpoints:Breakpoints):CssGeneric<Breakpoints> {
+function cssFactory<Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS>(
+    breakpoints: Breakpoints,
+): CssGeneric<Breakpoints> {
     /* Global cache for cross-engine reuse */
     const GLOBAL_LRU = new LRU<{
-        cname:string;
-        rules:{rule: string; selector?: string; query?: string;}[]
+        cname: string;
+        rules: {rule: string; selector?: string; query?: string}[];
     }>({max_size: 500});
     const GLOBAL_KEYFRAMES_LRU = new LRU<{
         cname: string;
-        rule:string;
+        rule: string;
     }>({max_size: 200});
 
     /**
@@ -205,7 +191,7 @@ function cssFactory <
      * @param {Record<string, unknown>} style - Raw style object
      * @param {CSSOptions} opts - Options for css, eg: {inject:false} will simply return the unique classname rather than adding to engine
      */
-    const mod = (style:Record<string, unknown>, opts?:CSSOptions) => {
+    const mod = (style: Record<string, unknown>, opts?: CSSOptions) => {
         if (Object.prototype.toString.call(style) !== '[object Object]') return '';
 
         const engine = active_engine || setActiveStyleEngine(new StyleEngine());
@@ -242,7 +228,7 @@ function cssFactory <
         if (!inject) return cname;
 
         /* Loop through flattened behavior and register each op */
-        const lru_entries:{rule: string; selector?: string; query?: string;}[] = [];
+        const lru_entries: {rule: string; selector?: string; query?: string}[] = [];
         for (let i = 0; i < flattened.length; i++) {
             const {declarations, selector = undefined, query = undefined} = flattened[i];
             const rule = styleToString(declarations);
@@ -281,22 +267,22 @@ function cssFactory <
     mod.selection = '::selection';
 
     /* Dynamic Selectors */
-    mod.nthChild = (i:number|string) => ':nth-child(' + i + ')';
-    mod.nthLastChild = (i:number|string) => ':nth-last-child(' + i + ')';
-    mod.nthOfType = (i:number|string) => ':nth-of-type(' + i + ')';
-    mod.nthLastOfType = (i:number|string) => ':nth-last-of-type(' + i + ')';
-    mod.not = (selector:string) => ':not(' + selector + ')';
+    mod.nthChild = (i: number | string) => ':nth-child(' + i + ')';
+    mod.nthLastChild = (i: number | string) => ':nth-last-child(' + i + ')';
+    mod.nthOfType = (i: number | string) => ':nth-of-type(' + i + ')';
+    mod.nthLastOfType = (i: number | string) => ':nth-last-of-type(' + i + ')';
+    mod.not = (selector: string) => ':not(' + selector + ')';
     mod.is = (...selectors: string[]) => ':is(' + selectors.join(', ') + ')';
-    mod.where = (selector:string) => ':where(' + selector + ')';
-    mod.has = (selector:string) => ':has(' + selector + ')';
-    mod.dir = (dir:'ltr' | 'rtl') => ':dir(' + dir + ')';
-    mod.attr = (name:string, value?:string|number|boolean) => {
+    mod.where = (selector: string) => ':where(' + selector + ')';
+    mod.has = (selector: string) => ':has(' + selector + ')';
+    mod.dir = (dir: 'ltr' | 'rtl') => ':dir(' + dir + ')';
+    mod.attr = (name: string, value?: string | number | boolean) => {
         if (value === undefined) return '[' + name + ']';
         return '[' + name + '="' + String(value) + '"]';
     };
-    mod.attrStartsWith = (name:string, value:string|number|boolean) => '[' + name + '^="' + String(value) + '"]';
-    mod.attrEndsWith = (name:string, value:string|number|boolean) => '[' + name + '$="' + String(value) + '"]';
-    mod.attrContains = (name:string, value:string|number|boolean) => '[' + name + '*="' + String(value) + '"]';
+    mod.attrStartsWith = (name: string, value: string | number | boolean) => '[' + name + '^="' + String(value) + '"]';
+    mod.attrEndsWith = (name: string, value: string | number | boolean) => '[' + name + '$="' + String(value) + '"]';
+    mod.attrContains = (name: string, value: string | number | boolean) => '[' + name + '*="' + String(value) + '"]';
 
     /* Media Queries */
     mod.media = {...FIXED_FEATURE_QUERIES, ...breakpoints};
@@ -323,7 +309,7 @@ function cssFactory <
     };
 
     /* KeyFrames */
-    mod.keyframes = (frames: Record<string, Record<string, string | number>>, opts?:CSSOptions) => {
+    mod.keyframes = (frames: Record<string, Record<string, string | number>>, opts?: CSSOptions) => {
         const raw = JSON.stringify(frames);
         const engine = active_engine || setActiveStyleEngine(new StyleEngine());
 
@@ -365,19 +351,19 @@ function cssFactory <
  */
 
 type VarMap = Record<string, string>;
-type ThemeMap = Record<string, string|{light: string; dark: string}>;
+type ThemeMap = Record<string, string | {light: string; dark: string}>;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-type VarVal <T extends string> = T extends `--${infer Rest}` ? `var(${T})` : `var(--v-${T})`;
+type VarVal<T extends string> = T extends `--${infer Rest}` ? `var(${T})` : `var(--v-${T})`;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-type ThemeVal <T extends string> = T extends `--${infer Rest}` ? `var(${T})` : `var(--t-${T})`;
+type ThemeVal<T extends string> = T extends `--${infer Rest}` ? `var(${T})` : `var(--t-${T})`;
 
-export type CssInstance <
+export type CssInstance<
     V extends VarMap,
     T extends ThemeMap,
     R extends Record<string, Record<string, unknown>> = {},
-    Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS
+    Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS,
 > = CssGeneric<Breakpoints> & {
     $uid: string;
     /**
@@ -442,7 +428,7 @@ export type CssInstance <
     /**
      * Sets mount path for the css instance
      */
-    setMountPath: (path:string|null) => void;
+    setMountPath: (path: string | null) => void;
 };
 
 const CSS_RESET = {
@@ -530,57 +516,60 @@ const CSS_RESET = {
     },
 };
 
-export function createCss <
-	const V extends VarMap,
-	const T extends ThemeMap,
+export function createCss<
+    const V extends VarMap,
+    const T extends ThemeMap,
     const R extends Record<string, Record<string, unknown>> = {},
-    const Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS
-> (config:{
-    breakpoints?: Breakpoints;
-    /**
-     * Global design tokens (CSS variables).
-     * Accessible via `css.var` or `css.$v`.
-     */
-    var?:V;
-    /**
-     * Themed values that adapt to light/dark modes.
-     * Accessible via `css.theme` or `css.$t`.
-     */
-    theme?:T,
-    /**
-     * If `true`, injects theme tokens as both media queries and HTML attributes (e.g. `data-theme="dark"`).
-     * You can also pass a string like `'data-mode'` to use a custom attribute.
-     */
-    themeAttribute?: boolean|string,
-    /**
-     * Opt-In to an SSR-safe CSS reset styles. Defaults to `false`.
-     */
-    reset?:boolean,
-    /**
-     * Defines named, composable style blocks for reuse across components.
-     * These can reference `var`, `theme`, media queries, pseudo selectors, etc.
-     *
-     * Use with `css.use(...)`.
-     *
-     * @example
-     * ```ts
-     * definitions: css => ({
-     *   button: {
-     *     fontSize: css.$v.font_s_body,
-     *     [css.hover]: { filter: 'brightness(1.2)' },
-     *   },
-     * })
-     * ```
-     */
-    definitions?: (mod:CssInstance<V, T, {}, Breakpoints>) => R;
-} = {}): CssInstance<V, T, R, Breakpoints> {
-    const mod = cssFactory(Object.prototype.toString.call(config.breakpoints) === '[object Object]'
-        ? config.breakpoints as Breakpoints
-        : DEFAULT_BREAKPOINTS
+    const Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS,
+>(
+    config: {
+        breakpoints?: Breakpoints;
+        /**
+         * Global design tokens (CSS variables).
+         * Accessible via `css.var` or `css.$v`.
+         */
+        var?: V;
+        /**
+         * Themed values that adapt to light/dark modes.
+         * Accessible via `css.theme` or `css.$t`.
+         */
+        theme?: T;
+        /**
+         * If `true`, injects theme tokens as both media queries and HTML attributes (e.g. `data-theme="dark"`).
+         * You can also pass a string like `'data-mode'` to use a custom attribute.
+         */
+        themeAttribute?: boolean | string;
+        /**
+         * Opt-In to an SSR-safe CSS reset styles. Defaults to `false`.
+         */
+        reset?: boolean;
+        /**
+         * Defines named, composable style blocks for reuse across components.
+         * These can reference `var`, `theme`, media queries, pseudo selectors, etc.
+         *
+         * Use with `css.use(...)`.
+         *
+         * @example
+         * ```ts
+         * definitions: css => ({
+         *   button: {
+         *     fontSize: css.$v.font_s_body,
+         *     [css.hover]: { filter: 'brightness(1.2)' },
+         *   },
+         * })
+         * ```
+         */
+        definitions?: (mod: CssInstance<V, T, {}, Breakpoints>) => R;
+    } = {},
+): CssInstance<V, T, R, Breakpoints> {
+    const mod = cssFactory(
+        Object.prototype.toString.call(config.breakpoints) === '[object Object]'
+            ? (config.breakpoints as Breakpoints)
+            : DEFAULT_BREAKPOINTS,
     ) as CssInstance<V, T, R, Breakpoints>;
 
     /* Is mounted on */
-    let mountPath:string|null = null;
+    let mountPath: string | null = null;
 
     /* Specific symbol for this css instance */
     mod.$uid = hexId(8);
@@ -588,23 +577,23 @@ export function createCss <
     const sym = Symbol('trifrost.jsx.style.css{' + mod.$uid + '}');
 
     /* Variable collectors */
-    const root_vars:Record<string, string> = {};
-    const theme_light:Record<string, string> = {};
-    const theme_dark:Record<string, string> = {};
-    const definitions:R = {} as R;
+    const root_vars: Record<string, string> = {};
+    const theme_light: Record<string, string> = {};
+    const theme_dark: Record<string, string> = {};
+    const definitions: R = {} as R;
 
-	/* Attach var tokens */
+    /* Attach var tokens */
     mod.var = {} as any;
     if (Object.prototype.toString.call(config.var) === '[object Object]') {
         for (const key in config.var) {
             const v_key = normalizeVariable(key, '--v-');
-            mod.var[key] = 'var(' + v_key + ')' as VarVal<typeof key>;
+            mod.var[key] = ('var(' + v_key + ')') as VarVal<typeof key>;
             root_vars[v_key] = config.var[key];
         }
     }
     mod.$v = mod.var;
 
-	/* Attach theme tokens */
+    /* Attach theme tokens */
     mod.theme = {} as any;
     if (Object.prototype.toString.call(config.theme) === '[object Object]') {
         for (const key in config.theme) {
@@ -612,15 +601,12 @@ export function createCss <
             if (isNeString(entry)) {
                 const t_key = normalizeVariable(key, '--t-');
                 root_vars[t_key] = entry;
-                mod.theme[key] = 'var(' + t_key + ')' as ThemeVal<typeof key>;
-            } else if (
-                isNeString(entry?.light) &&
-                isNeString(entry?.dark)
-            ) {
+                mod.theme[key] = ('var(' + t_key + ')') as ThemeVal<typeof key>;
+            } else if (isNeString(entry?.light) && isNeString(entry?.dark)) {
                 const t_key = normalizeVariable(key, '--t-');
                 theme_light[t_key] = entry.light;
                 theme_dark[t_key] = entry.dark;
-                mod.theme[key] = 'var(' + t_key + ')' as ThemeVal<typeof key>;
+                mod.theme[key] = ('var(' + t_key + ')') as ThemeVal<typeof key>;
             } else {
                 throw new Error(`Theme token '${key}' is invalid, must either be a string or define both 'light' and 'dark' values`);
             }
@@ -636,7 +622,7 @@ export function createCss <
 
     /* Determine default root injection */
     const ROOT_INJECTION = {
-        ...config.reset === true && CSS_RESET,
+        ...(config.reset === true && CSS_RESET),
         ...root_vars,
         [mod.media.light]: {
             ...theme_light,
@@ -645,9 +631,9 @@ export function createCss <
              * we will inject for 'data-theme' if passed as
              * a string we will use that as attribute
              */
-            ...config.themeAttribute && {
+            ...(config.themeAttribute && {
                 [`:root[${typeof config.themeAttribute === 'string' ? config.themeAttribute : 'data-theme'}="dark"]`]: theme_dark,
-            },
+            }),
         },
         [mod.media.dark]: {
             ...theme_dark,
@@ -656,15 +642,15 @@ export function createCss <
              * we will inject for 'data-theme' if passed as
              * a string we will use that as attribute
              */
-            ...config.themeAttribute && {
+            ...(config.themeAttribute && {
                 [`:root[${typeof config.themeAttribute === 'string' ? config.themeAttribute : 'data-theme'}="light"]`]: theme_light,
-            },
+            }),
         },
     };
 
-	/* Attach root generator */
+    /* Attach root generator */
     const ogRoot = mod.root;
-    mod.root = (styles:Record<string, unknown> = {}) => {
+    mod.root = (styles: Record<string, unknown> = {}) => {
         if (!active_engine) setActiveStyleEngine(new StyleEngine());
 
         /* Set mounted path */
@@ -709,7 +695,7 @@ export function createCss <
     mod.cid = () => 'tf-' + hexId(8);
 
     /* Sets mount path */
-    mod.setMountPath = (path:string|null) => {
+    mod.setMountPath = (path: string | null) => {
         mountPath = typeof path === 'string' ? path : null;
     };
 

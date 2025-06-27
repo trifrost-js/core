@@ -1,5 +1,3 @@
-/* eslint-disable max-lines */
-
 import {isArray} from '@valkyriestudios/utils/array';
 import {sleep} from '@valkyriestudios/utils/function';
 import {isObject} from '@valkyriestudios/utils/object';
@@ -14,7 +12,7 @@ import CONSTANTS from '../../constants';
 import {MockDurableObjectNamespace} from '../../MockDurableObject';
 
 describe('Storage - DurableObject', () => {
-    let ns:MockDurableObjectNamespace;
+    let ns: MockDurableObjectNamespace;
 
     beforeEach(() => {
         ns = new MockDurableObjectNamespace();
@@ -45,27 +43,21 @@ describe('Storage - DurableObject', () => {
             it('Returns null for missing key', async () => {
                 const result = await store.get('not-set');
                 expect(result).toBeNull();
-                expect(stub.calls).toEqual([
-                    ['https://do/trifrost-test?key=not-set', {method: 'GET'}],
-                ]);
+                expect(stub.calls).toEqual([['https://do/trifrost-test?key=not-set', {method: 'GET'}]]);
             });
 
             it('Returns parsed object if present', async () => {
                 stub.map.set('obj', {x: 1});
                 const result = await store.get('obj');
                 expect(result).toEqual({x: 1});
-                expect(stub.calls).toEqual([
-                    ['https://do/trifrost-test?key=obj', {method: 'GET'}],
-                ]);
+                expect(stub.calls).toEqual([['https://do/trifrost-test?key=obj', {method: 'GET'}]]);
             });
 
             it('Returns parsed array if present', async () => {
                 stub.map.set('arr', [0, 1, 2]);
                 const result = await store.get('arr');
                 expect(result).toEqual([0, 1, 2]);
-                expect(stub.calls).toEqual([
-                    ['https://do/trifrost-test?key=arr', {method: 'GET'}],
-                ]);
+                expect(stub.calls).toEqual([['https://do/trifrost-test?key=arr', {method: 'GET'}]]);
             });
 
             it('Returns null if stored value is malformed JSON', async () => {
@@ -231,32 +223,19 @@ describe('Storage - DurableObject', () => {
                         'https://do/trifrost-test?key=to-del',
                         {method: 'PUT', body: '{"v":{"z":9},"ttl":60}', headers: {'Content-Type': 'application/json'}},
                     ],
-                    [
-                        'https://do/trifrost-test?key=to-del',
-                        {method: 'DELETE'},
-                    ],
+                    ['https://do/trifrost-test?key=to-del', {method: 'DELETE'}],
                 ]);
             });
 
             it('Does nothing for missing key', async () => {
                 await store.del('ghost');
-                expect(stub.calls).toEqual([
-                    [
-                        'https://do/trifrost-test?key=ghost',
-                        {method: 'DELETE'},
-                    ],
-                ]);
+                expect(stub.calls).toEqual([['https://do/trifrost-test?key=ghost', {method: 'DELETE'}]]);
             });
 
             it('Deletes all keys matching prefix', async () => {
                 await store.del({prefix: 'user.'});
 
-                expect(stub.calls).toEqual([
-                    [
-                        'https://do/trifrost-test?key=user.*',
-                        {method: 'DELETE'},
-                    ],
-                ]);
+                expect(stub.calls).toEqual([['https://do/trifrost-test?key=user.*', {method: 'DELETE'}]]);
             });
 
             it('Throws on invalid key', async () => {
@@ -372,7 +351,7 @@ describe('Storage - DurableObject', () => {
     describe('Cache', () => {
         let cache: DurableObjectCache;
         let stub: ReturnType<MockDurableObjectNamespace['get']>;
-        let stubId:TriFrostCFDurableObjectId;
+        let stubId: TriFrostCFDurableObjectId;
 
         beforeEach(() => {
             cache = new DurableObjectCache({store: () => ns});
@@ -387,37 +366,28 @@ describe('Storage - DurableObject', () => {
 
         describe('init', () => {
             it('Should throw if not provided a store', () => {
-                for (const el of [
-                    ...CONSTANTS.NOT_OBJECT_WITH_EMPTY,
-                    ...[...CONSTANTS.NOT_FUNCTION].map(val => ({store: val})),
-                ]) {
-                    /* @ts-ignore */
+                for (const el of [...CONSTANTS.NOT_OBJECT_WITH_EMPTY, ...[...CONSTANTS.NOT_FUNCTION].map(val => ({store: val}))]) {
+                    /* @ts-expect-error Should be good */
                     expect(() => new DurableObjectCache(el)).toThrow(/DurableObjectCache: Expected a store initializer/);
                 }
             });
 
             it('Throws on get before init', async () => {
-                await expect(cache.get('x'))
-                    .rejects
-                    .toThrow(/TriFrostCache@get: Cache needs to be initialized first/);
+                await expect(cache.get('x')).rejects.toThrow(/TriFrostCache@get: Cache needs to be initialized first/);
             });
 
             it('Throws on set before init', async () => {
-                await expect(cache.set('x', {fail: true}))
-                    .rejects
-                    .toThrow(/TriFrostCache@set: Cache needs to be initialized first/);
+                await expect(cache.set('x', {fail: true})).rejects.toThrow(/TriFrostCache@set: Cache needs to be initialized first/);
             });
 
             it('Throws on delete before init', async () => {
-                await expect(cache.del('x'))
-                    .rejects
-                    .toThrow(/TriFrostCache@del: Cache needs to be initialized first/);
+                await expect(cache.del('x')).rejects.toThrow(/TriFrostCache@del: Cache needs to be initialized first/);
             });
 
             it('Throws on wrap before init', async () => {
-                await expect(cache.wrap('x', async () => ({computed: true})))
-                    .rejects
-                    .toThrow(/TriFrostCache@wrap: Cache needs to be initialized first/);
+                await expect(cache.wrap('x', async () => ({computed: true}))).rejects.toThrow(
+                    /TriFrostCache@wrap: Cache needs to be initialized first/,
+                );
             });
 
             it('Does not throw on stop before init', async () => {
@@ -444,91 +414,94 @@ describe('Storage - DurableObject', () => {
             });
 
             it('Returns null if value in DurableObject is malformed or not wrapped', async () => {
-                await ns.get(stubId).fetch(
-                    'https://do/trifrost-cache?key=corrupt',
-                    {
-                        method: 'PUT',
-                        body: JSON.stringify({v: {not_v: 123}, ttl: 60}),
-                        headers: {'Content-Type': 'application/json'},
-                    }
-                );
+                await ns.get(stubId).fetch('https://do/trifrost-cache?key=corrupt', {
+                    method: 'PUT',
+                    body: JSON.stringify({v: {not_v: 123}, ttl: 60}),
+                    headers: {'Content-Type': 'application/json'},
+                });
                 expect(await cache.get('corrupt')).toBe(null);
 
-                await ns.get(stubId).fetch(
-                    'https://do/trifrost-cache?key=not-json',
-                    {
-                        method: 'PUT',
-                        body: JSON.stringify({v: 'plain string', ttl: 60}),
-                        headers: {'Content-Type': 'application/json'},
-                    }
-                );
+                await ns.get(stubId).fetch('https://do/trifrost-cache?key=not-json', {
+                    method: 'PUT',
+                    body: JSON.stringify({v: 'plain string', ttl: 60}),
+                    headers: {'Content-Type': 'application/json'},
+                });
                 expect(await cache.get('not-json')).toBe(null);
             });
 
             it('Returns stored object', async () => {
-                await ns.get(stubId).fetch(
-                    'https://do/trifrost-cache?key=foo',
-                    {
-                        method: 'PUT',
-                        body: JSON.stringify({v: {v: {bar: 1}}, ttl: 60}),
-                        headers: {'Content-Type': 'application/json'},
-                    }
-                );
+                await ns.get(stubId).fetch('https://do/trifrost-cache?key=foo', {
+                    method: 'PUT',
+                    body: JSON.stringify({v: {v: {bar: 1}}, ttl: 60}),
+                    headers: {'Content-Type': 'application/json'},
+                });
                 expect(await cache.get('foo')).toEqual({bar: 1});
                 expect(stub.calls).toEqual([
-                    ['https://do/trifrost-cache?key=foo', {
-                        body: JSON.stringify({v: {v: {bar: 1}}, ttl: 60}),
-                        headers: {'Content-Type': 'application/json'},
-                        method: 'PUT',
-                    }],
-                    ['https://do/trifrost-cache?key=foo', {
-                        method: 'GET',
-                    }],
+                    [
+                        'https://do/trifrost-cache?key=foo',
+                        {
+                            body: JSON.stringify({v: {v: {bar: 1}}, ttl: 60}),
+                            headers: {'Content-Type': 'application/json'},
+                            method: 'PUT',
+                        },
+                    ],
+                    [
+                        'https://do/trifrost-cache?key=foo',
+                        {
+                            method: 'GET',
+                        },
+                    ],
                 ]);
             });
 
             it('Returns stored array', async () => {
-                await ns.get(stubId).fetch(
-                    'https://do/trifrost-cache?key=arr',
-                    {
-                        method: 'PUT',
-                        body: JSON.stringify({v: {v: [1,2,3]}, ttl: 60}),
-                        headers: {'Content-Type': 'application/json'},
-                    }
-                );
+                await ns.get(stubId).fetch('https://do/trifrost-cache?key=arr', {
+                    method: 'PUT',
+                    body: JSON.stringify({v: {v: [1, 2, 3]}, ttl: 60}),
+                    headers: {'Content-Type': 'application/json'},
+                });
                 expect(await cache.get('arr')).toEqual([1, 2, 3]);
                 expect(stub.calls).toEqual([
-                    ['https://do/trifrost-cache?key=arr', {
-                        body: JSON.stringify({v: {v: [1,2,3]}, ttl: 60}),
-                        headers: {'Content-Type': 'application/json'},
-                        method: 'PUT',
-                    }],
-                    ['https://do/trifrost-cache?key=arr', {
-                        method: 'GET',
-                    }],
+                    [
+                        'https://do/trifrost-cache?key=arr',
+                        {
+                            body: JSON.stringify({v: {v: [1, 2, 3]}, ttl: 60}),
+                            headers: {'Content-Type': 'application/json'},
+                            method: 'PUT',
+                        },
+                    ],
+                    [
+                        'https://do/trifrost-cache?key=arr',
+                        {
+                            method: 'GET',
+                        },
+                    ],
                 ]);
             });
 
             it('Returns stored primitive', async () => {
                 for (const el of [true, false, null, 1, 'hello', '', 99.999, -100]) {
-                    await ns.get(stubId).fetch(
-                        'https://do/trifrost-cache?key=val',
-                        {
-                            method: 'PUT',
-                            body: JSON.stringify({v: {v: el}, ttl: 60}),
-                            headers: {'Content-Type': 'application/json'},
-                        }
-                    );
+                    await ns.get(stubId).fetch('https://do/trifrost-cache?key=val', {
+                        method: 'PUT',
+                        body: JSON.stringify({v: {v: el}, ttl: 60}),
+                        headers: {'Content-Type': 'application/json'},
+                    });
                     expect(await cache.get('val')).toEqual(el);
                     expect(stub.calls).toEqual([
-                        ['https://do/trifrost-cache?key=val', {
-                            body: JSON.stringify({v: {v: el}, ttl: 60}),
-                            headers: {'Content-Type': 'application/json'},
-                            method: 'PUT',
-                        }],
-                        ['https://do/trifrost-cache?key=val', {
-                            method: 'GET',
-                        }],
+                        [
+                            'https://do/trifrost-cache?key=val',
+                            {
+                                body: JSON.stringify({v: {v: el}, ttl: 60}),
+                                headers: {'Content-Type': 'application/json'},
+                                method: 'PUT',
+                            },
+                        ],
+                        [
+                            'https://do/trifrost-cache?key=val',
+                            {
+                                method: 'GET',
+                            },
+                        ],
                     ]);
                     stub.reset();
                 }
@@ -539,9 +512,12 @@ describe('Storage - DurableObject', () => {
                 await cache.get('test-get');
                 expect(spy).toHaveBeenCalledWith(expect.stringContaining('test-get'), expect.objectContaining({method: 'GET'}));
                 expect(stub.calls).toEqual([
-                    ['https://do/trifrost-cache?key=test-get', {
-                        method: 'GET',
-                    }],
+                    [
+                        'https://do/trifrost-cache?key=test-get',
+                        {
+                            method: 'GET',
+                        },
+                    ],
                 ]);
             });
         });
@@ -552,10 +528,8 @@ describe('Storage - DurableObject', () => {
             });
 
             it('Throws if provided undefined', async () => {
-                /* @ts-ignore This is what we're testing */
-                await expect(cache.set('x'))
-                    .rejects
-                    .toThrow(/TriFrostCache@set: Value can not be undefined/);
+                /* @ts-expect-error Should be good */
+                await expect(cache.set('x')).rejects.toThrow(/TriFrostCache@set: Value can not be undefined/);
                 expect(stub.isEmpty);
             });
 
@@ -563,14 +537,20 @@ describe('Storage - DurableObject', () => {
                 await cache.set('obj', {x: 1});
                 expect(await cache.get('obj')).toEqual({x: 1});
                 expect(stub.calls).toEqual([
-                    ['https://do/trifrost-cache?key=obj', {
-                        body: JSON.stringify({v: {v: {x: 1}}, ttl: 60}),
-                        headers: {'Content-Type': 'application/json'},
-                        method: 'PUT',
-                    }],
-                    ['https://do/trifrost-cache?key=obj', {
-                        method: 'GET',
-                    }],
+                    [
+                        'https://do/trifrost-cache?key=obj',
+                        {
+                            body: JSON.stringify({v: {v: {x: 1}}, ttl: 60}),
+                            headers: {'Content-Type': 'application/json'},
+                            method: 'PUT',
+                        },
+                    ],
+                    [
+                        'https://do/trifrost-cache?key=obj',
+                        {
+                            method: 'GET',
+                        },
+                    ],
                 ]);
             });
 
@@ -578,14 +558,20 @@ describe('Storage - DurableObject', () => {
                 await cache.set('arr', [1, 2]);
                 expect(await cache.get('arr')).toEqual([1, 2]);
                 expect(stub.calls).toEqual([
-                    ['https://do/trifrost-cache?key=arr', {
-                        body: JSON.stringify({v: {v: [1, 2]}, ttl: 60}),
-                        headers: {'Content-Type': 'application/json'},
-                        method: 'PUT',
-                    }],
-                    ['https://do/trifrost-cache?key=arr', {
-                        method: 'GET',
-                    }],
+                    [
+                        'https://do/trifrost-cache?key=arr',
+                        {
+                            body: JSON.stringify({v: {v: [1, 2]}, ttl: 60}),
+                            headers: {'Content-Type': 'application/json'},
+                            method: 'PUT',
+                        },
+                    ],
+                    [
+                        'https://do/trifrost-cache?key=arr',
+                        {
+                            method: 'GET',
+                        },
+                    ],
                 ]);
             });
 
@@ -594,14 +580,20 @@ describe('Storage - DurableObject', () => {
                     await cache.set('val', el);
                     expect(await cache.get('val')).toEqual(el);
                     expect(stub.calls).toEqual([
-                        ['https://do/trifrost-cache?key=val', {
-                            body: JSON.stringify({v: {v: el}, ttl: 60}),
-                            headers: {'Content-Type': 'application/json'},
-                            method: 'PUT',
-                        }],
-                        ['https://do/trifrost-cache?key=val', {
-                            method: 'GET',
-                        }],
+                        [
+                            'https://do/trifrost-cache?key=val',
+                            {
+                                body: JSON.stringify({v: {v: el}, ttl: 60}),
+                                headers: {'Content-Type': 'application/json'},
+                                method: 'PUT',
+                            },
+                        ],
+                        [
+                            'https://do/trifrost-cache?key=val',
+                            {
+                                method: 'GET',
+                            },
+                        ],
                     ]);
                     stub.reset();
                 }
@@ -610,11 +602,14 @@ describe('Storage - DurableObject', () => {
             it('Respects TTL', async () => {
                 await cache.set('ttl-key', {v: 1}, {ttl: 90});
                 expect(stub.calls).toEqual([
-                    ['https://do/trifrost-cache?key=ttl-key', {
-                        body: JSON.stringify({v: {v: {v: 1}}, ttl: 90}),
-                        headers: {'Content-Type': 'application/json'},
-                        method: 'PUT',
-                    }],
+                    [
+                        'https://do/trifrost-cache?key=ttl-key',
+                        {
+                            body: JSON.stringify({v: {v: {v: 1}}, ttl: 90}),
+                            headers: {'Content-Type': 'application/json'},
+                            method: 'PUT',
+                        },
+                    ],
                 ]);
             });
 
@@ -645,9 +640,12 @@ describe('Storage - DurableObject', () => {
                 await cache.del('test-del');
                 expect(spy).toHaveBeenCalledWith(expect.stringContaining('test-del'), expect.objectContaining({method: 'DELETE'}));
                 expect(stub.calls).toEqual([
-                    ['https://do/trifrost-cache?key=test-del', {
-                        method: 'DELETE',
-                    }],
+                    [
+                        'https://do/trifrost-cache?key=test-del',
+                        {
+                            method: 'DELETE',
+                        },
+                    ],
                 ]);
             });
         });
@@ -662,14 +660,20 @@ describe('Storage - DurableObject', () => {
                 const result = await cache.wrap('wrapped', async () => ({fail: true}));
                 expect(result).toEqual({a: 1});
                 expect(stub.calls).toEqual([
-                    ['https://do/trifrost-cache?key=wrapped', {
-                        body: JSON.stringify({v: {v: {a: 1}}, ttl: 60}),
-                        headers: {'Content-Type': 'application/json'},
-                        method: 'PUT',
-                    }],
-                    ['https://do/trifrost-cache?key=wrapped', {
-                        method: 'GET',
-                    }],
+                    [
+                        'https://do/trifrost-cache?key=wrapped',
+                        {
+                            body: JSON.stringify({v: {v: {a: 1}}, ttl: 60}),
+                            headers: {'Content-Type': 'application/json'},
+                            method: 'PUT',
+                        },
+                    ],
+                    [
+                        'https://do/trifrost-cache?key=wrapped',
+                        {
+                            method: 'GET',
+                        },
+                    ],
                 ]);
             });
 
@@ -678,32 +682,47 @@ describe('Storage - DurableObject', () => {
                 expect(result).toEqual({hit: true});
                 expect(await cache.get('miss')).toEqual({hit: true});
                 expect(stub.calls).toEqual([
-                    ['https://do/trifrost-cache?key=miss', {
-                        method: 'GET',
-                    }],
-                    ['https://do/trifrost-cache?key=miss', {
-                        body: JSON.stringify({v: {v: {hit: true}}, ttl: 60}),
-                        headers: {'Content-Type': 'application/json'},
-                        method: 'PUT',
-                    }],
-                    ['https://do/trifrost-cache?key=miss', {
-                        method: 'GET',
-                    }],
+                    [
+                        'https://do/trifrost-cache?key=miss',
+                        {
+                            method: 'GET',
+                        },
+                    ],
+                    [
+                        'https://do/trifrost-cache?key=miss',
+                        {
+                            body: JSON.stringify({v: {v: {hit: true}}, ttl: 60}),
+                            headers: {'Content-Type': 'application/json'},
+                            method: 'PUT',
+                        },
+                    ],
+                    [
+                        'https://do/trifrost-cache?key=miss',
+                        {
+                            method: 'GET',
+                        },
+                    ],
                 ]);
             });
 
             it('Computes and does not store anything if function returns nada', async () => {
-                /* @ts-ignore this is what we're testing */
+                /* @ts-expect-error Should be good */
                 const result = await cache.wrap('noret', async () => {});
                 expect(result).toEqual(undefined);
                 expect(await cache.get('noret')).toEqual(null);
                 expect(stub.calls).toEqual([
-                    ['https://do/trifrost-cache?key=noret', {
-                        method: 'GET',
-                    }],
-                    ['https://do/trifrost-cache?key=noret', {
-                        method: 'GET',
-                    }],
+                    [
+                        'https://do/trifrost-cache?key=noret',
+                        {
+                            method: 'GET',
+                        },
+                    ],
+                    [
+                        'https://do/trifrost-cache?key=noret',
+                        {
+                            method: 'GET',
+                        },
+                    ],
                 ]);
             });
 
@@ -712,12 +731,18 @@ describe('Storage - DurableObject', () => {
                 expect(result).toEqual('you_shall_not_pass');
                 expect(await cache.get('nocache')).toEqual(null);
                 expect(stub.calls).toEqual([
-                    ['https://do/trifrost-cache?key=nocache', {
-                        method: 'GET',
-                    }],
-                    ['https://do/trifrost-cache?key=nocache', {
-                        method: 'GET',
-                    }],
+                    [
+                        'https://do/trifrost-cache?key=nocache',
+                        {
+                            method: 'GET',
+                        },
+                    ],
+                    [
+                        'https://do/trifrost-cache?key=nocache',
+                        {
+                            method: 'GET',
+                        },
+                    ],
                 ]);
             });
 
@@ -725,14 +750,20 @@ describe('Storage - DurableObject', () => {
                 const result = await cache.wrap('ttl', async () => ({timed: true}), {ttl: 80});
                 expect(result).toEqual({timed: true});
                 expect(stub.calls).toEqual([
-                    ['https://do/trifrost-cache?key=ttl', {
-                        method: 'GET',
-                    }],
-                    ['https://do/trifrost-cache?key=ttl', {
-                        body: JSON.stringify({v: {v: {timed: true}}, ttl: 80}),
-                        headers: {'Content-Type': 'application/json'},
-                        method: 'PUT',
-                    }],
+                    [
+                        'https://do/trifrost-cache?key=ttl',
+                        {
+                            method: 'GET',
+                        },
+                    ],
+                    [
+                        'https://do/trifrost-cache?key=ttl',
+                        {
+                            body: JSON.stringify({v: {v: {timed: true}}, ttl: 80}),
+                            headers: {'Content-Type': 'application/json'},
+                            method: 'PUT',
+                        },
+                    ],
                 ]);
             });
 
@@ -741,17 +772,26 @@ describe('Storage - DurableObject', () => {
                 expect(result).toBe(null);
                 expect(await cache.get('null-key')).toBe(null);
                 expect(stub.calls).toEqual([
-                    ['https://do/trifrost-cache?key=null-key', {
-                        method: 'GET',
-                    }],
-                    ['https://do/trifrost-cache?key=null-key', {
-                        body: JSON.stringify({v: {v: null}, ttl: 60}),
-                        headers: {'Content-Type': 'application/json'},
-                        method: 'PUT',
-                    }],
-                    ['https://do/trifrost-cache?key=null-key', {
-                        method: 'GET',
-                    }],
+                    [
+                        'https://do/trifrost-cache?key=null-key',
+                        {
+                            method: 'GET',
+                        },
+                    ],
+                    [
+                        'https://do/trifrost-cache?key=null-key',
+                        {
+                            body: JSON.stringify({v: {v: null}, ttl: 60}),
+                            headers: {'Content-Type': 'application/json'},
+                            method: 'PUT',
+                        },
+                    ],
+                    [
+                        'https://do/trifrost-cache?key=null-key',
+                        {
+                            method: 'GET',
+                        },
+                    ],
                 ]);
             });
 
@@ -760,14 +800,20 @@ describe('Storage - DurableObject', () => {
                 await cache.wrap('wrap-key', async () => ({fresh: true}));
                 expect(spy).toHaveBeenCalled();
                 expect(stub.calls).toEqual([
-                    ['https://do/trifrost-cache?key=wrap-key', {
-                        method: 'GET',
-                    }],
-                    ['https://do/trifrost-cache?key=wrap-key', {
-                        body: JSON.stringify({v: {v: {fresh: true}}, ttl: 60}),
-                        headers: {'Content-Type': 'application/json'},
-                        method: 'PUT',
-                    }],
+                    [
+                        'https://do/trifrost-cache?key=wrap-key',
+                        {
+                            method: 'GET',
+                        },
+                    ],
+                    [
+                        'https://do/trifrost-cache?key=wrap-key',
+                        {
+                            body: JSON.stringify({v: {v: {fresh: true}}, ttl: 60}),
+                            headers: {'Content-Type': 'application/json'},
+                            method: 'PUT',
+                        },
+                    ],
                 ]);
             });
         });
@@ -794,11 +840,8 @@ describe('Storage - DurableObject', () => {
 
         describe('init', () => {
             it('Should throw if not provided a store', () => {
-                for (const el of [
-                    ...CONSTANTS.NOT_OBJECT_WITH_EMPTY,
-                    ...[...CONSTANTS.NOT_FUNCTION].map(val => ({store: val})),
-                ]) {
-                    /* @ts-ignore */
+                for (const el of [...CONSTANTS.NOT_OBJECT_WITH_EMPTY, ...[...CONSTANTS.NOT_FUNCTION].map(val => ({store: val}))]) {
+                    /* @ts-expect-error Should be good */
                     expect(() => new DurableObjectRateLimit(el)).toThrow(/DurableObjectRateLimit: Expected a store initializer/);
                 }
             });
@@ -807,18 +850,21 @@ describe('Storage - DurableObject', () => {
                 const rl = new DurableObjectRateLimit({store: () => ns});
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
                 const mw = rl.limit(2);
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 expect(ctx.statusCode).not.toBe(429);
                 expect(rl.strategy).toBe('fixed');
                 expect(rl.window).toBe(60);
                 expect(stub.calls).toEqual([
                     [`https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:route:GET')}`, {method: 'GET'}],
-                    [`https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:route:GET')}`, {
-                        method: 'PUT',
-                        body: `{"v":{"amt":1,"reset":${now+rl.window}},"ttl":60}`,
-                        headers: {'Content-Type': 'application/json'},
-                    }],
+                    [
+                        `https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:route:GET')}`,
+                        {
+                            method: 'PUT',
+                            body: `{"v":{"amt":1,"reset":${now + rl.window}},"ttl":60}`,
+                            headers: {'Content-Type': 'application/json'},
+                        },
+                    ],
                 ]);
             });
 
@@ -829,18 +875,21 @@ describe('Storage - DurableObject', () => {
                 });
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
                 const mw = rl.limit(2);
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 expect(ctx.statusCode).not.toBe(429);
                 expect(rl.strategy).toBe('sliding');
                 expect(rl.window).toBe(60);
                 expect(stub.calls).toEqual([
                     [`https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:route:GET')}`, {method: 'GET'}],
-                    [`https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:route:GET')}`, {
-                        method: 'PUT',
-                        body: `{"v":[${now}],"ttl":60}`,
-                        headers: {'Content-Type': 'application/json'},
-                    }],
+                    [
+                        `https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:route:GET')}`,
+                        {
+                            method: 'PUT',
+                            body: `{"v":[${now}],"ttl":60}`,
+                            headers: {'Content-Type': 'application/json'},
+                        },
+                    ],
                 ]);
             });
 
@@ -882,7 +931,7 @@ describe('Storage - DurableObject', () => {
             it('Sets rate limit headers when enabled', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new DurableObjectRateLimit({window: 1, store: () => ns});
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
                 const mw = rl.limit(1);
                 await mw(ctx);
                 await mw(ctx);
@@ -895,11 +944,14 @@ describe('Storage - DurableObject', () => {
                 });
                 expect(stub.calls).toEqual([
                     [`https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:test:POST')}`, {method: 'GET'}],
-                    [`https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:test:POST')}`, {
-                        method: 'PUT',
-                        body: `{"v":{"amt":1,"reset":${now+rl.window}},"ttl":1}`,
-                        headers: {'Content-Type': 'application/json'},
-                    }],
+                    [
+                        `https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:test:POST')}`,
+                        {
+                            method: 'PUT',
+                            body: `{"v":{"amt":1,"reset":${now + rl.window}},"ttl":1}`,
+                            headers: {'Content-Type': 'application/json'},
+                        },
+                    ],
                     [`https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:test:POST')}`, {method: 'GET'}],
                 ]);
             });
@@ -908,7 +960,7 @@ describe('Storage - DurableObject', () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new DurableObjectRateLimit({headers: false, store: () => ns});
                 const mw = rl.limit(1);
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(429);
@@ -917,11 +969,14 @@ describe('Storage - DurableObject', () => {
                 });
                 expect(stub.calls).toEqual([
                     [`https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:test:POST')}`, {method: 'GET'}],
-                    [`https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:test:POST')}`, {
-                        method: 'PUT',
-                        body: `{"v":{"amt":1,"reset":${now+rl.window}},"ttl":60}`,
-                        headers: {'Content-Type': 'application/json'},
-                    }],
+                    [
+                        `https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:test:POST')}`,
+                        {
+                            method: 'PUT',
+                            body: `{"v":{"amt":1,"reset":${now + rl.window}},"ttl":60}`,
+                            headers: {'Content-Type': 'application/json'},
+                        },
+                    ],
                     [`https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:test:POST')}`, {method: 'GET'}],
                 ]);
             });
@@ -930,7 +985,7 @@ describe('Storage - DurableObject', () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new DurableObjectRateLimit({keygen: el => `ip:${el.ip}`, store: () => ns});
                 const mw = rl.limit(10);
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(200);
@@ -941,17 +996,23 @@ describe('Storage - DurableObject', () => {
                 });
                 expect(stub.calls).toEqual([
                     [`https://do/trifrost-ratelimit?key=${encodeURIComponent('ip:127.0.0.1')}`, {method: 'GET'}],
-                    [`https://do/trifrost-ratelimit?key=${encodeURIComponent('ip:127.0.0.1')}`, {
-                        method: 'PUT',
-                        body: `{"v":{"amt":1,"reset":${now+rl.window}},"ttl":60}`,
-                        headers: {'Content-Type': 'application/json'},
-                    }],
+                    [
+                        `https://do/trifrost-ratelimit?key=${encodeURIComponent('ip:127.0.0.1')}`,
+                        {
+                            method: 'PUT',
+                            body: `{"v":{"amt":1,"reset":${now + rl.window}},"ttl":60}`,
+                            headers: {'Content-Type': 'application/json'},
+                        },
+                    ],
                     [`https://do/trifrost-ratelimit?key=${encodeURIComponent('ip:127.0.0.1')}`, {method: 'GET'}],
-                    [`https://do/trifrost-ratelimit?key=${encodeURIComponent('ip:127.0.0.1')}`, {
-                        method: 'PUT',
-                        body: `{"v":{"amt":2,"reset":${now+rl.window}},"ttl":60}`,
-                        headers: {'Content-Type': 'application/json'},
-                    }],
+                    [
+                        `https://do/trifrost-ratelimit?key=${encodeURIComponent('ip:127.0.0.1')}`,
+                        {
+                            method: 'PUT',
+                            body: `{"v":{"amt":2,"reset":${now + rl.window}},"ttl":60}`,
+                            headers: {'Content-Type': 'application/json'},
+                        },
+                    ],
                 ]);
             });
 
@@ -960,18 +1021,21 @@ describe('Storage - DurableObject', () => {
                 const exceeded = vi.fn(el => el.status(400));
                 const rl = new DurableObjectRateLimit({exceeded, store: () => ns});
                 const mw = rl.limit(1);
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 await mw(ctx);
                 expect(exceeded).toHaveBeenCalledOnce();
                 expect(ctx.statusCode).toBe(400);
                 expect(stub.calls).toEqual([
                     [`https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:test:POST')}`, {method: 'GET'}],
-                    [`https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:test:POST')}`, {
-                        method: 'PUT',
-                        body: `{"v":{"amt":1,"reset":${now+rl.window}},"ttl":60}`,
-                        headers: {'Content-Type': 'application/json'},
-                    }],
+                    [
+                        `https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:test:POST')}`,
+                        {
+                            method: 'PUT',
+                            body: `{"v":{"amt":1,"reset":${now + rl.window}},"ttl":60}`,
+                            headers: {'Content-Type': 'application/json'},
+                        },
+                    ],
                     [`https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:test:POST')}`, {method: 'GET'}],
                 ]);
             });
@@ -989,18 +1053,21 @@ describe('Storage - DurableObject', () => {
                 for (const [key, key_expected] of Object.entries(expected)) {
                     const rl = new DurableObjectRateLimit({keygen: key as any, store: () => ns});
                     const mw = rl.limit(1);
-                    const now = Math.floor(Date.now()/1000);
+                    const now = Math.floor(Date.now() / 1000);
                     await mw(ctx);
                     await mw(ctx);
                     expect(ctx.statusCode).toBe(429);
 
                     expect(stub.calls).toEqual([
                         [`https://do/trifrost-ratelimit?key=${encodeURIComponent(key_expected)}`, {method: 'GET'}],
-                        [`https://do/trifrost-ratelimit?key=${encodeURIComponent(key_expected)}`, {
-                            method: 'PUT',
-                            body: `{"v":{"amt":1,"reset":${now+rl.window}},"ttl":60}`,
-                            headers: {'Content-Type': 'application/json'},
-                        }],
+                        [
+                            `https://do/trifrost-ratelimit?key=${encodeURIComponent(key_expected)}`,
+                            {
+                                method: 'PUT',
+                                body: `{"v":{"amt":1,"reset":${now + rl.window}},"ttl":60}`,
+                                headers: {'Content-Type': 'application/json'},
+                            },
+                        ],
                         [`https://do/trifrost-ratelimit?key=${encodeURIComponent(key_expected)}`, {method: 'GET'}],
                     ]);
                     stub.reset();
@@ -1020,18 +1087,21 @@ describe('Storage - DurableObject', () => {
                 for (const [key, key_expected] of Object.entries(expected)) {
                     const rl = new DurableObjectRateLimit({keygen: key as any, store: () => ns});
                     const mw = rl.limit(1);
-                    const now = Math.floor(Date.now()/1000);
+                    const now = Math.floor(Date.now() / 1000);
                     await mw(ctx);
                     await mw(ctx);
                     expect(ctx.statusCode).toBe(429);
 
                     expect(stub.calls).toEqual([
                         [`https://do/trifrost-ratelimit?key=${encodeURIComponent(key_expected)}`, {method: 'GET'}],
-                        [`https://do/trifrost-ratelimit?key=${encodeURIComponent(key_expected)}`, {
-                            method: 'PUT',
-                            body: `{"v":{"amt":1,"reset":${now+rl.window}},"ttl":60}`,
-                            headers: {'Content-Type': 'application/json'},
-                        }],
+                        [
+                            `https://do/trifrost-ratelimit?key=${encodeURIComponent(key_expected)}`,
+                            {
+                                method: 'PUT',
+                                body: `{"v":{"amt":1,"reset":${now + rl.window}},"ttl":60}`,
+                                headers: {'Content-Type': 'application/json'},
+                            },
+                        ],
                         [`https://do/trifrost-ratelimit?key=${encodeURIComponent(key_expected)}`, {method: 'GET'}],
                     ]);
                     stub.reset();
@@ -1041,21 +1111,24 @@ describe('Storage - DurableObject', () => {
             it('Falls back to "unknown" if keygen returns falsy', async () => {
                 const rl = new DurableObjectRateLimit({
                     store: () => ns,
-                    keygen: () => undefined as unknown as string, /* Force falsy value */
+                    keygen: () => undefined as unknown as string /* Force falsy value */,
                 });
 
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const mw = rl.limit(1);
-                const now = Math.floor(Date.now()/1000);
+                const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 await mw(ctx);
                 expect(stub.calls).toEqual([
                     ['https://do/trifrost-ratelimit?key=unknown', {method: 'GET'}],
-                    ['https://do/trifrost-ratelimit?key=unknown', {
-                        method: 'PUT',
-                        body: `{"v":{"amt":1,"reset":${now+rl.window}},"ttl":60}`,
-                        headers: {'Content-Type': 'application/json'},
-                    }],
+                    [
+                        'https://do/trifrost-ratelimit?key=unknown',
+                        {
+                            method: 'PUT',
+                            body: `{"v":{"amt":1,"reset":${now + rl.window}},"ttl":60}`,
+                            headers: {'Content-Type': 'application/json'},
+                        },
+                    ],
                     ['https://do/trifrost-ratelimit?key=unknown', {method: 'GET'}],
                 ]);
 
@@ -1121,18 +1194,18 @@ describe('Storage - DurableObject', () => {
                 /* First request */
                 await mw(ctx);
 
-                /* @ts-ignore Manually insert an old timestamp to simulate an aged entry */
-                await rl.resolvedStore.store.set('127.0.0.1:test:POST', [Math.floor(Date.now()/1000) - 2]);
+                /* @ts-expect-error Should be good */
+                await rl.resolvedStore.store.set('127.0.0.1:test:POST', [Math.floor(Date.now() / 1000) - 2]);
 
                 /* Second request triggers pruning of old timestamp */
                 await mw(ctx);
 
-                /* @ts-ignore We want to test this */
+                /* @ts-expect-error Should be good */
                 const val = await rl.resolvedStore.store.get('127.0.0.1:test:POST');
 
                 expect(Array.isArray(val)).toBe(true);
                 expect(val.length).toBe(1); /* old timestamp pruned */
-                expect(val[0]).toBeGreaterThan(Math.floor(Date.now()/1000) - 1); /* only recent timestamp remains */
+                expect(val[0]).toBeGreaterThan(Math.floor(Date.now() / 1000) - 1); /* only recent timestamp remains */
                 expect(ctx.statusCode).toBe(200);
             });
         });

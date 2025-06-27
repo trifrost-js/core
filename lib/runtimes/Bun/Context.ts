@@ -3,11 +3,7 @@
 import {Context} from '../../Context';
 import {type TriFrostRootLogger} from '../../modules/Logger';
 import {type TriFrostContextConfig} from '../../types/context';
-import {
-    HttpMethods,
-    HttpMethodToNormal,
-    type HttpStatusCode,
-} from '../../types/constants';
+import {HttpMethods, HttpMethodToNormal, type HttpStatusCode} from '../../types/constants';
 import {type TriFrostRouteMatch} from '../../types/routing';
 import {parseBody} from '../../utils/BodyParser/Request';
 import {extractPartsFromUrl} from '../../utils/Http';
@@ -17,9 +13,8 @@ import {verifyFileStream} from '../../utils/Stream';
 const encoder = new TextEncoder();
 
 export class BunContext extends Context {
-
     /* Bun Apis */
-    #bun:{file: typeof import('bun').file;};
+    #bun: {file: typeof import('bun').file};
 
     /* Bun Request instance */
     #bun_req: Request;
@@ -27,17 +22,12 @@ export class BunContext extends Context {
     /* Internal Response instance */
     #response: Response | null = null;
 
-    constructor (
-        cfg: TriFrostContextConfig,
-        logger: TriFrostRootLogger,
-        bunApis:{file: typeof import('bun').file},
-        req: Request
-    ) {
+    constructor(cfg: TriFrostContextConfig, logger: TriFrostRootLogger, bunApis: {file: typeof import('bun').file}, req: Request) {
         /* Extract path and query */
         const {path, query} = extractPartsFromUrl(req.url);
 
         /* Hydrate headers */
-        const headers:Record<string, string> = {};
+        const headers: Record<string, string> = {};
         /* eslint-disable-next-line */
         /* @ts-ignore */
         for (const [key, value] of req.headers.entries()) {
@@ -58,14 +48,14 @@ export class BunContext extends Context {
     /**
      * Getter for the final response
      */
-    get response (): Response|null {
+    get response(): Response | null {
         return this.#response;
     }
 
     /**
      * Initializes the context, this happens when a route is matched and tied to this context.
      */
-    async init (val:TriFrostRouteMatch) {
+    async init(val: TriFrostRouteMatch) {
         await super.init(val, async () => parseBody(this, this.#bun_req, val.route.bodyParser || DEFAULT_BODY_PARSER_OPTIONS));
     }
 
@@ -74,7 +64,7 @@ export class BunContext extends Context {
      *
      * @param {string} path - Path to the file
      */
-    async getStream (path: string): Promise<{stream: ReadableStream; size: number} | null> {
+    async getStream(path: string): Promise<{stream: ReadableStream; size: number} | null> {
         try {
             const file_obj = this.#bun.file(path);
             if (!file_obj) {
@@ -98,7 +88,7 @@ export class BunContext extends Context {
      * @param {unknown} stream - Stream to respond with
      * @param {number|null} size - Size of the stream
      */
-    protected stream (stream:unknown, size:number|null = null) {
+    protected stream(stream: unknown, size: number | null = null) {
         /* If already locked do nothing */
         if (this.isLocked) return;
 
@@ -121,7 +111,7 @@ export class BunContext extends Context {
      *
      * @param {HttpStatusCode?} status - Status to abort with (defaults to 503)
      */
-    abort (status?:HttpStatusCode) {
+    abort(status?: HttpStatusCode) {
         if (this.isLocked) return;
 
         super.abort(status);
@@ -139,16 +129,14 @@ export class BunContext extends Context {
     /**
      * End the request and respond to callee
      */
-    end () {
+    end() {
         if (this.isLocked) return;
 
         super.end();
 
         switch (this.method) {
             case HttpMethods.HEAD: {
-                this.res_headers['Content-Length'] = typeof this.res_body === 'string'
-                    ? '' + encoder.encode(this.res_body).length
-                    : '0';
+                this.res_headers['Content-Length'] = typeof this.res_body === 'string' ? '' + encoder.encode(this.res_body).length : '0';
 
                 this.#response = new Response(null, {
                     status: this.res_code,
@@ -175,7 +163,7 @@ export class BunContext extends Context {
     /**
      * Run jobs after the response has gone out
      */
-    runAfter () {
+    runAfter() {
         const hooks = this.afterHooks;
         if (!hooks.length) return;
 
@@ -190,23 +178,22 @@ export class BunContext extends Context {
         });
     }
 
-/**
- * MARK: Protected
- */
+    /**
+     * MARK: Protected
+     */
 
-    protected getIP ():string|null {
+    protected getIP(): string | null {
         return (this.#bun_req as {socket?: {remoteAddress?: string}}).socket?.remoteAddress ?? null;
     }
 
-/**
- * MARK: Private
- */
+    /**
+     * MARK: Private
+     */
 
-    #writeCookies () {
+    #writeCookies() {
         if (!this.$cookies) return;
         const outgoing = this.$cookies.outgoing;
         if (!outgoing.length) return;
         for (let i = 0; i < outgoing.length; i++) this.#response!.headers.append('Set-Cookie', outgoing[i]);
     }
-
 }

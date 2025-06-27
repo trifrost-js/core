@@ -1,7 +1,5 @@
 /// <reference types="@cloudflare/workers-types" />
 
-/* eslint-disable max-statements,complexity */
-
 import {split} from '@valkyriestudios/utils/array';
 import {isIntGt, isNum, isNumGt, isNumGte} from '@valkyriestudios/utils/number';
 import {isNeString} from '@valkyriestudios/utils/string';
@@ -18,19 +16,18 @@ const bucketFor = (ts: number): number => Math.floor(ts / BUCKET_INTERVAL) * BUC
  * TriFrostDurableObject — backs modules like RateLimit and Cache via bucketed TTL expiry
  */
 export class TriFrostDurableObject {
-
     #state: DurableObjectState;
 
-    constructor (state: DurableObjectState) {
+    constructor(state: DurableObjectState) {
         this.#state = state;
     }
 
-	/**
-	 * Alarm — deletes expired keys from current and past buckets
-	 */
-    async alarm (): Promise<void> {
-        const now       = Date.now();
-        const buckets   = await this.#state.storage.list({prefix: BUCKET_PREFIX});
+    /**
+     * Alarm — deletes expired keys from current and past buckets
+     */
+    async alarm(): Promise<void> {
+        const now = Date.now();
+        const buckets = await this.#state.storage.list({prefix: BUCKET_PREFIX});
 
         /* The next alarm will be scheduled to our bucket alarm (default of 60 seconds) */
         let next_alarm = Date.now() + BUCKET_ALARM;
@@ -54,17 +51,16 @@ export class TriFrostDurableObject {
         /* Set next alarm */
         await this.#state.storage.setAlarm(next_alarm);
 
-
         /* Evict keys */
         for (const batch of split(to_delete, 128)) {
             await this.#state.storage.delete(batch);
         }
     }
 
-	/**
-	 * Fetch — routes by /trifrost-{namespace}?key={key}
-	 */
-    async fetch (request: Request): Promise<Response> {
+    /**
+     * Fetch — routes by /trifrost-{namespace}?key={key}
+     */
+    async fetch(request: Request): Promise<Response> {
         const url = new URL(request.url);
 
         /* Ensure key exists */
@@ -73,11 +69,7 @@ export class TriFrostDurableObject {
 
         /* Get namespace */
         const match = url.pathname.match(/^\/trifrost-([a-z0-9_-]+)$/i);
-        if (
-            !match ||
-            match.length < 1 || 
-            !isNeString(match[1])
-        ) return new Response('Invalid namespace', {status: 400});
+        if (!match || match.length < 1 || !isNeString(match[1])) return new Response('Invalid namespace', {status: 400});
 
         /* Namespace key */
         const N_KEY = `${match[1]}:${key}`;
@@ -104,20 +96,19 @@ export class TriFrostDurableObject {
                 try {
                     /* Prevent consumers from writing to the ttl namespace */
                     if (N_KEY.startsWith(BUCKET_PREFIX)) return new Response('Invalid key: reserved prefix', {status: 400});
-                    
-                    if (
-                        (request.headers.get('Content-Type') || '').indexOf('application/json') < 0
-                    ) return new Response('Unsupported content type', {status: 415});
 
-                    const {v, ttl} = await request.json() as {v: unknown; ttl: number};
+                    if ((request.headers.get('Content-Type') || '').indexOf('application/json') < 0)
+                        return new Response('Unsupported content type', {status: 415});
+
+                    const {v, ttl} = (await request.json()) as {v: unknown; ttl: number};
                     if (!isIntGt(ttl, 0)) return new Response('Invalid TTL', {status: 400});
 
                     const now = Date.now();
-                    const exp = now + (ttl * 1000);
+                    const exp = now + ttl * 1000;
                     const bucket = bucketFor(exp);
                     const bucket_key = BUCKET_PREFIX + bucket;
 
-                    const set = new Set(await this.#state.storage.get<string[]>(bucket_key) || []);
+                    const set = new Set((await this.#state.storage.get<string[]>(bucket_key)) || []);
                     set.add(N_KEY);
 
                     await Promise.all([
@@ -138,11 +129,8 @@ export class TriFrostDurableObject {
                     if (pat_idx < 0) {
                         /* Run single delete */
                         await this.#state.storage.delete(N_KEY);
-                        return new Response(null, {status: 204});    
-                    } else if (
-                        key.length === 1 ||
-                        pat_idx !== (N_KEY.length - 1)
-                    ) {
+                        return new Response(null, {status: 204});
+                    } else if (key.length === 1 || pat_idx !== N_KEY.length - 1) {
                         return new Response('Wildcard deletion must end with "*" (e.g. "prefix:*")', {status: 400});
                     }
 
@@ -165,5 +153,4 @@ export class TriFrostDurableObject {
                 return new Response('Method not allowed', {status: 405});
         }
     }
-
 }

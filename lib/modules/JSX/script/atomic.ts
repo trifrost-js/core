@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-
 const RGX_COMMENT = /\/\/.*$/gm;
 const RGX_BREAK = /\n/g;
 const RGX_SPACE = /\s+/g;
@@ -26,13 +24,8 @@ const VM_STORE_SET_NAME = '$storeSet';
 const VM_HOOK_UNMOUNT_NAME = '$unmount';
 const VM_HOOK_MOUNT_NAME = '$mount';
 
-function minify (raw:string):string {
-    return raw
-        .replace(RGX_COMMENT, '')
-        .replace(RGX_BREAK, ' ')
-        .replace(RGX_SPACE, ' ')
-        .replace(RGX_SYMBOLS, '$1')
-        .trim();
+function minify(raw: string): string {
+    return raw.replace(RGX_COMMENT, '').replace(RGX_BREAK, ' ').replace(RGX_SPACE, ' ').replace(RGX_SYMBOLS, '$1').trim();
 }
 
 type StoreTopics<K extends string> = `$store:${K}`;
@@ -40,60 +33,52 @@ type StoreTopics<K extends string> = `$store:${K}`;
 type DotPathLevels = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; /* Up to depth 10, this prevents infinite recursion */
 
 type DotPaths<T, D extends number = 10> = [D] extends [never]
-  ? never
-  : T extends object
-    ? {
-        [K in keyof T & string]: T[K] extends object
-          ? K | `${K}.${DotPaths<T[K], DotPathLevels[D]>}`
-          : K
-      }[keyof T & string]
-    : '';
+    ? never
+    : T extends object
+      ? {
+            [K in keyof T & string]: T[K] extends object ? K | `${K}.${DotPaths<T[K], DotPathLevels[D]>}` : K;
+        }[keyof T & string]
+      : '';
 
-export type TriFrostAtomicVM <
+export type TriFrostAtomicVM<
     Relay extends Record<string, unknown> = {},
     Store extends Record<string, unknown> = {},
-    RelayKeys extends keyof Relay | StoreTopics<keyof Store & string> = keyof Relay | StoreTopics<keyof Store & string>
+    RelayKeys extends keyof Relay | StoreTopics<keyof Store & string> = keyof Relay | StoreTopics<keyof Store & string>,
 > = {
     [VM_ID_NAME]: string;
     /* VM Dispatch */
-    [VM_DISPATCH_NAME]: <T = unknown>(type: string, options?: {data?: T, mode?: 'up'|'down'}) => void;
+    [VM_DISPATCH_NAME]: <T = unknown>(type: string, options?: {data?: T; mode?: 'up' | 'down'}) => void;
     /* VM Relay */
     [VM_RELAY_SUBSCRIBE_NAME]<T extends RelayKeys>(
         topic: T,
         fn: T extends keyof Relay
             ? (data: Relay[T]) => void
             : T extends StoreTopics<infer K>
-                ? K extends keyof Store
-                    ? (data: Store[K]) => void
-                    : (data: unknown) => void
-                : (data: unknown) => void
-    ):void;
-    [VM_RELAY_UNSUBSCRIBE_NAME]<T extends RelayKeys>(topic?: T):void;
+              ? K extends keyof Store
+                  ? (data: Store[K]) => void
+                  : (data: unknown) => void
+              : (data: unknown) => void,
+    ): void;
+    [VM_RELAY_UNSUBSCRIBE_NAME]<T extends RelayKeys>(topic?: T): void;
     [VM_RELAY_PUBLISH_NAME]<T extends RelayKeys>(
         topic: T,
-        data?: T extends keyof Relay
-            ? Relay[T]
-            : T extends StoreTopics<infer K>
-                ? K extends keyof Store
-                    ? Store[K]
-                    : unknown
-                : unknown
-    ):void;
+        data?: T extends keyof Relay ? Relay[T] : T extends StoreTopics<infer K> ? (K extends keyof Store ? Store[K] : unknown) : unknown,
+    ): void;
     /* VM Store */
-    [VM_STORE_GET_NAME] <K extends keyof Store> (key: K): Store[K];
-    [VM_STORE_GET_NAME] (key: string): unknown;
-    [VM_STORE_SET_NAME] <K extends keyof Store> (key: K, value: Store[K]): void;
-    [VM_STORE_SET_NAME] (key: string, value: unknown): void;
+    [VM_STORE_GET_NAME]<K extends keyof Store>(key: K): Store[K];
+    [VM_STORE_GET_NAME](key: string): unknown;
+    [VM_STORE_SET_NAME]<K extends keyof Store>(key: K, value: Store[K]): void;
+    [VM_STORE_SET_NAME](key: string, value: unknown): void;
     /* VM Hooks */
     [VM_HOOK_MOUNT_NAME]?: () => void;
     [VM_HOOK_UNMOUNT_NAME]?: () => void;
 };
 
-export type TriFrostAtomicProxy <T> = T & {
+export type TriFrostAtomicProxy<T> = T & {
     $bind: <K extends DotPaths<T>>(key: K, selector: string) => void;
-    $watch: <K extends DotPaths<T>>(key: K, fn: (val: any) => void, options?:{immediate?: boolean; debounce?:number}) => void;
+    $watch: <K extends DotPaths<T>>(key: K, fn: (val: any) => void, options?: {immediate?: boolean; debounce?: number}) => void;
     $set: (key: DotPaths<T> | T, val?: any) => void;
-}
+};
 
 /**
  * Atomic Upgrades
@@ -443,7 +428,7 @@ export const ATOMIC_VM_BEFORE = minify(
             },
             ${VM_NAME}:{get: () => !0, configurable:!1}
         });
-    }`
+    }`,
 );
 
 export const ATOMIC_VM_AFTER = minify(`

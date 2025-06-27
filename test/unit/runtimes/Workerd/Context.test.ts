@@ -86,10 +86,10 @@ describe('Runtimes - Workerd - Context', () => {
 
             const context = new WorkerdContext(baseConfig as any, mockLogger, req, ctx2);
 
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(context.workerd_req).toBe(req);
 
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(context.workerd_ctx).toBe(ctx2);
         });
 
@@ -109,12 +109,17 @@ describe('Runtimes - Workerd - Context', () => {
                 },
             });
 
-            new WorkerdContext({
-                ...baseConfig,
-                requestId: {
-                    inbound: ['x-trace-id'],
-                },
-            } as any, {spawn: spy} as any, req, mockExecutionCtx as any);
+            new WorkerdContext(
+                {
+                    ...baseConfig,
+                    requestId: {
+                        inbound: ['x-trace-id'],
+                    },
+                } as any,
+                {spawn: spy} as any,
+                req,
+                mockExecutionCtx as any,
+            );
 
             expect(spy).toHaveBeenCalledWith({
                 traceId: 'trace-abc',
@@ -127,12 +132,17 @@ describe('Runtimes - Workerd - Context', () => {
                 method: 'GET',
             });
 
-            const context = new WorkerdContext({
-                ...baseConfig,
-                requestId: {
-                    inbound: ['x-trace-id'],
-                },
-            } as any, mockLogger as any, req, mockExecutionCtx as any);
+            const context = new WorkerdContext(
+                {
+                    ...baseConfig,
+                    requestId: {
+                        inbound: ['x-trace-id'],
+                    },
+                } as any,
+                mockLogger as any,
+                req,
+                mockExecutionCtx as any,
+            );
 
             expect(context.requestId).toMatch(/^[a-f0-9]{32}$/);
         });
@@ -160,7 +170,8 @@ describe('Runtimes - Workerd - Context', () => {
             };
 
             // Patch parseBody temporarily
-            const parseSpy = vi.spyOn(await import('../../../../lib/utils/BodyParser/Request'), 'parseBody')
+            const parseSpy = vi
+                .spyOn(await import('../../../../lib/utils/BodyParser/Request'), 'parseBody')
                 .mockResolvedValue({foo: 'bar'});
 
             await ctx.init(match as any);
@@ -175,8 +186,7 @@ describe('Runtimes - Workerd - Context', () => {
         });
 
         it('Skips re-initialization on second call', async () => {
-            const spy = vi.spyOn(await import('../../../../lib/utils/BodyParser/Request'), 'parseBody')
-                .mockResolvedValue({msg: 'noop'});
+            const spy = vi.spyOn(await import('../../../../lib/utils/BodyParser/Request'), 'parseBody').mockResolvedValue({msg: 'noop'});
 
             const match = {
                 route: {name: 'first', kind: 'std', bodyParser: null},
@@ -197,7 +207,8 @@ describe('Runtimes - Workerd - Context', () => {
         });
 
         it('Defaults to DEFAULT_BODY_PARSER_OPTIONS if none provided', async () => {
-            const spy = vi.spyOn(await import('../../../../lib/utils/BodyParser/Request'), 'parseBody')
+            const spy = vi
+                .spyOn(await import('../../../../lib/utils/BodyParser/Request'), 'parseBody')
                 .mockImplementation((_ctx, _req, opts) => {
                     expect(opts).toEqual(DEFAULT_BODY_PARSER_OPTIONS);
                     return Promise.resolve({fallback: true});
@@ -219,13 +230,17 @@ describe('Runtimes - Workerd - Context', () => {
         });
 
         it('Sets status 413 if body returns null', async () => {
-            const spy = vi.spyOn(await import('../../../../lib/utils/BodyParser/Request'), 'parseBody')
-                .mockResolvedValue(null);
+            const spy = vi.spyOn(await import('../../../../lib/utils/BodyParser/Request'), 'parseBody').mockResolvedValue(null);
 
-            const postCtx = new WorkerdContext(baseConfig as any, mockLogger, new Request('https://x.com', {
-                method: 'POST',
-                body: '',
-            }), mockExecutionCtx as any);
+            const postCtx = new WorkerdContext(
+                baseConfig as any,
+                mockLogger,
+                new Request('https://x.com', {
+                    method: 'POST',
+                    body: '',
+                }),
+                mockExecutionCtx as any,
+            );
 
             const match = {
                 route: {name: 'fail', kind: 'std', bodyParser: null},
@@ -240,8 +255,7 @@ describe('Runtimes - Workerd - Context', () => {
 
         it('Logs and sets 400 if parseBody throws', async () => {
             const err = new Error('boom');
-            const spy = vi.spyOn(await import('../../../../lib/utils/BodyParser/Request'), 'parseBody')
-                .mockRejectedValue(err);
+            const spy = vi.spyOn(await import('../../../../lib/utils/BodyParser/Request'), 'parseBody').mockRejectedValue(err);
 
             const ctx2 = new WorkerdContext(baseConfig as any, mockLogger, mockRequest, mockExecutionCtx);
 
@@ -258,23 +272,27 @@ describe('Runtimes - Workerd - Context', () => {
     });
 
     describe('getStream', () => {
-        const assetResponse = (body: ReadableStream | null, status = 200, headers = {}): Response => new Response(body, {
-            status,
-            headers: new Headers(headers),
-        });
+        const assetResponse = (body: ReadableStream | null, status = 200, headers = {}): Response =>
+            new Response(body, {
+                status,
+                headers: new Headers(headers),
+            });
 
         it('Returns stream and size when ASSETS is configured and response is OK', async () => {
             const stream = new ReadableStream();
-            const fetchMock = vi.fn().mockResolvedValue(
-                assetResponse(stream, 200, {'content-length': '1024'})
-            );
+            const fetchMock = vi.fn().mockResolvedValue(assetResponse(stream, 200, {'content-length': '1024'}));
 
-            ctx = new WorkerdContext({
-                ...baseConfig,
-                env: {
-                    ASSETS: {fetch: fetchMock},
-                },
-            } as any, mockLogger, mockRequest, mockExecutionCtx);
+            ctx = new WorkerdContext(
+                {
+                    ...baseConfig,
+                    env: {
+                        ASSETS: {fetch: fetchMock},
+                    },
+                } as any,
+                mockLogger,
+                mockRequest,
+                mockExecutionCtx,
+            );
 
             const result = await ctx.getStream('/file.txt');
 
@@ -289,12 +307,17 @@ describe('Runtimes - Workerd - Context', () => {
 
             const fetchMock = vi.fn().mockResolvedValue(assetResponse(null, 404));
 
-            ctx = new WorkerdContext({
-                ...baseConfig,
-                env: {
-                    ASSETS: {fetch: fetchMock},
-                },
-            } as any, mockLogger, mockRequest, mockExecutionCtx);
+            ctx = new WorkerdContext(
+                {
+                    ...baseConfig,
+                    env: {
+                        ASSETS: {fetch: fetchMock},
+                    },
+                } as any,
+                mockLogger,
+                mockRequest,
+                mockExecutionCtx,
+            );
 
             const result = await ctx.getStream('/missing.html');
             expect(result).toBeNull();
@@ -306,18 +329,22 @@ describe('Runtimes - Workerd - Context', () => {
         it('Returns null and logs error if ASSETS is not in env', async () => {
             const errorSpy = vi.spyOn(ctx.logger, 'error');
 
-            const ctx2 = new WorkerdContext({
-                ...baseConfig,
-                env: {}, // no ASSETS
-            } as any, mockLogger, mockRequest, mockExecutionCtx);
+            const ctx2 = new WorkerdContext(
+                {
+                    ...baseConfig,
+                    env: {}, // no ASSETS
+                } as any,
+                mockLogger,
+                mockRequest,
+                mockExecutionCtx,
+            );
 
             const result = await ctx2.getStream('/fail.js');
 
             expect(result).toBeNull();
-            expect(errorSpy).toHaveBeenCalledWith(
-                new Error('WorkerdContext@getStream: ASSETS is not configured on env'),
-                {path: '/fail.js'}
-            );
+            expect(errorSpy).toHaveBeenCalledWith(new Error('WorkerdContext@getStream: ASSETS is not configured on env'), {
+                path: '/fail.js',
+            });
         });
 
         it('Throws and logs if response body is null', async () => {
@@ -325,32 +352,41 @@ describe('Runtimes - Workerd - Context', () => {
 
             const fetchMock = vi.fn().mockResolvedValue(assetResponse(null, 200));
 
-            ctx = new WorkerdContext({
-                ...baseConfig,
-                env: {
-                    ASSETS: {fetch: fetchMock},
-                },
-            } as any, mockLogger, mockRequest, mockExecutionCtx);
+            ctx = new WorkerdContext(
+                {
+                    ...baseConfig,
+                    env: {
+                        ASSETS: {fetch: fetchMock},
+                    },
+                } as any,
+                mockLogger,
+                mockRequest,
+                mockExecutionCtx,
+            );
 
             const result = await ctx.getStream('/nobody.mp4');
 
             expect(result).toBeNull();
-            expect(errorSpy).toHaveBeenCalledWith(
-                new Error('WorkerdContext@getStream: Can not create stream from response body'),
-                {path: '/nobody.mp4'}
-            );
+            expect(errorSpy).toHaveBeenCalledWith(new Error('WorkerdContext@getStream: Can not create stream from response body'), {
+                path: '/nobody.mp4',
+            });
         });
 
         it('Parses content-length to null if missing or invalid', async () => {
             const stream = new ReadableStream();
             const fetchMock = vi.fn().mockResolvedValue(assetResponse(stream, 200, {}));
 
-            ctx = new WorkerdContext({
-                ...baseConfig,
-                env: {
-                    ASSETS: {fetch: fetchMock},
-                },
-            } as any, mockLogger, mockRequest, mockExecutionCtx);
+            ctx = new WorkerdContext(
+                {
+                    ...baseConfig,
+                    env: {
+                        ASSETS: {fetch: fetchMock},
+                    },
+                } as any,
+                mockLogger,
+                mockRequest,
+                mockExecutionCtx,
+            );
 
             const result = await ctx.getStream('/file.jpg');
             expect(result?.size).toBeNull();
@@ -361,12 +397,17 @@ describe('Runtimes - Workerd - Context', () => {
             const stream = new ReadableStream();
             const fetchMock = vi.fn().mockResolvedValue(assetResponse(stream, 200, {'content-length': '5'}));
 
-            const ctx2 = new WorkerdContext({
-                ...baseConfig,
-                env: {
-                    ASSETS: {fetch: fetchMock},
-                },
-            } as any, mockLogger, mockRequest, mockExecutionCtx);
+            const ctx2 = new WorkerdContext(
+                {
+                    ...baseConfig,
+                    env: {
+                        ASSETS: {fetch: fetchMock},
+                    },
+                } as any,
+                mockLogger,
+                mockRequest,
+                mockExecutionCtx,
+            );
 
             await ctx2.getStream('test.png');
 

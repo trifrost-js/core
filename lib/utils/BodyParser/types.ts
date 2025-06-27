@@ -1,6 +1,6 @@
 import {type MimeType} from '../../types/constants';
 
-export type ParsedBody = Record<string, unknown>|{raw?:unknown};
+export type ParsedBody = Record<string, unknown> | {raw?: unknown};
 
 export type TriFrostBodyParserJsonOptions = {
     limit?: number;
@@ -70,6 +70,6 @@ export type TriFrostBodyParserOptions = {
     form?: TriFrostBodyParserFormOptions;
 };
 
-export const DEFAULT_BODY_PARSER_OPTIONS:TriFrostBodyParserOptions = {
+export const DEFAULT_BODY_PARSER_OPTIONS: TriFrostBodyParserOptions = {
     limit: 4 * 1024 * 1024,
 };

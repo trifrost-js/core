@@ -8,29 +8,26 @@ import {getActiveScriptEngine} from './use';
 export const SCRIPT_MARKER = '__TRIFROST_HYDRATED_SCRIPT__';
 
 export type ScriptProps<
-  TFData = undefined,
-  TFRelay extends Record<string, unknown> = Record<string, unknown>,
-  TFStore extends Record<string, unknown> = Record<string, unknown>
+    TFData = undefined,
+    TFRelay extends Record<string, unknown> = Record<string, unknown>,
+    TFStore extends Record<string, unknown> = Record<string, unknown>,
 > = JSXProps & {
-  children?: (
-    el: HTMLElement & TriFrostAtomicVM<TFRelay, TFStore>,
-    data: TriFrostAtomicProxy<TFData>,
-  ) => void;
-  nonce?: string;
-  src?: string;
-  async?: boolean;
-  defer?: boolean;
-  type?: string;
-  data?: TFData;
+    children?: (el: HTMLElement & TriFrostAtomicVM<TFRelay, TFStore>, data: TriFrostAtomicProxy<TFData>) => void;
+    nonce?: string;
+    src?: string;
+    async?: boolean;
+    defer?: boolean;
+    type?: string;
+    data?: TFData;
 };
 
 const RGX_DATA_SCRIPT = /<\/script>/gi;
 
-export function Script <
+export function Script<
     TFData = undefined,
     TFRelay extends Record<string, unknown> = Record<string, unknown>,
-    TFStore extends Record<string, unknown> = Record<string, unknown>
-> (options: JSXProps & ScriptProps<TFData, TFRelay, TFStore> | null): JSX.Element {
+    TFStore extends Record<string, unknown> = Record<string, unknown>,
+>(options: (JSXProps & ScriptProps<TFData, TFRelay, TFStore>) | null): JSX.Element {
     if (!options || Object.prototype.toString.call(options) !== '[object Object]') return null as unknown as JSX.Element;
 
     /* Source */
@@ -38,7 +35,7 @@ export function Script <
         const {src, async, defer, type = 'text/javascript'} = options;
 
         /* Formulate props */
-        const props:JSXProps = {type};
+        const props: JSXProps = {type};
 
         props.src = src;
 
@@ -49,7 +46,7 @@ export function Script <
         if (defer) props.defer = true;
 
         /* Nonce */
-        let n_nonce:string|null = options.nonce || null;
+        let n_nonce: string | null = options.nonce || null;
         if (!n_nonce) n_nonce = nonce();
         if (typeof n_nonce === 'string' && n_nonce.length) props.nonce = n_nonce;
 
@@ -63,22 +60,14 @@ export function Script <
     if (!engine) return null as unknown as JSX.Element;
 
     /* Normalize function body */
-    const raw = options
-        .children
-        .toString()
-        .trim();
+    const raw = options.children.toString().trim();
 
     /* Get data */
-    const data = options.data
-        ? JSON.stringify(options.data).replace(RGX_DATA_SCRIPT, '<\\/script>')
-        : null;
+    const data = options.data ? JSON.stringify(options.data).replace(RGX_DATA_SCRIPT, '<\\/script>') : null;
 
     return {
         type: SCRIPT_MARKER,
-        props: engine.register(
-            raw.startsWith('function') || raw.startsWith('(') ? raw : `(${raw})`,
-            data
-        ),
+        props: engine.register(raw.startsWith('function') || raw.startsWith('(') ? raw : `(${raw})`, data),
         key: null,
     };
 }

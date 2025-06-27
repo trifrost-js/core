@@ -1,30 +1,26 @@
 import {type Store} from '../../../storage/_Storage';
-import {
-    type TriFrostRateLimitObject,
-    type TriFrostRateLimitStrategizedStore,
-} from './_Strategy';
+import {type TriFrostRateLimitObject, type TriFrostRateLimitStrategizedStore} from './_Strategy';
 
 export class Fixed implements TriFrostRateLimitStrategizedStore {
-
     #window: number;
 
-    #store:Store<TriFrostRateLimitObject>;
+    #store: Store<TriFrostRateLimitObject>;
 
-    constructor (window: number = 60, store:Store<TriFrostRateLimitObject>) {
+    constructor(window: number = 60, store: Store<TriFrostRateLimitObject>) {
         this.#window = window;
         this.#store = store;
     }
 
-    protected get store ():Store|null {
+    protected get store(): Store | null {
         return this.#store;
     }
 
-    async consume (key: string, limit:number): Promise<TriFrostRateLimitObject> {
-        const now = Math.floor(Date.now()/1000);
+    async consume(key: string, limit: number): Promise<TriFrostRateLimitObject> {
+        const now = Math.floor(Date.now() / 1000);
         const record = await this.#store.get(key);
 
-        let amt:number;
-        let reset:number;
+        let amt: number;
+        let reset: number;
         if (!record || record.reset <= now) {
             amt = 1;
             reset = now + this.#window;
@@ -42,8 +38,7 @@ export class Fixed implements TriFrostRateLimitStrategizedStore {
         return {amt, reset};
     }
 
-    async stop () {
+    async stop() {
         await this.#store.stop();
     }
-
 }

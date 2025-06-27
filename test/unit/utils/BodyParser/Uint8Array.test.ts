@@ -1,7 +1,3 @@
-/* eslint-disable max-statements */
-/* eslint-disable max-lines */
-/* eslint-disable prefer-template,no-bitwise */
-
 import {describe, it, expect, vi} from 'vitest';
 import {parseBody} from '../../../../lib/utils/BodyParser/Uint8Array';
 import {MockContext} from '../../../MockContext';
@@ -10,26 +6,26 @@ import {DEFAULT_BODY_PARSER_OPTIONS} from '../../../../lib/utils/BodyParser/type
 
 const encoder = new TextEncoder();
 
-function toUtf16LE (str:string):Uint8Array {
+function toUtf16LE(str: string): Uint8Array {
     const arr = new Uint16Array(str.length);
     for (let i = 0; i < str.length; i++) arr[i] = str.charCodeAt(i);
     return new Uint8Array(arr.buffer);
 }
 
-function toUtf16BE (str:string):Uint8Array {
+function toUtf16BE(str: string): Uint8Array {
     const buf = new Uint8Array(str.length * 2);
     for (let i = 0; i < str.length; i++) {
         const code = str.charCodeAt(i);
         buf[i * 2] = code >> 8;
-        buf[(i * 2) + 1] = code & 0xFF;
+        buf[i * 2 + 1] = code & 0xff;
     }
     return buf;
 }
 
-function createMultipart (
-    boundary:string,
-    parts:{name:string, value:string|Uint8Array, filename?:string, contentType?:string}[]
-):Uint8Array {
+function createMultipart(
+    boundary: string,
+    parts: {name: string; value: string | Uint8Array; filename?: string; contentType?: string}[],
+): Uint8Array {
     const delimiter = `--${boundary}`;
     const footer = `--${boundary}--\r\n`;
     const body: Uint8Array[] = [];
@@ -47,7 +43,7 @@ function createMultipart (
     }
 
     body.push(encoder.encode(footer));
-    /* @ts-ignore */
+    /* @ts-expect-error Should be good */
     return new Uint8Array(body.reduce((acc, curr) => acc.concat(Array.from(curr)), []));
 }
 
@@ -75,14 +71,14 @@ describe('Utils - BodyParser - Uint8Array', () => {
     });
 
     it('Returns raw Uint8Array on unknown content-type', async () => {
-        const ctx = new MockContext({headers:{'content-type': 'application/unknown'}});
+        const ctx = new MockContext({headers: {'content-type': 'application/unknown'}});
         const buf = encoder.encode('raw data');
         const res = await parseBody(ctx, buf, DEFAULT_BODY_PARSER_OPTIONS);
         expect(res!.raw).toEqual(buf);
     });
 
     it('Returns null if body exceeds global limit', async () => {
-        const ctx = new MockContext({headers:{'content-type': 'application/unknown'}});
+        const ctx = new MockContext({headers: {'content-type': 'application/unknown'}});
         ctx.logger.debug = vi.fn();
         const buf = encoder.encode('this is long');
         const res = await parseBody(ctx, buf, {limit: 5});
@@ -108,8 +104,8 @@ describe('Utils - BodyParser - Uint8Array', () => {
                 'parseBody: Failed to parse',
                 expect.objectContaining({
                     type: 'application/json',
-                    msg: expect.stringContaining('Expected property name or \'}\' in JSON'),
-                })
+                    msg: expect.stringContaining("Expected property name or '}' in JSON"),
+                }),
             );
         });
 
@@ -154,14 +150,14 @@ describe('Utils - BodyParser - Uint8Array', () => {
         it('Parses UTF-8 BOM-prefixed JSON correctly', async () => {
             const ctx = new MockContext({headers: {'content-type': 'application/json'}});
             const json = '{"foo":"bar"}';
-            const res = await parseBody(ctx, new Uint8Array([0xEF, 0xBB, 0xBF, ...encoder.encode(json)]), DEFAULT_BODY_PARSER_OPTIONS);
+            const res = await parseBody(ctx, new Uint8Array([0xef, 0xbb, 0xbf, ...encoder.encode(json)]), DEFAULT_BODY_PARSER_OPTIONS);
             expect(res).toEqual({foo: 'bar'});
         });
 
         it('Returns {} on broken decode', async () => {
             const ctx = new MockContext({headers: {'content-type': 'application/json;'}});
             ctx.logger.debug = vi.fn();
-            const broken = new Uint8Array([0xC3, 0x28]);
+            const broken = new Uint8Array([0xc3, 0x28]);
             const res = await parseBody(ctx, broken, DEFAULT_BODY_PARSER_OPTIONS);
             expect(res).toEqual({});
             expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody: Failed to parse', {
@@ -210,8 +206,8 @@ describe('Utils - BodyParser - Uint8Array', () => {
                 'parseBody: Failed to parse',
                 expect.objectContaining({
                     type: 'text/json',
-                    msg: expect.stringContaining('Expected property name or \'}\' in JSON'),
-                })
+                    msg: expect.stringContaining("Expected property name or '}' in JSON"),
+                }),
             );
         });
 
@@ -256,14 +252,14 @@ describe('Utils - BodyParser - Uint8Array', () => {
         it('Parses UTF-8 BOM-prefixed JSON correctly', async () => {
             const ctx = new MockContext({headers: {'content-type': 'text/json'}});
             const json = '{"foo":"bar"}';
-            const res = await parseBody(ctx, new Uint8Array([0xEF, 0xBB, 0xBF, ...encoder.encode(json)]), DEFAULT_BODY_PARSER_OPTIONS);
+            const res = await parseBody(ctx, new Uint8Array([0xef, 0xbb, 0xbf, ...encoder.encode(json)]), DEFAULT_BODY_PARSER_OPTIONS);
             expect(res).toEqual({foo: 'bar'});
         });
 
         it('Returns {} on broken decode', async () => {
             const ctx = new MockContext({headers: {'content-type': 'text/json;'}});
             ctx.logger.debug = vi.fn();
-            const broken = new Uint8Array([0xC3, 0x28]);
+            const broken = new Uint8Array([0xc3, 0x28]);
             const res = await parseBody(ctx, broken, DEFAULT_BODY_PARSER_OPTIONS);
             expect(res).toEqual({});
             expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody: Failed to parse', {
@@ -312,8 +308,8 @@ describe('Utils - BodyParser - Uint8Array', () => {
                 'parseBody: Failed to parse',
                 expect.objectContaining({
                     type: 'application/ld+json',
-                    msg: expect.stringContaining('Expected property name or \'}\' in JSON'),
-                })
+                    msg: expect.stringContaining("Expected property name or '}' in JSON"),
+                }),
             );
         });
 
@@ -358,14 +354,14 @@ describe('Utils - BodyParser - Uint8Array', () => {
         it('Parses UTF-8 BOM-prefixed JSON correctly', async () => {
             const ctx = new MockContext({headers: {'content-type': 'application/ld+json'}});
             const json = '{"foo":"bar"}';
-            const res = await parseBody(ctx, new Uint8Array([0xEF, 0xBB, 0xBF, ...encoder.encode(json)]), DEFAULT_BODY_PARSER_OPTIONS);
+            const res = await parseBody(ctx, new Uint8Array([0xef, 0xbb, 0xbf, ...encoder.encode(json)]), DEFAULT_BODY_PARSER_OPTIONS);
             expect(res).toEqual({foo: 'bar'});
         });
 
         it('Returns {} on broken decode', async () => {
             const ctx = new MockContext({headers: {'content-type': 'application/ld+json;'}});
             ctx.logger.debug = vi.fn();
-            const broken = new Uint8Array([0xC3, 0x28]);
+            const broken = new Uint8Array([0xc3, 0x28]);
             const res = await parseBody(ctx, broken, DEFAULT_BODY_PARSER_OPTIONS);
             expect(res).toEqual({});
             expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody: Failed to parse', {
@@ -399,11 +395,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
     describe('application/x-ndjson', () => {
         it('Parses NDJSON as array of objects', async () => {
             const ctx = new MockContext({headers: {'content-type': 'application/x-ndjson'}});
-            const lines = [
-                JSON.stringify({id: 1}),
-                JSON.stringify({id: 2}),
-                JSON.stringify({id: 3}),
-            ].join('\n');
+            const lines = [JSON.stringify({id: 1}), JSON.stringify({id: 2}), JSON.stringify({id: 3})].join('\n');
             const buf = encoder.encode(lines);
             const res = await parseBody(ctx, buf, DEFAULT_BODY_PARSER_OPTIONS);
             expect(res!.raw).toEqual([{id: 1}, {id: 2}, {id: 3}]);
@@ -411,10 +403,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
 
         it('Handles content-type with charset', async () => {
             const ctx = new MockContext({headers: {'content-type': 'application/x-ndjson; charset=utf-8'}});
-            const lines = [
-                JSON.stringify({a: 'x'}),
-                JSON.stringify({b: 'y'}),
-            ].join('\n');
+            const lines = [JSON.stringify({a: 'x'}), JSON.stringify({b: 'y'})].join('\n');
             const buf = encoder.encode(lines);
             const res = await parseBody(ctx, buf, DEFAULT_BODY_PARSER_OPTIONS);
             expect(res!.raw).toEqual([{a: 'x'}, {b: 'y'}]);
@@ -449,7 +438,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
         it('Handles BOM-prefixed UTF-8 NDJSON', async () => {
             const ctx = new MockContext({headers: {'content-type': 'application/x-ndjson'}});
             const ndjson = '{"a":1}\n{"b":2}';
-            const buf = new Uint8Array([0xEF, 0xBB, 0xBF, ...encoder.encode(ndjson)]);
+            const buf = new Uint8Array([0xef, 0xbb, 0xbf, ...encoder.encode(ndjson)]);
             const res = await parseBody(ctx, buf, DEFAULT_BODY_PARSER_OPTIONS);
             expect(res!.raw).toEqual([{a: 1}, {b: 2}]);
         });
@@ -467,10 +456,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
         it('Returns null if body exceeds global limit', async () => {
             const ctx = new MockContext({headers: {'content-type': 'application/x-ndjson'}});
             ctx.logger.debug = vi.fn();
-            const lines = [
-                JSON.stringify({a: 'x'}),
-                JSON.stringify({b: 'y'}),
-            ].join('\n');
+            const lines = [JSON.stringify({a: 'x'}), JSON.stringify({b: 'y'})].join('\n');
             const buf = encoder.encode(lines);
             const res = await parseBody(ctx, buf, {limit: 10});
             expect(res).toBeNull();
@@ -480,10 +466,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
         it('Return null if body exceeds json limit', async () => {
             const ctx = new MockContext({headers: {'content-type': 'application/x-ndjson'}});
             ctx.logger.debug = vi.fn();
-            const lines = [
-                JSON.stringify({a: 'x'}),
-                JSON.stringify({b: 'y'}),
-            ].join('\n');
+            const lines = [JSON.stringify({a: 'x'}), JSON.stringify({b: 'y'})].join('\n');
             const buf = encoder.encode(lines);
             const res = await parseBody(ctx, buf, {
                 limit: 10_000,
@@ -538,7 +521,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
         it('Returns {} on broken HTML decode', async () => {
             const ctx = new MockContext({headers: {'content-type': 'text/html'}});
             ctx.logger.debug = vi.fn();
-            const broken = new Uint8Array([0xC3, 0x28]);
+            const broken = new Uint8Array([0xc3, 0x28]);
             const res = await parseBody(ctx, broken, DEFAULT_BODY_PARSER_OPTIONS);
             expect(res).toEqual({});
             expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody: Failed to parse', {
@@ -610,7 +593,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
         it('Returns {} on broken plain text decode', async () => {
             const ctx = new MockContext({headers: {'content-type': 'text/plain'}});
             ctx.logger.debug = vi.fn();
-            const broken = new Uint8Array([0xC3, 0x28]);
+            const broken = new Uint8Array([0xc3, 0x28]);
             const res = await parseBody(ctx, broken, DEFAULT_BODY_PARSER_OPTIONS);
             expect(res).toEqual({});
             expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody: Failed to parse', {
@@ -682,7 +665,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
         it('Returns {} on broken CSV decode', async () => {
             const ctx = new MockContext({headers: {'content-type': 'text/csv'}});
             ctx.logger.debug = vi.fn();
-            const broken = new Uint8Array([0xC3, 0x28]);
+            const broken = new Uint8Array([0xc3, 0x28]);
             const res = await parseBody(ctx, broken, DEFAULT_BODY_PARSER_OPTIONS);
             expect(res).toEqual({});
             expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody: Failed to parse', {
@@ -754,7 +737,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
         it('Returns {} on broken XML decode', async () => {
             const ctx = new MockContext({headers: {'content-type': 'application/xml'}});
             ctx.logger.debug = vi.fn();
-            const broken = new Uint8Array([0xC3, 0x28]);
+            const broken = new Uint8Array([0xc3, 0x28]);
             const res = await parseBody(ctx, broken, DEFAULT_BODY_PARSER_OPTIONS);
             expect(res).toEqual({});
             expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody: Failed to parse', {
@@ -826,7 +809,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
         it('Returns {} on broken XML decode', async () => {
             const ctx = new MockContext({headers: {'content-type': 'text/xml'}});
             ctx.logger.debug = vi.fn();
-            const broken = new Uint8Array([0xC3, 0x28]);
+            const broken = new Uint8Array([0xc3, 0x28]);
             const res = await parseBody(ctx, broken, DEFAULT_BODY_PARSER_OPTIONS);
             expect(res).toEqual({});
             expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody: Failed to parse', {
@@ -953,7 +936,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
         it('Returns {} on fatal decode failure', async () => {
             const ctx = new MockContext({headers: {'content-type': 'application/x-www-form-urlencoded'}});
             ctx.logger.debug = vi.fn();
-            const broken = new Uint8Array([0xC3, 0x28]);
+            const broken = new Uint8Array([0xc3, 0x28]);
             const res = await parseBody(ctx, broken, DEFAULT_BODY_PARSER_OPTIONS);
             expect(res).toEqual({});
             expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody: Failed to parse', {
@@ -1058,7 +1041,8 @@ describe('Utils - BodyParser - Uint8Array', () => {
             const multipart = createMultipart(boundary, [
                 {
                     name: 'username',
-                    value: 'Peter'},
+                    value: 'Peter',
+                },
                 {
                     name: 'avatar',
                     value: encoder.encode('file content'),
@@ -1069,7 +1053,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
 
             const ctx = new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}});
 
-            const result = await parseBody<{username:string;avatar:File}>(ctx, multipart, DEFAULT_BODY_PARSER_OPTIONS);
+            const result = await parseBody<{username: string; avatar: File}>(ctx, multipart, DEFAULT_BODY_PARSER_OPTIONS);
             expect(result!.username).toBe('Peter');
             expect(result!.avatar).toBeInstanceOf(File);
             expect(result!.avatar.name).toBe('avatar.png');
@@ -1079,7 +1063,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
 
         it('Handles missing filename as text field', async () => {
             const boundary = '----NoFileBoundary';
-            const result = await parseBody<{description:string}>(
+            const result = await parseBody<{description: string}>(
                 new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}}),
                 createMultipart(boundary, [
                     {
@@ -1088,7 +1072,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
                         contentType: 'text/plain',
                     },
                 ]),
-                DEFAULT_BODY_PARSER_OPTIONS
+                DEFAULT_BODY_PARSER_OPTIONS,
             );
             expect(result!.description).toBe('Just a string');
         });
@@ -1098,7 +1082,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
             const ctx = new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}});
             ctx.logger.debug = vi.fn();
 
-            const result = await parseBody<{upload?:File}>(
+            const result = await parseBody<{upload?: File}>(
                 ctx,
                 createMultipart(boundary, [
                     {
@@ -1108,13 +1092,13 @@ describe('Utils - BodyParser - Uint8Array', () => {
                         contentType: 'text/plain',
                     },
                 ]),
-                DEFAULT_BODY_PARSER_OPTIONS
+                DEFAULT_BODY_PARSER_OPTIONS,
             );
             expect(result!.upload).toBe(undefined);
-            expect(ctx.logger.debug).toHaveBeenCalledWith(
-                'parseBody@multipart: Empty file skipped',
-                {name: 'upload', filename: 'empty.txt'}
-            );
+            expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody@multipart: Empty file skipped', {
+                name: 'upload',
+                filename: 'empty.txt',
+            });
         });
 
         it('Ignores malformed part without boundary end', async () => {
@@ -1123,10 +1107,10 @@ describe('Utils - BodyParser - Uint8Array', () => {
             const result = await parseBody(
                 new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}}),
                 encoder.encode(`--${boundary}\r\nContent-Disposition: form-data; name="fail"\r\n\r\nbad`),
-                DEFAULT_BODY_PARSER_OPTIONS
+                DEFAULT_BODY_PARSER_OPTIONS,
             );
 
-            /* @ts-ignore this is what we're testing */
+            /* @ts-expect-error Should be good */
             expect(result.fail).toBe(undefined);
         });
 
@@ -1135,11 +1119,9 @@ describe('Utils - BodyParser - Uint8Array', () => {
 
             const file = globalThis.File;
             globalThis.File = class {
-
-                constructor () {
+                constructor() {
                     throw new Error('Simulated File failure');
                 }
-
             } as any;
 
             const ctx = new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}});
@@ -1155,22 +1137,18 @@ describe('Utils - BodyParser - Uint8Array', () => {
                         contentType: 'application/octet-stream',
                     },
                 ]),
-                DEFAULT_BODY_PARSER_OPTIONS
+                DEFAULT_BODY_PARSER_OPTIONS,
             );
 
-            /* @ts-ignore this is what we're testing */
+            /* @ts-expect-error Should be good */
             expect(result.badfile).toBe(undefined);
 
-            expect(ctx.logger.debug).toHaveBeenCalledWith(
-                'parseBody@multipart: Failed to create File',
-                {
-                    msg: 'Simulated File failure',
-                    filename: 'fail.dat',
-                    type: 'application/octet-stream',
-                }
-            );
+            expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody@multipart: Failed to create File', {
+                msg: 'Simulated File failure',
+                filename: 'fail.dat',
+                type: 'application/octet-stream',
+            });
 
-            /* eslint-disable-next-line require-atomic-updates */
             globalThis.File = file;
         });
 
@@ -1206,10 +1184,10 @@ describe('Utils - BodyParser - Uint8Array', () => {
             body.set(content, head.length);
             body.set(tail, head.length + content.length);
 
-            const result = await parseBody<{username:string}>(
+            const result = await parseBody<{username: string}>(
                 new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}}),
                 body,
-                DEFAULT_BODY_PARSER_OPTIONS
+                DEFAULT_BODY_PARSER_OPTIONS,
             );
             expect(result!.username).toBe('Peter ☃️');
         });
@@ -1234,10 +1212,10 @@ describe('Utils - BodyParser - Uint8Array', () => {
             body.set(content, head.length);
             body.set(tail, head.length + content.length);
 
-            const result = await parseBody<{comment:string}>(
+            const result = await parseBody<{comment: string}>(
                 new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}}),
                 body,
-                DEFAULT_BODY_PARSER_OPTIONS
+                DEFAULT_BODY_PARSER_OPTIONS,
             );
 
             expect(result!.comment).toBe('Multilingual 🌍 text');
@@ -1259,7 +1237,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
             const result = await parseBody<{secret: File}>(
                 new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}}),
                 multipart,
-                DEFAULT_BODY_PARSER_OPTIONS
+                DEFAULT_BODY_PARSER_OPTIONS,
             );
 
             expect(result!.secret).toBeInstanceOf(File);
@@ -1290,15 +1268,12 @@ describe('Utils - BodyParser - Uint8Array', () => {
             body.set(content, head.length);
             body.set(tail, head.length + content.length);
 
-            const result = await parseBody<{bio:string}>(ctx, body, DEFAULT_BODY_PARSER_OPTIONS);
+            const result = await parseBody<{bio: string}>(ctx, body, DEFAULT_BODY_PARSER_OPTIONS);
             expect(result!.bio).toBe(undefined);
-            expect(ctx.logger.debug).toHaveBeenCalledWith(
-                'parseBody: Failed to parse',
-                {
-                    msg: 'The "unsupported-enc" encoding is not supported',
-                    type: 'multipart/form-data',
-                }
-            );
+            expect(ctx.logger.debug).toHaveBeenCalledWith('parseBody: Failed to parse', {
+                msg: 'The "unsupported-enc" encoding is not supported',
+                type: 'multipart/form-data',
+            });
         });
 
         it('Parses multipart with mixed part charsets correctly', async () => {
@@ -1331,7 +1306,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
             const result = await parseBody<any>(
                 new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}}),
                 body,
-                DEFAULT_BODY_PARSER_OPTIONS
+                DEFAULT_BODY_PARSER_OPTIONS,
             );
 
             expect(result.utf8field).toBe('Normal UTF-8 text');
@@ -1341,7 +1316,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
 
         it('Parses UTF-8 field with BOM correctly', async () => {
             const boundary = 'bom-le';
-            const bomLE = new Uint8Array([0xFF, 0xFE]);
+            const bomLE = new Uint8Array([0xff, 0xfe]);
             const content = toUtf16LE('BOM start');
             const full = new Uint8Array(bomLE.length + content.length);
             full.set(bomLE);
@@ -1358,7 +1333,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
             const result = await parseBody<{field: string}>(
                 new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}}),
                 body,
-                DEFAULT_BODY_PARSER_OPTIONS
+                DEFAULT_BODY_PARSER_OPTIONS,
             );
 
             expect(result!.field).toBe('BOM start');
@@ -1366,7 +1341,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
 
         it('Parses UTF-16LE field with BOM correctly', async () => {
             const boundary = 'bom-le';
-            const bomLE = new Uint8Array([0xFF, 0xFE]);
+            const bomLE = new Uint8Array([0xff, 0xfe]);
             const content = toUtf16LE('BOM start');
             const full = new Uint8Array(bomLE.length + content.length);
             full.set(bomLE);
@@ -1383,7 +1358,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
             const result = await parseBody<{field: string}>(
                 new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}}),
                 body,
-                DEFAULT_BODY_PARSER_OPTIONS
+                DEFAULT_BODY_PARSER_OPTIONS,
             );
 
             expect(result!.field).toBe('BOM start');
@@ -1391,7 +1366,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
 
         it('Parses UTF-16BE field with BOM correctly', async () => {
             const boundary = 'bom-be';
-            const bomBE = new Uint8Array([0xFE, 0xFF]);
+            const bomBE = new Uint8Array([0xfe, 0xff]);
             const content = toUtf16BE('Big endian 🧠');
             const full = new Uint8Array(bomBE.length + content.length);
             full.set(bomBE);
@@ -1408,7 +1383,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
             const result = await parseBody<{field: string}>(
                 new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}}),
                 body,
-                DEFAULT_BODY_PARSER_OPTIONS
+                DEFAULT_BODY_PARSER_OPTIONS,
             );
 
             expect(result!.field).toBe('Big endian 🧠');
@@ -1430,7 +1405,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
             const result = await parseBody<{doc: File}>(
                 new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}}),
                 multipart,
-                DEFAULT_BODY_PARSER_OPTIONS
+                DEFAULT_BODY_PARSER_OPTIONS,
             );
 
             expect(result!.doc).toBeInstanceOf(File);
@@ -1455,7 +1430,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
             const result = await parseBody<{launchDoc: File}>(
                 new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}}),
                 multipart,
-                DEFAULT_BODY_PARSER_OPTIONS
+                DEFAULT_BODY_PARSER_OPTIONS,
             );
 
             expect(result!.launchDoc).toBeInstanceOf(File);
@@ -1468,7 +1443,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
             const boundary = 'missing-separator';
             const raw = `--${boundary}\r\nContent-Disposition: form-data; name="oops"\r\nMISSING_SEPARATOR\r\n--${boundary}--\r\n`;
             const ctx = new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}});
-            const result = await parseBody<{oops?:unknown}>(ctx, encoder.encode(raw), DEFAULT_BODY_PARSER_OPTIONS);
+            const result = await parseBody<{oops?: unknown}>(ctx, encoder.encode(raw), DEFAULT_BODY_PARSER_OPTIONS);
             expect(result!.oops).toBeUndefined();
         });
 
@@ -1484,7 +1459,7 @@ describe('Utils - BodyParser - Uint8Array', () => {
             const boundary = 'unknown-headers';
             const raw = `--${boundary}\r\nX-C-Field: n\r\nContent-Disposition: form-data; name="test"\r\n\r\nvalue\r\n--${boundary}--\r\n`;
             const ctx = new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}});
-            const result = await parseBody<{test:string}>(ctx, encoder.encode(raw), DEFAULT_BODY_PARSER_OPTIONS);
+            const result = await parseBody<{test: string}>(ctx, encoder.encode(raw), DEFAULT_BODY_PARSER_OPTIONS);
             expect(result!.test).toBe('value');
         });
 
@@ -1493,9 +1468,11 @@ describe('Utils - BodyParser - Uint8Array', () => {
             const ctx = new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}});
             const result = await parseBody<{file: File}>(
                 ctx,
-                /* eslint-disable-next-line max-len */
-                encoder.encode(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="data.bin"\r\n\r\ncontent\r\n--${boundary}--\r\n`),
-                DEFAULT_BODY_PARSER_OPTIONS
+
+                encoder.encode(
+                    `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="data.bin"\r\n\r\ncontent\r\n--${boundary}--\r\n`,
+                ),
+                DEFAULT_BODY_PARSER_OPTIONS,
             );
             expect(result!.file.type).toBe('application/octet-stream');
         });
@@ -1521,20 +1498,13 @@ describe('Utils - BodyParser - Uint8Array', () => {
             ].join('\r\n');
 
             const ctx = new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}});
-            const result = await parseBody<{simple:string}>(ctx, encoder.encode(raw), DEFAULT_BODY_PARSER_OPTIONS);
+            const result = await parseBody<{simple: string}>(ctx, encoder.encode(raw), DEFAULT_BODY_PARSER_OPTIONS);
             expect(result!.simple).toBe('Hello world');
         });
 
         it('Skips part with missing Content-Disposition header (covers fallback path)', async () => {
             const boundary = 'no-disposition';
-            const raw = [
-                `--${boundary}`,
-                'X-Custom: Something',
-                '',
-                'Should be ignored',
-                `--${boundary}--`,
-                '',
-            ].join('\r\n');
+            const raw = [`--${boundary}`, 'X-Custom: Something', '', 'Should be ignored', `--${boundary}--`, ''].join('\r\n');
 
             const ctx = new MockContext({headers: {'content-type': `multipart/form-data; boundary=${boundary}`}});
             const result = await parseBody(ctx, encoder.encode(raw), DEFAULT_BODY_PARSER_OPTIONS);
@@ -1686,61 +1656,53 @@ describe('Utils - BodyParser - Uint8Array', () => {
         });
 
         it('Respects normalizeDate = false', async () => {
-            const multipart = createMultipart('norm-date', [
-                {name: 'timestamp', value: '2025-06-12T10:00:00.000Z'},
-            ]);
+            const multipart = createMultipart('norm-date', [{name: 'timestamp', value: '2025-06-12T10:00:00.000Z'}]);
 
             const ctx = new MockContext({
                 headers: {'content-type': 'multipart/form-data; boundary=norm-date'},
             });
             ctx.logger.debug = vi.fn();
 
-            const result = await parseBody<{timestamp:string}>(ctx, multipart, {form: {normalizeDate: false}});
+            const result = await parseBody<{timestamp: string}>(ctx, multipart, {form: {normalizeDate: false}});
             expect(result!.timestamp).toBe('2025-06-12T10:00:00.000Z');
             expect(ctx.logger.debug).not.toHaveBeenCalled();
         });
 
         it('Respects normalizeNull = false', async () => {
-            const multipart = createMultipart('norm-date', [
-                {name: 'val', value: 'null'},
-            ]);
+            const multipart = createMultipart('norm-date', [{name: 'val', value: 'null'}]);
 
             const ctx = new MockContext({
                 headers: {'content-type': 'multipart/form-data; boundary=norm-date'},
             });
             ctx.logger.debug = vi.fn();
 
-            const result = await parseBody<{val:string}>(ctx, multipart, {form: {normalizeNull: false}});
+            const result = await parseBody<{val: string}>(ctx, multipart, {form: {normalizeNull: false}});
             expect(result!.val).toBe('null');
             expect(ctx.logger.debug).not.toHaveBeenCalled();
         });
 
         it('Respects normalizeBool = false', async () => {
-            const multipart = createMultipart('norm-date', [
-                {name: 'val', value: 'true'},
-            ]);
+            const multipart = createMultipart('norm-date', [{name: 'val', value: 'true'}]);
 
             const ctx = new MockContext({
                 headers: {'content-type': 'multipart/form-data; boundary=norm-date'},
             });
             ctx.logger.debug = vi.fn();
 
-            const result = await parseBody<{val:string}>(ctx, multipart, {form: {normalizeBool: false}});
+            const result = await parseBody<{val: string}>(ctx, multipart, {form: {normalizeBool: false}});
             expect(result!.val).toBe('true');
             expect(ctx.logger.debug).not.toHaveBeenCalled();
         });
 
         it('Respects normalizeNumber = false', async () => {
-            const multipart = createMultipart('norm-date', [
-                {name: 'val', value: '1234'},
-            ]);
+            const multipart = createMultipart('norm-date', [{name: 'val', value: '1234'}]);
 
             const ctx = new MockContext({
                 headers: {'content-type': 'multipart/form-data; boundary=norm-date'},
             });
             ctx.logger.debug = vi.fn();
 
-            const result = await parseBody<{val:string}>(ctx, multipart, {form: {normalizeNumber: false}});
+            const result = await parseBody<{val: string}>(ctx, multipart, {form: {normalizeNumber: false}});
             expect(result!.val).toBe('1234');
             expect(ctx.logger.debug).not.toHaveBeenCalled();
         });

@@ -2,10 +2,10 @@ import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {ConsoleExporter} from '../../../../../lib/modules/Logger/exporters/Console';
 import {type TriFrostLoggerLogPayload, type TriFrostLogLevel} from '../../../../../lib/modules/Logger/types';
 
-const levels:TriFrostLogLevel[] = ['log', 'info', 'warn', 'error', 'debug'];
+const levels: TriFrostLogLevel[] = ['log', 'info', 'warn', 'error', 'debug'];
 
 describe('Modules - Logger - Exporters - Console', () => {
-    let spies:any;
+    let spies: any;
     const fixedDate = new Date('2025-06-03T12:34:56.789Z');
 
     const baseLog: Omit<TriFrostLoggerLogPayload, 'level'> = {
@@ -14,7 +14,7 @@ describe('Modules - Logger - Exporters - Console', () => {
         ctx: {user: 'test'},
     };
 
-    const customFormat = (log:TriFrostLoggerLogPayload) => `CUSTOM[${log.level.toUpperCase()}]: ${log.message}`;
+    const customFormat = (log: TriFrostLoggerLogPayload) => `CUSTOM[${log.level.toUpperCase()}]: ${log.message}`;
 
     beforeEach(() => {
         spies = {
@@ -192,12 +192,12 @@ describe('Modules - Logger - Exporters - Console', () => {
                     omit: [{global: 'token'}],
                 });
                 exporter.init({service: 'test', api: {token: 'secret-token'}});
-            
+
                 await exporter.pushLog({
                     ...baseLog,
                     level,
                 });
-            
+
                 expect(spies[level]).toHaveBeenCalledWith(`[${fixedDate.toISOString()}] [${level}] Test message`, {
                     global: {
                         service: 'test',
@@ -205,14 +205,13 @@ describe('Modules - Logger - Exporters - Console', () => {
                     },
                 });
             });
-            
 
             it('Scrambles ctx using default SCRAMBLER_PRESETS', async () => {
                 const exporter = new ConsoleExporter({
                     include: ['ctx'],
                 });
                 exporter.init({});
-            
+
                 await exporter.pushLog({
                     ...baseLog,
                     level,
@@ -221,7 +220,7 @@ describe('Modules - Logger - Exporters - Console', () => {
                         user: 'bob',
                     },
                 });
-            
+
                 expect(spies[level]).toHaveBeenCalledWith(`[${fixedDate.toISOString()}] [${level}] Test message`, {
                     ctx: {
                         password: '***',
@@ -229,7 +228,6 @@ describe('Modules - Logger - Exporters - Console', () => {
                     },
                 });
             });
-            
 
             it('Does not scramble anything if omit is empty array', async () => {
                 const exporter = new ConsoleExporter({
@@ -237,7 +235,7 @@ describe('Modules - Logger - Exporters - Console', () => {
                     omit: [],
                 });
                 exporter.init({});
-            
+
                 await exporter.pushLog({
                     ...baseLog,
                     level,
@@ -246,7 +244,7 @@ describe('Modules - Logger - Exporters - Console', () => {
                         user: 'bob',
                     },
                 });
-            
+
                 expect(spies[level]).toHaveBeenCalledWith(`[${fixedDate.toISOString()}] [${level}] Test message`, {
                     ctx: {
                         password: 'super-secret',
@@ -258,12 +256,12 @@ describe('Modules - Logger - Exporters - Console', () => {
             it('Skips meta logging when no data and no inclusions', async () => {
                 const exporter = new ConsoleExporter({omit: []});
                 exporter.init({});
-            
+
                 await exporter.pushLog({
                     ...baseLog,
                     level,
                 });
-            
+
                 expect(spies[level]).toHaveBeenCalledWith(`[${fixedDate.toISOString()}] [${level}] Test message`);
                 expect(spies.groupCollapsed).not.toHaveBeenCalled();
             });
@@ -272,15 +270,15 @@ describe('Modules - Logger - Exporters - Console', () => {
                 const exporter = new ConsoleExporter({
                     include: ['invalid' as any, 'trace_id'],
                 });
-            
+
                 exporter.init({});
-            
+
                 await exporter.pushLog({
                     ...baseLog,
                     level,
                     trace_id: 'trace-x',
                 });
-            
+
                 expect(spies[level]).toHaveBeenCalledWith(`[${fixedDate.toISOString()}] [${level}] Test message`, {
                     trace_id: 'trace-x',
                 });

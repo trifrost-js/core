@@ -1,17 +1,10 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-
 import {isObject} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
 import {type TriFrostCache} from './modules/Cache';
 import {Cookies} from './modules/Cookies';
 import {rootRender} from './modules/JSX/render';
-import {
-    type TriFrostLogger,
-    type TriFrostRootLogger,
-} from './modules/Logger';
-import {
-    ParseAndApplyCacheControl,
-} from './middleware/CacheControl';
+import {type TriFrostLogger, type TriFrostRootLogger} from './modules/Logger';
+import {ParseAndApplyCacheControl} from './middleware/CacheControl';
 import {
     ExtensionToMimeType,
     type HttpMethod,
@@ -23,9 +16,7 @@ import {
     MimeTypesSet,
     HttpMethods,
 } from './types/constants';
-import {
-    type TriFrostRouteMatch,
-} from './types/routing';
+import {type TriFrostRouteMatch} from './types/routing';
 import {
     type TriFrostContextFileOptions,
     type TriFrostContextRedirectOptions,
@@ -37,15 +28,12 @@ import {
 } from './types/context';
 import {encodeFilename} from './utils/Http';
 import {hexId} from './utils/Generic';
-import {
-    type TriFrostBodyParserOptions,
-    type ParsedBody,
-} from './utils/BodyParser/types';
+import {type TriFrostBodyParserOptions, type ParsedBody} from './utils/BodyParser/types';
 
 type RequestConfig = {
-    method: HttpMethod,
+    method: HttpMethod;
     path: string;
-    headers: Record<string,string>;
+    headers: Record<string, string>;
     query: string;
 };
 
@@ -56,7 +44,7 @@ const RGX_URL = /^(https?:\/\/)[^\s/$.?#].[^\s]*$/i;
  * Used to get ip from headers under a trusted proxy, take note that this array will
  * be re-ordered automatically.
  */
-export const IP_HEADER_CANDIDATES:string[] = [
+export const IP_HEADER_CANDIDATES: string[] = [
     'x-client-ip',
     'x-forwarded-for',
     'cf-connecting-ip',
@@ -70,94 +58,87 @@ export const IP_HEADER_CANDIDATES:string[] = [
     'x-appengine-user-ip',
 ];
 
-export abstract class Context <
-    Env extends Record<string, any> = {},
-    State extends Record<string, unknown> = {}
-> implements TriFrostContext<Env, State> {
-
-/**
- * MARK: Private
- */
+// eslint-disable-next-line prettier/prettier
+export abstract class Context<Env extends Record<string, any> = {}, State extends Record<string, unknown> = {}> implements TriFrostContext<Env, State> {
+    /**
+     * MARK: Private
+     */
 
     /* Computed IP Address, see ip getter */
-    #ip:string|null|undefined = undefined;
+    #ip: string | null | undefined = undefined;
 
     /* TriFrost State */
-    #state!:State;
+    #state!: State;
 
     /* TriFrost Name */
-    #name:string = 'unknown';
+    #name: string = 'unknown';
 
     /* TriFrost Nonce */
-    #nonce:string|null = null;
+    #nonce: string | null = null;
 
     /* Kind of Context */
-    #kind:TriFrostContextKind = 'std';
+    #kind: TriFrostContextKind = 'std';
 
     /* Cache (see cache getter) */
-    #cache:TriFrostCache|null = null;
+    #cache: TriFrostCache | null = null;
 
     /* TriFrost Route Query. We compute this on an as-needed basis */
-    #query:URLSearchParams|null = null;
+    #query: URLSearchParams | null = null;
 
     /* TriFrost logger instance */
-    #logger:TriFrostLogger;
+    #logger: TriFrostLogger;
 
     /* Timeout */
-    #timeout:number|null = null;
+    #timeout: number | null = null;
 
     /* Timeout Id */
-    #timeout_id:any|null = null;
+    #timeout_id: any | null = null;
 
     /* Hooks to be executed after the context has finished */
     #after: (() => Promise<void>)[] = [];
 
-/**
- * MARK: Protected
- */
+    /**
+     * MARK: Protected
+     */
 
     /* TriFrost Context Config */
-    protected ctx_config:Readonly<TriFrostContextConfig<Env>>;
+    protected ctx_config: Readonly<TriFrostContextConfig<Env>>;
 
     /* TriFrost Request */
-    protected req_config:Readonly<RequestConfig>;
+    protected req_config: Readonly<RequestConfig>;
 
     /* TriFrost Request Id (take note: this CAN be different from the traceId used in logger, this is the inbound request id) */
-    protected req_id:string|null = null;
+    protected req_id: string | null = null;
 
     /* TriFrost Request body */
-    protected req_body:Readonly<ParsedBody>|null = null;
+    protected req_body: Readonly<ParsedBody> | null = null;
 
     /* Whether or not the context is initialized */
-    protected is_initialized:boolean = false;
+    protected is_initialized: boolean = false;
 
     /* Whether or not the context is done/finished and should not be written to anymore */
-    protected is_done:boolean = false;
+    protected is_done: boolean = false;
 
     /* Whether or not the context was aborted and should not be written to anymore */
-    protected is_aborted:boolean = false;
+    protected is_aborted: boolean = false;
 
     /* Response Headers */
-    protected res_headers:Record<string, string> = {};
+    protected res_headers: Record<string, string> = {};
 
     /* Response Code (for usage in runtimes working with numerical response codes) */
-    protected res_code:HttpStatusCode = 200;
+    protected res_code: HttpStatusCode = 200;
 
     /* Response Body */
-    protected res_body:string|null = null;
+    protected res_body: string | null = null;
 
     /* TriFrost Cookies. We compute this on an as-needed basis */
-    protected $cookies:Cookies|null = null;
+    protected $cookies: Cookies | null = null;
 
-/**
- * MARK: Constructor
- */
+    /**
+     * MARK: Constructor
+     */
 
-    constructor (
-        logger: TriFrostRootLogger,
-        cfg:TriFrostContextConfig<Env>,
-        req:RequestConfig
-    ) {
+    constructor(logger: TriFrostRootLogger, cfg: TriFrostContextConfig<Env>, req: RequestConfig) {
         this.ctx_config = cfg;
         this.req_config = req;
 
@@ -181,56 +162,56 @@ export abstract class Context <
         });
     }
 
-/**
- * MARK: Getters
- */
+    /**
+     * MARK: Getters
+     */
 
     /**
      * Whether or not the context was initialized
      */
-    get isInitialized ():boolean {
+    get isInitialized(): boolean {
         return this.is_initialized;
     }
 
     /**
      * Whether or not the response was finished
      */
-    get isDone ():boolean {
+    get isDone(): boolean {
         return this.is_done;
     }
 
     /**
      * Whether or not the request was aborted
      */
-    get isAborted ():boolean {
+    get isAborted(): boolean {
         return this.is_aborted;
     }
 
     /**
      * Whether or not the request is in a locked state and can not be written to anymore
      */
-    get isLocked ():boolean {
+    get isLocked(): boolean {
         return this.is_done || this.is_aborted;
     }
 
     /**
      * Returns the TriFrost environment
      */
-    get env ():Readonly<Env> {
+    get env(): Readonly<Env> {
         return this.ctx_config.env;
     }
 
     /**
      * Returns the method for the context
      */
-    get method ():HttpMethod {
+    get method(): HttpMethod {
         return this.req_config.method;
     }
 
     /**
      * Returns the name of the route the context is for (defaults to registration path)
      */
-    get name ():string {
+    get name(): string {
         return this.#name;
     }
 
@@ -241,28 +222,28 @@ export abstract class Context <
      * - 'std': General context, run everything :)
      * - 'options': Options run
      */
-    get kind () {
+    get kind() {
         return this.#kind;
     }
 
     /**
      * Returns the path for the context
      */
-    get path ():string {
+    get path(): string {
         return this.req_config.path;
     }
 
     /**
      * Returns the host of the context.
      */
-    get host ():string|null {
+    get host(): string | null {
         return this.req_config.headers.host || this.ctx_config.host || null;
     }
 
     /**
      * Returns the ip address of the request for the context
      */
-    get ip ():string|null {
+    get ip(): string | null {
         if (this.#ip !== undefined) return this.#ip;
         let val = this.getIPFromHeaders();
         if (!val) {
@@ -276,14 +257,14 @@ export abstract class Context <
     /**
      * Request ID
      */
-    get requestId (): string {
+    get requestId(): string {
         return this.req_id as string;
     }
 
     /**
      * Request Query parameters
      */
-    get query ():Readonly<URLSearchParams> {
+    get query(): Readonly<URLSearchParams> {
         if (!this.#query) this.#query = new URLSearchParams(this.req_config.query);
         return this.#query;
     }
@@ -291,9 +272,8 @@ export abstract class Context <
     /**
      * Cache Instance
      */
-    get cache ():TriFrostCache {
+    get cache(): TriFrostCache {
         if (!this.#cache) {
-            /* eslint-disable-next-line dot-notation */
             this.#cache = this.ctx_config.cache?.['spawn'](this as TriFrostContext<Env>) as TriFrostCache;
         }
         return this.#cache;
@@ -302,7 +282,7 @@ export abstract class Context <
     /**
      * Cookies for context
      */
-    get cookies ():Cookies {
+    get cookies(): Cookies {
         if (!this.$cookies) this.$cookies = new Cookies(this as TriFrostContext, this.ctx_config.cookies);
         return this.$cookies;
     }
@@ -310,28 +290,28 @@ export abstract class Context <
     /**
      * Logger
      */
-    get logger ():TriFrostLogger {
+    get logger(): TriFrostLogger {
         return this.#logger;
     }
 
     /**
      * Request Headers
      */
-    get headers ():Readonly<Record<string, string>> {
+    get headers(): Readonly<Record<string, string>> {
         return this.req_config.headers;
     }
 
     /**
      * Request Body
      */
-    get body ():Readonly<NonNullable<ParsedBody>> {
+    get body(): Readonly<NonNullable<ParsedBody>> {
         return this.req_body || {};
     }
 
     /**
      * Security nonce
      */
-    get nonce (): string {
+    get nonce(): string {
         if (this.#nonce) return this.#nonce;
 
         /* Check state nonce */
@@ -348,39 +328,39 @@ export abstract class Context <
     /**
      * Internal State
      */
-    get state () {
+    get state() {
         return this.#state;
     }
 
     /**
      * Returns the response code for the context
      */
-    get statusCode ():HttpStatusCode {
+    get statusCode(): HttpStatusCode {
         return this.res_code;
     }
 
     /**
      * Returns the currently configured timeout value
      */
-    get timeout ():number|null {
+    get timeout(): number | null {
         return this.#timeout;
     }
 
     /**
      * Returns the currently registered after hooks
      */
-    get afterHooks (): (() => Promise<void>)[] {
+    get afterHooks(): (() => Promise<void>)[] {
         return this.#after;
     }
 
-/**
- * MARK: State Mgmt
- */
+    /**
+     * MARK: State Mgmt
+     */
 
     /**
      * Expands the state and sets values
      */
-    setState <Patch extends Record<string, unknown>> (patch: Patch) {
+    setState<Patch extends Record<string, unknown>>(patch: Patch) {
         this.#state = {...this.#state, ...patch};
         return this as TriFrostContext<Env, State & Patch>;
     }
@@ -388,20 +368,20 @@ export abstract class Context <
     /**
      * Remove a set of keys from the state
      */
-    delState <K extends keyof State> (keys: K[]) {
+    delState<K extends keyof State>(keys: K[]) {
         /* Delete each key from the copy */
         for (let i = 0; i < keys.length; i++) delete this.#state[keys[i]];
         return this as TriFrostContext<Env, Omit<State, K>>;
     }
 
-/**
- * MARK: Timeouts
- */
+    /**
+     * MARK: Timeouts
+     */
 
     /**
      * Sets the timeout
      */
-    setTimeout (val:number|null):void {
+    setTimeout(val: number | null): void {
         if (Number.isInteger(val) && (val as number) > 0) {
             this.clearTimeout();
             this.#timeout = val;
@@ -420,15 +400,15 @@ export abstract class Context <
     /**
      * Clears the existing timeout
      */
-    clearTimeout ():void {
+    clearTimeout(): void {
         if (this.#timeout_id) clearTimeout(this.#timeout_id);
         this.#timeout = null;
         this.#timeout_id = null;
     }
 
-/**
- * MARK: Headers
- */
+    /**
+     * MARK: Headers
+     */
 
     /**
      * Set a header as part of the response to be returned to the callee
@@ -436,7 +416,7 @@ export abstract class Context <
      * Example:
      *  ctx.setHeader('Content-Type', 'application/json');
      */
-    setHeader (key:string, val:string|number):void {
+    setHeader(key: string, val: string | number): void {
         this.res_headers[String(key)] = String(val);
     }
 
@@ -446,7 +426,7 @@ export abstract class Context <
      * Example:
      *  ctx.setHeader('Content-Type', 'application/json');
      */
-    setHeaders (obj: Record<string, string|number>):void {
+    setHeaders(obj: Record<string, string | number>): void {
         for (const key in obj) this.res_headers[String(key)] = String(obj[key]);
     }
 
@@ -456,7 +436,7 @@ export abstract class Context <
      * Example:
      *  ctx.delHeader('Content-Type');
      */
-    delHeader (key:string):void {
+    delHeader(key: string): void {
         delete this.res_headers[String(key)];
     }
 
@@ -466,19 +446,19 @@ export abstract class Context <
      * Example:
      *  ctx.setType('text/html')
      */
-    setType (val:MimeType):void {
+    setType(val: MimeType): void {
         if (!MimeTypesSet.has(val)) return;
         this.res_headers['Content-Type'] = val;
     }
 
-/**
- * MARK: Status
- */
+    /**
+     * MARK: Status
+     */
 
     /**
      * Sets the response status code to a known HTTP status code
      */
-    setStatus (status:HttpStatusCode):void {
+    setStatus(status: HttpStatusCode): void {
         if (!(status in HttpCodeToStatus)) throw new Error('Context@setStatus: Invalid status code ' + status);
 
         /* Patch logger attributes to reflect status for observability */
@@ -492,14 +472,14 @@ export abstract class Context <
         this.res_code = status as HttpStatusCode;
     }
 
-/**
- * MARK: Body
- */
+    /**
+     * MARK: Body
+     */
 
     /**
      * Sets the body of the response to be returned to the callee
      */
-    setBody (value:string|null):void {
+    setBody(value: string | null): void {
         if (typeof value === 'string') {
             this.res_body = value;
         } else if (value === null) {
@@ -507,17 +487,14 @@ export abstract class Context <
         }
     }
 
-/**
- * MARK: LifeCycle
- */
+    /**
+     * MARK: LifeCycle
+     */
 
     /**
      * Initializes the request body and parses it into Json or FormData depending on its type
      */
-    async init (
-        match:TriFrostRouteMatch<Env>,
-        handler?:(config:TriFrostBodyParserOptions|null)=>Promise<ParsedBody|null>
-    ) {
+    async init(match: TriFrostRouteMatch<Env>, handler?: (config: TriFrostBodyParserOptions | null) => Promise<ParsedBody | null>) {
         try {
             /* No need to do anything if already initialized */
             if (this.is_initialized) return;
@@ -563,7 +540,7 @@ export abstract class Context <
      * @param {string|URL} input
      * @param {RequestInit} init
      */
-    async fetch (input: string | URL, init: RequestInit = {}): Promise<Response> {
+    async fetch(input: string | URL, init: RequestInit = {}): Promise<Response> {
         const url = typeof input === 'string' ? input : input.toString();
         const method = init?.method || 'GET';
 
@@ -604,7 +581,7 @@ export abstract class Context <
      *
      * @param {HttpStatusCode?} status - Status to abort with (defaults to 503)
      */
-    abort (status?:HttpStatusCode):void {
+    abort(status?: HttpStatusCode): void {
         if (this.is_aborted) return;
 
         this.#logger.debug('Context@abort: Aborting request');
@@ -622,7 +599,7 @@ export abstract class Context <
     /**
      * End the request and respond to callee
      */
-    end ():void|Response {
+    end(): void | Response {
         /* Set done to ensure nobody else writes data */
         this.is_done = true;
 
@@ -633,35 +610,35 @@ export abstract class Context <
     /**
      * Register an after hook
      */
-    addAfter (fn: () => Promise<void>) {
+    addAfter(fn: () => Promise<void>) {
         if (typeof fn !== 'function') return;
         this.#after.push(fn);
     }
 
-/**
- * MARK: Response
- */
+    /**
+     * MARK: Response
+     */
 
     /**
      * Render a JSX body to a string
      */
-    render (body:JSX.Element, opts?:TriFrostContextRenderOptions):string {
+    render(body: JSX.Element, opts?: TriFrostContextRenderOptions): string {
         return rootRender<Env, State>(this, body, (opts || this.ctx_config) as TriFrostContextConfig<Env>);
     }
 
     /**
      * Respond with a file
      */
-    async file (input:string|{stream:unknown; size?:number|null; name:string}, opts?:TriFrostContextFileOptions):Promise<void> {
+    async file(input: string | {stream: unknown; size?: number | null; name: string}, opts?: TriFrostContextFileOptions): Promise<void> {
         try {
             if (this.isLocked) throw new Error('Context@file: Cannot modify a finalized response');
 
             /* Cache Control */
             if (opts?.cacheControl) ParseAndApplyCacheControl(this as TriFrostContext, opts.cacheControl);
 
-            let stream:unknown;
-            let size:number|null = null;
-            let name:string;
+            let stream: unknown;
+            let size: number | null = null;
+            let name: string;
             if (isNeString(input)) {
                 /* Get a streamable */
                 const result = await this.getStream(input);
@@ -688,14 +665,11 @@ export abstract class Context <
              * Set Content-Disposition header depending on download option
              * @note As per RFC 6266 we make use of filename* with UTF-8
              */
-            const download:{encoded:string; ascii:string}|null = opts?.download === true
-                ? encodeFilename(name)
-                : typeof opts?.download === 'string'
-                    ? encodeFilename(opts.download)
-                    : null;
+            const download: {encoded: string; ascii: string} | null =
+                opts?.download === true ? encodeFilename(name) : typeof opts?.download === 'string' ? encodeFilename(opts.download) : null;
             if (download) {
                 this.res_headers['Content-Disposition'] = download.ascii.length
-                    ? 'attachment; filename="' + download.ascii + '"; filename*=UTF-8\'\'' + download.encoded
+                    ? 'attachment; filename="' + download.ascii + "\"; filename*=UTF-8''" + download.encoded
                     : 'attachment; filename="download"; filename*=UTF-8\'\'' + download.encoded;
             }
 
@@ -709,7 +683,7 @@ export abstract class Context <
     /**
      * Respond with HTML
      */
-    html (body:string|JSX.Element = '', opts?:TriFrostContextResponseOptions):void {
+    html(body: string | JSX.Element = '', opts?: TriFrostContextResponseOptions): void {
         try {
             /* Ensure we dont double write */
             if (this.isLocked) throw new Error('Context@html: Cannot modify a finalized response');
@@ -741,16 +715,14 @@ export abstract class Context <
     /**
      * Respond with JSON
      */
-    json (body:Record<string, unknown>|unknown[] = {}, opts?:TriFrostContextResponseOptions):void {
+    json(body: Record<string, unknown> | unknown[] = {}, opts?: TriFrostContextResponseOptions): void {
         try {
             /* Ensure we dont double write */
             if (this.isLocked) throw new Error('Context@json: Cannot modify a finalized response');
 
             /* Run sanity check on body payload */
-            if (
-                Object.prototype.toString.call(body) !== '[object Object]' &&
-                !Array.isArray(body)
-            ) throw new Error('Context@json: Invalid Payload');
+            if (Object.prototype.toString.call(body) !== '[object Object]' && !Array.isArray(body))
+                throw new Error('Context@json: Invalid Payload');
 
             /* Cache Control */
             if (opts?.cacheControl) ParseAndApplyCacheControl(this, opts.cacheControl);
@@ -772,7 +744,7 @@ export abstract class Context <
     /**
      * Respond with a status and no body
      */
-    status (status:HttpStatusCode):void {
+    status(status: HttpStatusCode): void {
         try {
             /* Ensure we dont double write */
             if (this.isLocked) throw new Error('Context@status: Cannot modify a finalized response');
@@ -788,7 +760,7 @@ export abstract class Context <
     /**
      * Respond with plain text
      */
-    text (body:string, opts?:TriFrostContextResponseOptions):void {
+    text(body: string, opts?: TriFrostContextResponseOptions): void {
         try {
             if (typeof body !== 'string') throw new Error('Context@text: Invalid Payload');
 
@@ -818,12 +790,10 @@ export abstract class Context <
      * @note Default status is 303 See Other
      * @note Default keep_query is true
      */
-    redirect (to:string, opts?:TriFrostContextRedirectOptions):void {
+    redirect(to: string, opts?: TriFrostContextRedirectOptions): void {
         try {
-            if (
-                typeof to !== 'string' ||
-                (opts?.status && !(opts.status in HttpRedirectStatusesToCode))
-            ) throw new Error('Context@redirect: Invalid Payload');
+            if (typeof to !== 'string' || (opts?.status && !(opts.status in HttpRedirectStatusesToCode)))
+                throw new Error('Context@redirect: Invalid Payload');
 
             /* Ensure we dont double write */
             if (this.isLocked) throw new Error('Context@redirect: Cannot modify a finalized response');
@@ -841,7 +811,9 @@ export abstract class Context <
                 if (!host) throw new Error('Context@redirect: Unable to determine host');
                 const normalized = host.startsWith('http://')
                     ? 'https://' + host.slice(7)
-                    : host.startsWith('http') ? host : 'https://' + host;
+                    : host.startsWith('http')
+                        ? host // eslint-disable-line prettier/prettier
+                        : 'https://' + host; // eslint-disable-line prettier/prettier
                 url = normalized.replace(/\/+$/, '') + '/' + url.replace(/^\/+/, '');
             }
 
@@ -861,14 +833,14 @@ export abstract class Context <
         }
     }
 
-/**
- * MARK: Private
- */
+    /**
+     * MARK: Private
+     */
 
     /**
      * If trustProxy is true tries to compute the IP from well-known headers
      */
-    private getIPFromHeaders ():string|null {
+    private getIPFromHeaders(): string | null {
         if (this.ctx_config.trustProxy !== true) return null;
 
         const headers = this.headers;
@@ -880,9 +852,7 @@ export abstract class Context <
             val = val.trim();
             if (!val.length) continue;
 
-            const candidate:string|null = name === 'x-forwarded-for'
-                ? val.split(',', 1)[0]?.trim()
-                : val;
+            const candidate: string | null = name === 'x-forwarded-for' ? val.split(',', 1)[0]?.trim() : val;
             if (!candidate || !RGX_IP.test(candidate)) continue;
 
             /* Promote to front of the array for next call */
@@ -896,19 +866,19 @@ export abstract class Context <
         return null;
     }
 
-/**
- * MARK: Abstract
- */
+    /**
+     * MARK: Abstract
+     */
 
     /**
      * Retrieve a streamable
      */
-    abstract getStream (path:string):Promise<{stream:unknown;size:number|null}|null>;
+    abstract getStream(path: string): Promise<{stream: unknown; size: number | null} | null>;
 
     /**
      * Stream a response from a streamlike value
      */
-    protected stream (stream:unknown, size:number|null) {
+    protected stream(stream: unknown, size: number | null) {
         if (this.isLocked) return;
 
         /* Lock the context to ensure no other responding can happen as we stream */
@@ -924,12 +894,11 @@ export abstract class Context <
     /**
      * Runs our after hooks
      */
-    abstract runAfter ():void;
+    abstract runAfter(): void;
 
     /**
      * Abstract function to be implemented by Context classes which computes the IP address
      * for a request on that runtime
      */
-    protected abstract getIP():string|null;
-
+    protected abstract getIP(): string | null;
 }

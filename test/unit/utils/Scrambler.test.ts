@@ -144,11 +144,7 @@ describe('scrambler', () => {
 
     it('Applies patterns when keys/globals do not match', () => {
         const s = createScrambler({
-            checks: [
-                'nonexistent.key',
-                {global: 'foo'},
-                {valuePattern: /\+1\s?\(\d{3}\)\s?\d{3}-\d{4}/},
-            ],
+            checks: ['nonexistent.key', {global: 'foo'}, {valuePattern: /\+1\s?\(\d{3}\)\s?\d{3}-\d{4}/}],
         });
         const r = s(baseInput);
         expect(r.extra.message).toBe('Call *** for help');
@@ -195,7 +191,10 @@ describe('scrambler', () => {
 
     it('Scrambles values inside array of objects', () => {
         const input = {
-            items: [{id: 1, token: 'a'}, {id: 2, token: 'b'}],
+            items: [
+                {id: 1, token: 'a'},
+                {id: 2, token: 'b'},
+            ],
         };
         const s = createScrambler({checks: ['items.token']});
         const r = s(input);
@@ -215,31 +214,28 @@ describe('scrambler', () => {
     it('Skips non-object elements in array during deep traversal', () => {
         const input = {
             data: {
-                list: [
-                    {meta: {value: 'a'}},
-                    'plain string',
-                    {meta: {value: 'b'}},
-                ],
+                list: [{meta: {value: 'a'}}, 'plain string', {meta: {value: 'b'}}],
             },
         };
         const s = createScrambler({checks: ['data.list.meta.value']});
         const r = s(input);
-        /* @ts-ignore */
         expect(r.data.list[0].meta.value).toBe('***');
         expect(r.data.list[1]).toBe('plain string');
-        /* @ts-ignore */
         expect(r.data.list[2].meta.value).toBe('***');
     });
 
     it('Handles deeply nested structures without crashing', () => {
         let deep = {value: 'secret'};
-        /* @ts-ignore */
+        /* @ts-expect-error Should be good */
         for (let i = 0; i < 20; i++) deep = {nested: deep};
-        /* eslint-disable-next-line max-len */
-        const s = createScrambler({checks: ['nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.value']});
+
+        const s = createScrambler({
+            checks: [
+                'nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.nested.value',
+            ],
+        });
         const r = s(deep);
         let cursor = r;
-        /* @ts-ignore */
         for (let i = 0; i < 20; i++) cursor = cursor.nested;
         expect(cursor.value).toBe('***');
     });

@@ -1,11 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import {
-    type JSXType,
-    type JSXProps,
-    type JSXKey,
-    type JSXFragment,
-} from './types';
+import {type JSXType, type JSXProps, type JSXKey, type JSXFragment} from './types';
 
 /**
  * Creates a JSX element representation.
@@ -15,7 +10,7 @@ import {
  * @param {JSXProps} props - The properties/attributes for the element.
  * @param {JSXKey} key - An optional key for element identity in a list.
  */
-export function jsx (type:JSXType, props:JSXProps, key?:JSXKey):JSX.Element {
+export function jsx(type: JSXType, props: JSXProps, key?: JSXKey): JSX.Element {
     return {type, props: props || {}, key};
 }
 
@@ -27,7 +22,7 @@ export function jsx (type:JSXType, props:JSXProps, key?:JSXKey):JSX.Element {
  * @param {JSXProps} props - The properties/attributes for the element.
  * @param {JSXKey} key - An optional key for element identity in a list.
  */
-export function jsxs (type:JSXType, props:JSXProps, key?:JSXKey):JSX.Element {
+export function jsxs(type: JSXType, props: JSXProps, key?: JSXKey): JSX.Element {
     return jsx(type, props, key);
 }
 
@@ -48,14 +43,14 @@ export function jsxs (type:JSXType, props:JSXProps, key?:JSXKey):JSX.Element {
  * @param {{fileName: string;lineNumber:number}} _source - Metadata about the JSX origin location (file + line).
  * @param {any} _self - The lexical 'this' in source (unused).
  */
-export function jsxDEV (
-    type:JSXType,
-    props:JSXProps,
-    key:JSXKey|undefined,
+export function jsxDEV(
+    type: JSXType,
+    props: JSXProps,
+    key: JSXKey | undefined,
     _isStaticChildren: boolean,
     _source: {fileName: string; lineNumber: number},
-    _self: any
-):JSX.Element {
+    _self: any,
+): JSX.Element {
     return jsx(type, props, key);
 }
 
@@ -64,4 +59,4 @@ export function jsxDEV (
  *
  * @param props - Props object containing `children`.
  */
-export const Fragment = (props:JSXFragment) => props.children;
+export const Fragment = (props: JSXFragment) => props.children;

@@ -4,41 +4,38 @@ import type {TriFrostContext} from '../types/context';
 import type {TriFrostStoreAdapter, TriFrostStoreValue} from './types';
 
 export class Store<T extends TriFrostStoreValue = TriFrostStoreValue> {
-
     #name: string;
 
-    protected adapter:TriFrostStoreAdapter<T>;
+    protected adapter: TriFrostStoreAdapter<T>;
 
-    readonly #ctx?:TriFrostContext|null = null;
+    readonly #ctx?: TriFrostContext | null = null;
 
-    constructor (name:string, adapter:TriFrostStoreAdapter<T>, ctx?:TriFrostContext) {
+    constructor(name: string, adapter: TriFrostStoreAdapter<T>, ctx?: TriFrostContext) {
         this.#name = name;
         this.adapter = adapter;
         if (ctx) this.#ctx = ctx;
     }
 
-    get name () {
+    get name() {
         return this.#name;
     }
 
-    async get (key: string): Promise<T|null> {
+    async get(key: string): Promise<T | null> {
         if (!isNeString(key)) throw new Error(this.#name + '@get: Invalid key');
 
         try {
             const val = await this.adapter.get(key);
-            return Object.prototype.toString.call(val) === '[object Object]' || Array.isArray(val) ? val as T : null;
+            return Object.prototype.toString.call(val) === '[object Object]' || Array.isArray(val) ? (val as T) : null;
         } catch (err) {
             this.#ctx?.logger?.error?.(err, {key});
             return null;
         }
     }
 
-    async set (key:string, value:T, opts?:{ttl?:number}): Promise<void> {
+    async set(key: string, value: T, opts?: {ttl?: number}): Promise<void> {
         if (!isNeString(key)) throw new Error(this.#name + '@set: Invalid key');
-        if (
-            Object.prototype.toString.call(value) !== '[object Object]' &&
-            !Array.isArray(value)
-        ) throw new Error(this.#name + '@set: Invalid value');
+        if (Object.prototype.toString.call(value) !== '[object Object]' && !Array.isArray(value))
+            throw new Error(this.#name + '@set: Invalid value');
 
         const TTL = isIntGt(opts?.ttl, 0) ? opts.ttl : 60;
 
@@ -49,7 +46,7 @@ export class Store<T extends TriFrostStoreValue = TriFrostStoreValue> {
         }
     }
 
-    async del (val:string|{prefix:string}):Promise<void> {
+    async del(val: string | {prefix: string}): Promise<void> {
         if (isNeString(val)) {
             try {
                 await this.adapter.del(val);
@@ -67,7 +64,7 @@ export class Store<T extends TriFrostStoreValue = TriFrostStoreValue> {
         }
     }
 
-    async stop ():Promise<void> {
+    async stop(): Promise<void> {
         try {
             await this.adapter.stop();
         } catch (err) {
@@ -75,8 +72,7 @@ export class Store<T extends TriFrostStoreValue = TriFrostStoreValue> {
         }
     }
 
-    spawn (ctx:TriFrostContext):Store<T> {
+    spawn(ctx: TriFrostContext): Store<T> {
         return new Store<T>(this.name, this.adapter, ctx);
     }
-
 }

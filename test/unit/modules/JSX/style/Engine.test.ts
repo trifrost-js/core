@@ -48,11 +48,9 @@ describe('Modules – JSX – style – Engine', () => {
             engine.register('margin:1rem', 'tf-m1', {query});
             engine.register('padding:2rem', 'tf-p2', {query});
 
-            expect(engine.flush()).toBe([
-                '<style>',
-                '@media screen and (min-width: 768px){.tf-m1{margin:1rem}.tf-p2{padding:2rem}}',
-                '</style>',
-            ].join(''));
+            expect(engine.flush()).toBe(
+                ['<style>', '@media screen and (min-width: 768px){.tf-m1{margin:1rem}.tf-p2{padding:2rem}}', '</style>'].join(''),
+            );
         });
 
         it('Respects custom selectors', () => {
@@ -77,13 +75,15 @@ describe('Modules – JSX – style – Engine', () => {
             engine.register('font-size:1rem', 'tf-black', {query: '@media (prefers-color-scheme: light)'});
             engine.register('color:red', 'tf-black', {query: '@media (prefers-color-scheme: light)'});
 
-            expect(engine.flush()).toBe([
-                '<style>',
-                '.tf-black{color:black}',
-                '@media (prefers-color-scheme: dark){.tf-black{font-size:2rem}.tf-white{color:white}}',
-                '@media (prefers-color-scheme: light){.tf-black{font-size:1rem}.tf-black{color:red}}',
-                '</style>',
-            ].join(''));
+            expect(engine.flush()).toBe(
+                [
+                    '<style>',
+                    '.tf-black{color:black}',
+                    '@media (prefers-color-scheme: dark){.tf-black{font-size:2rem}.tf-white{color:white}}',
+                    '@media (prefers-color-scheme: light){.tf-black{font-size:1rem}.tf-black{color:red}}',
+                    '</style>',
+                ].join(''),
+            );
         });
 
         it('Deduplicates duplicate rules', () => {
@@ -111,9 +111,9 @@ describe('Modules – JSX – style – Engine', () => {
         });
 
         it('Ignores rule if null or undefined', () => {
-			/* @ts-ignore testing invalid input */
+            /* @ts-expect-error testing invalid input */
             engine.register(undefined, 'tf-null', {});
-			/* @ts-ignore testing invalid input */
+            /* @ts-expect-error testing invalid input */
             engine.register(null, 'tf-null', {});
             expect(engine.flush()).toBe('');
         });
@@ -137,60 +137,62 @@ describe('Modules – JSX – style – Engine', () => {
                 engine.register(rule, cls, {});
             }
 
-            expect(engine.flush()).toBe([
-                '<style>',
-                '.tf-1dma5fa{padding:0px}',
-                '.tf-1dma4mv{padding:1px}',
-                '.tf-1dma0hg{padding:2px}',
-                '.tf-1dma67p{padding:3px}',
-                '.tf-1dma22a{padding:4px}',
-                '.tf-1dma19v{padding:5px}',
-                '.tf-1dm9x4g{padding:6px}',
-                '.tf-1dma2up{padding:7px}',
-                '.tf-1dm9ypq{padding:8px}',
-                '.tf-1dm9xxb{padding:9px}',
-                '.tf-3pqeav{padding:10px}',
-                '.tf-3pqf3a{padding:11px}',
-                '.tf-3pqfvp{padding:12px}',
-                '.tf-3pqa5g{padding:13px}',
-                '.tf-3pqaxv{padding:14px}',
-                '.tf-3pqbqa{padding:15px}',
-                '.tf-3pqcip{padding:16px}',
-                '.tf-3pq6sg{padding:17px}',
-                '.tf-3pq7lb{padding:18px}',
-                '.tf-3pq8dq{padding:19px}',
-                '.tf-3pmlac{padding:20px}',
-                '.tf-3pmkhx{padding:21px}',
-                '.tf-3pmq86{padding:22px}',
-                '.tf-3pmpfr{padding:23px}',
-                '.tf-3pmhxc{padding:24px}',
-                '.tf-3pmh4x{padding:25px}',
-                '.tf-3pmmv6{padding:26px}',
-                '.tf-3pmm2r{padding:27px}',
-                '.tf-3pmeks{padding:28px}',
-                '.tf-3pmdsd{padding:29px}',
-                '.tf-3pouqt{padding:30px}',
-                '.tf-3povj8{padding:31px}',
-                '.tf-3pozon{padding:32px}',
-                '.tf-3potye{padding:33px}',
-                '.tf-3pordt{padding:34px}',
-                '.tf-3pos68{padding:35px}',
-                '.tf-3powbn{padding:36px}',
-                '.tf-3poqle{padding:37px}',
-                '.tf-3poo19{padding:38px}',
-                '.tf-3pooto{padding:39px}',
-                '.tf-3pl1qa{padding:40px}',
-                '.tf-3pl0xv{padding:41px}',
-                '.tf-3pl3b4{padding:42px}',
-                '.tf-3pl2ip{padding:43px}',
-                '.tf-3pl53a{padding:44px}',
-                '.tf-3pl4av{padding:45px}',
-                '.tf-3pl6o4{padding:46px}',
-                '.tf-3pl5vp{padding:47px}',
-                '.tf-3pkv0q{padding:48px}',
-                '.tf-3pku8b{padding:49px}',
-                '</style>',
-            ].join(''));
+            expect(engine.flush()).toBe(
+                [
+                    '<style>',
+                    '.tf-1dma5fa{padding:0px}',
+                    '.tf-1dma4mv{padding:1px}',
+                    '.tf-1dma0hg{padding:2px}',
+                    '.tf-1dma67p{padding:3px}',
+                    '.tf-1dma22a{padding:4px}',
+                    '.tf-1dma19v{padding:5px}',
+                    '.tf-1dm9x4g{padding:6px}',
+                    '.tf-1dma2up{padding:7px}',
+                    '.tf-1dm9ypq{padding:8px}',
+                    '.tf-1dm9xxb{padding:9px}',
+                    '.tf-3pqeav{padding:10px}',
+                    '.tf-3pqf3a{padding:11px}',
+                    '.tf-3pqfvp{padding:12px}',
+                    '.tf-3pqa5g{padding:13px}',
+                    '.tf-3pqaxv{padding:14px}',
+                    '.tf-3pqbqa{padding:15px}',
+                    '.tf-3pqcip{padding:16px}',
+                    '.tf-3pq6sg{padding:17px}',
+                    '.tf-3pq7lb{padding:18px}',
+                    '.tf-3pq8dq{padding:19px}',
+                    '.tf-3pmlac{padding:20px}',
+                    '.tf-3pmkhx{padding:21px}',
+                    '.tf-3pmq86{padding:22px}',
+                    '.tf-3pmpfr{padding:23px}',
+                    '.tf-3pmhxc{padding:24px}',
+                    '.tf-3pmh4x{padding:25px}',
+                    '.tf-3pmmv6{padding:26px}',
+                    '.tf-3pmm2r{padding:27px}',
+                    '.tf-3pmeks{padding:28px}',
+                    '.tf-3pmdsd{padding:29px}',
+                    '.tf-3pouqt{padding:30px}',
+                    '.tf-3povj8{padding:31px}',
+                    '.tf-3pozon{padding:32px}',
+                    '.tf-3potye{padding:33px}',
+                    '.tf-3pordt{padding:34px}',
+                    '.tf-3pos68{padding:35px}',
+                    '.tf-3powbn{padding:36px}',
+                    '.tf-3poqle{padding:37px}',
+                    '.tf-3poo19{padding:38px}',
+                    '.tf-3pooto{padding:39px}',
+                    '.tf-3pl1qa{padding:40px}',
+                    '.tf-3pl0xv{padding:41px}',
+                    '.tf-3pl3b4{padding:42px}',
+                    '.tf-3pl2ip{padding:43px}',
+                    '.tf-3pl53a{padding:44px}',
+                    '.tf-3pl4av{padding:45px}',
+                    '.tf-3pl6o4{padding:46px}',
+                    '.tf-3pl5vp{padding:47px}',
+                    '.tf-3pkv0q{padding:48px}',
+                    '.tf-3pku8b{padding:49px}',
+                    '</style>',
+                ].join(''),
+            );
         });
 
         it('Includes nonce attribute when active', () => {
@@ -213,18 +215,16 @@ describe('Modules – JSX – style – Engine', () => {
         it('Replaces marker if present', () => {
             const cls = engine.hash('color:red');
             engine.register('color:red', cls, {});
-            expect(
-                engine.inject(`<div>${MARKER}Hello there</div>`)
-            ).toBe('<div><style>.tf-1tlgz3l{color:red}</style>Hello there</div>');
+            expect(engine.inject(`<div>${MARKER}Hello there</div>`)).toBe('<div><style>.tf-1tlgz3l{color:red}</style>Hello there</div>');
         });
 
         it('Includes nonce attribute when active', () => {
             const cls = engine.hash('color:red');
             setActiveCtx(new MockContext({nonce: 'abc123'}));
             engine.register('color:red', cls, {});
-            expect(
-                engine.inject(`<div>${MARKER}Hello there</div>`)
-            ).toBe('<div><style nonce="abc123">.tf-1tlgz3l{color:red}</style>Hello there</div>');
+            expect(engine.inject(`<div>${MARKER}Hello there</div>`)).toBe(
+                '<div><style nonce="abc123">.tf-1tlgz3l{color:red}</style>Hello there</div>',
+            );
         });
 
         it('Does not prepend styles if marker is not present', () => {
@@ -236,15 +236,13 @@ describe('Modules – JSX – style – Engine', () => {
         it('Only replaces the first occurrence of the style marker and strips the rest', () => {
             const cls = engine.hash('border:1px solid red');
             engine.register('border:1px solid red', cls, {});
-            expect(
-                engine.inject(`<div>${MARKER}<span>${MARKER}</span></div>`)
-            ).toBe('<div><style>.tf-12bzjpg{border:1px solid red}</style><span></span></div>');
+            expect(engine.inject(`<div>${MARKER}<span>${MARKER}</span></div>`)).toBe(
+                '<div><style>.tf-12bzjpg{border:1px solid red}</style><span></span></div>',
+            );
         });
 
         it('Strips the markers even if engine is empty', () => {
-            expect(
-                engine.inject(`<div>${MARKER}<span>${MARKER}</span></div>`)
-            ).toBe('<div><span></span></div>');
+            expect(engine.inject(`<div>${MARKER}<span>${MARKER}</span></div>`)).toBe('<div><span></span></div>');
         });
 
         it('Does not fail if passed a non/empty-string html', () => {
@@ -266,12 +264,14 @@ describe('Modules – JSX – style – Engine', () => {
             engine.register('color:red', cls, {});
             engine.setMountPath('/styles.css');
 
-            expect(engine.inject(`<!DOCTYPE html><html>${MARKER}</html>`)).toBe([
-                '<!DOCTYPE html><html>',
-                '<link rel="stylesheet" href="/styles.css">',
-                '<style>.tf-1tlgz3l{color:red}</style>',
-                '</html>',
-            ].join(''));
+            expect(engine.inject(`<!DOCTYPE html><html>${MARKER}</html>`)).toBe(
+                [
+                    '<!DOCTYPE html><html>',
+                    '<link rel="stylesheet" href="/styles.css">',
+                    '<style>.tf-1tlgz3l{color:red}</style>',
+                    '</html>',
+                ].join(''),
+            );
         });
 
         it('Injects <link> when HTML starts with <html>', () => {
@@ -279,12 +279,9 @@ describe('Modules – JSX – style – Engine', () => {
             engine.register('margin:0', cls, {});
             engine.setMountPath('/styles.css');
 
-            expect(engine.inject(`<html>${MARKER}</html>`)).toBe([
-                '<html>',
-                '<link rel="stylesheet" href="/styles.css">',
-                '<style>.tf-pmr7gx{margin:0}</style>',
-                '</html>',
-            ].join(''));
+            expect(engine.inject(`<html>${MARKER}</html>`)).toBe(
+                ['<html>', '<link rel="stylesheet" href="/styles.css">', '<style>.tf-pmr7gx{margin:0}</style>', '</html>'].join(''),
+            );
         });
 
         it('Injects <link> with nonce when mount_path is set and nonce context is active', () => {
@@ -293,12 +290,14 @@ describe('Modules – JSX – style – Engine', () => {
             engine.setMountPath('/styles.css');
             setActiveCtx(new MockContext({nonce: 'abc123'}));
 
-            expect(engine.inject(`<!DOCTYPE html><html>${MARKER}</html>`)).toBe([
-                '<!DOCTYPE html><html>',
-                '<link rel="stylesheet" nonce="abc123" href="/styles.css">',
-                '<style nonce="abc123">.tf-1tlgz3l{color:red}</style>',
-                '</html>',
-            ].join(''));
+            expect(engine.inject(`<!DOCTYPE html><html>${MARKER}</html>`)).toBe(
+                [
+                    '<!DOCTYPE html><html>',
+                    '<link rel="stylesheet" nonce="abc123" href="/styles.css">',
+                    '<style nonce="abc123">.tf-1tlgz3l{color:red}</style>',
+                    '</html>',
+                ].join(''),
+            );
         });
 
         it('Does not inject <link> if mount_path is set but HTML is not full document', () => {
@@ -306,9 +305,7 @@ describe('Modules – JSX – style – Engine', () => {
             engine.register('padding:0', cls, {});
             engine.setMountPath('/styles.css');
 
-            expect(engine.inject(`<div>${MARKER}content</div>`)).toBe([
-                '<div><style>.tf-8pxw5a{padding:0}</style>content</div>',
-            ].join(''));
+            expect(engine.inject(`<div>${MARKER}content</div>`)).toBe(['<div><style>.tf-8pxw5a{padding:0}</style>content</div>'].join(''));
         });
     });
 
@@ -325,30 +322,32 @@ describe('Modules – JSX – style – Engine', () => {
                 engine.register(rule, engine.hash(rule), {});
             }
 
-            expect(engine.flush()).toBe([
-                '<style>',
-                '.tf-n8zwv2{border-radius:0px}',
-                '.tf-n8zw2n{border-radius:1px}',
-                '.tf-n8zyfw{border-radius:2px}',
-                '.tf-n8zxnh{border-radius:3px}',
-                '.tf-n8zti2{border-radius:4px}',
-                '.tf-n8zspn{border-radius:5px}',
-                '.tf-n8zv2w{border-radius:6px}',
-                '.tf-n8zuah{border-radius:7px}',
-                '.tf-n903km{border-radius:8px}',
-                '.tf-n902s7{border-radius:9px}',
-                '.tf-1kxtfin{border-radius:10px}',
-                '.tf-1kxtgb2{border-radius:11px}',
-                '.tf-1kxtakt{border-radius:12px}',
-                '.tf-1kxtbd8{border-radius:13px}',
-                '.tf-1kxtc5n{border-radius:14px}',
-                '.tf-1kxtcy2{border-radius:15px}',
-                '.tf-1kxt77t{border-radius:16px}',
-                '.tf-1kxt808{border-radius:17px}',
-                '.tf-1kxtm87{border-radius:18px}',
-                '.tf-1kxtn0m{border-radius:19px}',
-                '</style>',
-            ].join(''));
+            expect(engine.flush()).toBe(
+                [
+                    '<style>',
+                    '.tf-n8zwv2{border-radius:0px}',
+                    '.tf-n8zw2n{border-radius:1px}',
+                    '.tf-n8zyfw{border-radius:2px}',
+                    '.tf-n8zxnh{border-radius:3px}',
+                    '.tf-n8zti2{border-radius:4px}',
+                    '.tf-n8zspn{border-radius:5px}',
+                    '.tf-n8zv2w{border-radius:6px}',
+                    '.tf-n8zuah{border-radius:7px}',
+                    '.tf-n903km{border-radius:8px}',
+                    '.tf-n902s7{border-radius:9px}',
+                    '.tf-1kxtfin{border-radius:10px}',
+                    '.tf-1kxtgb2{border-radius:11px}',
+                    '.tf-1kxtakt{border-radius:12px}',
+                    '.tf-1kxtbd8{border-radius:13px}',
+                    '.tf-1kxtc5n{border-radius:14px}',
+                    '.tf-1kxtcy2{border-radius:15px}',
+                    '.tf-1kxt77t{border-radius:16px}',
+                    '.tf-1kxt808{border-radius:17px}',
+                    '.tf-1kxtm87{border-radius:18px}',
+                    '.tf-1kxtn0m{border-radius:19px}',
+                    '</style>',
+                ].join(''),
+            );
             engine.reset();
             expect(engine.flush()).toBe('');
         });
@@ -358,12 +357,11 @@ describe('Modules – JSX – style – Engine', () => {
             engine.register('font-size:0.9rem', engine.hash('font-size:0.9rem'), {
                 query: '@media (min-width: 800px)',
             });
-            expect(engine.flush()).toBe([
-                '<style>',
-                '.tf-9loqhw{font-weight:bold}',
-                '@media (min-width: 800px){.tf-1txfpkp{font-size:0.9rem}}',
-                '</style>',
-            ].join(''));
+            expect(engine.flush()).toBe(
+                ['<style>', '.tf-9loqhw{font-weight:bold}', '@media (min-width: 800px){.tf-1txfpkp{font-size:0.9rem}}', '</style>'].join(
+                    '',
+                ),
+            );
             engine.reset();
             expect(engine.flush()).toBe('');
         });

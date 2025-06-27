@@ -1,8 +1,4 @@
-/* eslint-disable max-lines */
-/* eslint-disable max-statements */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-useless-constructor */
-/* eslint-disable class-methods-use-this */
 
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {HttpMethods} from '../../lib/types/constants';
@@ -14,24 +10,23 @@ import CONSTANTS from '../constants';
 import {Cookies} from '../../lib/modules';
 
 class TestContext extends Context {
-
-    constructor (logger: TriFrostRootLogger, cfg: TriFrostContextConfig, req: any) {
+    constructor(logger: TriFrostRootLogger, cfg: TriFrostContextConfig, req: any) {
         super(logger, cfg, req);
     }
 
-    protected getIP (): string | null {
+    protected getIP(): string | null {
         return '127.0.0.1';
     }
 
-    async getStream (path: string) {
+    async getStream(path: string) {
         return {stream: new ReadableStream(), size: 123};
     }
 
-    public stream (stream: unknown, size: number | null): void {
+    public stream(stream: unknown, size: number | null): void {
         super.stream(stream, size);
     }
 
-    runAfter (): void {
+    runAfter(): void {
         const hooks = this.afterHooks;
         for (let i = 0; i < hooks.length; i++) {
             try {
@@ -42,11 +37,10 @@ class TestContext extends Context {
         }
     }
 
-    public call_getIPFromHeaders () {
-        /* @ts-ignore */
+    public call_getIPFromHeaders() {
+        /* @ts-expect-error Should be good */
         return this.getIPFromHeaders();
     }
-
 }
 
 describe('Context', () => {
@@ -81,19 +75,23 @@ describe('Context', () => {
 
     describe('Constructor', () => {
         it('Uses requestId from headers when present and valid', () => {
-            const ctxWithId = new TestContext(mockLogger as any, {
-                ...baseConfig,
-                /* @ts-ignore */
-                requestId: {
-                    inbound: ['x-request-id'],
+            const ctxWithId = new TestContext(
+                mockLogger as any,
+                {
+                    ...baseConfig,
+                    /* @ts-expect-error Should be good */
+                    requestId: {
+                        inbound: ['x-request-id'],
+                    },
                 },
-            }, {
-                ...baseRequest,
-                headers: {
-                    ...baseRequest.headers,
-                    'x-request-id': 'abc-123',
+                {
+                    ...baseRequest,
+                    headers: {
+                        ...baseRequest.headers,
+                        'x-request-id': 'abc-123',
+                    },
                 },
-            });
+            );
 
             expect(ctxWithId.requestId).toBe('abc-123');
         });
@@ -101,20 +99,24 @@ describe('Context', () => {
         it('Skips invalid requestId when validator fails', () => {
             const validator = (val: string) => val.startsWith('valid-');
 
-            const ctxInvalid = new TestContext(mockLogger as any, {
-                ...baseConfig,
-                /* @ts-ignore */
-                requestId: {
-                    inbound: ['x-request-id'],
-                    validate: validator,
+            const ctxInvalid = new TestContext(
+                mockLogger as any,
+                {
+                    ...baseConfig,
+                    /* @ts-expect-error Should be good */
+                    requestId: {
+                        inbound: ['x-request-id'],
+                        validate: validator,
+                    },
                 },
-            }, {
-                ...baseRequest,
-                headers: {
-                    ...baseRequest.headers,
-                    'x-request-id': 'bad-id',
+                {
+                    ...baseRequest,
+                    headers: {
+                        ...baseRequest.headers,
+                        'x-request-id': 'bad-id',
+                    },
                 },
-            });
+            );
 
             // Should fall back to hexId (not 'bad-id')
             expect(ctxInvalid.requestId).not.toBe('bad-id');
@@ -124,35 +126,43 @@ describe('Context', () => {
         it('Accepts requestId from headers if validator passes', () => {
             const validator = (val: string) => val.startsWith('valid-');
 
-            const ctxValid = new TestContext(mockLogger as any, {
-                ...baseConfig,
-                /* @ts-ignore */
-                requestId: {
-                    inbound: ['x-request-id'],
-                    validate: validator,
+            const ctxValid = new TestContext(
+                mockLogger as any,
+                {
+                    ...baseConfig,
+                    /* @ts-expect-error Should be good */
+                    requestId: {
+                        inbound: ['x-request-id'],
+                        validate: validator,
+                    },
                 },
-            }, {
-                ...baseRequest,
-                headers: {
-                    ...baseRequest.headers,
-                    'x-request-id': 'valid-42',
+                {
+                    ...baseRequest,
+                    headers: {
+                        ...baseRequest.headers,
+                        'x-request-id': 'valid-42',
+                    },
                 },
-            });
+            );
 
             expect(ctxValid.requestId).toBe('valid-42');
         });
 
         it('Falls back to hexId if no requestId header present', () => {
-            const ctxFallback = new TestContext(mockLogger as any, {
-                ...baseConfig,
-                /* @ts-ignore */
-                requestId: {
-                    inbound: ['x-request-id'],
+            const ctxFallback = new TestContext(
+                mockLogger as any,
+                {
+                    ...baseConfig,
+                    /* @ts-expect-error Should be good */
+                    requestId: {
+                        inbound: ['x-request-id'],
+                    },
                 },
-            }, {
-                ...baseRequest,
-                headers: {}, // no headers
-            });
+                {
+                    ...baseRequest,
+                    headers: {}, // no headers
+                },
+            );
 
             expect(ctxFallback.requestId).toMatch(/^[a-f0-9]{32}$/);
         });
@@ -173,14 +183,18 @@ describe('Context', () => {
                 },
             };
 
-            const ctxFresh = new TestContext({spawn: loggerSpy} as any, {
-                ...baseConfig,
-                env: {stage: 'test'},
-                /* @ts-ignore */
-                requestId: {
-                    inbound: ['x-trace-id'],
+            const ctxFresh = new TestContext(
+                {spawn: loggerSpy} as any,
+                {
+                    ...baseConfig,
+                    env: {stage: 'test'},
+                    /* @ts-expect-error Should be good */
+                    requestId: {
+                        inbound: ['x-trace-id'],
+                    },
                 },
-            }, req);
+                req,
+            );
 
             expect(loggerSpy).toHaveBeenCalledWith({
                 traceId: 'trace-me',
@@ -194,10 +208,10 @@ describe('Context', () => {
         it('Stores provided config and request config correctly', () => {
             const ctxFresh = new TestContext(mockLogger as any, baseConfig as any, baseRequest);
 
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctxFresh.ctx_config).toBe(baseConfig);
 
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctxFresh.req_config).toBe(baseRequest);
         });
     });
@@ -209,9 +223,7 @@ describe('Context', () => {
         });
 
         it('Deletes state keys', () => {
-            ctx
-                .setState({foo: 'bar', bar: 1})
-                .delState(['foo']);
+            ctx.setState({foo: 'bar', bar: 1}).delState(['foo']);
             expect(ctx.state).toEqual({bar: 1});
         });
     });
@@ -219,27 +231,27 @@ describe('Context', () => {
     describe('Header management', () => {
         it('Sets a header', () => {
             ctx.setHeader('X-Test', '123');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers).toEqual({'X-Test': '123'});
         });
 
         it('Sets multiple headers', () => {
             ctx.setHeaders({'X-A': 'a', 'X-B': 'b'});
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers).toEqual({'X-A': 'a', 'X-B': 'b'});
         });
 
         it('Overwrites header when set multiple times', () => {
             ctx.setHeader('X-Foo', '1');
             ctx.setHeader('X-Foo', '2');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['X-Foo']).toBe('2');
         });
 
         it('Deletes a header', () => {
             ctx.setHeader('X-Delete', 'delete');
             ctx.delHeader('X-Delete');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers).toEqual({});
         });
     });
@@ -255,7 +267,7 @@ describe('Context', () => {
         it('Sets string body', () => {
             ctx.setBody('Hello');
             ctx.end();
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe('Hello');
         });
     });
@@ -296,10 +308,7 @@ describe('Context', () => {
         it('Logs error on invalid timeout value', () => {
             const spy = vi.spyOn(ctx.logger, 'error');
             ctx.setTimeout(-5);
-            expect(spy).toHaveBeenCalledWith(
-                'Context@setTimeout: Expects a value above 0 or null',
-                {val: -5}
-            );
+            expect(spy).toHaveBeenCalledWith('Context@setTimeout: Expects a value above 0 or null', {val: -5});
         });
 
         it('Aborts with 408 if timeout triggers and context not locked', async () => {
@@ -389,11 +398,14 @@ describe('Context', () => {
         });
 
         it('Returns true after init()', async () => {
-            await ctx.init({
-                /* @ts-ignore */
-                route: {name: 'test', kind: 'std', bodyParser: null},
-                params: {},
-            }, async () => ({}));
+            await ctx.init(
+                {
+                    /* @ts-expect-error Should be good */
+                    route: {name: 'test', kind: 'std', bodyParser: null},
+                    params: {},
+                },
+                async () => ({}),
+            );
             expect(ctx.isInitialized).toBe(true);
         });
     });
@@ -466,23 +478,27 @@ describe('Context', () => {
         });
 
         it('Returns null if no valid IP found', () => {
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             TestContext.prototype.getIP = vi.fn().mockReturnValue(null);
 
-            /* @ts-ignore */
-            const ctx2 = new TestContext(mockLogger as any, {
-                ...baseConfig,
-                trustProxy: false,
-            }, {
-                ...baseRequest,
-                headers: {},
-            });
+            const ctx2 = new TestContext(
+                mockLogger as any,
+                /* @ts-expect-error Should be good */
+                {
+                    ...baseConfig,
+                    trustProxy: false,
+                },
+                {
+                    ...baseRequest,
+                    headers: {},
+                },
+            );
 
             expect(ctx2.ip).toBe(null);
         });
 
         it('Caches computed IP after first access with trustProxy=false', () => {
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             TestContext.prototype.getIP = vi.fn().mockReturnValue('127.12.12.12');
             const spy = vi.spyOn(ctx, 'call_getIPFromHeaders');
             const val1 = ctx.ip;
@@ -491,7 +507,7 @@ describe('Context', () => {
             expect(val1).toBe(val2);
             expect(spy).not.toHaveBeenCalled();
 
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(TestContext.prototype.getIP).toHaveBeenCalledTimes(1);
         });
 
@@ -504,14 +520,14 @@ describe('Context', () => {
                 },
             });
 
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             TestContext.prototype.getIP = vi.fn().mockReturnValue('127.12.12.12');
             const val1 = ctx2.ip;
             const val2 = ctx2.ip;
             expect(val1).toBe('8.8.8.8');
             expect(val1).toBe(val2);
 
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(TestContext.prototype.getIP).not.toHaveBeenCalled();
         });
 
@@ -620,9 +636,7 @@ describe('Context', () => {
 
             const out = ctx.cookies.outgoing;
             expect(out[0]).toContain('Secure');
-            expect(warn).toHaveBeenCalledWith(
-                'TriFrostCookies@set: SameSite=None requires Secure=true; overriding to ensure security'
-            );
+            expect(warn).toHaveBeenCalledWith('TriFrostCookies@set: SameSite=None requires Secure=true; overriding to ensure security');
         });
 
         it('Does not set cookie on invalid name or value', () => {
@@ -649,11 +663,14 @@ describe('Context', () => {
         });
 
         it('Reflects value set in init()', async () => {
-            await ctx.init({
-                /* @ts-ignore */
-                route: {name: 'cool', kind: 'std', bodyParser: null},
-                params: {},
-            }, async () => ({}));
+            await ctx.init(
+                {
+                    /* @ts-expect-error Should be good */
+                    route: {name: 'cool', kind: 'std', bodyParser: null},
+                    params: {},
+                },
+                async () => ({}),
+            );
             expect(ctx.name).toBe('cool');
         });
     });
@@ -664,11 +681,14 @@ describe('Context', () => {
         });
 
         it('Reflects kind set in init()', async () => {
-            await ctx.init({
-                /* @ts-ignore */
-                route: {name: 'x', kind: 'health', bodyParser: null},
-                params: {},
-            }, async () => ({}));
+            await ctx.init(
+                {
+                    /* @ts-expect-error Should be good */
+                    route: {name: 'x', kind: 'health', bodyParser: null},
+                    params: {},
+                },
+                async () => ({}),
+            );
             expect(ctx.kind).toBe('health');
         });
     });
@@ -738,11 +758,14 @@ describe('Context', () => {
                 method: HttpMethods.POST,
             });
 
-            await postCtx.init({
-                /* @ts-ignore */
-                route: {name: 'test', kind: 'std', bodyParser: null},
-                params: {},
-            }, async () => parsed);
+            await postCtx.init(
+                {
+                    /* @ts-expect-error Should be good */
+                    route: {name: 'test', kind: 'std', bodyParser: null},
+                    params: {},
+                },
+                async () => parsed,
+            );
 
             expect(postCtx.body).toEqual(parsed);
         });
@@ -750,20 +773,26 @@ describe('Context', () => {
 
     describe('init()', () => {
         it('Sets isInitialized to true', async () => {
-            await ctx.init({
-                /* @ts-ignore */
-                route: {name: 'foo', kind: 'std', bodyParser: null},
-                params: {id: '123'},
-            }, async () => ({}));
+            await ctx.init(
+                {
+                    /* @ts-expect-error Should be good */
+                    route: {name: 'foo', kind: 'std', bodyParser: null},
+                    params: {id: '123'},
+                },
+                async () => ({}),
+            );
             expect(ctx.isInitialized).toBe(true);
         });
 
         it('Sets name, kind and initial state', async () => {
-            await ctx.init({
-                /* @ts-ignore */
-                route: {name: 'foo', kind: 'health', bodyParser: null},
-                params: {x: '1', y: '2'},
-            }, async () => ({}));
+            await ctx.init(
+                {
+                    /* @ts-expect-error Should be good */
+                    route: {name: 'foo', kind: 'health', bodyParser: null},
+                    params: {x: '1', y: '2'},
+                },
+                async () => ({}),
+            );
 
             expect(ctx.name).toBe('foo');
             expect(ctx.kind).toBe('health');
@@ -778,11 +807,14 @@ describe('Context', () => {
 
             const bodyHandler = vi.fn().mockResolvedValue({a: 'b'});
 
-            await postCtx.init({
-                /* @ts-ignore */
-                route: {name: 'test', kind: 'std', bodyParser: null},
-                params: {},
-            }, bodyHandler);
+            await postCtx.init(
+                {
+                    /* @ts-expect-error Should be good */
+                    route: {name: 'test', kind: 'std', bodyParser: null},
+                    params: {},
+                },
+                bodyHandler,
+            );
 
             expect(bodyHandler).toHaveBeenCalled();
             expect(postCtx.body).toEqual({a: 'b'});
@@ -796,11 +828,14 @@ describe('Context', () => {
 
             const logSpy = vi.spyOn(putCtx.logger, 'error');
 
-            await putCtx.init({
-                /* @ts-ignore */
-                route: {name: 'fail', kind: 'std', bodyParser: null},
-                params: {},
-            }, async () => null);
+            await putCtx.init(
+                {
+                    /* @ts-expect-error Should be good */
+                    route: {name: 'fail', kind: 'std', bodyParser: null},
+                    params: {},
+                },
+                async () => null,
+            );
 
             expect(putCtx.statusCode).toBe(413);
             expect(logSpy).not.toHaveBeenCalled();
@@ -811,13 +846,16 @@ describe('Context', () => {
             const err = new Error('explode');
             const loggerSpy = vi.spyOn(ctx2.logger, 'error');
 
-            await ctx2.init({
-                /* @ts-ignore */
-                route: {name: 'explode', kind: 'std', bodyParser: null, method: 'POST'},
-                params: {},
-            }, async () => {
-                throw err;
-            });
+            await ctx2.init(
+                {
+                    /* @ts-expect-error Should be good */
+                    route: {name: 'explode', kind: 'std', bodyParser: null, method: 'POST'},
+                    params: {},
+                },
+                async () => {
+                    throw err;
+                },
+            );
 
             expect(ctx2.statusCode).toBe(400);
             expect(loggerSpy).toHaveBeenCalledWith(err);
@@ -826,17 +864,23 @@ describe('Context', () => {
         it('Is a no-op if already initialized', async () => {
             const ctx2 = new TestContext(mockLogger as any, baseConfig as any, {...baseRequest, method: 'POST'});
             const spy = vi.fn().mockResolvedValue({});
-            await ctx2.init({
-                /* @ts-ignore */
-                route: {name: 'once', kind: 'std', bodyParser: null},
-                params: {},
-            }, spy);
+            await ctx2.init(
+                {
+                    /* @ts-expect-error Should be good */
+                    route: {name: 'once', kind: 'std', bodyParser: null},
+                    params: {},
+                },
+                spy,
+            );
 
-            await ctx2.init({
-                /* @ts-ignore */
-                route: {name: 'twice', kind: 'health', bodyParser: null},
-                params: {x: '2'},
-            }, spy);
+            await ctx2.init(
+                {
+                    /* @ts-expect-error Should be good */
+                    route: {name: 'twice', kind: 'health', bodyParser: null},
+                    params: {x: '2'},
+                },
+                spy,
+            );
 
             expect(ctx2.name).toBe('once');
             expect(ctx2.kind).toBe('std');
@@ -845,11 +889,14 @@ describe('Context', () => {
 
         it('Is a no-op if a GET', async () => {
             const spy = vi.fn().mockResolvedValue({});
-            await ctx.init({
-                /* @ts-ignore */
-                route: {name: 'once', kind: 'std', bodyParser: null},
-                params: {},
-            }, spy);
+            await ctx.init(
+                {
+                    /* @ts-expect-error Should be good */
+                    route: {name: 'once', kind: 'std', bodyParser: null},
+                    params: {},
+                },
+                spy,
+            );
 
             expect(ctx.name).toBe('once');
             expect(ctx.kind).toBe('std');
@@ -861,7 +908,7 @@ describe('Context', () => {
         const originalFetch = globalThis.fetch;
 
         beforeEach(() => {
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             globalThis.fetch = vi.fn();
             ctx.logger.setAttributes = vi.fn();
             ctx.logger.span = vi.fn((_, fn) => fn());
@@ -879,13 +926,15 @@ describe('Context', () => {
 
             expect(globalThis.fetch).toHaveBeenCalledWith('https://api.example.com/data', expect.any(Object));
             expect(res.status).toBe(200);
-            expect(ctx.logger.setAttributes).toHaveBeenCalledWith(expect.objectContaining({
-                'http.method': 'GET',
-                'http.url': 'https://api.example.com/data',
-                'http.status_code': 200,
-                'otel.status_code': 'OK',
-                'span.kind': 'client',
-            }));
+            expect(ctx.logger.setAttributes).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    'http.method': 'GET',
+                    'http.url': 'https://api.example.com/data',
+                    'http.status_code': 200,
+                    'otel.status_code': 'OK',
+                    'span.kind': 'client',
+                }),
+            );
         });
 
         it('Injects logger trace id into outbound headers if configured', async () => {
@@ -931,11 +980,13 @@ describe('Context', () => {
             await expect(ctx.fetch('https://broken')).rejects.toThrow('network fail');
 
             expect(ctx.logger.error).toHaveBeenCalledWith(err);
-            expect(ctx.logger.setAttributes).toHaveBeenCalledWith(expect.objectContaining({
-                'http.method': 'GET',
-                'http.url': 'https://broken',
-                'otel.status_code': 'ERROR',
-            }));
+            expect(ctx.logger.setAttributes).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    'http.method': 'GET',
+                    'http.url': 'https://broken',
+                    'otel.status_code': 'ERROR',
+                }),
+            );
         });
 
         it('Uses logger.span to wrap fetch', async () => {
@@ -962,13 +1013,15 @@ describe('Context', () => {
                 method: 'PUT',
             });
             expect(res.status).toBe(201);
-            expect(ctx.logger.setAttributes).toHaveBeenCalledWith(expect.objectContaining({
-                'http.url': 'https://api.example.com/alt',
-                'http.method': 'PUT',
-                'http.status_code': 201,
-                'otel.status_code': 'OK',
-                'span.kind': 'client',
-            }));
+            expect(ctx.logger.setAttributes).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    'http.url': 'https://api.example.com/alt',
+                    'http.method': 'PUT',
+                    'http.status_code': 201,
+                    'otel.status_code': 'OK',
+                    'span.kind': 'client',
+                }),
+            );
         });
 
         it('Sets otel.status_code to ERROR for 500+ responses', async () => {
@@ -977,26 +1030,28 @@ describe('Context', () => {
 
             await ctx.fetch('https://api.example.com/fail');
 
-            expect(ctx.logger.setAttributes).toHaveBeenCalledWith(expect.objectContaining({
-                'http.status_code': 503,
-                'otel.status_code': 'ERROR',
-            }));
+            expect(ctx.logger.setAttributes).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    'http.status_code': 503,
+                    'otel.status_code': 'ERROR',
+                }),
+            );
         });
     });
 
     describe('json()', () => {
         it('Responds with JSON object', () => {
             ctx.json({foo: 'bar'});
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(JSON.stringify({foo: 'bar'}));
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Content-Type']).toBe('application/json');
             expect(ctx.isDone).toBe(true);
         });
 
         it('Responds with JSON array', () => {
             ctx.json([1, 2, 3]);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(JSON.stringify([1, 2, 3]));
             expect(ctx.isDone).toBe(true);
         });
@@ -1004,26 +1059,26 @@ describe('Context', () => {
         it('Respects pre-existing Content-Type', () => {
             ctx.setHeader('Content-Type', 'application/vnd.custom+json');
             ctx.json({hello: 'world'});
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Content-Type']).toBe('application/vnd.custom+json');
         });
 
         it('Applies cacheControl headers', () => {
             ctx.json({msg: 'hello'}, {cacheControl: {type: 'public', maxage: 3600}});
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Cache-Control']).toBe('public, max-age=3600');
         });
 
         it('Overwrites previously set Cache-Control', () => {
             ctx.setHeader('Cache-Control', 'manual');
             ctx.json({override: true}, {cacheControl: {type: 'no-store'}});
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Cache-Control']).toBe('no-store');
         });
 
         it('Does not set Cache-Control when not passed', () => {
             ctx.json({silent: true});
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Cache-Control']).toBeUndefined();
         });
 
@@ -1038,29 +1093,26 @@ describe('Context', () => {
                 if (el === undefined || Object.prototype.toString.call(el) === '[object Object]' || Array.isArray(el)) continue;
                 ctx.logger.error = vi.fn();
                 ctx.json(el as any);
-                expect(ctx.logger.error).toHaveBeenCalledWith(
-                    new Error('Context@json: Invalid Payload'),
-                    {body: el, opts: undefined}
-                );
+                expect(ctx.logger.error).toHaveBeenCalledWith(new Error('Context@json: Invalid Payload'), {body: el, opts: undefined});
             }
         });
 
         it('Throws if context is locked', () => {
             ctx.abort();
             ctx.json({fail: true});
-            expect(ctx.logger.error).toHaveBeenCalledWith(
-                new Error('Context@json: Cannot modify a finalized response'),
-                {body: {fail: true}, opts: undefined}
-            );
+            expect(ctx.logger.error).toHaveBeenCalledWith(new Error('Context@json: Cannot modify a finalized response'), {
+                body: {fail: true},
+                opts: undefined,
+            });
         });
     });
 
     describe('text()', () => {
         it('Responds with plain text', () => {
             ctx.text('hello world');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe('hello world');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Content-Type']).toBe('text/plain');
             expect(ctx.isDone).toBe(true);
         });
@@ -1068,7 +1120,7 @@ describe('Context', () => {
         it('Respects existing Content-Type', () => {
             ctx.setHeader('Content-Type', 'text/markdown');
             ctx.text('## Hello');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Content-Type']).toBe('text/markdown');
         });
 
@@ -1080,20 +1132,20 @@ describe('Context', () => {
                     immutable: true,
                 },
             });
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Cache-Control']).toBe('private, max-age=86400, immutable');
         });
 
         it('Overwrites existing Cache-Control', () => {
             ctx.setHeader('Cache-Control', 'set-by-hand');
             ctx.text('overwrite me', {cacheControl: {type: 'no-cache'}});
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Cache-Control']).toBe('no-cache');
         });
 
         it('Skips if cacheControl is not passed', () => {
             ctx.text('no headers here');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Cache-Control']).toBeUndefined();
         });
 
@@ -1105,28 +1157,25 @@ describe('Context', () => {
 
         it('Throws on non-string payload', () => {
             ctx.text(42 as any);
-            expect(ctx.logger.error).toHaveBeenCalledWith(
-                new Error('Context@text: Invalid Payload'),
-                {body: 42, opts: undefined}
-            );
+            expect(ctx.logger.error).toHaveBeenCalledWith(new Error('Context@text: Invalid Payload'), {body: 42, opts: undefined});
         });
 
         it('Throws if context is locked', () => {
             ctx.end();
             ctx.text('locked');
-            expect(ctx.logger.error).toHaveBeenCalledWith(
-                new Error('Context@text: Cannot modify a finalized response'),
-                {body: 'locked', opts: undefined}
-            );
+            expect(ctx.logger.error).toHaveBeenCalledWith(new Error('Context@text: Cannot modify a finalized response'), {
+                body: 'locked',
+                opts: undefined,
+            });
         });
     });
 
     describe('html()', () => {
         it('Responds with HTML string', () => {
             ctx.html('<html><body>Hello</body></html>');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body?.startsWith('<!DOCTYPE html><html>')).toBe(true);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Content-Type']).toBe('text/html');
             expect(ctx.isDone).toBe(true);
         });
@@ -1134,14 +1183,14 @@ describe('Context', () => {
         it('Renders JSXElement using rootRender', () => {
             const jsxElement = {type: 'div', props: {children: 'World'}};
             ctx.html(jsxElement as any);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toContain('<div>World</div>');
         });
 
         it('Respects Content-Type if already set', () => {
             ctx.setHeader('Content-Type', 'application/xhtml+xml');
             ctx.html('<html><body>Hi</body></html>');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Content-Type']).toBe('application/xhtml+xml');
         });
 
@@ -1153,7 +1202,7 @@ describe('Context', () => {
                     proxyRevalidate: true,
                 },
             });
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Cache-Control']).toBe('public, max-age=600, proxy-revalidate');
         });
 
@@ -1164,19 +1213,19 @@ describe('Context', () => {
                     type: 'no-store',
                 },
             });
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Cache-Control']).toBe('no-store');
         });
 
         it('Skips if cacheControl is not passed', () => {
             ctx.html('<em>Simple</em>');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Cache-Control']).toBeUndefined();
         });
 
         it('Adds doctype if HTML starts with <html', () => {
             ctx.html('<html><head></head><body></body></html>');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe('<!DOCTYPE html><html><head></head><body></body></html>');
         });
 
@@ -1189,20 +1238,20 @@ describe('Context', () => {
         it('Throws if context is locked', () => {
             ctx.end();
             ctx.html('<p>Too late</p>');
-            expect(ctx.logger.error).toHaveBeenCalledWith(
-                new Error('Context@html: Cannot modify a finalized response'),
-                {body: '<p>Too late</p>', opts: undefined}
-            );
+            expect(ctx.logger.error).toHaveBeenCalledWith(new Error('Context@html: Cannot modify a finalized response'), {
+                body: '<p>Too late</p>',
+                opts: undefined,
+            });
         });
     });
 
     describe('redirect()', () => {
         it('Redirects to absolute URL with default status', () => {
             ctx.redirect('https://example.com');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers.Location).toBe('https://example.com');
             expect(ctx.statusCode).toBe(303);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(null);
             expect(ctx.isDone).toBe(true);
         });
@@ -1213,10 +1262,10 @@ describe('Context', () => {
                 query: 'a=1',
             });
             withQuery.redirect('/next');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(withQuery.res_headers.Location).toContain('?a=1');
             expect(withQuery.statusCode).toBe(303);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(withQuery.res_body).toBe(null);
             expect(withQuery.isDone).toBe(true);
         });
@@ -1227,10 +1276,10 @@ describe('Context', () => {
                 query: 'q=123',
             });
             clean.redirect('/path', {status: 301, keep_query: false});
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(clean.res_headers.Location).not.toContain('q=123');
             expect(clean.statusCode).toBe(301);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(clean.res_body).toBe(null);
             expect(clean.isDone).toBe(true);
         });
@@ -1238,10 +1287,10 @@ describe('Context', () => {
         it('Preserves "/"-prefixed paths without adding host', () => {
             const rel = new TestContext(mockLogger as any, baseConfig as any, baseRequest);
             rel.redirect('/dashboard');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(rel.res_headers.Location).toBe('/dashboard');
             expect(rel.statusCode).toBe(303);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(rel.res_body).toBe(null);
             expect(rel.isDone).toBe(true);
         });
@@ -1253,133 +1302,150 @@ describe('Context', () => {
             });
 
             withQuery.redirect('/next?page=1');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(withQuery.res_headers.Location).toBe('/next?page=1&b=2');
             expect(withQuery.statusCode).toBe(303);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(withQuery.res_body).toBe(null);
             expect(withQuery.isDone).toBe(true);
         });
 
         it('Respects protocol-relative URLs and skips prefixing', () => {
             ctx.redirect('//cdn.example.com/image.jpg');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers.Location).toBe('//cdn.example.com/image.jpg');
             expect(ctx.statusCode).toBe(303);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(null);
             expect(ctx.isDone).toBe(true);
         });
 
         it('Prefixes host for non-slash-prefixed relative paths', () => {
-            /* @ts-ignore */
-            const rel = new TestContext(mockLogger as any, {
-                ...baseConfig,
-                host: 'example.org',
-            }, {
-                ...baseRequest,
-                headers: {},
-            });
+            const rel = new TestContext(
+                mockLogger as any,
+                /* @ts-expect-error Should be good */
+                {
+                    ...baseConfig,
+                    host: 'example.org',
+                },
+                {
+                    ...baseRequest,
+                    headers: {},
+                },
+            );
 
             rel.redirect('dashboard');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(rel.res_headers.Location).toBe('https://example.org/dashboard');
             expect(rel.statusCode).toBe(303);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(rel.res_body).toBe(null);
             expect(rel.isDone).toBe(true);
         });
 
         it('Upgrades http:// host to https:// if needed', () => {
-            /* @ts-ignore */
-            const rel = new TestContext(mockLogger as any, {
-                ...baseConfig,
-                host: 'http://plain.org',
-            }, {
-                ...baseRequest,
-                headers: {},
-            });
+            const rel = new TestContext(
+                mockLogger as any,
+                /* @ts-expect-error Should be good */
+                {
+                    ...baseConfig,
+                    host: 'http://plain.org',
+                },
+                {
+                    ...baseRequest,
+                    headers: {},
+                },
+            );
 
             rel.redirect('secure', {status: 307});
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(rel.res_headers.Location).toBe('https://plain.org/secure');
             expect(rel.statusCode).toBe(307);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(rel.res_body).toBe(null);
             expect(rel.isDone).toBe(true);
         });
 
         it('Redirects using host that already starts with https://', () => {
-            const ctxWithHttpsHost = new TestContext(mockLogger as any, {
-                ...baseConfig,
-                host: 'https://example.com',
-            } as any, {
-                ...baseRequest,
-                headers: {},
-                query: '',
-            });
+            const ctxWithHttpsHost = new TestContext(
+                mockLogger as any,
+                {
+                    ...baseConfig,
+                    host: 'https://example.com',
+                } as any,
+                {
+                    ...baseRequest,
+                    headers: {},
+                    query: '',
+                },
+            );
 
             ctxWithHttpsHost.redirect('dashboard');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctxWithHttpsHost.res_headers.Location).toBe('https://example.com/dashboard');
         });
 
         it('Redirects using host that starts with http:// (normalizes to https)', () => {
-            const ctxWithHttpHost = new TestContext(mockLogger as any, {
-                ...baseConfig,
-                host: 'http://example.com',
-            } as any, {
-                ...baseRequest,
-                headers: {},
-                query: '',
-            });
+            const ctxWithHttpHost = new TestContext(
+                mockLogger as any,
+                {
+                    ...baseConfig,
+                    host: 'http://example.com',
+                } as any,
+                {
+                    ...baseRequest,
+                    headers: {},
+                    query: '',
+                },
+            );
 
             ctxWithHttpHost.redirect('foo');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctxWithHttpHost.res_headers.Location).toBe('https://example.com/foo');
         });
 
         it('Throws if payload is invalid', () => {
             ctx.redirect(123 as any);
-            expect(ctx.logger.error).toHaveBeenCalledWith(
-                new Error('Context@redirect: Invalid Payload'),
-                {to: 123, opts: undefined}
-            );
+            expect(ctx.logger.error).toHaveBeenCalledWith(new Error('Context@redirect: Invalid Payload'), {to: 123, opts: undefined});
         });
 
         it('Throws on unknown status code', () => {
             ctx.redirect('/test', {status: 999 as any});
-            expect(ctx.logger.error).toHaveBeenCalledWith(
-                new Error('Context@redirect: Invalid Payload'),
-                {to: '/test', opts: {status: 999}}
-            );
+            expect(ctx.logger.error).toHaveBeenCalledWith(new Error('Context@redirect: Invalid Payload'), {
+                to: '/test',
+                opts: {status: 999},
+            });
         });
 
         it('Throws if already ended', () => {
             ctx.end();
             ctx.redirect('/fail');
-            expect(ctx.logger.error).toHaveBeenCalledWith(
-                new Error('Context@redirect: Cannot modify a finalized response'),
-                {to: '/fail', opts: undefined}
-            );
+            expect(ctx.logger.error).toHaveBeenCalledWith(new Error('Context@redirect: Cannot modify a finalized response'), {
+                to: '/fail',
+                opts: undefined,
+            });
         });
 
         it('Throws if host is missing and redirect path requires prefixing', () => {
-            const noHostCtx = new TestContext(mockLogger as any, {
-                ...baseConfig,
-                /* @ts-ignore */
-                host: undefined, /* explicitly no host in config */
-            }, {
-                ...baseRequest,
-                headers: {}, /* and no host in headers */
-            });
+            const noHostCtx = new TestContext(
+                mockLogger as any,
+                {
+                    ...baseConfig,
+                    /* @ts-expect-error Should be good */
+                    host: undefined /* explicitly no host in config */,
+                },
+                {
+                    ...baseRequest,
+                    headers: {} /* and no host in headers */,
+                },
+            );
 
             noHostCtx.redirect('dashboard');
 
-            expect(noHostCtx.logger.error).toHaveBeenCalledWith(
-                new Error('Context@redirect: Unable to determine host'),
-                {to: 'dashboard', opts: undefined}
-            );
+            expect(noHostCtx.logger.error).toHaveBeenCalledWith(new Error('Context@redirect: Unable to determine host'), {
+                to: 'dashboard',
+                opts: undefined,
+            });
         });
     });
 
@@ -1388,7 +1454,7 @@ describe('Context', () => {
             ctx.status(204);
             expect(ctx.statusCode).toBe(204);
             expect(ctx.isDone).toBe(true);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(null);
         });
 
@@ -1397,7 +1463,7 @@ describe('Context', () => {
             ctx.status(404);
             expect(ctx.statusCode).toBe(404);
             expect(ctx.isDone).toBe(true);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(null);
         });
 
@@ -1406,7 +1472,7 @@ describe('Context', () => {
             ctx.status(200);
             expect(ctx.logger.setAttributes).not.toHaveBeenCalled();
             expect(ctx.statusCode).toBe(200);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(null);
             expect(ctx.isDone).toBe(true);
         });
@@ -1419,7 +1485,7 @@ describe('Context', () => {
                 'otel.status_code': 'OK',
             });
             expect(ctx.statusCode).toBe(201);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(null);
             expect(ctx.isDone).toBe(true);
         });
@@ -1432,7 +1498,7 @@ describe('Context', () => {
                 'otel.status_code': 'OK',
             });
             expect(ctx.statusCode).toBe(404);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(null);
             expect(ctx.isDone).toBe(true);
         });
@@ -1445,7 +1511,7 @@ describe('Context', () => {
                 'otel.status_code': 'ERROR',
             });
             expect(ctx.statusCode).toBe(500);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(null);
             expect(ctx.isDone).toBe(true);
         });
@@ -1453,7 +1519,7 @@ describe('Context', () => {
         it('Does not set a response body', () => {
             ctx.status(204);
             expect(ctx.statusCode).toBe(204);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(null);
             expect(ctx.isDone).toBe(true);
         });
@@ -1462,7 +1528,7 @@ describe('Context', () => {
             ctx.setBody('Howdie');
             ctx.status(204);
             expect(ctx.statusCode).toBe(204);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(null);
             expect(ctx.isDone).toBe(true);
         });
@@ -1470,27 +1536,18 @@ describe('Context', () => {
         it('Throws if called after end()', () => {
             ctx.end();
             ctx.status(403);
-            expect(ctx.logger.error).toHaveBeenCalledWith(
-                new Error('Context@status: Cannot modify a finalized response'),
-                {status: 403}
-            );
+            expect(ctx.logger.error).toHaveBeenCalledWith(new Error('Context@status: Cannot modify a finalized response'), {status: 403});
         });
 
         it('Throws if called after abort()', () => {
             ctx.abort();
             ctx.status(410);
-            expect(ctx.logger.error).toHaveBeenCalledWith(
-                new Error('Context@status: Cannot modify a finalized response'),
-                {status: 410}
-            );
+            expect(ctx.logger.error).toHaveBeenCalledWith(new Error('Context@status: Cannot modify a finalized response'), {status: 410});
         });
 
         it('Throws if called with invalid code', () => {
             ctx.status(999 as any);
-            expect(ctx.logger.error).toHaveBeenCalledWith(
-                new Error('Context@setStatus: Invalid status code 999'),
-                {status: 999}
-            );
+            expect(ctx.logger.error).toHaveBeenCalledWith(new Error('Context@setStatus: Invalid status code 999'), {status: 999});
         });
     });
 
@@ -1508,19 +1565,16 @@ describe('Context', () => {
 
         it('Throws if path is not a string', async () => {
             await ctx.file(123 as any);
-            expect(ctx.logger.error).toHaveBeenCalledWith(
-                new Error('Context@file: Invalid Payload'),
-                {input: 123, opts: undefined}
-            );
+            expect(ctx.logger.error).toHaveBeenCalledWith(new Error('Context@file: Invalid Payload'), {input: 123, opts: undefined});
         });
 
         it('Skips if context is locked', async () => {
             ctx.end();
             await ctx.file('/some/file.txt');
-            expect(ctx.logger.error).toHaveBeenCalledWith(
-                new Error('Context@file: Cannot modify a finalized response'),
-                {input: '/some/file.txt', opts: undefined}
-            );
+            expect(ctx.logger.error).toHaveBeenCalledWith(new Error('Context@file: Cannot modify a finalized response'), {
+                input: '/some/file.txt',
+                opts: undefined,
+            });
         });
 
         it('Applies cache control headers when passed', async () => {
@@ -1529,14 +1583,14 @@ describe('Context', () => {
                 cacheControl: {type: 'private', maxage: 123},
             });
 
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Cache-Control']).toBe('private, max-age=123');
         });
 
         it('Infers Content-Type from extension if not already set', async () => {
             getStreamMock.mockResolvedValue({stream: 'x', size: 100});
             await ctx.file('/cool.json');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Content-Type']).toBe('application/json');
         });
 
@@ -1544,53 +1598,51 @@ describe('Context', () => {
             getStreamMock.mockResolvedValue({stream: 'x', size: 100});
             ctx.setHeader('Content-Type', 'custom/type');
             await ctx.file('/anything.unknown');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Content-Type']).toBe('custom/type');
         });
 
         it('Applies Content-Disposition for download=true', async () => {
             getStreamMock.mockResolvedValue({stream: 'x', size: 100});
             await ctx.file('/data.zip', {download: true});
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Content-Disposition']).toBe('attachment; filename="data.zip"; filename*=UTF-8\'\'data.zip');
         });
 
         it('Applies Content-Disposition for download=filename', async () => {
             getStreamMock.mockResolvedValue({stream: 'x', size: 100});
             await ctx.file('/data.zip', {download: 'résumé.pdf'});
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Content-Disposition']).toMatch(/filename/i);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Content-Disposition']).toContain('UTF-8');
         });
 
         it('Skips Content-Disposition if download option not passed', async () => {
             getStreamMock.mockResolvedValue({stream: 'x', size: 1});
             await ctx.file('/no-disposition.pdf');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Content-Disposition']).toBeUndefined();
         });
 
         it('Sets Content-Disposition correctly when download is true', async () => {
             getStreamMock.mockResolvedValue({stream: 'x', size: 1});
             await ctx.file('/yes.txt', {download: true});
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Content-Disposition']).toBe('attachment; filename="yes.txt"; filename*=UTF-8\'\'yes.txt');
         });
 
         it('Handles download with ASCII-only filename', async () => {
             getStreamMock.mockResolvedValue({stream: 'x', size: 1});
             await ctx.file('/file.zip', {download: 'report.csv'});
-            /* @ts-ignore */
-            expect(ctx.res_headers['Content-Disposition']).toBe(
-                'attachment; filename="report.csv"; filename*=UTF-8\'\'report.csv'
-            );
+            /* @ts-expect-error Should be good */
+            expect(ctx.res_headers['Content-Disposition']).toBe('attachment; filename="report.csv"; filename*=UTF-8\'\'report.csv');
         });
 
         it('Handles download with UTF-8 filename needing encoding', async () => {
             getStreamMock.mockResolvedValue({stream: 'x', size: 1});
             await ctx.file('/résumé.zip', {download: 'rêsumé.zip'});
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             const header = ctx.res_headers['Content-Disposition'];
             expect(header).toContain('attachment;');
             expect(header).toContain('filename*=');
@@ -1603,7 +1655,7 @@ describe('Context', () => {
 
             await ctx.file('/utf', {download: '📄.pdf'});
 
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers).toEqual({
                 'Content-Disposition': 'attachment; filename=".pdf"; filename*=UTF-8\'\'%EF%BF%BD%EF%BF%BD.pdf',
                 'Content-Length': '1',
@@ -1616,7 +1668,7 @@ describe('Context', () => {
 
             await ctx.file('/utf', {download: '📄'});
 
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers).toEqual({
                 'Content-Disposition': 'attachment; filename="download"; filename*=UTF-8\'\'%EF%BF%BD%EF%BF%BD',
                 'Content-Length': '1',
@@ -1634,7 +1686,7 @@ describe('Context', () => {
             ctx.setHeader('Content-Type', 'application/custom');
             ctx.getStream = vi.fn().mockResolvedValue({stream: 'x', size: 1});
             await ctx.file('/file.png');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers).toEqual({
                 'Content-Type': 'application/custom',
             });
@@ -1676,7 +1728,7 @@ describe('Context', () => {
                 const stream = {pipe: vi.fn()};
                 ctx.stream = vi.fn();
                 await ctx.file({stream, name: 'file.json'});
-                /* @ts-ignore */
+                /* @ts-expect-error Should be good */
                 expect(ctx.res_headers).toEqual({
                     'Content-Type': 'application/json',
                 });
@@ -1686,7 +1738,7 @@ describe('Context', () => {
                 const stream = {pipe: vi.fn()};
                 ctx.stream = vi.fn();
                 await ctx.file({stream, name: 'resume.pdf'}, {download: 'resume.pdf'});
-                /* @ts-ignore */
+                /* @ts-expect-error Should be good */
                 expect(ctx.res_headers).toEqual({
                     'Content-Disposition': 'attachment; filename="resume.pdf"; filename*=UTF-8\'\'resume.pdf',
                     'Content-Type': 'application/pdf',
@@ -1699,7 +1751,7 @@ describe('Context', () => {
                     await ctx.file({stream: {} as any, name: el} as any);
                     expect(errorSpy).toHaveBeenCalledWith(
                         new Error('Context@file: name is required when passing a stream'),
-                        expect.anything()
+                        expect.anything(),
                     );
                 }
             });
@@ -1707,21 +1759,16 @@ describe('Context', () => {
             it('Throws on completely invalid stream input', async () => {
                 const errorSpy = vi.spyOn(ctx.logger, 'error');
                 await ctx.file({notAStream: true} as any);
-                expect(errorSpy).toHaveBeenCalledWith(
-                    new Error('Context@file: Invalid Payload'),
-                    expect.anything()
-                );
+                expect(errorSpy).toHaveBeenCalledWith(new Error('Context@file: Invalid Payload'), expect.anything());
             });
         });
     });
 
     describe('stream()', () => {
         class StreamTestContext extends TestContext {
-
-            public stream (stream: unknown, size: number | null) {
+            public stream(stream: unknown, size: number | null) {
                 super.stream(stream, size);
             }
-
         }
 
         let streamCtx: StreamTestContext;
@@ -1737,7 +1784,7 @@ describe('Context', () => {
 
         it('Sets Content-Length if valid size provided', () => {
             streamCtx.stream('streamy', 512);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(streamCtx.res_headers).toEqual({
                 'Content-Length': '512',
             });
@@ -1745,7 +1792,7 @@ describe('Context', () => {
 
         it('Does not set Content-Length if size is null', () => {
             streamCtx.stream('data', null);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(streamCtx.res_headers).toEqual({});
         });
 
@@ -1757,10 +1804,10 @@ describe('Context', () => {
 
         it('Skips if context is already locked', () => {
             streamCtx.end();
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             const before = {...streamCtx.res_headers};
             streamCtx.stream('ignored', 42);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(streamCtx.res_headers).toEqual(before);
         });
     });
@@ -1842,28 +1889,28 @@ describe('Context', () => {
     describe('setType()', () => {
         it('Sets a valid MIME type', () => {
             ctx.setType('application/json');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Content-Type']).toBe('application/json');
         });
 
         it('Ignores unknown MIME types', () => {
             ctx.setType('application/unknown' as any);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Content-Type']).toBeUndefined();
         });
 
         it('Overwrites existing Content-Type', () => {
             ctx.setHeader('Content-Type', 'text/plain');
             ctx.setType('text/html');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers['Content-Type']).toBe('text/html');
         });
 
         it('Is a no-op if MIME type is not in MimeTypesSet', () => {
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             const before = {...ctx.res_headers};
             ctx.setType('invalid/type' as any);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_headers).toEqual(before);
         });
     });
@@ -1871,41 +1918,45 @@ describe('Context', () => {
     describe('setBody()', () => {
         it('Sets a string body', () => {
             ctx.setBody('hello world');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe('hello world');
         });
 
         it('Sets body to null when passed null', () => {
             ctx.setBody(null);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(null);
         });
 
         it('Ignores non-string and non-null values', () => {
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             ctx.setBody(42);
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(null);
         });
 
         it('Can overwrite previous value', () => {
             ctx.setBody('first');
             ctx.setBody('second');
-            /* @ts-ignore */
+            /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe('second');
         });
     });
 
     describe('getIPFromHeaders()', () => {
         it('Returns null if trustProxy is false', () => {
-            /* @ts-ignore */
-            const ctxNoProxy = new TestContext(mockLogger as any, {
-                ...baseConfig,
-                trustProxy: false,
-            }, {
-                ...baseRequest,
-                headers: {'x-forwarded-for': '1.2.3.4'},
-            });
+            const ctxNoProxy = new TestContext(
+                mockLogger as any,
+                /* @ts-expect-error Should be good */
+                {
+                    ...baseConfig,
+                    trustProxy: false,
+                },
+                {
+                    ...baseRequest,
+                    headers: {'x-forwarded-for': '1.2.3.4'},
+                },
+            );
 
             expect(ctxNoProxy.call_getIPFromHeaders()).toBe(null);
         });

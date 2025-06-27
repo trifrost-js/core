@@ -1,21 +1,16 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-import {
-    Sym_TriFrostDescription,
-    Sym_TriFrostFingerPrint,
-    Sym_TriFrostName,
-} from '../../types/constants';
+import {Sym_TriFrostDescription, Sym_TriFrostFingerPrint, Sym_TriFrostName} from '../../types/constants';
 import {type TriFrostContext} from '../../types/context';
 import {type SigningAlgorithm} from '../../modules/Cookies';
 import {Sym_TriFrostMiddlewareAuth} from './types';
 
-type SessionCookieAuthSecretFn <Env extends Record<string, unknown> = {}> = (opts:{env:Env}) => string;
+type SessionCookieAuthSecretFn<Env extends Record<string, unknown> = {}> = (opts: {env: Env}) => string;
 
 /* Specific symbol attached to auth mware to identify them by */
 export const Sym_TriFrostMiddlewareSessionCookieAuth = Symbol('TriFrost.Middleware.SessionCookieAuth');
 
-export type SessionCookieAuthResult = {cookie:string};
+export type SessionCookieAuthResult = {cookie: string};
 
-export type SessionCookieAuthSecret <Env extends Record<string, unknown> = {}> = {
+export type SessionCookieAuthSecret<Env extends Record<string, unknown> = {}> = {
     /**
      * Secret value, either directly or lazily resolved from env
      */
@@ -27,7 +22,7 @@ export type SessionCookieAuthSecret <Env extends Record<string, unknown> = {}> =
     algorithm?: SigningAlgorithm;
 };
 
-export type SessionCookieAuthOptions <
+export type SessionCookieAuthOptions<
     Env extends Record<string, any> = {},
     State extends Record<string, unknown> = {},
     Patch extends Record<string, unknown> = SessionCookieAuthResult,
@@ -45,7 +40,7 @@ export type SessionCookieAuthOptions <
      * @note Return true if valid or false if false
      * @note You can also return an object if valid, this will then be set on the state as $auth
      */
-    validate?: (ctx:TriFrostContext<Env, State>, value: string) => Promise<Patch|boolean>|Patch|boolean;
+    validate?: (ctx: TriFrostContext<Env, State>, value: string) => Promise<Patch | boolean> | Patch | boolean;
 };
 
 /**
@@ -63,18 +58,16 @@ export type SessionCookieAuthOptions <
  *   validate: (ctx, value) => lookupSession(value)
  * }))
  */
-export function SessionCookieAuth <
+export function SessionCookieAuth<
     Env extends Record<string, any> = {},
     State extends Record<string, unknown> = {},
-    Patch extends Record<string, unknown> = SessionCookieAuthResult
-> (opts:SessionCookieAuthOptions<Env, State, Patch>) {
-    if (
-        typeof opts?.cookie !== 'string' ||
-        !opts.cookie.length
-    ) throw new Error('TriFrostMiddleware@SessionCookieAuth: A cookie name must be provided');
+    Patch extends Record<string, unknown> = SessionCookieAuthResult,
+>(opts: SessionCookieAuthOptions<Env, State, Patch>) {
+    if (typeof opts?.cookie !== 'string' || !opts.cookie.length)
+        throw new Error('TriFrostMiddleware@SessionCookieAuth: A cookie name must be provided');
 
     /* Define secret function */
-    let secretFn:SessionCookieAuthSecretFn<Env>;
+    let secretFn: SessionCookieAuthSecretFn<Env>;
     const secretType = typeof opts.secret?.val;
     if (secretType === 'function') {
         secretFn = opts.secret.val as SessionCookieAuthSecretFn<Env>;
@@ -87,9 +80,9 @@ export function SessionCookieAuth <
     const algorithm = typeof opts.secret.algorithm === 'string' ? opts.secret.algorithm : 'SHA-256';
     const validateFn = typeof opts.validate === 'function' ? opts.validate : null;
 
-    const mware = async function TriFrostSessionCookieAuth (
-        ctx:TriFrostContext<Env, State>
-    ):Promise<void|TriFrostContext<Env, State & {$auth:Patch}>> {
+    const mware = async function TriFrostSessionCookieAuth(
+        ctx: TriFrostContext<Env, State>,
+    ): Promise<void | TriFrostContext<Env, State & {$auth: Patch}>> {
         /* Get cookie, if cookie is not found return 401 */
         const cookie = ctx.cookies.get(opts.cookie);
         if (typeof cookie !== 'string' || !cookie.length) return ctx.status(401);
@@ -103,14 +96,14 @@ export function SessionCookieAuth <
         if (!verified) return ctx.status(401);
 
         /* If no validation function, set state and continue */
-        if (!validateFn) return ctx.setState({$auth: {cookie: verified}} as unknown as {$auth:Patch});
+        if (!validateFn) return ctx.setState({$auth: {cookie: verified}} as unknown as {$auth: Patch});
 
         /* Validate, if not valid return 401 */
         const result = await validateFn(ctx, verified);
         if (!result) return ctx.status(401);
 
         const authenticated = result === true ? {cookie: verified} : result;
-        return ctx.setState({$auth: authenticated} as {$auth:Patch});
+        return ctx.setState({$auth: authenticated} as {$auth: Patch});
     };
 
     /* Add symbols for introspection/use further down the line */

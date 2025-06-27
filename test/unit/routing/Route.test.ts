@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-
 import {describe, it, expect, vi} from 'vitest';
 import {Route} from '../../../lib/routing/Route';
 import {HttpMethods} from '../../../lib/types/constants';
@@ -22,7 +20,8 @@ describe('routing - Route', () => {
                     handler: dummyHandler,
                     methods: [HttpMethods.GET],
                     middleware: [dummyMiddleware],
-                }, {
+                },
+                {
                     bodyParser: null,
                     handler: dummyHandler,
                     methods: [HttpMethods.HEAD],
@@ -42,7 +41,8 @@ describe('routing - Route', () => {
                     handler: dummyHandler,
                     methods: [HttpMethods.GET],
                     middleware: [m1, m2],
-                }, {
+                },
+                {
                     bodyParser: null,
                     handler: dummyHandler,
                     methods: [HttpMethods.HEAD],
@@ -75,13 +75,7 @@ describe('routing - Route', () => {
                 rateLimit: rateLimitMock as unknown as TriFrostRateLimit,
                 bodyParser: null,
             });
-            for (const el of [
-                ...CONSTANTS.NOT_FUNCTION,
-                ...CONSTANTS.NOT_INTEGER,
-                0,
-                -10,
-                10.5,
-            ]) {
+            for (const el of [...CONSTANTS.NOT_FUNCTION, ...CONSTANTS.NOT_INTEGER, 0, -10, 10.5]) {
                 if ((Number.isInteger(el) && (el as number) > 0) || typeof el === 'function') continue;
                 expect(() => route.limit(el as any)).toThrow(/TriFrostRoute@limit: Invalid limit/);
             }
@@ -105,7 +99,8 @@ describe('routing - Route', () => {
                     handler: dummyHandler,
                     methods: [HttpMethods.GET],
                     middleware: [dummyMiddleware],
-                }, {
+                },
+                {
                     bodyParser: null,
                     handler: dummyHandler,
                     methods: [HttpMethods.HEAD],
@@ -188,10 +183,7 @@ describe('routing - Route', () => {
     describe('.get()', () => {
         it('Throws and does not register if passed an invalid handler', () => {
             const route = new Route({rateLimit: null, bodyParser: null});
-            for (const el of [
-                ...CONSTANTS.NOT_FUNCTION,
-                ...[...CONSTANTS.NOT_FUNCTION.map(val => ({fn: val}))],
-            ]) {
+            for (const el of [...CONSTANTS.NOT_FUNCTION, ...[...CONSTANTS.NOT_FUNCTION.map(val => ({fn: val}))]]) {
                 expect(() => route.get(el as TriFrostRouteHandler<any>)).toThrowError(/TriFrostRoute@get: Invalid handler/);
             }
 
@@ -207,7 +199,8 @@ describe('routing - Route', () => {
                     handler: dummyHandler,
                     methods: [HttpMethods.GET],
                     middleware: [],
-                }, {
+                },
+                {
                     bodyParser: null,
                     handler: dummyHandler,
                     methods: [HttpMethods.HEAD],
@@ -220,10 +213,7 @@ describe('routing - Route', () => {
     describe('.post()', () => {
         it('Throws and does not register if passed an invalid handler', () => {
             const route = new Route({rateLimit: null, bodyParser: null});
-            for (const el of [
-                ...CONSTANTS.NOT_FUNCTION,
-                ...[...CONSTANTS.NOT_FUNCTION.map(val => ({fn: val}))],
-            ]) {
+            for (const el of [...CONSTANTS.NOT_FUNCTION, ...[...CONSTANTS.NOT_FUNCTION.map(val => ({fn: val}))]]) {
                 expect(() => route.post(el as TriFrostRouteHandler<any>)).toThrowError(/TriFrostRoute@post: Invalid handler/);
             }
 
@@ -247,10 +237,7 @@ describe('routing - Route', () => {
     describe('.put()', () => {
         it('Throws and does not register if passed an invalid handler', () => {
             const route = new Route({rateLimit: null, bodyParser: null});
-            for (const el of [
-                ...CONSTANTS.NOT_FUNCTION,
-                ...[...CONSTANTS.NOT_FUNCTION.map(val => ({fn: val}))],
-            ]) {
+            for (const el of [...CONSTANTS.NOT_FUNCTION, ...[...CONSTANTS.NOT_FUNCTION.map(val => ({fn: val}))]]) {
                 expect(() => route.put(el as TriFrostRouteHandler<any>)).toThrowError(/TriFrostRoute@put: Invalid handler/);
             }
 
@@ -274,10 +261,7 @@ describe('routing - Route', () => {
     describe('.patch()', () => {
         it('Throws and does not register if passed an invalid handler', () => {
             const route = new Route({rateLimit: null, bodyParser: null});
-            for (const el of [
-                ...CONSTANTS.NOT_FUNCTION,
-                ...[...CONSTANTS.NOT_FUNCTION.map(val => ({fn: val}))],
-            ]) {
+            for (const el of [...CONSTANTS.NOT_FUNCTION, ...[...CONSTANTS.NOT_FUNCTION.map(val => ({fn: val}))]]) {
                 expect(() => route.patch(el as TriFrostRouteHandler<any>)).toThrowError(/TriFrostRoute@patch: Invalid handler/);
             }
 
@@ -301,10 +285,7 @@ describe('routing - Route', () => {
     describe('.del()', () => {
         it('Throws and does not register if passed an invalid handler', () => {
             const route = new Route({rateLimit: null, bodyParser: null});
-            for (const el of [
-                ...CONSTANTS.NOT_FUNCTION,
-                ...[...CONSTANTS.NOT_FUNCTION.map(val => ({fn: val}))],
-            ]) {
+            for (const el of [...CONSTANTS.NOT_FUNCTION, ...[...CONSTANTS.NOT_FUNCTION.map(val => ({fn: val}))]]) {
                 expect(() => route.del(el as TriFrostRouteHandler<any>)).toThrowError(/TriFrostRoute@del: Invalid handler/);
             }
 
@@ -354,12 +335,14 @@ describe('routing - Route', () => {
                     handler: handler1,
                     methods: [HttpMethods.GET],
                     middleware: [m1, m2],
-                }, {
+                },
+                {
                     bodyParser: null,
                     handler: handler1,
                     methods: [HttpMethods.HEAD],
                     middleware: [m1, m2],
-                }, {
+                },
+                {
                     bodyParser: null,
                     handler: handler2,
                     methods: [HttpMethods.POST],
@@ -382,7 +365,8 @@ describe('routing - Route', () => {
                     handler: handler2,
                     methods: [HttpMethods.GET],
                     middleware: [],
-                }, {
+                },
+                {
                     bodyParser: null,
                     handler: handler2,
                     methods: [HttpMethods.HEAD],
@@ -415,7 +399,8 @@ describe('routing - Route', () => {
                     handler: dummyHandler,
                     methods: [HttpMethods.GET],
                     middleware: [m1, dummyMiddleware],
-                }, {
+                },
+                {
                     bodyParser: null,
                     handler: dummyHandler,
                     methods: [HttpMethods.HEAD],
@@ -436,24 +421,21 @@ describe('routing - Route', () => {
                 rateLimit: rateLimitMock as unknown as TriFrostRateLimit,
                 bodyParser: null,
             });
-            route
-                .use(m1)
-                .limit(5)
-                .get(handler1)
-                .use(m2)
-                .post(handler2);
+            route.use(m1).limit(5).get(handler1).use(m2).post(handler2);
             expect(route.stack).toEqual([
                 {
                     bodyParser: null,
                     handler: handler1,
                     methods: [HttpMethods.GET],
                     middleware: [m1, dummyMiddleware],
-                }, {
+                },
+                {
                     bodyParser: null,
                     handler: handler1,
                     methods: [HttpMethods.HEAD],
                     middleware: [m1, dummyMiddleware],
-                }, {
+                },
+                {
                     bodyParser: null,
                     handler: handler2,
                     methods: [HttpMethods.POST],

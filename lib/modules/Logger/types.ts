@@ -18,43 +18,43 @@ export type TriFrostLoggerSpanPayload = {
     start: number;
     end: number;
     ctx: Record<string, unknown>;
-    status?: {code: 1 | 2, message?: string};
+    status?: {code: 1 | 2; message?: string};
 };
 
 export interface TriFrostLoggerExporter {
-    init: (globalAttributes:Record<string, unknown>) => void;
-    pushLog: (log:TriFrostLoggerLogPayload) => Promise<void>;
-    pushSpan?: (span:TriFrostLoggerSpanPayload) => void;
+    init: (globalAttributes: Record<string, unknown>) => void;
+    pushLog: (log: TriFrostLoggerLogPayload) => Promise<void>;
+    pushSpan?: (span: TriFrostLoggerSpanPayload) => void;
     flush: () => Promise<void>;
 }
 
 export type TriFrostLoggerSpanAwareExporter = TriFrostLoggerExporter & {
-    pushSpan: (span:TriFrostLoggerSpanPayload) => void;
+    pushSpan: (span: TriFrostLoggerSpanPayload) => void;
 };
 
 export interface TriFrostLoggerSpan {
     uid: () => string;
 
-    setAttribute: (key:string, value:unknown) => TriFrostLoggerSpan;
-    setAttributes: (obj:Record<string, unknown>) => TriFrostLoggerSpan;
+    setAttribute: (key: string, value: unknown) => TriFrostLoggerSpan;
+    setAttributes: (obj: Record<string, unknown>) => TriFrostLoggerSpan;
 
     end: () => void;
 }
 
 export interface TriFrostLogger {
-    get traceId ():string|null;
+    get traceId(): string | null;
 
-    debug: (msg:string, data?:Record<string, unknown>) => void;
-    info: (msg:string, data?:Record<string, unknown>) => void;
-    log: (msg:string, data?:Record<string, unknown>) => void;
-    warn: (msg:string, data?:Record<string, unknown>) => void;
-    error: (msg:string|Error|unknown, data?:Record<string, unknown>) => void;
+    debug: (msg: string, data?: Record<string, unknown>) => void;
+    info: (msg: string, data?: Record<string, unknown>) => void;
+    log: (msg: string, data?: Record<string, unknown>) => void;
+    warn: (msg: string, data?: Record<string, unknown>) => void;
+    error: (msg: string | Error | unknown, data?: Record<string, unknown>) => void;
 
-    span: <T> (name:string, fn:() => Promise<T>|T) => Promise<T>;
-    startSpan: (name:string) => TriFrostLoggerSpan;
+    span: <T>(name: string, fn: () => Promise<T> | T) => Promise<T>;
+    startSpan: (name: string) => TriFrostLoggerSpan;
 
-    setAttribute: (key:string, value:unknown) => TriFrostLogger;
-    setAttributes: (obj:Record<string, unknown>) => TriFrostLogger;
+    setAttribute: (key: string, value: unknown) => TriFrostLogger;
+    setAttributes: (obj: Record<string, unknown>) => TriFrostLogger;
 
     flush: () => Promise<void>;
 }

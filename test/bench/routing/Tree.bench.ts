@@ -10,14 +10,14 @@ const targetPath = '/bulk/9999';
 const targetPattern = '/bulk/:id9999';
 
 /* Memoized regex setup */
-const generateRegex = (pattern:string) => {
+const generateRegex = (pattern: string) => {
     const regexPattern = pattern.replace(/:([^/]+)/g, '([^/]+)');
     return new RegExp(`^${regexPattern}$`);
 };
 
 const memoizedGetRegex = memoize(
     (_method, pattern) => generateRegex(pattern),
-    (method, pattern) => `${method}:${pattern}`
+    (method, pattern) => `${method}:${pattern}`,
 );
 
 /* Build regex cache */

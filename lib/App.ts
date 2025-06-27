@@ -1,25 +1,13 @@
-/* eslint-disable complexity */
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {isObject} from '@valkyriestudios/utils/object';
 import {type TriFrostCache} from './modules/Cache';
 import {type TriFrostCookieOptions} from './modules/Cookies';
-import {
-    type TriFrostRateLimit,
-    type TriFrostRateLimitLimitFunction,
-} from './modules/RateLimit/_RateLimit';
-import {
-    TriFrostRootLogger,
-    type TriFrostLoggerExporter,
-} from './modules/Logger';
+import {type TriFrostRateLimit, type TriFrostRateLimitLimitFunction} from './modules/RateLimit/_RateLimit';
+import {TriFrostRootLogger, type TriFrostLoggerExporter} from './modules/Logger';
 import {Sym_TriFrostSpan} from './modules/Logger/util';
 import {Router} from './routing/Router';
 import {getRuntime} from './runtimes/Runtime';
-import {
-    type TriFrostRuntime,
-    type TriFrostRuntimeOnIncoming,
-} from './runtimes/types';
+import {type TriFrostRuntime, type TriFrostRuntimeOnIncoming} from './runtimes/types';
 import {MemoryCache} from './storage/Memory';
 import {
     type TriFrostMiddleware,
@@ -29,10 +17,7 @@ import {
     type PathParam,
     type TriFrostRouteBuilderHandler,
 } from './types/routing';
-import {
-    type TriFrostContext,
-    type TriFrostContextIdOptions,
-} from './types/context';
+import {type TriFrostContext, type TriFrostContextIdOptions} from './types/context';
 import {type TriFrostBodyParserOptions} from './utils/BodyParser/types';
 import {type LazyInitFn} from './utils/Lazy';
 import {RouteTree} from './routing/Tree';
@@ -44,8 +29,8 @@ import {type CssGeneric, type CssInstance} from './modules/JSX/style/use';
 
 const RGX_RID = /^[a-z0-9-]{8,100}$/i;
 
-type AppOptions <Env extends Record<string, any>> = {
-    cookies?:{
+type AppOptions<Env extends Record<string, any>> = {
+    cookies?: {
         /**
          * Global cookie defaults
          * (defaults to {
@@ -61,11 +46,11 @@ type AppOptions <Env extends Record<string, any>> = {
     /**
      * Rate Limiter instance
      */
-    rateLimit?:TriFrostRateLimit<Env>;
+    rateLimit?: TriFrostRateLimit<Env>;
     /**
      * Cache instance
      */
-    cache?:TriFrostCache<Env>;
+    cache?: TriFrostCache<Env>;
     /**
      * Tracing Setup
      */
@@ -83,90 +68,86 @@ type AppOptions <Env extends Record<string, any>> = {
     /**
      * Global environment for the app
      */
-    env?:Partial<Env>;
+    env?: Partial<Env>;
     /**
      * Host the application is running on, this is used inside of for example redirects.
      * @note If not provided we will fall back to determining host off of request headers
      */
-    host?:string;
+    host?: string;
     /**
      * Custom Runtime
      * @note If not provided we will automatically determine the environment
      */
-    runtime?:TriFrostRuntime;
+    runtime?: TriFrostRuntime;
     /**
      * Maximum timeout in milliseconds globally
      * @note defaults to 30 000
      */
-    timeout?:number|null;
+    timeout?: number | null;
     /**
      * Whether or not to trust proxy, eg: can we trust x-forwarded-for headers.
      * @note Different runtimes have different defaults.
      */
-    trustProxy?:boolean;
+    trustProxy?: boolean;
     client?: {
         script?: ReturnType<typeof createScript>['script'];
         css?: CssGeneric<any>;
     };
-}
+};
 
-class App <
-    Env extends Record<string, any>,
-    State extends Record<string, unknown> = {},
-> extends Router<Env, State> {
-
-/**
- * MARK: Private Vars
- */
+class App<Env extends Record<string, any>, State extends Record<string, unknown> = {}> extends Router<Env, State> {
+    /**
+     * MARK: Private Vars
+     */
 
     /* Runtime instance */
-    #runtime:TriFrostRuntime|null = null;
+    #runtime: TriFrostRuntime | null = null;
 
     /* Logger instance */
-    #logger:TriFrostRootLogger<Env>|null = null;
+    #logger: TriFrostRootLogger<Env> | null = null;
 
     /* Logger options */
-    #exporters:LazyInitFn<TriFrostLoggerExporter[], Env>|null = null;
+    #exporters: LazyInitFn<TriFrostLoggerExporter[], Env> | null = null;
 
     /* Request ID config */
-    #requestId:TriFrostContextIdOptions|null = {
+    #requestId: TriFrostContextIdOptions | null = {
         inbound: ['x-request-id', 'cf-ray'],
         outbound: 'x-request-id',
         validate: val => RGX_RID.test(val),
     };
 
     /* Whether or not the runtime has been started or not */
-    #running:boolean = false;
+    #running: boolean = false;
 
     /* Global cookie defaults */
-    #cookies:{config: Partial<TriFrostCookieOptions>};
+    #cookies: {config: Partial<TriFrostCookieOptions>};
 
     /* Global cache */
-    #cache:TriFrostCache<Env>;
+    #cache: TriFrostCache<Env>;
 
     /* Client-css instance */
-    #css:CssInstance<any, any, any, any>|null = null;
+    #css: CssInstance<any, any, any, any> | null = null;
 
     /* Client-script instance */
-    #script:ReturnType<typeof createScript>['script']|null = null;
+    #script: ReturnType<typeof createScript>['script'] | null = null;
 
     /* Provided host */
-    #host:string|null = null;
+    #host: string | null = null;
 
     /* Trust Proxy */
-    #trustProxy:boolean|null = null;
+    #trustProxy: boolean | null = null;
 
     /* Environment */
-    #env:Env;
+    #env: Env;
 
     /* Routing tree */
-    #tree:RouteTree<Env>;
+    #tree: RouteTree<Env>;
 
-/**
- * MARK: Constructor
- */
+    /**
+     * MARK: Constructor
+     */
 
-    constructor (options:AppOptions<Env> = {}) {
+    constructor(options: AppOptions<Env> = {}) {
         /* Verify that the options passed are in the form of an object */
         if (!isObject(options)) throw new Error('TriFrost@ctor: options should be an object');
 
@@ -199,16 +180,11 @@ class App <
         this.#env = (isObject(options.env) ? options.env : {}) as Env;
 
         /* Extract domain and configure cookie options */
-        const domain:string|null = extractDomainFromHost(this.#host);
+        const domain: string | null = extractDomainFromHost(this.#host);
         this.#cookies = {
             config: {
-                ...domain !== null && {domain},
-                ...isObject(options.cookies) ? options.cookies : {
-                    path: '/',
-                    secure: true,
-                    httpOnly: true,
-                    sameSite: 'Strict',
-                },
+                ...(domain !== null && {domain}),
+                ...(isObject(options.cookies) ? options.cookies : {path: '/', secure: true, httpOnly: true, sameSite: 'Strict'}),
             },
         };
 
@@ -236,33 +212,33 @@ class App <
         }
     }
 
-/**
- * MARK: Getters
- */
+    /**
+     * MARK: Getters
+     */
 
     /**
      * Whether or not the server is running (started) or not
      */
-    get isRunning ():boolean {
+    get isRunning(): boolean {
         return this.#running;
     }
 
     /**
      * Returns the configured host or null
      */
-    get host ():string|null {
+    get host(): string | null {
         return this.#host;
     }
 
-/**
- * MARK: Methods
- */
+    /**
+     * MARK: Methods
+     */
 
     /**
      * Boot the app, configure the runtime and any runtime-specific bits
      * (such as listening for traffic, configuring workerd, etc)
      */
-    async boot (options:{port?:number} = {}) {
+    async boot(options: {port?: number} = {}) {
         if (this.#running) return this;
 
         try {
@@ -270,17 +246,17 @@ class App <
 
             this.#logger = new TriFrostRootLogger<Env>({
                 runtime: this.#runtime,
-                exporters: (opts:{env:Env}) => [
-                    ...this.#exporters
+                exporters: (opts: {env: Env}) => [
+                    ...(this.#exporters
                         ? this.#exporters(opts) /* Use provided exporters */
-                        : [this.#runtime!.defaultExporter(opts.env)] /* Fallback to default exporter if none provided */,
+                        : [this.#runtime!.defaultExporter(opts.env)]) /* Fallback to default exporter if none provided */,
                 ],
             });
 
             this.#running = true;
 
             /* Triage handler */
-            const runTriage = async (path:string, ctx:TriFrostContext<Env>) => {
+            const runTriage = async (path: string, ctx: TriFrostContext<Env>) => {
                 /* User might have forgotten to end ... */
                 if (ctx.statusCode >= 200 && ctx.statusCode < 400) {
                     return ctx.end();
@@ -291,10 +267,7 @@ class App <
                         if (Reflect.get(notfound.route.fn, Sym_TriFrostSpan)) {
                             await notfound.route.fn(ctx);
                         } else {
-                            await ctx.logger.span(
-                                notfound.route.name,
-                                async () => notfound.route.fn(ctx)
-                            );
+                            await ctx.logger.span(notfound.route.name, async () => notfound.route.fn(ctx));
                         }
                     }
 
@@ -307,10 +280,7 @@ class App <
                         if (Reflect.get(error.route.fn, Sym_TriFrostSpan)) {
                             await error.route.fn(ctx);
                         } else {
-                            await ctx.logger.span(
-                                error.route.name,
-                                async () => error.route.fn(ctx)
-                            );
+                            await ctx.logger.span(error.route.name, async () => error.route.fn(ctx));
                         }
                     }
 
@@ -329,12 +299,12 @@ class App <
                     requestId: this.#requestId,
                     env: this.#env as unknown as Env,
                     timeout: this.timeout,
-                    ...options?.port && {port: options.port},
-                    ...this.#trustProxy !== null && {trustProxy: this.#trustProxy},
-                    ...this.#css !== null && {css: this.#css},
-                    ...this.#script !== null && {script: this.#script},
+                    ...(options?.port && {port: options.port}),
+                    ...(this.#trustProxy !== null && {trustProxy: this.#trustProxy}),
+                    ...(this.#css !== null && {css: this.#css}),
+                    ...(this.#script !== null && {script: this.#script}),
                 },
-                onIncoming: (async (ctx:TriFrostContext<Env, State>) => {
+                onIncoming: (async (ctx: TriFrostContext<Env, State>) => {
                     const {path, method} = ctx;
                     this.#logger!.debug('onIncoming', {method, path});
 
@@ -376,7 +346,7 @@ class App <
                             if (Reflect.get(el.handler, Sym_TriFrostSpan)) {
                                 await el.handler(ctx);
                             } else {
-                                await ctx.logger.span(el.name,  async () => el.handler(ctx as TriFrostContext<Env, State>));
+                                await ctx.logger.span(el.name, async () => el.handler(ctx as TriFrostContext<Env, State>));
                             }
 
                             /* If context is locked at this point, return as the route has been handled */
@@ -390,10 +360,7 @@ class App <
                         if (Reflect.get(match.route.fn, Sym_TriFrostSpan)) {
                             await match.route.fn(ctx);
                         } else {
-                            await ctx.logger.span(
-                                match.route.name,
-                                async () => match!.route.fn(ctx as TriFrostContext<Env, State>)
-                            );
+                            await ctx.logger.span(match.route.name, async () => match!.route.fn(ctx as TriFrostContext<Env, State>));
                         }
 
                         /* Let's run triage if context is not locked */
@@ -430,7 +397,7 @@ class App <
     /**
      * Stop the runtime and shutdown the app instance
      */
-    shutdown () {
+    shutdown() {
         if (!this.#running) {
             if (this.#logger) this.#logger.warn('Server is not running');
             return false;
@@ -447,14 +414,14 @@ class App <
         }
     }
 
-/**
- * MARK: Routing
- */
+    /**
+     * MARK: Routing
+     */
 
     /**
      * Add a router or middleware to the router
      */
-    use <Patch extends Record<string, unknown> = {}> (val:TriFrostMiddleware<Env, State, Patch>):App<Env, State & Patch> {
+    use<Patch extends Record<string, unknown> = {}>(val: TriFrostMiddleware<Env, State, Patch>): App<Env, State & Patch> {
         super.use(val);
         return this as App<Env, State & Patch>;
     }
@@ -462,7 +429,7 @@ class App <
     /**
      * Attach a rate limit to the middleware chain
      */
-    limit (limit:number|TriFrostRateLimitLimitFunction<Env, State>) {
+    limit(limit: number | TriFrostRateLimitLimitFunction<Env, State>) {
         super.limit(limit);
         return this;
     }
@@ -470,7 +437,7 @@ class App <
     /**
      * Configure body parser options
      */
-    bodyParser (options:TriFrostBodyParserOptions|null) {
+    bodyParser(options: TriFrostBodyParserOptions | null) {
         super.bodyParser(options);
         return this;
     }
@@ -478,7 +445,7 @@ class App <
     /**
      * Add a subrouter with dynamic path handling.
      */
-    group <Path extends string = string> (path:Path, handler:TriFrostGrouperHandler<Env, State & PathParam<Path>>) {
+    group<Path extends string = string>(path: Path, handler: TriFrostGrouperHandler<Env, State & PathParam<Path>>) {
         super.group(path, handler);
         return this;
     }
@@ -486,7 +453,7 @@ class App <
     /**
      * Add a subroute with a builder approach
      */
-    route <Path extends string = string> (path:Path, handler:TriFrostRouteBuilderHandler<Env, State & PathParam<Path>>) {
+    route<Path extends string = string>(path: Path, handler: TriFrostRouteBuilderHandler<Env, State & PathParam<Path>>) {
         super.route(path, handler);
         return this;
     }
@@ -496,7 +463,7 @@ class App <
      *
      * @param {Handler} handler - Handler to run
      */
-    onNotFound (handler:TriFrostHandler<Env, State>) {
+    onNotFound(handler: TriFrostHandler<Env, State>) {
         super.onNotFound(handler);
         return this;
     }
@@ -506,7 +473,7 @@ class App <
      *
      * @param {Handler} handler - Handler to run
      */
-    onError (handler:TriFrostHandler<Env, State>) {
+    onError(handler: TriFrostHandler<Env, State>) {
         super.onError(handler);
         return this;
     }
@@ -514,7 +481,7 @@ class App <
     /**
      * Configure a HTTP Get route
      */
-    get <Path extends string = string> (path:Path, handler:TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+    get<Path extends string = string>(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
         super.get(path, handler);
         return this;
     }
@@ -522,7 +489,7 @@ class App <
     /**
      * Configure a HTTP Post route
      */
-    post <Path extends string = string> (path:Path, handler:TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+    post<Path extends string = string>(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
         super.post(path, handler);
         return this;
     }
@@ -530,7 +497,7 @@ class App <
     /**
      * Configure a HTTP Patch route
      */
-    patch <Path extends string = string> (path:Path, handler:TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+    patch<Path extends string = string>(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
         super.patch(path, handler);
         return this;
     }
@@ -538,7 +505,7 @@ class App <
     /**
      * Configure a HTTP Put route
      */
-    put <Path extends string = string> (path:Path, handler:TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+    put<Path extends string = string>(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
         super.put(path, handler);
         return this;
     }
@@ -546,11 +513,10 @@ class App <
     /**
      * Configure a HTTP Delete route
      */
-    del <Path extends string = string> (path:Path, handler:TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+    del<Path extends string = string>(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
         super.del(path, handler);
         return this;
     }
-
 }
 
 export {App, App as default};

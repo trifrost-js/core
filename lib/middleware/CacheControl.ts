@@ -1,12 +1,6 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-
 import {isObject} from '@valkyriestudios/utils/object';
 import {isIntGt} from '@valkyriestudios/utils/number';
-import {
-    Sym_TriFrostDescription,
-    Sym_TriFrostFingerPrint,
-    Sym_TriFrostName,
-} from '../types/constants';
+import {Sym_TriFrostDescription, Sym_TriFrostFingerPrint, Sym_TriFrostName} from '../types/constants';
 import {type TriFrostContext} from '../types/context';
 
 /* Specific symbol attached to cache control mware to identify them by */
@@ -33,7 +27,7 @@ enum CacheControlValues {
 
 type CacheControlValue = `${CacheControlValues}`;
 
-const CacheControlSet:Set<CacheControlValue> = new Set([...Object.values(CacheControlValues)]);
+const CacheControlSet: Set<CacheControlValue> = new Set([...Object.values(CacheControlValues)]);
 
 export type TriFrostCacheControlOptions = {
     /**
@@ -64,14 +58,14 @@ export type TriFrostCacheControlOptions = {
      * Signals that shared caches (proxies) must revalidate the response once stale.
      */
     proxyRevalidate?: boolean;
-}
+};
 
 /**
  * Parse Cache Header options into a Cache-Control value
  *
  * @param {TriFrostCacheControlOptions} opts - Cache Header Options
  */
-function parse (opts:TriFrostCacheControlOptions):string|null {
+function parse(opts: TriFrostCacheControlOptions): string | null {
     const parts: string[] = [];
 
     if (isObject(opts)) {
@@ -103,7 +97,7 @@ function parse (opts:TriFrostCacheControlOptions):string|null {
  * @param {TriFrostContext} ctx - Context the headers are to be applied to
  * @param {TriFrostCacheControlOptions} opts - Cache Header Options
  */
-export function ParseAndApplyCacheControl (ctx:TriFrostContext, opts:TriFrostCacheControlOptions) {
+export function ParseAndApplyCacheControl(ctx: TriFrostContext, opts: TriFrostCacheControlOptions) {
     const val = parse(opts);
     if (val) ctx.setHeader('Cache-Control', val);
 }
@@ -113,13 +107,12 @@ export function ParseAndApplyCacheControl (ctx:TriFrostContext, opts:TriFrostCac
  *
  * @param {TriFrostCacheControlOptions} opts - Cache Header Options
  */
-export function CacheControl <
-    Env extends Record<string, any> = {},
-    State extends Record<string, unknown> = {},
-> (opts:TriFrostCacheControlOptions = {}) {
+export function CacheControl<Env extends Record<string, any> = {}, State extends Record<string, unknown> = {}>(
+    opts: TriFrostCacheControlOptions = {},
+) {
     const val = parse(opts);
 
-    const mware = function TriFrostCacheControlMiddleware (ctx:TriFrostContext<Env, State>):void {
+    const mware = function TriFrostCacheControlMiddleware(ctx: TriFrostContext<Env, State>): void {
         if (val) ctx.setHeader('Cache-Control', val);
     };
 

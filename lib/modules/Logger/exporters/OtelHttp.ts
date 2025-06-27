@@ -1,19 +1,10 @@
 import {deepFreeze} from '@valkyriestudios/utils/deep';
 import {sleep} from '@valkyriestudios/utils/function';
 import {isIntGt} from '@valkyriestudios/utils/number';
-import {
-    type TriFrostLoggerSpanPayload,
-    type TriFrostLogLevel,
-    type TriFrostLoggerLogPayload,
-    type TriFrostLoggerExporter,
-} from '../types';
-import {
-    createScrambler,
-    OMIT_PRESETS,
-    type ScramblerValue,
-} from '../../../utils/Scrambler';
+import {type TriFrostLoggerSpanPayload, type TriFrostLogLevel, type TriFrostLoggerLogPayload, type TriFrostLoggerExporter} from '../types';
+import {createScrambler, OMIT_PRESETS, type ScramblerValue} from '../../../utils/Scrambler';
 
-const LEVELSMAP:Record<TriFrostLogLevel, string> = {
+const LEVELSMAP: Record<TriFrostLogLevel, string> = {
     debug: 'DEBUG',
     error: 'ERROR',
     info: 'INFO',
@@ -21,10 +12,10 @@ const LEVELSMAP:Record<TriFrostLogLevel, string> = {
     warn: 'WARN',
 };
 
-type OtelAttribute = {key:string, value: {stringValue: string}|{intValue:number}|{doubleValue:number}|{boolValue:boolean}};
+type OtelAttribute = {key: string; value: {stringValue: string} | {intValue: number} | {doubleValue: number} | {boolValue: boolean}};
 
-function convertObjectToAttributes (obj:Record<string, unknown>, prefix:string = ''):OtelAttribute[] {
-    const acc:OtelAttribute[] = [];
+function convertObjectToAttributes(obj: Record<string, unknown>, prefix: string = ''): OtelAttribute[] {
+    const acc: OtelAttribute[] = [];
     for (const key in obj) {
         const val = obj[key];
         switch (typeof val) {
@@ -50,59 +41,58 @@ function convertObjectToAttributes (obj:Record<string, unknown>, prefix:string =
 }
 
 export class OtelHttpExporter implements TriFrostLoggerExporter {
+    #logEndpoint: string;
 
-    #logEndpoint:string;
+    #spanEndpoint: string;
 
-    #spanEndpoint:string;
-
-    #headers:Record<string, string>;
+    #headers: Record<string, string>;
 
     /**
      * Internal buffer for logs
      */
-    #buffer:TriFrostLoggerLogPayload[] = [];
+    #buffer: TriFrostLoggerLogPayload[] = [];
 
     /**
      * Internal buffer for spans
      */
-    #spanBuffer:TriFrostLoggerSpanPayload[] = [];
+    #spanBuffer: TriFrostLoggerSpanPayload[] = [];
 
     /**
      * Max size per batch that we send through to source system
      */
-    #maxBatchSize:number = 20;
+    #maxBatchSize: number = 20;
 
     /**
      * Max internal buffer size
      */
-    #maxBufferSize:number = 10_000;
+    #maxBufferSize: number = 10_000;
 
     /**
      * Max retries when sending batch to source system
      */
-    #maxRetries:number = 3;
+    #maxRetries: number = 3;
 
-    #resourceAttributes:OtelAttribute[] = [];
+    #resourceAttributes: OtelAttribute[] = [];
 
     /**
      * Scrambler based on omit pattern provided
      */
-    #scramble:ReturnType<typeof createScrambler>;
+    #scramble: ReturnType<typeof createScrambler>;
 
-    constructor (options: {
-        logEndpoint:string;
-        spanEndpoint?:string;
-        headers?:Record<string, string>;
-        maxBatchSize?:number;
-        maxBufferSize?:number;
-        maxRetries?:number;
-        omit?:ScramblerValue[];
+    constructor(options: {
+        logEndpoint: string;
+        spanEndpoint?: string;
+        headers?: Record<string, string>;
+        maxBatchSize?: number;
+        maxBufferSize?: number;
+        maxRetries?: number;
+        omit?: ScramblerValue[];
     }) {
         this.#logEndpoint = options.logEndpoint;
         this.#spanEndpoint = options.spanEndpoint || options.logEndpoint;
         this.#headers = {
             'Content-Type': 'application/json',
-            ...options.headers || {},
+            ...(options.headers || {}),
         };
 
         /* Configure max batch size */
@@ -123,31 +113,28 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
         });
     }
 
-    init (trifrost:Record<string, unknown>) {
+    init(trifrost: Record<string, unknown>) {
         this.#resourceAttributes = convertObjectToAttributes(this.#scramble(trifrost));
     }
 
-    async pushLog (log:TriFrostLoggerLogPayload): Promise<void> {
+    async pushLog(log: TriFrostLoggerLogPayload): Promise<void> {
         this.#buffer.push(log);
         if (this.#buffer.length >= this.#maxBatchSize) await this.flushLogs();
     }
 
-    async pushSpan (span:TriFrostLoggerSpanPayload) {
+    async pushSpan(span: TriFrostLoggerSpanPayload) {
         this.#spanBuffer.push(span);
         if (this.#spanBuffer.length >= this.#maxBatchSize) await this.flushSpans();
     }
 
-    async flush ():Promise<void> {
-        await Promise.all([
-            this.flushLogs(),
-            this.flushSpans(),
-        ]);
+    async flush(): Promise<void> {
+        await Promise.all([this.flushLogs(), this.flushSpans()]);
     }
 
     /**
      * Flushes Otel Logs
      */
-    async flushLogs (): Promise<void> {
+    async flushLogs(): Promise<void> {
         if (this.#buffer.length === 0) return;
 
         /* swap out buffer */
@@ -161,8 +148,8 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
 
             /* Scramble sensitive values and convert to attributes */
             const attributes = [
-                ...log.ctx ? convertObjectToAttributes(this.#scramble(log.ctx), 'ctx.') : [],
-                ...log.data ? convertObjectToAttributes(this.#scramble(log.data), 'data.') : [],
+                ...(log.ctx ? convertObjectToAttributes(this.#scramble(log.ctx), 'ctx.') : []),
+                ...(log.data ? convertObjectToAttributes(this.#scramble(log.data), 'data.') : []),
             ];
             if (log.trace_id) attributes.push({key: 'trace_id', value: {stringValue: log.trace_id}});
             if (log.span_id) attributes.push({key: 'span_id', value: {stringValue: log.span_id}});
@@ -175,15 +162,21 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
             });
         }
 
-        const success = await this.sendWithRetry(this.#logEndpoint, {resourceLogs: [{
-            resource: {
-                attributes: this.#resourceAttributes,
-            },
-            scopeLogs: [{
-                scope: {name: 'trifrost.logger', version: '1.0.0'},
-                logRecords,
-            }],
-        }]});
+        const success = await this.sendWithRetry(this.#logEndpoint, {
+            resourceLogs: [
+                {
+                    resource: {
+                        attributes: this.#resourceAttributes,
+                    },
+                    scopeLogs: [
+                        {
+                            scope: {name: 'trifrost.logger', version: '1.0.0'},
+                            logRecords,
+                        },
+                    ],
+                },
+            ],
+        });
 
         /* If failed, requeue batch */
         if (!success) {
@@ -196,7 +189,7 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
     /**
      * Flushes Otel Spans
      */
-    async flushSpans (): Promise<void> {
+    async flushSpans(): Promise<void> {
         if (this.#spanBuffer.length === 0) return;
 
         /* swap out buffer */
@@ -215,20 +208,26 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
                 startTimeUnixNano: span.start * 1_000_000,
                 endTimeUnixNano: span.end * 1_000_000,
                 attributes: convertObjectToAttributes(this.#scramble(span.ctx)),
-                ...span.parentSpanId && {parentSpanId: span.parentSpanId},
-                ...span.status && {status: span.status},
+                ...(span.parentSpanId && {parentSpanId: span.parentSpanId}),
+                ...(span.status && {status: span.status}),
             });
         }
 
-        const success = await this.sendWithRetry(this.#spanEndpoint, {resourceSpans: [{
-            resource: {
-                attributes: this.#resourceAttributes,
-            },
-            scopeSpans: [{
-                scope: {name: 'trifrost.logger', version: '1.0.0'},
-                spans: otelSpans,
-            }],
-        }]});
+        const success = await this.sendWithRetry(this.#spanEndpoint, {
+            resourceSpans: [
+                {
+                    resource: {
+                        attributes: this.#resourceAttributes,
+                    },
+                    scopeSpans: [
+                        {
+                            scope: {name: 'trifrost.logger', version: '1.0.0'},
+                            spans: otelSpans,
+                        },
+                    ],
+                },
+            ],
+        });
 
         /* If failed, requeue batch */
         if (!success) {
@@ -238,7 +237,7 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
         }
     }
 
-    private async sendWithRetry (endpoint:string, body: Record<string, unknown>) {
+    private async sendWithRetry(endpoint: string, body: Record<string, unknown>) {
         let attempt = 0;
         let delay = 100;
 
@@ -268,5 +267,4 @@ export class OtelHttpExporter implements TriFrostLoggerExporter {
 
         return false;
     }
-
 }

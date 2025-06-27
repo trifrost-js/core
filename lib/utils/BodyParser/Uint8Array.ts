@@ -1,19 +1,13 @@
-/* eslint-disable max-statements,complexity,no-labels */
-
 import {isInt} from '@valkyriestudios/utils/number';
 import {toObject} from '@valkyriestudios/utils/formdata';
 import {type TriFrostContext} from '../../types/context';
 import {type MimeType, MimeTypes} from '../../types/constants';
-import {
-    type TriFrostBodyParserFormOptions,
-    type TriFrostBodyParserOptions,
-    type ParsedBody,
-} from './types';
+import {type TriFrostBodyParserFormOptions, type TriFrostBodyParserOptions, type ParsedBody} from './types';
 
 const encoder = new TextEncoder();
 const enc_newline = encoder.encode('\r\n');
 const enc_double_newline = encoder.encode('\r\n\r\n');
-const decoders:Record<string, TextDecoder> = {};
+const decoders: Record<string, TextDecoder> = {};
 
 const RGX_BOUNDARY = /boundary=([^;]+)/;
 const RGX_NAME = /name="([^"]+)"/;
@@ -23,7 +17,7 @@ const RGX_CHARSET = /charset=([^;\s]+)/i;
 /**
  * Simple Uint8Array indexOf implementation
  */
-function indexOf (haystack: Uint8Array, needle: Uint8Array, start = 0): number {
+function indexOf(haystack: Uint8Array, needle: Uint8Array, start = 0): number {
     outer: for (let i = start; i <= haystack.length - needle.length; i++) {
         for (let j = 0; j < needle.length; j++) {
             if (haystack[i + j] !== needle[j]) continue outer;
@@ -37,9 +31,9 @@ function indexOf (haystack: Uint8Array, needle: Uint8Array, start = 0): number {
  * Decodes a uint8array buffer with the provided decoder and
  * potentially strips byte-order-marks prepended to the text
  */
-function decode (dec:TextDecoder, buf:Uint8Array) {
+function decode(dec: TextDecoder, buf: Uint8Array) {
     const text = dec.decode(buf);
-    return text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
+    return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
 }
 
 /**
@@ -51,7 +45,7 @@ function decode (dec:TextDecoder, buf:Uint8Array) {
  * @param {number|undefined} typeLim - Type limit
  * @param {number|undefined} globalLim - Global limit
  */
-function isAboveLimit (ctx:TriFrostContext, buf:Uint8Array, typeLim:number|undefined, globalLim?:number|undefined) {
+function isAboveLimit(ctx: TriFrostContext, buf: Uint8Array, typeLim: number | undefined, globalLim?: number | undefined) {
     const bufLength = buf.byteLength;
     if (isInt(typeLim)) {
         if (bufLength > typeLim) {
@@ -73,16 +67,16 @@ function isAboveLimit (ctx:TriFrostContext, buf:Uint8Array, typeLim:number|undef
 /**
  * Parses multipart/form-data from a Uint8Array and returns a FormData (binary-safe)
  */
-export async function parseMultipart (
-    ctx:TriFrostContext,
-    bytes:Uint8Array,
-    boundary:string,
-    decoder:TextDecoder,
-    config:TriFrostBodyParserFormOptions
+export async function parseMultipart(
+    ctx: TriFrostContext,
+    bytes: Uint8Array,
+    boundary: string,
+    decoder: TextDecoder,
+    config: TriFrostBodyParserFormOptions,
 ): Promise<FormData> {
     const form = new FormData();
-    const files:string[] = [];
-    const files_allowed:Set<MimeType>|null = Array.isArray(config.files?.types) ? new Set(config.files.types) : null;
+    const files: string[] = [];
+    const files_allowed: Set<MimeType> | null = Array.isArray(config.files?.types) ? new Set(config.files.types) : null;
     const delimiter = encoder.encode('--' + boundary);
 
     /* Get start index using delimiter */
@@ -104,8 +98,8 @@ export async function parseMultipart (
 
         const content = part.subarray(header_end_idx + 4);
 
-        let disposition:string|null = null;
-        let type:string|null = null;
+        let disposition: string | null = null;
+        let type: string | null = null;
         let part_decoder = decoder;
         const header_lines = decoder.decode(part.subarray(0, header_end_idx)).split('\r\n');
         for (let i = 0; i < header_lines.length; i++) {
@@ -159,33 +153,21 @@ export async function parseMultipart (
                     try {
                         const n_type = (type || MimeTypes.BINARY) as MimeType;
                         /* Option: Allowed file types */
-                        /* eslint-disable-next-line max-depth */
+
                         if (files_allowed && !files_allowed.has(n_type)) {
                             ctx.logger.debug('parseBody@multipart: disallowed type', {filename, type: n_type, size: content.length});
                         } else {
-                            form.append(
-                                name,
-                                new File([content], filename, {type: n_type})
-                            );
+                            form.append(name, new File([content], filename, {type: n_type}));
                             files.push(filename);
                         }
                     } catch (err: any) {
-                        ctx.logger.debug(
-                            'parseBody@multipart: Failed to create File',
-                            {msg: err.message, filename, type}
-                        );
+                        ctx.logger.debug('parseBody@multipart: Failed to create File', {msg: err.message, filename, type});
                     }
                 } else {
-                    ctx.logger.debug(
-                        'parseBody@multipart: Empty file skipped',
-                        {name, filename}
-                    );
+                    ctx.logger.debug('parseBody@multipart: Empty file skipped', {name, filename});
                 }
             } else {
-                form.append(
-                    name,
-                    decode(part_decoder, content)
-                );
+                form.append(name, decode(part_decoder, content));
             }
         }
 
@@ -199,16 +181,14 @@ export async function parseMultipart (
 /**
  * Parses a raw body into an object for use on a trifrost context
  */
-export async function parseBody <T extends ParsedBody = ParsedBody> (
-    ctx:TriFrostContext,
-    buf:Uint8Array,
-    config:TriFrostBodyParserOptions
-):Promise<T|null> {
+export async function parseBody<T extends ParsedBody = ParsedBody>(
+    ctx: TriFrostContext,
+    buf: Uint8Array,
+    config: TriFrostBodyParserOptions,
+): Promise<T | null> {
     if (!(buf instanceof Uint8Array)) return {} as T;
 
-    const raw_type = typeof ctx.headers?.['content-type'] === 'string'
-        ? ctx.headers['content-type']
-        : '';
+    const raw_type = typeof ctx.headers?.['content-type'] === 'string' ? ctx.headers['content-type'] : '';
     const [mime, ...params] = raw_type.split(';');
     const type = mime.trim().toLowerCase();
 
@@ -224,7 +204,7 @@ export async function parseBody <T extends ParsedBody = ParsedBody> (
 
     try {
         /* Get decoder */
-        let strict_decoder:TextDecoder;
+        let strict_decoder: TextDecoder;
         if (charset in decoders) {
             strict_decoder = decoders[charset];
         } else {
@@ -281,13 +261,7 @@ export async function parseBody <T extends ParsedBody = ParsedBody> (
                 const boundary = raw_type.match(RGX_BOUNDARY)?.[1];
                 if (!boundary) throw new Error('multipart: Missing boundary');
 
-                const form = await parseMultipart(
-                    ctx,
-                    buf,
-                    boundary,
-                    strict_decoder,
-                    config.form || {}
-                );
+                const form = await parseMultipart(ctx, buf, boundary, strict_decoder, config.form || {});
                 return toObject(form, {
                     raw: config.form?.normalizeRaw ?? [],
                     normalize_bool: config.form?.normalizeBool ?? true,
@@ -297,9 +271,9 @@ export async function parseBody <T extends ParsedBody = ParsedBody> (
                 }) as T;
             }
             default:
-                return isAboveLimit(ctx, buf, config.limit) ? null : {raw: buf} as T;
+                return isAboveLimit(ctx, buf, config.limit) ? null : ({raw: buf} as T);
         }
-    } catch (err:any) {
+    } catch (err: any) {
         ctx.logger.debug('parseBody: Failed to parse', {type, msg: err.message});
         return {} as T;
     }

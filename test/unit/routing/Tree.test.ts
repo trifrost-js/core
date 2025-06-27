@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import {describe, it, expect, beforeEach} from 'vitest';
 import {RouteTree} from '../../../lib/routing/Tree';
 import {HttpMethods} from '../../../lib/types/constants';
@@ -577,16 +576,18 @@ describe('routing - Tree', () => {
                 bodyParser: null,
             });
 
-            expect(tree.stack).toEqual(expect.arrayContaining([
-                expect.objectContaining({path: '/static', method: 'GET'}),
-                expect.objectContaining({path: '/static', method: 'OPTIONS'}),
-                expect.objectContaining({path: '/dynamic/:id', method: 'POST'}),
-                expect.objectContaining({path: '/dynamic/:id', method: 'OPTIONS'}),
-                expect.objectContaining({path: '/nf/*', kind: 'notfound'}),
-                expect.not.objectContaining({path: '/nf/*', method: 'OPTIONS'}),
-                expect.objectContaining({path: '/err/*', kind: 'error'}),
-                expect.not.objectContaining({path: '/err/*', method: 'OPTIONS'}),
-            ]));
+            expect(tree.stack).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({path: '/static', method: 'GET'}),
+                    expect.objectContaining({path: '/static', method: 'OPTIONS'}),
+                    expect.objectContaining({path: '/dynamic/:id', method: 'POST'}),
+                    expect.objectContaining({path: '/dynamic/:id', method: 'OPTIONS'}),
+                    expect.objectContaining({path: '/nf/*', kind: 'notfound'}),
+                    expect.not.objectContaining({path: '/nf/*', method: 'OPTIONS'}),
+                    expect.objectContaining({path: '/err/*', kind: 'error'}),
+                    expect.not.objectContaining({path: '/err/*', method: 'OPTIONS'}),
+                ]),
+            );
         });
 
         it('includes auto-generated OPTIONS routes in stack', () => {
@@ -1049,65 +1050,73 @@ describe('routing - Tree', () => {
         describe('add', () => {
             it('Throws on invalid path', () => {
                 for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
-                    expect(() => tree.add({
-                        path: el as string,
+                    expect(() =>
+                        tree.add({
+                            path: el as string,
+                            fn: () => {},
+                            middleware: [],
+                            timeout: null,
+                            kind: 'std',
+                            method: HttpMethods.GET,
+                            name: 'invalid_path',
+                            description: null,
+                            meta: {},
+                            bodyParser: null,
+                        }),
+                    ).toThrowError(/RouteTree@add: invalid path/);
+                }
+
+                expect(() =>
+                    tree.add({
+                        path: 'no-slash',
                         fn: () => {},
                         middleware: [],
                         timeout: null,
                         kind: 'std',
                         method: HttpMethods.GET,
-                        name: 'invalid_path',
+                        name: 'no_slash',
                         description: null,
                         meta: {},
                         bodyParser: null,
-                    })).toThrowError(/RouteTree@add: invalid path/);
-                }
-
-                expect(() => tree.add({
-                    path: 'no-slash',
-                    fn: () => {},
-                    middleware: [],
-                    timeout: null,
-                    kind: 'std',
-                    method: HttpMethods.GET,
-                    name: 'no_slash',
-                    description: null,
-                    meta: {},
-                    bodyParser: null,
-                })).toThrowError(/RouteTree@add: invalid path/);
+                    }),
+                ).toThrowError(/RouteTree@add: invalid path/);
             });
 
             it('Throws on invalid handler', () => {
                 for (const el of CONSTANTS.NOT_FUNCTION) {
-                    expect(() => tree.add({
-                        path: '/valid',
-                        fn: el as any,
-                        middleware: [],
-                        timeout: null,
-                        kind: 'std',
-                        method: HttpMethods.GET,
-                        name: 'invalid_fn',
-                        description: null,
-                        meta: {},
-                        bodyParser: null,
-                    })).toThrowError(/RouteTree@add: route\.fn must be a function/);
+                    expect(() =>
+                        tree.add({
+                            path: '/valid',
+                            fn: el as any,
+                            middleware: [],
+                            timeout: null,
+                            kind: 'std',
+                            method: HttpMethods.GET,
+                            name: 'invalid_fn',
+                            description: null,
+                            meta: {},
+                            bodyParser: null,
+                        }),
+                    ).toThrowError(/RouteTree@add: route\.fn must be a function/);
                 }
             });
 
             it('Throws on invalid method', () => {
                 for (const el of [...CONSTANTS.NOT_STRING_WITH_EMPTY, 'GOT', 'PAT', 'PUST', ' GET ']) {
-                    expect(() => tree.add({
-                        path: '/valid',
-                        fn: () => {},
-                        middleware: [],
-                        timeout: null,
-                        kind: 'std',
-                        method: el as any,
-                        name: 'invalid_method',
-                        description: null,
-                        meta: {},
-                        bodyParser: null,
-                    })).toThrowError(/RouteTree@add: method is not valid/);
+                    expect(() =>
+                        tree.add({
+                            path: '/valid',
+                            fn: () => {},
+                            middleware: [],
+                            timeout: null,
+                            kind: 'std',
+                            method: el as any,
+                            name: 'invalid_method',
+                            description: null,
+                            meta: {},
+                            bodyParser: null,
+                        }),
+                    ).toThrowError(/RouteTree@add: method is not valid/);
                 }
             });
         });
@@ -1115,60 +1124,68 @@ describe('routing - Tree', () => {
         describe('addNotFound', () => {
             it('Throws on invalid path', () => {
                 for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
-                    expect(() => tree.addNotFound({
-                        path: el as string,
+                    expect(() =>
+                        tree.addNotFound({
+                            path: el as string,
+                            fn: () => {},
+                            middleware: [],
+                            timeout: null,
+                            kind: 'notfound',
+                            name: 'invalid_nf_path',
+                            description: null,
+                            meta: {},
+                            bodyParser: null,
+                        }),
+                    ).toThrowError(/RouteTree@addNotFound: invalid path/);
+                }
+
+                expect(() =>
+                    tree.addNotFound({
+                        path: 'no-slash',
                         fn: () => {},
                         middleware: [],
                         timeout: null,
                         kind: 'notfound',
-                        name: 'invalid_nf_path',
+                        name: 'invalid_nf_path2',
                         description: null,
                         meta: {},
                         bodyParser: null,
-                    })).toThrowError(/RouteTree@addNotFound: invalid path/);
-                }
-
-                expect(() => tree.addNotFound({
-                    path: 'no-slash',
-                    fn: () => {},
-                    middleware: [],
-                    timeout: null,
-                    kind: 'notfound',
-                    name: 'invalid_nf_path2',
-                    description: null,
-                    meta: {},
-                    bodyParser: null,
-                })).toThrowError(/RouteTree@addNotFound: invalid path/);
+                    }),
+                ).toThrowError(/RouteTree@addNotFound: invalid path/);
             });
         });
 
         describe('addError', () => {
             it('Throws on invalid path', () => {
                 for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) {
-                    expect(() => tree.addError({
-                        path: el as string,
+                    expect(() =>
+                        tree.addError({
+                            path: el as string,
+                            fn: () => {},
+                            middleware: [],
+                            timeout: null,
+                            kind: 'error',
+                            name: 'invalid_err_path',
+                            description: null,
+                            meta: {},
+                            bodyParser: null,
+                        }),
+                    ).toThrowError(/RouteTree@addError: invalid path/);
+                }
+
+                expect(() =>
+                    tree.addError({
+                        path: 'no-slash',
                         fn: () => {},
                         middleware: [],
                         timeout: null,
                         kind: 'error',
-                        name: 'invalid_err_path',
+                        name: 'invalid_err_path2',
                         description: null,
                         meta: {},
                         bodyParser: null,
-                    })).toThrowError(/RouteTree@addError: invalid path/);
-                }
-
-                expect(() => tree.addError({
-                    path: 'no-slash',
-                    fn: () => {},
-                    middleware: [],
-                    timeout: null,
-                    kind: 'error',
-                    name: 'invalid_err_path2',
-                    description: null,
-                    meta: {},
-                    bodyParser: null,
-                })).toThrowError(/RouteTree@addError: invalid path/);
+                    }),
+                ).toThrowError(/RouteTree@addError: invalid path/);
             });
         });
     });
@@ -1262,19 +1279,21 @@ describe('routing - Tree', () => {
     describe('options + cors auto-generation', () => {
         it('Auto-generates OPTIONS route with correct Allow header', async () => {
             const handler = () => {};
-            const corsMiddleware = (ctx:TriFrostContext) => {
+            const corsMiddleware = (ctx: TriFrostContext) => {
                 ctx.setHeader('x-cors-hit', 'true');
             };
 
             tree.add({
                 path: '/options-test',
                 fn: handler,
-                middleware: [{
-                    name: 'Cors Middleware',
-                    description: null,
-                    fingerprint: Sym_TriFrostMiddlewareCors,
-                    handler: corsMiddleware,
-                }],
+                middleware: [
+                    {
+                        name: 'Cors Middleware',
+                        description: null,
+                        fingerprint: Sym_TriFrostMiddlewareCors,
+                        handler: corsMiddleware,
+                    },
+                ],
                 timeout: null,
                 kind: 'std',
                 method: HttpMethods.GET,
@@ -1449,14 +1468,7 @@ describe('routing - Tree', () => {
             const handler = () => {};
             const path = '/stress';
 
-            const methods = [
-                HttpMethods.GET,
-                HttpMethods.POST,
-                HttpMethods.PUT,
-                HttpMethods.PATCH,
-                HttpMethods.DELETE,
-                HttpMethods.HEAD,
-            ];
+            const methods = [HttpMethods.GET, HttpMethods.POST, HttpMethods.PUT, HttpMethods.PATCH, HttpMethods.DELETE, HttpMethods.HEAD];
 
             for (const method of methods) {
                 tree.add({

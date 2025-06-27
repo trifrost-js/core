@@ -1,5 +1,4 @@
 export class MockDurableObjectStorage {
-    
     store = new Map<string, unknown>();
     alarms: number[] = [];
 
@@ -8,7 +7,7 @@ export class MockDurableObjectStorage {
     }
 
     async get<T>(key: string): Promise<T | undefined> {
-        return this.store.get(key) as T|undefined;
+        return this.store.get(key) as T | undefined;
     }
 
     async delete(keys: string[] | string) {
@@ -30,5 +29,4 @@ export class MockDurableObjectStorage {
     async setAlarm(ts: number) {
         this.alarms.push(ts);
     }
-
 }

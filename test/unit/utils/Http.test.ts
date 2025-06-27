@@ -44,7 +44,6 @@ describe('Utils - Http', () => {
         });
 
         it('Encodes single quote using custom rule (%27)', () => {
-            // eslint-disable-next-line quotes
             const result = encodeFilename("O'Reilly's Guide.pdf");
             expect(result.ascii).toBe('OReillys Guide.pdf');
             expect(result.encoded).toBe('O%27Reilly%27s%20Guide.pdf');

@@ -1,9 +1,5 @@
 import {describe, it, expect, beforeEach} from 'vitest';
-import {
-    setActiveCtx,
-    getActiveCtx,
-    hasActiveCtx,
-} from '../../../../../lib/modules/JSX/ctx/use';
+import {setActiveCtx, getActiveCtx, hasActiveCtx} from '../../../../../lib/modules/JSX/ctx/use';
 
 describe('JSX - ctx/use', () => {
     beforeEach(() => {

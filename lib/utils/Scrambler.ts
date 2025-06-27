@@ -1,14 +1,10 @@
-/* eslint-disable complexity */
 import {deepFreeze} from '@valkyriestudios/utils/deep';
 
 const RGX_MALICIOUS = /__proto__|constructor|prototype/;
 
-export type ScramblerValue =
-    | string
-    | {global: string}
-    | {valuePattern: RegExp};
+export type ScramblerValue = string | {global: string} | {valuePattern: RegExp};
 
-export type Scrambler <T extends Record<string, any>> = (obj:T) => T;
+export type Scrambler<T extends Record<string, any>> = (obj: T) => T;
 
 type ScramblerOptions = {
     replacement?: string;
@@ -67,12 +63,12 @@ export const OMIT_PRESETS = {
 /**
  * Create a reusable scrambler function with precompiled key + value pattern checks
  */
-function createScrambler <T extends Record<string, any> = Record<string, any>> (options:ScramblerOptions = {}):Scrambler<T> {
+function createScrambler<T extends Record<string, any> = Record<string, any>>(options: ScramblerOptions = {}): Scrambler<T> {
     const repl = typeof options?.replacement === 'string' ? options.replacement : '***';
     const checks = Array.isArray(options?.checks) ? options.checks : [];
 
-    let paths:Set<string>|null = new Set();
-    let props:Set<string>|null = new Set();
+    let paths: Set<string> | null = new Set();
+    let props: Set<string> | null = new Set();
     const valueRgx: RegExp[] = [];
 
     for (let i = 0; i < checks.length; i++) {
@@ -89,13 +85,13 @@ function createScrambler <T extends Record<string, any> = Record<string, any>> (
     }
 
     const values = valueRgx.length
-        ? new RegExp(valueRgx.reduce((acc, r, i) => acc + (i > 0 ? '|' : '') + r.source, ''), 'ig')
+        ? new RegExp( valueRgx.reduce((acc, r, i) => acc + (i > 0 ? '|' : '') + r.source, ''), 'ig') // eslint-disable-line prettier/prettier
         : null;
 
     paths = paths.size ? paths : null;
     props = props.size ? props : null;
 
-    function walk (input: any, path = ''): any {
+    function walk(input: any, path = ''): any {
         if (Array.isArray(input)) {
             let mutated = false;
             const result = new Array(input.length);
@@ -124,10 +120,7 @@ function createScrambler <T extends Record<string, any> = Record<string, any>> (
                 switch (type) {
                     case 'string':
                     case 'number': {
-                        if (
-                            (paths !== null && paths.has(normalized_path) === true) ||
-                            (props !== null && props.has(key) === true)
-                        ) {
+                        if ((paths !== null && paths.has(normalized_path) === true) || (props !== null && props.has(key) === true)) {
                             if (!result) result = {...input};
                             result![key] = repl;
                         } else if (values) {
@@ -155,9 +148,7 @@ function createScrambler <T extends Record<string, any> = Record<string, any>> (
         return input;
     }
 
-    return checks.length
-        ? (obj:T) => walk(obj) as T
-        : (obj:T) => obj;
+    return checks.length ? (obj: T) => walk(obj) as T : (obj: T) => obj;
 }
 
 export {createScrambler};
