@@ -1,0 +1,177 @@
+import {LRU} from '@valkyriestudios/utils/caching';
+import {djb2Hash} from './Generic';
+
+const encoder = new TextEncoder();
+const decoder = new TextDecoder('utf-8', {fatal: true});
+const KEY_HEADER = /-----[A-Z ]+-----/g;
+const KEY_SPACES = /\s+/g;
+
+const key_cache = new LRU<CryptoKey>({max_size: 100});
+
+const B64URL_LOOKUP: Record<string, string> = {
+    '+': '-',
+    '/': '_',
+    '=': '',
+};
+
+const RGX_B64URL = /[+/=]/g;
+
+/**
+ * Supported cryptographic algorithms mapped to WebCrypto import configurations.
+ *
+ * - HMAC: HS256, HS384, HS512
+ * - RSA: RS256, RS384, RS512
+ * - ECDSA: ES256, ES384, ES512
+ * - None: No signature
+ *
+ * @see https://datatracker.ietf.org/doc/html/rfc7518#section-3
+ */
+export const ALGOS: Record<string, SubtleCryptoImportKeyAlgorithm> = {
+    none: {name: 'none'},
+    HS256: {name: 'HMAC', hash: {name: 'SHA-256'}},
+    HS384: {name: 'HMAC', hash: {name: 'SHA-384'}},
+    HS512: {name: 'HMAC', hash: {name: 'SHA-512'}},
+    RS256: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-256'}},
+    RS384: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-384'}},
+    RS512: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-512'}},
+    ES256: {name: 'ECDSA', namedCurve: 'P-256', hash: {name: 'SHA-256'}},
+    ES384: {name: 'ECDSA', namedCurve: 'P-384', hash: {name: 'SHA-384'}},
+    ES512: {name: 'ECDSA', namedCurve: 'P-521', hash: {name: 'SHA-512'}},
+} as const;
+
+/**
+ * Keys of supported algorithms defined in `ALGOS`.
+ */
+export type SupportedAlgorithms = keyof typeof ALGOS;
+
+/**
+ * Encodes a Uint8Array into a base64url string.
+ *
+ * @param {Uint8Array} data - Raw binary data to encode
+ * @returns URL-safe base64 string without padding.
+ * @see https://datatracker.ietf.org/doc/html/rfc7515#appendix-C
+ */
+export function b64url(data: Uint8Array): string {
+    if (!(data instanceof Uint8Array)) throw new TypeError('Crypto@b64url: Expected Uint8Array');
+    return btoa(String.fromCharCode(...data)).replace(RGX_B64URL, ch => B64URL_LOOKUP[ch]);
+}
+
+/**
+ * Decodes a base64url string into a Uint8Array.
+ *
+ * @param {string} input - URL-safe base64 string (with or without padding)
+ * @returns Decoded binary data.
+ */
+export function b64urlDecode(input: string): Uint8Array {
+    if (typeof input !== 'string') throw new TypeError('Crypto@b64urlDecode: Expected string input');
+    const len = input.length;
+    const rem = len % 4;
+
+    /* Only pad if necessary (0/2/3 remainder) */
+    let padded;
+    switch (rem) {
+        case 2:
+            padded = input + '==';
+            break;
+        case 3:
+            padded = input + '=';
+            break;
+        case 0:
+            padded = input;
+            break;
+        default:
+            throw new Error('Crypto@b64urlDecode: Invalid base64 length');
+    }
+
+    /* Replace in a single regex callback for perf */
+    const b64 = padded.replace(/[-_]/g, c => (c === '-' ? '+' : '/'));
+
+    try {
+        const bin = atob(b64);
+        const out = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) {
+            out[i] = bin.charCodeAt(i);
+        }
+        return out;
+    } catch {
+        throw new Error('Crypto@b64urlDecode: Invalid base64 input');
+    }
+}
+
+/**
+ * Encodes a UTF-8 string into a Uint8Array.
+ *
+ * @param {string} str - Text string to encode.
+ * @returns UTF-8 encoded bytes.
+ */
+export function utf8Encode(str: string): Uint8Array {
+    if (typeof str !== 'string') throw new TypeError('Crypto@utf8Encode: Expected string');
+    return encoder.encode(str);
+}
+
+/**
+ * Decodes a Uint8Array into a UTF-8 string.
+ *
+ * @param data - UTF-8 bytes to decode.
+ * @returns Decoded string.
+ */
+export function utf8Decode(data: Uint8Array): string {
+    if (!(data instanceof Uint8Array)) throw new TypeError('Crypto@utf8Decode: Expected Uint8Array');
+    return decoder.decode(data);
+}
+
+/**
+ * Imports a key for use with WebCrypto API, supporting PEM strings, JWK objects, or raw secrets.
+ * Automatically caches keys using a DJB2 hash of input to avoid repeated imports.
+ *
+ * @param {string|JsonWebKey|CryptoKey} key - PEM string, JWK object, or CryptoKey
+ * @param {SubtleCryptoImportKeyAlgorithm} algorithm - Algorithm to import the key for (e.g., HMAC, RSA, ECDSA)
+ * @param {KeyUsage[]} usages - Key usages such as `['sign']` or `['verify']`
+ * @returns A Promise resolving to a `CryptoKey` instance
+ * @throws If the PEM body is empty or unsupported key type
+ */
+export async function importKey(
+    key: string | JsonWebKey | CryptoKey,
+    algorithm: SubtleCryptoImportKeyAlgorithm,
+    usages: KeyUsage[],
+): Promise<CryptoKey> {
+    if (!algorithm?.name) throw new TypeError('Crypto@importKey: Invalid algorithm provided');
+    if (!Array.isArray(usages) || usages.length === 0) throw new TypeError('Crypto@importKey: Missing key usages');
+
+    if (key instanceof CryptoKey) return key;
+
+    /* Generate an id for the key */
+    const id = algorithm.name + ':' + usages.join('.') + ':' + djb2Hash(typeof key === 'string' ? key : JSON.stringify(key));
+
+    /* If cached, return cached version */
+    const cached = key_cache.get(id);
+    if (cached) return cached;
+
+    try {
+        if (typeof key === 'object') {
+            const imported = await crypto.subtle.importKey('jwk', key, algorithm, false, usages);
+            key_cache.set(id, imported);
+            return imported;
+        }
+
+        if (typeof key === 'string') {
+            const raw = key.replace(KEY_HEADER, '').replace(KEY_SPACES, '');
+            if (!raw) throw new Error('importKey: Empty PEM body');
+
+            const data = b64urlDecode(raw);
+
+            let format: 'pkcs8' | 'spki' | 'raw';
+            if (key.includes('PRIVATE')) format = 'pkcs8';
+            else if (key.includes('PUBLIC')) format = 'spki';
+            else format = 'raw';
+
+            const imported = await crypto.subtle.importKey(format, format === 'raw' ? utf8Encode(key) : data, algorithm, false, usages);
+            key_cache.set(id, imported);
+            return imported;
+        }
+
+        throw new Error('importKey: Unsupported key input type');
+    } catch (err) {
+        throw new Error(`importKey: Failed to import key (${(err as Error).message})`);
+    }
+}
