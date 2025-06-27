@@ -1,6 +1,6 @@
 /* eslint-disable array-element-newline */
 
-import {isIntGt} from '@valkyriestudios/utils/number';
+import {isIntBetween, isIntGt} from '@valkyriestudios/utils/number';
 import {isNeString} from '@valkyriestudios/utils/string';
 
 const HEX_LUT = [
@@ -130,6 +130,21 @@ export function determineName (env:Record<string, unknown>):string {
 export function determineVersion (env:Record<string, unknown>):string {
     const val = env.TRIFROST_VERSION ?? env.SERVICE_VERSION ?? env.VERSION;
     return isNeString(val) ? val.trim() : '1.0.0';
+}
+
+/**
+ * Determine default port
+ *
+ * @param {Record<string, unknown>?} env - Environment to check on
+ * @param {number|null?} port - Provided options port
+ */
+export function determinePort (env?:Record<string, unknown>, port?:number|null):number {
+    if (isIntBetween(port, 1, 65535)) return port;
+    if (Object.prototype.toString.call(env) !== '[object Object]') return 3000;
+    let val = env?.TRIFROST_PORT ?? env?.SERVICE_PORT ?? env?.PORT;
+    if (isNeString(val)) val = (val as unknown as number) | 0;
+    if (isIntBetween(val, 1, 65535)) return val;
+    return 3000;
 }
 
 /**

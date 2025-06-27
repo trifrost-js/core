@@ -1,7 +1,7 @@
 /* eslint-disable complexity */
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
-import {isIntBetween, isIntGt} from '@valkyriestudios/utils/number';
+import {isIntGt} from '@valkyriestudios/utils/number';
 import {isObject} from '@valkyriestudios/utils/object';
 import {type TriFrostCache} from './modules/Cache';
 import {type TriFrostCookieOptions} from './modules/Cookies';
@@ -326,10 +326,10 @@ class App <
                     cookies: this.#cookies.config,
                     cache: this.#cache as TriFrostCache,
                     host: this.#host,
-                    port: isIntBetween(options?.port, 1, 65535) ? options?.port : 3000,
                     requestId: this.#requestId,
                     env: this.#env as unknown as Env,
                     timeout: this.timeout,
+                    ...options?.port && {port: options.port},
                     ...this.#trustProxy !== null && {trustProxy: this.#trustProxy},
                     ...this.#css !== null && {css: this.#css},
                     ...this.#script !== null && {script: this.#script},

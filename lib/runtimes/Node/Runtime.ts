@@ -13,7 +13,7 @@ import {
     type IncomingMessage,
     type ServerResponse,
 } from './types';
-import {isDevMode} from '../../utils/Generic';
+import {determinePort, isDevMode} from '../../utils/Generic';
 
 export class NodeRuntime implements TriFrostRuntime {
 
@@ -98,8 +98,8 @@ export class NodeRuntime implements TriFrostRuntime {
 
             /* Listen on the provided port, resolve if succeeds, reject if fails */
             this.#server!
-                .listen(opts.cfg.port, () => {
-                    this.#logger!.info(`NodeRuntime@boot: Listening on port ${opts.cfg.port}`);
+                .listen(determinePort(cfg.env, opts.cfg.port || null), () => {
+                    this.#logger!.debug(`NodeRuntime@boot: Listening on port ${opts.cfg.port}`);
                     return resolve();
                 })
                 .on('error', () => {

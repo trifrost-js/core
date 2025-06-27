@@ -5,6 +5,7 @@ import {
     determineDebug,
     determineName,
     determineVersion,
+    determinePort,
 } from '../../../lib/utils/Generic';
 import CONSTANTS from '../../constants';
 
@@ -145,6 +146,118 @@ describe('Utils - Generic', () => {
 
         it('Trims whitespace from value before validation', () => {
             expect(determineVersion({TRIFROST_VERSION: '  1.0.0  '})).toBe('1.0.0');
+        });
+    });
+
+    describe('determinePort', () => {
+        it('Returns 3000 if passed nothing', () => {
+            expect(determinePort()).toBe(3000);
+        });
+
+        it('Returns 3000 if passed a non-object env and nothing else', () => {
+            for (const el of CONSTANTS.NOT_OBJECT) expect(determinePort(el as any)).toBe(3000);
+        });
+
+        it('Returns 3000 if passed an object env and a chosen port, but the port is a non-integer', () => {
+            for (const el of CONSTANTS.NOT_INTEGER) expect(determinePort({}, el as number)).toBe(3000);
+        });
+
+        it('Returns 3000 if passed an object env and a chosen port, but the port is not in the valid range', () => {
+            for (const el of [-1, 0, 80.9, 65536]) expect(determinePort({}, el)).toBe(3000);
+        });
+
+        it('Returns the chosen port if a chosen port is provided', () => {
+            expect(determinePort({}, 9000)).toBe(9000);
+        });
+
+        it('Prefers chosen port over env-based port if both are valid', () => {
+            expect(determinePort({TRIFROST_PORT: 9999}, 9000)).toBe(9000);
+        });
+
+        describe('Multiple ports', () => {
+            it('Prefers TRIFROST_PORT over SERVICE_PORT', () => {
+                expect(determinePort({
+                    TRIFROST_PORT: '9999',
+                    SERVICE_PORT: '8888',
+                    PORT: '7777',
+                })).toBe(9999);
+            });
+
+            it('Prefers SERVICE_PORT over PORT', () => {
+                expect(determinePort({
+                    SERVICE_PORT: '8888',
+                    PORT: '7777',
+                })).toBe(8888);
+            });
+        });
+
+        describe('TRIFROST_PORT', () => {
+            it('Returns 3000 if passed a TRIFROST_PORT env but the port is a non-integer', () => {
+                for (const el of CONSTANTS.NOT_INTEGER) expect(determinePort({TRIFROST_PORT: el})).toBe(3000);
+            });
+
+            it('Returns 3000 if passed a TRIFROST_PORT env but the port is not in the valid range', () => {
+                for (const el of [-1, 0, 80.9, 65536]) expect(determinePort({TRIFROST_PORT: el})).toBe(3000);
+            });
+
+            it('Returns TRIFROST_PORT if valid', () => {
+                expect(determinePort({TRIFROST_PORT: 9999})).toBe(9999);
+            });
+
+            it('Coerces string TRIFROST_PORT into integer and returns 3000 if not valid', () => {
+                for (const el of [-1, 0, 65536]) expect(determinePort({TRIFROST_PORT: String(el)})).toBe(3000);
+            });
+
+            it('Coerces string TRIFROST_PORT into integer and returns as number if valid', () => {
+                expect(determinePort({TRIFROST_PORT: '80.9'})).toBe(80);
+                expect(determinePort({TRIFROST_PORT: '9999'})).toBe(9999);
+            });
+        });
+
+        describe('SERVICE_PORT', () => {
+            it('Returns 3000 if passed a SERVICE_PORT env but the port is a non-integer', () => {
+                for (const el of CONSTANTS.NOT_INTEGER) expect(determinePort({SERVICE_PORT: el})).toBe(3000);
+            });
+
+            it('Returns 3000 if passed a SERVICE_PORT env but the port is not in the valid range', () => {
+                for (const el of [-1, 0, 80.9, 65536]) expect(determinePort({SERVICE_PORT: el})).toBe(3000);
+            });
+
+            it('Returns SERVICE_PORT if valid', () => {
+                expect(determinePort({SERVICE_PORT: 9999})).toBe(9999);
+            });
+
+            it('Coerces string SERVICE_PORT into integer and returns 3000 if not valid', () => {
+                for (const el of [-1, 0, 65536]) expect(determinePort({SERVICE_PORT: String(el)})).toBe(3000);
+            });
+
+            it('Coerces string SERVICE_PORT into integer and returns as number if valid', () => {
+                expect(determinePort({SERVICE_PORT: '80.9'})).toBe(80);
+                expect(determinePort({SERVICE_PORT: '9999'})).toBe(9999);
+            });
+        });
+
+        describe('PORT', () => {
+            it('Returns 3000 if passed a PORT env but the port is a non-integer', () => {
+                for (const el of CONSTANTS.NOT_INTEGER) expect(determinePort({PORT: el})).toBe(3000);
+            });
+
+            it('Returns 3000 if passed a PORT env but the port is not in the valid range', () => {
+                for (const el of [-1, 0, 80.9, 65536]) expect(determinePort({PORT: el})).toBe(3000);
+            });
+
+            it('Returns PORT if valid', () => {
+                expect(determinePort({PORT: 9999})).toBe(9999);
+            });
+
+            it('Coerces string PORT into integer and returns 3000 if not valid', () => {
+                for (const el of [-1, 0, 65536]) expect(determinePort({PORT: String(el)})).toBe(3000);
+            });
+
+            it('Coerces string PORT into integer and returns as number if valid', () => {
+                expect(determinePort({PORT: '80.9'})).toBe(80);
+                expect(determinePort({PORT: '9999'})).toBe(9999);
+            });
         });
     });
 

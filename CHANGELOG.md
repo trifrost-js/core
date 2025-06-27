@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Improved
+- **dx**: `TRIFROST_PORT` can now be used as the canonical source of the runtime port (for runtimes that bind to a specific port such as bun and node), set via `.env`, `.dev.vars`, GitHub Actions, or Docker builds. If no `TRIFROST_PORT` is defined we will fallback to `SERVICE_PORT` and `PORT` env variables. **Take Note**: You can still manually do `.boot({port: /* Your port */})` but this is no longer a necessity if already defined on the environment. In case **no port** can be found on either the environment or manually passed we will default to `3000`.
+
 ## [0.38.1] - 2025-06-25
 ### Fixed
 - Fix an issue due to IOS Safari working differently regarding CustomEvent instantiation

@@ -47,7 +47,7 @@ export type TriFrostContextConfig <Env extends Record<string, any> = Record<stri
     cookies: Partial<TriFrostCookieOptions>;
     cache: TriFrostCache<Env>;
     host: string|null;
-    port: number;
+    port?: number;
     timeout: number|null;
     env: Env;
     requestId: TriFrostContextIdOptions|null;
