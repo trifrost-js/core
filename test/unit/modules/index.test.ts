@@ -5,6 +5,7 @@ import {RateLimitKeyGeneratorRegistry} from '../../../lib/modules/RateLimit/_Rat
 import {createCss} from '../../../lib/modules/JSX/style/use';
 import {Style} from '../../../lib/modules/JSX/style/Style';
 import {createScript} from '../../../lib/modules/JSX/script/use';
+import {jwtSign, jwtVerify, jwtDecode} from '../../../lib/modules/JWT';
 import * as Modules from '../../../lib/modules';
 
 describe('Modules - Index', () => {
@@ -65,6 +66,24 @@ describe('Modules - Index', () => {
     describe('OtelHttpExporter', () => {
         it('Should link to the correct module', () => {
             expect(Modules.OtelHttpExporter).toEqual(OtelHttpExporter);
+        });
+    });
+
+    /**
+     * MARK: JWT
+     */
+
+    describe('JWT', () => {
+        it('jwtVerify should link to the correct module', () => {
+            expect(Modules.jwtVerify).toEqual(jwtVerify);
+        });
+
+        it('jwtSign should link to the correct module', () => {
+            expect(Modules.jwtSign).toEqual(jwtSign);
+        });
+
+        it('jwtDecode should link to the correct module', () => {
+            expect(Modules.jwtDecode).toEqual(jwtDecode);
         });
     });
 });

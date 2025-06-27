@@ -18,6 +18,9 @@ export {ConsoleExporter, JsonExporter, OtelHttpExporter, span, spanFn} from './m
 /* Modules - JSX */
 export {createCss, createScript, Style, nonce} from './modules/JSX';
 
+/* Modules - JWT */
+export {jwtSign, jwtVerify, jwtDecode} from './modules/JWT';
+
 /* Modules - Rate Limit */
 export {Sym_TriFrostMiddlewareRateLimit} from './modules/RateLimit';
 

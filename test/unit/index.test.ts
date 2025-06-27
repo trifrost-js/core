@@ -12,6 +12,7 @@ import {cache, cacheFn, cacheSkip} from '../../lib/modules/Cache/util';
 import {ConsoleExporter, JsonExporter, OtelHttpExporter, span, spanFn} from '../../lib/modules/Logger';
 import {createCss, Style} from '../../lib/modules/JSX/style';
 import {createScript} from '../../lib/modules/JSX/script';
+import {jwtSign, jwtVerify, jwtDecode} from '../../lib/modules/JWT';
 import {DurableObjectCache, DurableObjectRateLimit} from '../../lib/storage/DurableObject';
 import {TriFrostDurableObject} from '../../lib/runtimes/Workerd/DurableObject';
 import {KVCache, KVRateLimit} from '../../lib/storage/KV';
@@ -161,6 +162,18 @@ describe('index', () => {
 
         it('Style', () => {
             expect(Index.Style).toBe(Style);
+        });
+
+        it('jwtVerify', () => {
+            expect(Index.jwtVerify).toBe(jwtVerify);
+        });
+
+        it('jwtSign', () => {
+            expect(Index.jwtSign).toBe(jwtSign);
+        });
+
+        it('jwtDecode', () => {
+            expect(Index.jwtDecode).toBe(jwtDecode);
         });
     });
 
