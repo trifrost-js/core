@@ -39,7 +39,7 @@ describe('Modules - JSX - style - use', () => {
 
         it('Generates deterministic class for flat styles', () => {
             const cls = css({color: 'red', fontSize: '1rem'});
-            expect(cls).toMatch(/^tf-/);
+            expect(cls).toMatch(/^tf/);
             const html = engine.inject(`${MARKER}<div class="${cls}">Hello</div>`);
             expect(html).toBe(`<style>.${cls}{color:red;font-size:1rem}</style><div class="${cls}">Hello</div>`);
         });
@@ -262,7 +262,7 @@ describe('Modules - JSX - style - use', () => {
 
         it('Returns class but does not inject when inject: false', () => {
             const cls = css({color: 'green'}, {inject: false});
-            expect(cls).toMatch(/^tf-/);
+            expect(cls).toMatch(/^tf/);
             const html = engine.inject(`${MARKER}<div class="${cls}">Nothing</div>`);
             expect(html).toBe(`<div class="${cls}">Nothing</div>`);
         });
@@ -379,7 +379,7 @@ describe('Modules - JSX - style - use', () => {
                         `.${cls}:not(:last-child){margin-bottom:0.5rem}`,
                         '}',
                         '</style>',
-                        '<div class="tf-tipekr">Media</div>',
+                        '<div class="tf1ng9lfv">Media</div>',
                     ].join(''),
                 );
             });
@@ -1205,7 +1205,7 @@ describe('Modules - JSX - style - use', () => {
             expect(html).toBe(
                 [
                     '<style>',
-                    '.tf-xlk7jb{background-color:var(--t-bg);color:var(--t-fg);padding:var(--v-spacing_m);border-radius:var(--v-radius_s)}',
+                    '.tfje8nhj{background-color:var(--t-bg);color:var(--t-fg);padding:var(--v-spacing_m);border-radius:var(--v-radius_s)}',
                     ':root{--v-spacing_m:1rem;--v-radius_s:4px}',
                     '@media (prefers-color-scheme: light){',
                     ':root[data-theme="dark"]{--t-bg:#000;--t-fg:#eee}',
@@ -1216,7 +1216,7 @@ describe('Modules - JSX - style - use', () => {
                     ':root{--t-bg:#000;--t-fg:#eee}',
                     '}',
                     '</style>',
-                    '<div class="tf-xlk7jb">Vars in Use</div>',
+                    '<div class="tfje8nhj">Vars in Use</div>',
                 ].join(''),
             );
         });
@@ -1249,7 +1249,7 @@ describe('Modules - JSX - style - use', () => {
             expect(html).toBe(
                 [
                     '<style>',
-                    '.tf-xlk7jb{background-color:var(--t-bg);color:var(--t-fg);padding:var(--v-spacing_m);border-radius:var(--v-radius_s)}',
+                    '.tfje8nhj{background-color:var(--t-bg);color:var(--t-fg);padding:var(--v-spacing_m);border-radius:var(--v-radius_s)}',
                     ':root{--v-spacing_m:1rem;--v-radius_s:4px}',
                     '@media (prefers-color-scheme: light){',
                     ':root[data-theme="dark"]{--t-bg:#000;--t-fg:#eee}',
@@ -1260,7 +1260,7 @@ describe('Modules - JSX - style - use', () => {
                     ':root{--t-bg:#000;--t-fg:#eee}',
                     '}',
                     '</style>',
-                    '<div class="tf-xlk7jb">Vars in Use</div>',
+                    '<div class="tfje8nhj">Vars in Use</div>',
                 ].join(''),
             );
         });
@@ -1327,9 +1327,9 @@ describe('Modules - JSX - style - use', () => {
                     '--t-bg:#fff;',
                     '--t-fg:#222',
                     '}',
-                    '.tf-cd4cfg{display:flex;align-items:center;color:var(--t-fg);background:var(--t-bg);padding:var(--v-spacing)}',
+                    '.tf1c79mh8{display:flex;align-items:center;color:var(--t-fg);background:var(--t-bg);padding:var(--v-spacing)}',
                     '</style>',
-                    '<div class="tf-cd4cfg">Defined</div>',
+                    '<div class="tf1c79mh8">Defined</div>',
                 ].join(''),
             );
         });
@@ -1464,13 +1464,13 @@ describe('Modules - JSX - style - use', () => {
             });
 
             const cls = css.use('row', 'center', {gap: css.var.x});
-            expect(cls).toMatch(/^tf-/);
+            expect(cls).toMatch(/^tf/);
             expect(engine.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe(
                 [
                     '<style>',
-                    '.tf-1v7zb4h{display:flex;flex-direction:row;justify-content:center;align-items:center;gap:var(--v-x)}',
+                    '.tf1ozn3bl{display:flex;flex-direction:row;justify-content:center;align-items:center;gap:var(--v-x)}',
                     '</style>',
-                    '<div class="tf-1v7zb4h">Mix</div>',
+                    '<div class="tf1ozn3bl">Mix</div>',
                 ].join(''),
             );
         });
@@ -1484,7 +1484,7 @@ describe('Modules - JSX - style - use', () => {
             });
 
             const cls = css.use('base', null, undefined, false, 'active');
-            expect(cls).toMatch(/^tf-/);
+            expect(cls).toMatch(/^tf/);
 
             const html = engine.inject(`${MARKER}<div class="${cls}">Falsy</div>`);
             expect(html).toBe(['<style>', `.${cls}{display:block;color:blue}`, '</style>', `<div class="${cls}">Falsy</div>`].join(''));
@@ -1531,21 +1531,21 @@ describe('Modules - JSX - style - use', () => {
                 [css.media.tablet]: css.mix('sp_l', 'fj_sa', {' > span': css.mix('hide')}),
             });
 
-            expect(cls).toMatch(/^tf-/);
+            expect(cls).toMatch(/^tf/);
             expect(engine.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe(
                 [
                     '<style>',
-                    '.tf-oupfrh{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                    '.tf1bdiex9{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
                     '@media (min-width: 1200px){',
-                    '.tf-oupfrh > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
-                    '.tf-oupfrh{padding:var(--v-space_xl);justify-content:center}',
+                    '.tf1bdiex9 > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                    '.tf1bdiex9{padding:var(--v-space_xl);justify-content:center}',
                     '}',
                     '@media (max-width: 1199px){',
-                    '.tf-oupfrh > span{display:none}',
-                    '.tf-oupfrh{padding:var(--v-space_l);justify-content:space-around}',
+                    '.tf1bdiex9 > span{display:none}',
+                    '.tf1bdiex9{padding:var(--v-space_l);justify-content:space-around}',
                     '}',
                     '</style>',
-                    '<div class="tf-oupfrh">Mix</div>',
+                    '<div class="tf1bdiex9">Mix</div>',
                 ].join(''),
             );
         });
@@ -1592,21 +1592,21 @@ describe('Modules - JSX - style - use', () => {
                 [css.media.tablet]: css.mix('sp_l', 'fj_sa', {' > span': css.mix('hode')}),
             });
 
-            expect(cls).toMatch(/^tf-/);
+            expect(cls).toMatch(/^tf/);
             expect(engine.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe(
                 [
                     '<style>',
-                    '.tf-1wuvp3b{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                    '.tf1gwdlxj{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
                     '@media (min-width: 1200px){',
-                    '.tf-1wuvp3b > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
-                    '.tf-1wuvp3b{padding:var(--v-space_xl);justify-content:center}',
+                    '.tf1gwdlxj > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                    '.tf1gwdlxj{padding:var(--v-space_xl);justify-content:center}',
                     '}',
                     '@media (max-width: 1199px){',
-                    // '.tf-1wuvp3b > span{display:none}',
-                    '.tf-1wuvp3b{padding:var(--v-space_l);justify-content:space-around}',
+                    // '.tf1gwdlxj > span{display:none}',
+                    '.tf1gwdlxj{padding:var(--v-space_l);justify-content:space-around}',
                     '}',
                     '</style>',
-                    '<div class="tf-1wuvp3b">Mix</div>',
+                    '<div class="tf1gwdlxj">Mix</div>',
                 ].join(''),
             );
         });
@@ -1654,20 +1654,20 @@ describe('Modules - JSX - style - use', () => {
                 [css.media.tablet]: css.mix('sp_l', 'fj_sa'),
             });
 
-            expect(cls).toMatch(/^tf-/);
+            expect(cls).toMatch(/^tf/);
             expect(getActiveStyleEngine()!.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe(
                 [
                     '<style>',
-                    '.tf-kn00o5{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                    '.tfhev09x{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
                     '@media (min-width: 1200px){',
-                    '.tf-kn00o5 > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
-                    '.tf-kn00o5{padding:var(--v-space_xl);justify-content:center}',
+                    '.tfhev09x > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                    '.tfhev09x{padding:var(--v-space_xl);justify-content:center}',
                     '}',
                     '@media (max-width: 1199px){',
-                    '.tf-kn00o5{padding:var(--v-space_l);justify-content:space-around}',
+                    '.tfhev09x{padding:var(--v-space_l);justify-content:space-around}',
                     '}',
                     '</style>',
-                    '<div class="tf-kn00o5">Mix</div>',
+                    '<div class="tfhev09x">Mix</div>',
                 ].join(''),
             );
         });
@@ -1727,17 +1727,17 @@ describe('Modules - JSX - style - use', () => {
                 expect(el).toBe(
                     [
                         '<style>',
-                        '.tf-oupfrh{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                        '.tf1bdiex9{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
                         '@media (min-width: 1200px){',
-                        '.tf-oupfrh > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
-                        '.tf-oupfrh{padding:var(--v-space_xl);justify-content:center}',
+                        '.tf1bdiex9 > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                        '.tf1bdiex9{padding:var(--v-space_xl);justify-content:center}',
                         '}',
                         '@media (max-width: 1199px){',
-                        '.tf-oupfrh > span{display:none}',
-                        '.tf-oupfrh{padding:var(--v-space_l);justify-content:space-around}',
+                        '.tf1bdiex9 > span{display:none}',
+                        '.tf1bdiex9{padding:var(--v-space_l);justify-content:space-around}',
                         '}',
                         '</style>',
-                        '<div class="tf-oupfrh">Mix</div>',
+                        '<div class="tf1bdiex9">Mix</div>',
                     ].join(''),
                 );
             }
@@ -1798,7 +1798,7 @@ describe('Modules - JSX - style - use', () => {
             const duration = Date.now() - start;
             expect(duration).toBeLessThan(100);
             for (const el of output) {
-                expect(el).toBe(['<div class="tf-oupfrh">Mix</div>'].join(''));
+                expect(el).toBe(['<div class="tf1bdiex9">Mix</div>'].join(''));
             }
         });
 
@@ -1806,7 +1806,7 @@ describe('Modules - JSX - style - use', () => {
             const css = createCss();
             const id1 = css.cid();
             const id2 = css.cid();
-            expect(id1).toMatch(/^tf-/);
+            expect(id1).toMatch(/^tf/);
             expect(id1).not.toBe(id2);
         });
 
@@ -1815,7 +1815,7 @@ describe('Modules - JSX - style - use', () => {
             const set = new Set();
             for (let i = 0; i < 1000; i++) set.add(css.cid());
             expect(set.size).toBe(1000);
-            for (const el of set.values()) expect(el).toMatch(/^tf-/);
+            for (const el of set.values()) expect(el).toMatch(/^tf/);
         });
 
         describe('breakpoints', () => {
@@ -2104,7 +2104,7 @@ describe('Modules - JSX - style - use', () => {
                     },
                 });
                 expect(engine.inject(`${MARKER}<div class="${cls}">Headers</div>`)).toBe(
-                    ['<style>', '.tf-1b6zzds *:is(h1, h2, h3){font-weight:bold}', '</style>', '<div class="tf-1b6zzds">Headers</div>'].join(
+                    ['<style>', '.tfaac61s *:is(h1, h2, h3){font-weight:bold}', '</style>', '<div class="tfaac61s">Headers</div>'].join(
                         '',
                     ),
                 );
@@ -2117,7 +2117,7 @@ describe('Modules - JSX - style - use', () => {
                     },
                 });
                 expect(engine.inject(`${MARKER}<div class="${cls}">Direct Headers</div>`)).toBe(
-                    ['<style>', '.tf-4jrbvv > :is(h1, h2){font-size:2rem}', '</style>', '<div class="tf-4jrbvv">Direct Headers</div>'].join(
+                    ['<style>', '.tfdtlncb > :is(h1, h2){font-size:2rem}', '</style>', '<div class="tfdtlncb">Direct Headers</div>'].join(
                         '',
                     ),
                 );
@@ -2137,7 +2137,7 @@ describe('Modules - JSX - style - use', () => {
                 });
 
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Equals</div>`)).toBe(
-                    ['<style>', '.tf-1prf8nr[data-active="true"]{color:red}', '</style>', '<div class="tf-1prf8nr">Attr Equals</div>'].join(
+                    ['<style>', '.tf1ci7xlj[data-active="true"]{color:red}', '</style>', '<div class="tf1ci7xlj">Attr Equals</div>'].join(
                         '',
                     ),
                 );
@@ -2149,7 +2149,7 @@ describe('Modules - JSX - style - use', () => {
                 });
 
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Presence</div>`)).toBe(
-                    ['<style>', '.tf-10d7b0h[disabled]{opacity:0.5}', '</style>', '<div class="tf-10d7b0h">Attr Presence</div>'].join(''),
+                    ['<style>', '.tf1kwc03l[disabled]{opacity:0.5}', '</style>', '<div class="tf1kwc03l">Attr Presence</div>'].join(''),
                 );
             });
 
@@ -2161,9 +2161,9 @@ describe('Modules - JSX - style - use', () => {
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Starts With</div>`)).toBe(
                     [
                         '<style>',
-                        '.tf-1i3yt6f[data-role^="adm"]{font-weight:bold}',
+                        '.tf1oml3hz[data-role^="adm"]{font-weight:bold}',
                         '</style>',
-                        '<div class="tf-1i3yt6f">Attr Starts With</div>',
+                        '<div class="tf1oml3hz">Attr Starts With</div>',
                     ].join(''),
                 );
             });
@@ -2174,7 +2174,7 @@ describe('Modules - JSX - style - use', () => {
                 });
 
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Ends With</div>`)).toBe(
-                    ['<style>', '.tf-qboq1q[data-id$="42"]{opacity:0.5}', '</style>', '<div class="tf-qboq1q">Attr Ends With</div>'].join(
+                    ['<style>', '.tf13fuixq[data-id$="42"]{opacity:0.5}', '</style>', '<div class="tf13fuixq">Attr Ends With</div>'].join(
                         '',
                     ),
                 );
@@ -2188,9 +2188,9 @@ describe('Modules - JSX - style - use', () => {
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Contains</div>`)).toBe(
                     [
                         '<style>',
-                        '.tf-9ofipt[data-label*="part"]{text-decoration:underline}',
+                        '.tf1xzovwh[data-label*="part"]{text-decoration:underline}',
                         '</style>',
-                        '<div class="tf-9ofipt">Attr Contains</div>',
+                        '<div class="tf1xzovwh">Attr Contains</div>',
                     ].join(''),
                 );
             });
@@ -2206,12 +2206,12 @@ describe('Modules - JSX - style - use', () => {
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Combo</div>`)).toBe(
                     [
                         '<style>',
-                        '.tf-ijybug[data-active="true"]{color:green}',
-                        '.tf-ijybug[data-role^="adm"]{font-weight:bold}',
-                        '.tf-ijybug[data-id$="42"]{opacity:0.5}',
-                        '.tf-ijybug[data-label*="part"]{text-decoration:underline}',
+                        '.tfmqkgag[data-active="true"]{color:green}',
+                        '.tfmqkgag[data-role^="adm"]{font-weight:bold}',
+                        '.tfmqkgag[data-id$="42"]{opacity:0.5}',
+                        '.tfmqkgag[data-label*="part"]{text-decoration:underline}',
                         '</style>',
-                        '<div class="tf-ijybug">Attr Combo</div>',
+                        '<div class="tfmqkgag">Attr Combo</div>',
                     ].join(''),
                 );
             });
@@ -2239,14 +2239,14 @@ describe('Modules - JSX - style - use', () => {
             expect(engine.inject(`${MARKER}<div class="${cls}">Drop</div>`)).toBe(
                 [
                     '<style>',
-                    '@keyframes kf-tf-i13zsv {',
+                    '@keyframes kftf1nm8f27 {',
                     '0%{top:-50%;opacity:1}',
                     '60%{top:110%;opacity:0}',
                     '100%{top:110%;opacity:0}',
                     '}',
-                    '.tf-mr7948{animation:kf-tf-i13zsv 10s infinite}',
+                    '.tfgi3aad{animation:kftf1nm8f27 10s infinite}',
                     '</style>',
-                    '<div class="tf-mr7948">Drop</div>',
+                    '<div class="tfgi3aad">Drop</div>',
                 ].join(''),
             );
         });
@@ -2277,14 +2277,14 @@ describe('Modules - JSX - style - use', () => {
             expect(engine.inject(`${MARKER}<div class="${cls}">Slide</div>`)).toBe(
                 [
                     '<style>',
-                    '@keyframes kf-tf-18k37kf {',
+                    '@keyframes kftfky3yn {',
                     '0%{transform:translateX(-100%)}',
                     '50%{transform:translateX(0%)}',
                     '100%{transform:translateX(100%)}',
                     '}',
-                    '.tf-1sstk66{animation:kf-tf-18k37kf 5s linear infinite}',
+                    '.tf1el6a0z{animation:kftfky3yn 5s linear infinite}',
                     '</style>',
-                    '<div class="tf-1sstk66">Slide</div>',
+                    '<div class="tf1el6a0z">Slide</div>',
                 ].join(''),
             );
         });
@@ -2303,14 +2303,14 @@ describe('Modules - JSX - style - use', () => {
             expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe(
                 [
                     '<style>',
-                    '@keyframes kf-tf-9boemd {',
+                    '@keyframes kftfkzsft1 {',
                     '0%{transform:translateY(0px) scale(1)}',
                     '50%{transform:translateY(-10px) scale(1.1)}',
                     '100%{transform:translateY(0px) scale(1)}',
                     '}',
-                    '.tf-1qa35qk{animation:kf-tf-9boemd 2s ease-in-out infinite}',
+                    '.tf4e2llh{animation:kftfkzsft1 2s ease-in-out infinite}',
                     '</style>',
-                    '<div class="tf-1qa35qk">Bounce</div>',
+                    '<div class="tf4e2llh">Bounce</div>',
                 ].join(''),
             );
         });
@@ -2327,14 +2327,14 @@ describe('Modules - JSX - style - use', () => {
             expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe(
                 [
                     '<style>',
-                    '@keyframes kf-tf-9boemd {',
+                    '@keyframes kftfkzsft1 {',
                     '0%{transform:translateY(0px) scale(1)}',
                     '50%{transform:translateY(-10px) scale(1.1)}',
                     '100%{transform:translateY(0px) scale(1)}',
                     '}',
-                    '.tf-1qa35qk{animation:kf-tf-9boemd 2s ease-in-out infinite}',
+                    '.tf4e2llh{animation:kftfkzsft1 2s ease-in-out infinite}',
                     '</style>',
-                    '<div class="tf-1qa35qk">Bounce</div>',
+                    '<div class="tf4e2llh">Bounce</div>',
                 ].join(''),
             );
         });
@@ -2360,24 +2360,24 @@ describe('Modules - JSX - style - use', () => {
             expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe(
                 [
                     '<style>',
-                    '@keyframes kf-tf-9boemd {',
+                    '@keyframes kftfkzsft1 {',
                     '0%{transform:translateY(0px) scale(1)}',
                     '50%{transform:translateY(-10px) scale(1.1)}',
                     '100%{transform:translateY(0px) scale(1)}',
                     '}',
-                    '@keyframes kf-tf-17n8939 {',
+                    '@keyframes kftf1dngq2t {',
                     '0%{transform:translateY(0px) scale(1)}',
                     '50%{transform:translateY(-5px) scale(1.05)}',
                     '100%{transform:translateY(0px) scale(1)}',
                     '}',
                     '@media (min-width: 1200px){',
-                    '.tf-8q2azu{animation:kf-tf-9boemd 2s ease-in-out infinite}',
+                    '.tfh48it7{animation:kftfkzsft1 2s ease-in-out infinite}',
                     '}',
                     '@media (max-width: 1199px){',
-                    '.tf-8q2azu{animation:kf-tf-17n8939 1s ease-in-out infinite}',
+                    '.tfh48it7{animation:kftf1dngq2t 1s ease-in-out infinite}',
                     '}',
                     '</style>',
-                    '<div class="tf-8q2azu">Bounce</div>',
+                    '<div class="tfh48it7">Bounce</div>',
                 ].join(''),
             );
         });
@@ -2403,19 +2403,19 @@ describe('Modules - JSX - style - use', () => {
             expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe(
                 [
                     '<style>',
-                    '@keyframes kf-tf-9boemd {',
+                    '@keyframes kftfkzsft1 {',
                     '0%{transform:translateY(0px) scale(1)}',
                     '50%{transform:translateY(-10px) scale(1.1)}',
                     '100%{transform:translateY(0px) scale(1)}',
                     '}',
                     '@media (min-width: 1200px){',
-                    '.tf-728429{animation:kf-tf-9boemd 2s ease-in-out infinite}',
+                    '.tf1fgnlu9{animation:kftfkzsft1 2s ease-in-out infinite}',
                     '}',
                     '@media (max-width: 1199px){',
-                    '.tf-728429{animation:kf-tf-9boemd 1s ease-in-out infinite}',
+                    '.tf1fgnlu9{animation:kftfkzsft1 1s ease-in-out infinite}',
                     '}',
                     '</style>',
-                    '<div class="tf-728429">Bounce</div>',
+                    '<div class="tf1fgnlu9">Bounce</div>',
                 ].join(''),
             );
         });
@@ -2511,29 +2511,29 @@ describe('Modules - JSX - style - use', () => {
                 expect(el).toBe(
                     [
                         '<style>',
-                        '@keyframes kf-tf-1w2hawo {',
+                        '@keyframes kftfss8l3s {',
                         '0%{transform:scale(1);opacity:0.5}',
                         '50%{transform:scale(1.1);opacity:0.2}',
                         '100%{transform:scale(1);opacity:0.1}',
                         '}',
-                        '@keyframes kf-tf-bo5hof {',
+                        '@keyframes kftf1jxp4lb {',
                         '0%{transform:scale(1)}',
                         '50%{transform:scale(1.1)}',
                         '100%{transform:scale(1)}',
                         '}',
-                        '.tf-1dfab8x{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                        '.tf1cg6hcg{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
                         '@media (min-width: 1200px){',
-                        '.tf-1dfab8x > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
-                        '.tf-1dfab8x div{animation:kf-tf-1w2hawo 3s ease-in-out}',
-                        '.tf-1dfab8x{padding:var(--v-space_xl);justify-content:center}',
+                        '.tf1cg6hcg > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                        '.tf1cg6hcg div{animation:kftfss8l3s 3s ease-in-out}',
+                        '.tf1cg6hcg{padding:var(--v-space_xl);justify-content:center}',
                         '}',
                         '@media (max-width: 1199px){',
-                        '.tf-1dfab8x > span{display:none}',
-                        '.tf-1dfab8x div{animation:kf-tf-bo5hof 3s ease-in-out}',
-                        '.tf-1dfab8x{padding:var(--v-space_l);justify-content:space-around}',
+                        '.tf1cg6hcg > span{display:none}',
+                        '.tf1cg6hcg div{animation:kftf1jxp4lb 3s ease-in-out}',
+                        '.tf1cg6hcg{padding:var(--v-space_l);justify-content:space-around}',
                         '}',
                         '</style>',
-                        '<div class="tf-1dfab8x">Mix</div>',
+                        '<div class="tf1cg6hcg">Mix</div>',
                     ].join(''),
                 );
             }

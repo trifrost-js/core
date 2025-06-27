@@ -249,8 +249,8 @@ describe('Modules - JSX - Renderer', () => {
             const html = rootRender(ctx, ['__TRIFROST_STYLE_MARKER__', {type: Component, props: {}}]);
             expect(html).toBe(
                 [
-                    `<style nonce="${ctx.nonce}">.tf-46gioo{padding:1rem;background-color:blue}</style>`,
-                    '<div class="tf-46gioo">Hello</div>',
+                    `<style nonce="${ctx.nonce}">.tf15g6c60{padding:1rem;background-color:blue}</style>`,
+                    '<div class="tf15g6c60">Hello</div>',
                 ].join(''),
             );
         });
@@ -289,12 +289,12 @@ describe('Modules - JSX - Renderer', () => {
             const html = rootRender(ctx, {type: Page, props: {}});
             expect(html).toBe(
                 [
-                    '<header class="tf-iypj3">Title</header>',
+                    '<header class="tfs8h0jj">Title</header>',
                     `<style nonce="${ctx.nonce}">`,
-                    '.tf-iypj3{font-size:1.5rem;font-weight:bold}',
-                    '.tf-rnr4jx{line-height:1.5;padding:2rem}',
+                    '.tfs8h0jj{font-size:1.5rem;font-weight:bold}',
+                    '.tfy8y40d{line-height:1.5;padding:2rem}',
                     '</style>',
-                    '<main class="tf-rnr4jx">Content</main>',
+                    '<main class="tfy8y40d">Content</main>',
                 ].join(''),
             );
         });
@@ -360,13 +360,13 @@ describe('Modules - JSX - Renderer', () => {
                     '<head>',
                     '<title>TriFrost Demo</title>',
                     `<style nonce="${ctx.nonce}">`,
-                    '.tf-gz38p9:hover{background-color:darkblue}',
-                    '.tf-gz38p9{padding:0.75rem 1.25rem;border:none;background-color:blue;color:white;font-weight:bold;border-radius:0.25rem}',
+                    '.tf1f9e66l:hover{background-color:darkblue}',
+                    '.tf1f9e66l{padding:0.75rem 1.25rem;border:none;background-color:blue;color:white;font-weight:bold;border-radius:0.25rem}',
                     '</style>',
                     '</head>',
                     '<body>',
                     '<h1>Welcome to TriFrost</h1>',
-                    '<button class="tf-gz38p9">Click Me</button>',
+                    '<button class="tf1f9e66l">Click Me</button>',
                     '</body>',
                     '</html>',
                 ].join(''),
@@ -524,10 +524,10 @@ describe('Modules - JSX - Renderer', () => {
             expect(html).toBe(
                 [
                     '<ul>',
-                    '<div class="tf-1ahm5s3">Styled</div>',
+                    '<div class="tf15fd003">Styled</div>',
                     '<li data-tfhf="id-3" data-tfhd="id-4">A</li>',
                     '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
-                    '<style nonce="aWQtMQ==">*, *::before, *::after{box-sizing:border-box}html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}footer, header, nav, section, main{display:block}ol, ul{list-style:none}q, blockquote::before{content:none}q, blockquote::after{content:none}q, blockquote{quotes:none}table{border-collapse:collapse;border-spacing:0}.tf-1ahm5s3{margin:2rem;color:black}</style>',
+                    '<style nonce="aWQtMQ==">*, *::before, *::after{box-sizing:border-box}html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}footer, header, nav, section, main{display:block}ol, ul{list-style:none}q, blockquote::before{content:none}q, blockquote::after{content:none}q, blockquote{quotes:none}table{border-collapse:collapse;border-spacing:0}.tf15fd003{margin:2rem;color:black}</style>',
                     '</ul>',
                     '<script nonce="aWQtMQ==">(function(d,w){',
                     ATOMIC_GLOBAL,
@@ -624,12 +624,12 @@ describe('Modules - JSX - Renderer', () => {
             expect(html).toBe(
                 [
                     '<html><body><ul>',
-                    '<div class="tf-1ahm5s3">Styled</div>',
+                    '<div class="tf15fd003">Styled</div>',
                     '<li data-tfhf="id-3" data-tfhd="id-4">A</li>',
                     '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
                     '<style nonce="aWQtMQ==">',
                     '*, *::before, *::after{box-sizing:border-box}html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}footer, header, nav, section, main{display:block}ol, ul{list-style:none}q, blockquote::before{content:none}q, blockquote::after{content:none}q, blockquote{quotes:none}table{border-collapse:collapse;border-spacing:0}',
-                    '.tf-1ahm5s3{margin:2rem;color:black}',
+                    '.tf15fd003{margin:2rem;color:black}',
                     '</style>',
                     '</ul>',
                     '<script nonce="aWQtMQ==">(function(d,w){',
@@ -730,11 +730,11 @@ describe('Modules - JSX - Renderer', () => {
             expect(html).toBe(
                 [
                     '<html><body><ul>',
-                    '<div class="tf-1ahm5s3">Styled</div>',
+                    '<div class="tf15fd003">Styled</div>',
                     '<li data-tfhf="id-3" data-tfhd="id-4">A</li>',
                     '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
                     '<link rel="stylesheet" nonce="aWQtMQ==" href="/static.css">',
-                    '<style nonce="aWQtMQ==">.tf-1ahm5s3{margin:2rem;color:black}</style>',
+                    '<style nonce="aWQtMQ==">.tf15fd003{margin:2rem;color:black}</style>',
                     '</ul>',
                     '<script nonce="aWQtMQ==" src="/static.js" defer></script>',
                     '<script nonce="aWQtMQ==">(function(d,w){',
@@ -1387,7 +1387,7 @@ describe('Modules - JSX - Renderer', () => {
                 /* Note: order in json stringification matters */
                 expect(html).toBe(
                     [
-                        '<ul><div class="tf-1ahm5s3">Styled</div><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==">(function(d,w){',
+                        '<ul><div class="tf15fd003">Styled</div><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==">(function(d,w){',
                         ATOMIC_GLOBAL,
                         'const TFD={"id-3":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
                         'const TFF={"id-2":(el, data) => el.innerText = JSON.stringify(data)};',

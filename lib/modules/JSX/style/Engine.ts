@@ -25,19 +25,6 @@ export class StyleEngine {
     cache: Map<string, string> = new Map();
 
     /**
-     * Generate a deterministic class name for a rule
-     *
-     * @note This internally uses DJB2 hashing and autoprefixes tf-
-     */
-    hash(input: string): string {
-        let h = 5381;
-        for (let i = 0; i < input.length; i++) {
-            h = (h * 33) ^ input.charCodeAt(i);
-        }
-        return 'tf-' + (h >>> 0).toString(36);
-    }
-
-    /**
      * Register a rule (base or media) under a known class name
      *
      * @param {string} rule - Raw CSS declaration (e.g., 'color:red')

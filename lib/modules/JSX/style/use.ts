@@ -3,7 +3,7 @@ import {isNeObject, merge} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
 import {StyleEngine} from './Engine';
 import {HTML_TAGS, styleToString} from './util';
-import {hexId} from '../../../utils/Generic';
+import {djb2Hash, hexId} from '../../../utils/Generic';
 
 const RGX_SEPARATOR = /[:.#[]| /;
 
@@ -223,7 +223,7 @@ function cssFactory<Breakpoints extends Record<string, string> = typeof DEFAULT_
         }
 
         /* Get class name and register on engine */
-        const cname = engine.hash(raw);
+        const cname = 'tf' + djb2Hash(raw);
         engine.cache.set(raw, cname);
         if (!inject) return cname;
 
@@ -328,7 +328,7 @@ function cssFactory<Breakpoints extends Record<string, string> = typeof DEFAULT_
             return replay.cname;
         }
 
-        const cname = `kf-${engine.hash(raw)}`;
+        const cname = 'kftf' + djb2Hash(raw);
         engine.cache.set(raw, cname);
 
         let rule = '@keyframes ' + cname + ' {';

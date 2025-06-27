@@ -73,6 +73,18 @@ export function hexId(lng: number): string {
 }
 
 /**
+ * DJB2 Hash implementation
+ *
+ * @param {string} val - Value to hash
+ */
+export function djb2Hash (val:string) {
+    let h = 5381;
+    let i = val.length;
+    while (i) h = (h * 33) ^ val.charCodeAt(--i);
+    return (h >>> 0).toString(36);
+}
+
+/**
  * Determines based on a provided env object whether or not we're running in dev mode
  *
  * @param {Record<string, unknown>} env - Env object to check from

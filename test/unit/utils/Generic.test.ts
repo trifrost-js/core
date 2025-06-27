@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {hexId, isDevMode, determineDebug, determineName, determineVersion, determinePort} from '../../../lib/utils/Generic';
+import {hexId, djb2Hash, isDevMode, determineDebug, determineName, determineVersion, determinePort} from '../../../lib/utils/Generic';
 import CONSTANTS from '../../constants';
 
 describe('Utils - Generic', () => {
@@ -52,6 +52,47 @@ describe('Utils - Generic', () => {
                 expect(seen.has(id)).toBe(false);
                 seen.add(id);
             }
+        });
+    });
+
+    describe('djb2Hash', () => {
+        it('Should produce a consistent hash for a given string', () => {
+            const hash1 = djb2Hash('hello world');
+            const hash2 = djb2Hash('hello world');
+            expect(hash1).toBe(hash2);
+        });
+
+        it('Should produce different hashes for different strings', () => {
+            const h1 = djb2Hash('a');
+            const h2 = djb2Hash('b');
+            expect(h1).not.toBe(h2);
+        });
+
+        it('Should return a base36 string', () => {
+            const hash = djb2Hash('example');
+            expect(hash).toMatch(/^[0-9a-z]+$/);
+        });
+
+        it('Should handle empty string', () => {
+            const hash = djb2Hash('');
+            expect(typeof hash).toBe('string');
+            expect(hash.length).toBeGreaterThan(0);
+        });
+
+        it('Should be case-sensitive', () => {
+            expect(djb2Hash('FOO')).not.toBe(djb2Hash('foo'));
+        });
+
+        it('Should handle unicode characters', () => {
+            expect(() => djb2Hash('🚀🌌')).not.toThrow();
+            expect(typeof djb2Hash('🚀🌌')).toBe('string');
+        });
+
+        it('Should handle very long strings', () => {
+            const long = 'a'.repeat(10_000);
+            const hash = djb2Hash(long);
+            expect(typeof hash).toBe('string');
+            expect(hash.length).toBeGreaterThan(0);
         });
     });
 
