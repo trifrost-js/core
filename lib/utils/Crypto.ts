@@ -152,7 +152,10 @@ export async function importKey(
         } else if (typeof key === 'string') {
             const start_trimmed = key.trimStart();
             /* WebCrypto spec defines HMAC keys as raw binary data. as such no pem wrapped */
-            if (algo.name !== 'HMAC' && (start_trimmed.startsWith('-----BEGIN PRIVATE KEY-----') || start_trimmed.startsWith('-----BEGIN PUBLIC KEY-----'))) {
+            if (
+                algo.name !== 'HMAC' &&
+                (start_trimmed.startsWith('-----BEGIN PRIVATE KEY-----') || start_trimmed.startsWith('-----BEGIN PUBLIC KEY-----'))
+            ) {
                 const raw = key
                     .replace(RGX_PEMKEY_HEADER, '') /* Normalize pem key header removal */
                     .replace(RGX_KEY_SPACES, '') /* Normalize spaces */
