@@ -4,12 +4,139 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.39.0] - 2025-06-27
+This release brings long-awaited built-in support for JWT authentication, a critical step in the journey to 1.0. We're introducing **runtime-agnostic** `jwtSign`, `jwtVerify` and `jwtDecode` utilities along with a suite of purpose-built JWT error classes.
+
+Together, they offer a runtime-agnostic, batteries-included solution for stateless authentication, whether you're working with shared secrets (HS256) or asymmetric keys (RS256). Supported algorithms are: `HS256`, `HS384`, `HS512`, `RS256`, `RS384`, `RS512`, `ES256`, `ES384`, `ES512`,
+
+Alongside this, we've improved how **environment-driven port configuration behaves**, made some minor performance optimizations to the style engine, and cleaned up internal dev tooling.
+
+### Added
+- **feat**: `jwtSign(secret, options)`, signs a payload into a JWT with optional claims. (**Take Note:** Defaults to 1h expiry)
+- **feat**: `jwtVerify(token, secret, options)`, verifies a JWT’s signature and claims.
+- **feat**: `jwtDecode(token)`, decodes a JWT without verifying.
+- **feat**: Custom `JWTError` classes for precise failure handling (`JWTError`, `JWTMalformedError`, `JWTTypeError`, `JWTTimeError`, `JWTClaimError`, `JWTAlgorithmError`, `JWTSignatureError`).
+
 ### Improved
 - **qol**: `TRIFROST_PORT` can now be used as the canonical source of the runtime port (for runtimes that bind to a specific port such as bun and node), set via `.env`, `.dev.vars`, GitHub Actions, or Docker builds. If no `TRIFROST_PORT` is defined we will fallback to `SERVICE_PORT` and `PORT` env variables. **Take Note**: You can still manually do `.boot({port: /* Your port */})` but this is no longer a necessity if already defined on the environment. In case **no port** can be found on either the environment or manually passed we will default to `3000`.
 - **perf**: Minor performance bump in the style engine thanks to an alternative djb2 hash implementation using a decrementing while loop over an incrementing for loop
 - **perf**: Minor reduction in style engine byte output due to removing unnecessary `-` parts of computed class names
+- **misc**: Internal centralization of crypto utilities
 - **misc**: Adjust codebase to work with prettier and simplify eslint config to be more aligned with recommended behaviors
+
+### JWT Usage Examples
+##### Basic JWT sign/verify with a shared secret (HS256)
+```typescript
+import {jwtSign, jwtVerify} from '@trifrost/core';
+import {type Context} from './types';
+
+export async function handler(ctx:Context) {
+  /* Create token */
+  const token = await jwtSign(ctx.env.SECRET, {
+    issuer: 'api-service',
+    expiresIn: 600,
+    subject: 'user-123',
+    payload: {role: 'user'} /* Additional data */
+  });
+
+  /* Verify token */
+  const payload = await jwtVerify(token, ctx.env.SECRET, {
+    algorithm: 'HS256',
+    issuer: 'api-service',
+  });
+
+  return ctx.json({token, payload});
+}
+```
+
+##### BearerAuth middleware using a shared secret
+```typescript
+import {jwtVerify, BearerAuth} from '@trifrost/core';
+
+app.use(
+  BearerAuth({
+    validate: async (ctx, token) => {
+      try {
+        const payload = await jwtVerify(token, ctx.env.SECRET, {
+          algorithm: 'HS256',
+          issuer: 'api-service',
+        });
+
+        // ... (Potentially even load up the user here?)
+
+        /* Returns custom auth object to store on ctx.state.$auth */
+        return {id: payload.sub, role: payload.role};
+      } catch {
+        return false;
+      }
+    },
+  })
+).get('/me', ctx => {
+  return ctx.json({
+    id: ctx.state.$auth.id,
+    role: ctx.state.$auth.role,
+  });
+});
+```
+
+##### BearerAuth middleware using RS256 (public/private key pair) to guard a group of routes
+```typescript
+import {jwtSign, jwtVerify, BearerAuth} from '@trifrost/core';
+
+app
+  /* Login route issuing a JWT signed through RS256 */
+  .post('/login', async (ctx) => {
+    const body = await ctx.body<{id: string; role: string}>();
+    if (!body?.id || !body?.role) return ctx.status(400);
+
+    // ... (Potentially do other stuff here)
+
+    const token = await jwtSign(ctx.env.PRIVATE_KEY, {
+      algorithm: 'RS256',
+      issuer: 'auth-service',
+      audience: 'trifrost-client',
+      expiresIn: 3600,
+      subject: body.id,
+      payload: {role: body.role}, /* Additional data */
+    });
+
+    return ctx.json({token});
+  })
+  /* Protected router group */
+  .group('/api', r => {
+    r
+      .use(BearerAuth({
+        validate: async (ctx, token) => {
+          try {
+            const payload = await jwtVerify(token, ctx.env.PUBLIC_KEY, {
+              algorithm: 'RS256',
+              issuer: 'auth-service',
+              audience: 'trifrost-client',
+            });
+
+            // ... (Potentially do other stuff here like load up user, etc)
+
+            return {id: payload.sub, role: payload.role};
+          } catch {
+            return false;
+          }
+        },
+      }))
+      .get('/me', ctx => ctx.json({user: ctx.state.$auth}))
+      .get('/admin', ctx => {
+          if (ctx.state.$auth.role !== 'admin') return ctx.status(403);
+          return ctx.json({ok: true});
+      });
+  });
+```
+
+---
+
+We're continuing to harden the core as we approach a rock-solid 1.0. This release furthers the earlier groundwork for authentication without tying you to Node-specific crypto or third-party dependencies.
+
+Where you're building APIs at the edge or backend monoliths, the new JWT primitives in combination with the already existing auth middlewares give you even more control ... without the ceremony.
+
+As always, stay frosty ❄️.
 
 ## [0.38.1] - 2025-06-25
 ### Fixed
