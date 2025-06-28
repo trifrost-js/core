@@ -1101,10 +1101,10 @@ Just pass a mix of:
 
 ... and TriFrost handler the rest.
 
-## Added
+### Added
 - **feat**: Internal `createScrambler()` engine powering `omit` behavior in all log exporters. Smartly scrubs **matching paths, wildcard keys, and regex patterns**.
 
-## Improved
+### Improved
 - **feat**: Expanded default `OMIT_PRESETS` with automated redaction of **PII** for `first_name`, `last_name`, `full_name`, email/phone/ssn/creditcard value patterns.
 - **feat**: Expanded default `OMIT_PRESETS` with automated redaction of `api_key`, `api_secret`, `apikey`, `apitoken`, `id_token`, `private_key`, `public_key`, `session`, `session_id`, `sid`, `user_token` globals and `Bearer ...` value pattern.
 ```typescript
