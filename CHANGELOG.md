@@ -4,6 +4,260 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.40.0] - 2025-06-28
+This release cracks open a leaner, meaner era for the Atomic layer. We’ve surgically extracted node-bound behavior and reassembled it into a centralized `$` utility namespace, smaller boot footprints, faster VMs, and crystal-clear ergonomics. The new `$.fetch`? One helper to parse them all. The updated `data.$bind`? Reactive sugar with zero overhead. This is DX that moves like lightning.
+
+If you're building on TriFrost: expect sharper form bindings, saner fetch handling, and tighter event logic. If you haven't? This is the update to start with.
+
+### Added
+- **feat**: `$` utility namespace is now available as the third argument in TriFrost Atomic `<Script>` blocks. It offers a suite of lean, performant helpers (see below).
+
+### Improved
+- **feat**: Improved `$bind` reactive data API for bindings in `<Script>` blocks. You can now pass a **callback** directly as the third argument to `$bind` to implicitly create a `$watch`, reducing boilerplate:
+```tsx
+data.$bind('user.name', 'input[name="username"]', (val) => {
+  console.log('New name is:', val);
+});
+```
+
+### Breaking Changes
+Removed node-bound methods in favor of central Atomic Utils:
+- `el.$dispatch(...)` → now use `$.fire(el, ...)`
+- `el.$storeGet(...)` → now use `$.storeGet(...)`
+- `el.$storeSet(...)` → now use `$.storeSet(...)`
+- `debounce` option removed from `$watch`. To debounce a reactive watcher, wrap the callback with `$.debounce(...)` instead:
+```typescript
+// Before
+data.$watch('query', fn, {debounce: 200});
+
+// After
+data.$watch('query', $.debounce(fn, 200));
+```
+
+> **Why this change?**: These methods were previously defined **per script-bound node**, adding weight to every node during boot.
+> By consolidating them into Atomic Utils (`$`), VM instantiation is now leaner and faster, while improving clarity and reusability.
+
+---
+
+### Atomic Utilities
+##### Event utilities
+- `$.fire(el, type, {data?, mode?})`: Fires a `CustomEvent` from the provided element. Defaults to bubbling upward.
+- `$.on(el, type, handler)`: Adds an event listener and returns a disposer.
+- `$.once(el, type, handler)`: Adds a one-time event listener that **auto-cleans on first call**.
+
+##### DOM utilities
+- `$.query(el, selector)`: Scoped querySelector.
+- `$.queryAll(el, selector)`: Scoped querySelectorAll with **array** result.
+
+##### Global Store access
+- `$.storeGet(key)`: Get a value from the global store.
+- `$.storeSet(key, value)`: Set a value in the global store.
+
+##### Miscellaneous
+- `$.uid()`: Generates a random id.
+- `$.sleep(ms)`: Resolves after the specified delay.
+- `$.eq(a, b)`: Structural equality check.
+- `$.debounce(fn, delay)`: Debounced function wrapper.
+- `$.fetch(...)`: Smart wrapper around fetch with automatic body serialization and content parsing.
+
+### Notes on $.fetch
+- Automatically parses JSON, HTML, text, blobs, etc. based on the response `Content-Type`.
+- Supports **timeout**: auto-aborts request after X milliseconds (internally uses AbortController)
+- Supports **credentials**: Sent as `include` by default to support cookies/session auth.
+- Returns
+```typescript
+{
+  content: T | null;
+  status: number;
+  ok: boolean; /* True for http 2xx */
+  headers: Headers;
+  raw: Response | null;
+}
+```
+- Graceful fallback: On unexpected content types or parse failures, `content` falls back to `null`.
+- Safe defaults: Automatically serializes JSON payloads and sets headers unless `FormData` is used
+- Auto-converts HTML response to a DocumentFragment for insertion ease
+- Auto-converts Binary response to a Blob
+
+### Usage Examples
+##### Event Handling + Store Access
+```tsx
+<Script data={{user: {name: 'Anna'}}}>
+  {(el, data, $) => {
+    const btn = $.query(el, 'button')!;
+    const msg = $.query(el, 'p')!;
+
+    $.on(btn, 'click', () => {
+      const token = $.storeGet('auth.token');
+      msg.textContent = token ? 'Authenticated ✅' : 'No Token ❌';
+
+      $.fire(el, 'user:click', {data: {name: data.user.name}});
+    });
+
+    $.once(el, 'user:click', e => {
+      console.log('Clicked once:', e.detail);
+    });
+  }}
+</Script>
+```
+
+##### Store Set + Validation Feedback with new $bind behavior
+```tsx
+<Script data={{age: 0}}>
+  {(el, data, $) => {
+    const status = $.query(el, 'p')!;
+
+    data.$bind('age', 'input[name="age"]', val => {
+      const isAdult = Number(val) >= 18;
+      $.storeSet('user.isAdult', isAdult);
+      status.textContent = isAdult ? 'Adult ✅' : 'Minor ❌';
+    });
+  }}
+</Script>
+```
+
+##### Combined Utilities: Debounced watch + Sleep
+```tsx
+<Script data={{search: ''}}>
+  {(el, data, $) => {
+    const resultBox = $.query(el, '.results')!;
+
+    data.$bind('search', 'input[name="search"]');
+
+    data.$watch('search', $.debounce(async (term) => {
+      if (!term || term.length < 3) {
+        resultBox.textContent = 'Enter at least 3 characters...';
+        return;
+      }
+
+      resultBox.textContent = 'Searching...';
+      await $.sleep(500); // simulate async
+
+      // Fake result
+      resultBox.textContent = term.toUpperCase();
+    }, 300));
+  }}
+</Script>
+```
+
+##### Basic JSON Fetch
+```tsx
+<Script>{async (el, data, $) => {
+  const {status, content} = await $.fetch('/api/user');
+  if (status === 200) console.log('User:', content);
+}}</Script>
+```
+
+##### HTML Fragment Fetch and Inject
+```tsx
+<div>
+  <button>Load Content</button>
+  <section></section>
+  <Script>{(el, data, $) => {
+    const btn = $.query(el, 'button')!;
+    const section = $.query(el, 'section')!;
+
+    $.on(btn, 'click', async () => {
+      const {status, content} = await $.fetch<DocumentFragment>('/snippet.html');
+      if (status === 200 && content) {
+        section.replaceChildren(content);
+      }
+    });
+  }}</Script>
+</div>
+```
+
+##### POST JSON Payload
+```tsx
+<Script>{async (el, data, $) => {
+  const {status, content} = await $.fetch<{userId: string}>('/api/create-user', {
+    method: 'POST',
+    body: {name: 'Alice', age: 30}
+  });
+
+  if (status === 201) {
+    console.log('Created user:', content);
+  }
+}}</Script>
+```
+
+##### Accessing Response headers
+```tsx
+<Script>{async (el, data, $) => {
+  const {headers} = await $.fetch('/api/data');
+  const contentType = headers.get('Content-Type');
+  console.log('Got content-type:', contentType);
+}}</Script>
+```
+
+##### Blob Fetch (eg: download)
+```tsx
+<Script>
+  {async (el, data, $) => {
+    const {status, content} = await $.fetch<Blob>('/download/file.zip');
+    if (status === 200 && content) {
+      const url = URL.createObjectURL(content);
+      window.open(url, '_blank');
+    }
+  }}
+</Script>
+```
+
+##### Timeout Fetch
+```tsx
+const res = await $.fetch('/api/heavy', { timeout: 3000 });
+if (!res.ok) console.error('Request timed out or failed');
+```
+
+##### Login form with submit and redirect
+```tsx
+<form>
+  <input name="username" type="text" placeholder="Username" required />
+  <input name="password" type="password" placeholder="Password" required />
+  <button type="submit">Login</button>
+  <p class="error"></p>
+  <Script>{(el, data, $) => {
+      const error = $.query(el, '.error')!;
+      let is_running = false;
+
+      /* Submit form */
+      $.on(el, 'submit', async (e) => {
+        e.preventDefault();
+
+        /* Do nothing if already loading */
+        if (is_running) return;
+
+        is_running = true;
+        error.textContent = '';
+
+        const res = await $.fetch<{message:string}>('/api/login', {
+          method: 'POST',
+          body: new FormData(el),
+        });
+
+        /* If we get a redirect, do so */
+        if (res.status >= 300 && res.status < 400) {
+          const loc = res.headers.get('Location');
+          if (loc) window.location.href = loc;
+          return;
+        } else {
+          is_running = false;
+          error.textContent = res.content?.message || 'Login failed. Try again';
+        }
+      });
+    }}
+  </Script>
+</form>
+```
+
+---
+
+> A glint in the ice. A signal in the silence. With **Cobalt Pulse**, TriFrost refactors its atomic soul, lighter, faster, sharper.
+
+Welcome to TriFrost v0.40.0 – Cobalt Pulse.
+
+As always, stay frosty ❄️.
+
 ## [0.39.0] - 2025-06-27
 This release brings long-awaited built-in support for JWT authentication, a critical step in the journey to 1.0. We're introducing **runtime-agnostic** `jwtSign`, `jwtVerify` and `jwtDecode` utilities along with a suite of purpose-built JWT error classes.
 
