@@ -1,26 +1,25 @@
+import {type Promisify} from '../../../types/generic';
+
 const RGX_COMMENT = /\/\/.*$/gm;
 const RGX_BREAK = /\n/g;
 const RGX_SPACE = /\s+/g;
 const RGX_SYMBOLS = /\s*([{}();,:=<>+\-[\]])\s*/g;
 export const GLOBAL_HYDRATED_NAME = '$tfhydra';
+export const GLOBAL_UTILS_NAME = '$tfutils';
+export const GLOBAL_DATA_REACTOR_NAME = '$tfdr';
 const GLOBAL_OBSERVER_NAME = '$tfo';
 const GLOBAL_RELAY_NAME = '$tfr';
 const GLOBAL_STORE_NAME = '$tfs';
-const GLOBAL_UTIL_DEBOUNCE = '$tfdebounce';
 const GLOBAL_UTIL_EQUAL = '$tfequal';
 const GLOBAL_UTIL_CLONE = '$tfclone';
 const GLOBAL_UTIL_CREATE_EVENT = '$tfevent';
 const GLOBAL_CLOCK = '$tfc';
 const GLOBAL_CLOCK_TICK = '$tfcr';
-export const GLOBAL_DATA_REACTOR_NAME = '$tfdr';
 const VM_NAME = '$tfVM';
 const VM_ID_NAME = '$uid';
-const VM_DISPATCH_NAME = '$dispatch';
 const VM_RELAY_SUBSCRIBE_NAME = '$subscribe';
 const VM_RELAY_UNSUBSCRIBE_NAME = '$unsubscribe';
 const VM_RELAY_PUBLISH_NAME = '$publish';
-const VM_STORE_GET_NAME = '$storeGet';
-const VM_STORE_SET_NAME = '$storeSet';
 const VM_HOOK_UNMOUNT_NAME = '$unmount';
 const VM_HOOK_MOUNT_NAME = '$mount';
 
@@ -46,8 +45,6 @@ export type TriFrostAtomicVM<
     RelayKeys extends keyof Relay | StoreTopics<keyof Store & string> = keyof Relay | StoreTopics<keyof Store & string>,
 > = {
     [VM_ID_NAME]: string;
-    /* VM Dispatch */
-    [VM_DISPATCH_NAME]: <T = unknown>(type: string, options?: {data?: T; mode?: 'up' | 'down'}) => void;
     /* VM Relay */
     [VM_RELAY_SUBSCRIBE_NAME]<T extends RelayKeys>(
         topic: T,
@@ -64,39 +61,68 @@ export type TriFrostAtomicVM<
         topic: T,
         data?: T extends keyof Relay ? Relay[T] : T extends StoreTopics<infer K> ? (K extends keyof Store ? Store[K] : unknown) : unknown,
     ): void;
-    /* VM Store */
-    [VM_STORE_GET_NAME]<K extends keyof Store>(key: K): Store[K];
-    [VM_STORE_GET_NAME](key: string): unknown;
-    [VM_STORE_SET_NAME]<K extends keyof Store>(key: K, value: Store[K]): void;
-    [VM_STORE_SET_NAME](key: string, value: unknown): void;
     /* VM Hooks */
     [VM_HOOK_MOUNT_NAME]?: () => void;
     [VM_HOOK_UNMOUNT_NAME]?: () => void;
 };
 
 export type TriFrostAtomicProxy<T> = T & {
-    $bind: <K extends DotPaths<T>>(key: K, selector: string) => void;
-    $watch: <K extends DotPaths<T>>(key: K, fn: (val: any) => void, options?: {immediate?: boolean; debounce?: number}) => void;
+    /* Bind */
+    $bind<K extends DotPaths<T>>(key: K, selector: string): void;
+    $bind<K extends DotPaths<T>>(key: K, selector: string, handler: (val: any) => Promisify<void>): void;
+    $bind<K extends DotPaths<T>>(key: K, selector: string, options: {handler: (val: any) => Promisify<void>; immediate?: boolean}): void;
+    /* Watch */
+    $watch: <K extends DotPaths<T>>(key: K, fn: (val: any) => Promisify<void>, options?: {immediate?: boolean}) => void;
+    /* Set */
     $set: (key: DotPaths<T> | T, val?: any) => void;
 };
 
-/**
- * Atomic Upgrades
- * @idea Future: Add globally registered utils to future $ helpers (el, data, $), $ here should then have {equal,debounce,clone,...}
- */
+export type TriFrostAtomicUtils<Store extends Record<string, unknown> = {}> = {
+    debounce: <T extends (...args: any[]) => any>(fn: T, delay: number) => T;
+    eq: (a: unknown, b: unknown) => boolean;
+    uid: () => string;
+    sleep: (ms: number) => Promise<void>;
+    fetch: <T = unknown>(
+        url: string,
+        options?: {
+            method?: string;
+            headers?: Record<string, string>;
+            body?: any;
+            timeout?: number;
+            credentials?: RequestCredentials;
+        },
+    ) => Promise<{
+        content: [T] extends [unknown] ? DocumentFragment | string | Blob | object | null : T | null;
+        status: number;
+        ok: boolean;
+        headers: Headers;
+        raw: Response;
+    }>;
+    /* Event Listening */
+    fire: <T = unknown>(el: HTMLElement, type: string, options?: {data?: T; mode?: 'up' | 'down'}) => void;
+    on: <Payload = unknown, K extends string = string>(
+        el: HTMLElement,
+        type: K,
+        handler: (evt: K extends keyof HTMLElementEventMap ? HTMLElementEventMap[K] : CustomEvent<Payload>) => void,
+    ) => () => void;
+    once: <Payload = unknown, K extends string = string>(
+        el: HTMLElement,
+        type: K,
+        handler: (evt: K extends keyof HTMLElementEventMap ? HTMLElementEventMap[K] : CustomEvent<Payload>) => void,
+    ) => void;
+    /* DOM selectors */
+    query: <T extends Element = HTMLElement>(root: HTMLElement, selector: string) => T | null;
+    queryAll: <T extends Element = HTMLElement>(root: HTMLElement, selector: string) => T[];
+    /* Store Get */
+    storeGet<K extends keyof Store>(key: K): Store[K];
+    storeGet(key: string): unknown;
+    /* Store Set */
+    storeSet<K extends keyof Store>(key: K, value: Store[K]): void;
+    storeSet(key: string, value: unknown): void;
+};
 
 export const ATOMIC_GLOBAL = minify(`
     if (!window.${GLOBAL_HYDRATED_NAME}) {
-        if (!window.${GLOBAL_UTIL_DEBOUNCE}) {
-            window.${GLOBAL_UTIL_DEBOUNCE} = (fn, delay) => {
-                let t;
-                return (...args) => {
-                    clearTimeout(t);
-                    t = setTimeout(() => fn(...args), delay);
-                };
-            };
-        }
-
         if (!window.${GLOBAL_UTIL_EQUAL}) {
             const equal = (a,b) => {
                 if (a === b) return!0;
@@ -339,7 +365,7 @@ export const ATOMIC_GLOBAL = minify(`
                 return new Proxy(store, {
                     get(_, key) {
                         switch (key) {
-                            case "$bind": return (path, selector) => {
+                            case "$bind": return (path, selector, watcher) => {
                                 const els = [...root.querySelectorAll(selector)];
                                 if (!els.length) return;
 
@@ -366,19 +392,18 @@ export const ATOMIC_GLOBAL = minify(`
                                 }
 
                                 (subs[path] ??= []).push(v => setIV(els, v));
+
+                                if (typeof watcher === "function") {
+                                    this.$watch(path, watcher);
+                                } else if (typeof watcher?.handler === "function") {
+                                    this.$watch(path, watcher.handler, watcher);
+                                }
                             };
                             case "$watch": return (path, fn, opts = {}) => {
                                 if (typeof path !== "string" || typeof fn !== "function") return;
-                                const {
-                                    immediate = false,
-                                    debounce = 0
-                                } = Object.prototype.toString.call(opts) === "[object Object]" ? opts : {};
-                                const handler = Number.isInteger(debounce) && debounce > 0
-                                    ? window.${GLOBAL_UTIL_DEBOUNCE}(fn, debounce)
-                                    : fn;
-                                (subs[path] ??= []).push(handler);
+                                (subs[path] ??= []).push(fn);
                                 fn._last = window.${GLOBAL_UTIL_CLONE}(get(path));
-                                if (immediate) handler(fn._last);
+                                if (opts?.immediate === true) fn(fn._last);
                             };
                             case "$set": return patch;
                             default: return store[key];
@@ -394,6 +419,108 @@ export const ATOMIC_GLOBAL = minify(`
             };
         }
 
+        if (!window.${GLOBAL_UTILS_NAME}) {
+            const obj = Object.create(null);
+            const tuples = [
+                ["clear", n => {
+                    while (n.firstChild) n.removeChild(n.firstChild);
+                }],
+                ["debounce", (fn, ms) => {
+                    let t;
+                    return (...args) => {
+                        clearTimeout(t);
+                        t = setTimeout(() => fn(...args), ms);
+                    };
+                }],
+                ["eq", window.${GLOBAL_UTIL_EQUAL}],
+                ["uid", () => crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)],
+                ["sleep", ms => new Promise(r => setTimeout(r, ms))],
+                ["fetch", async (url, o = {}) => {
+                    const { method = "GET", headers = {}, body, timeout, credentials = "include" } = o;
+                    const isJSON = body && typeof body === "object" && !(body instanceof FormData);
+                    const nHeaders = { ...headers };
+                    const payload = isJSON ? JSON.stringify(body) : body;
+
+                    if (isJSON && !("Content-Type" in nHeaders))
+                        nHeaders["Content-Type"] = "application/json";
+
+                    const ctrl = typeof timeout === "number" ? new AbortController() : null;
+                    const tId = ctrl
+                        ? setTimeout(() => ctrl.abort(), timeout)
+                        : null;
+
+                    try {
+                        const r = await fetch(url, {
+                            method,
+                            headers: nHeaders,
+                            body: method !== "GET" && body !== undefined ? payload : undefined,
+                            signal: ctrl?.signal,
+                            credentials
+                        });
+
+                        if (tId) clearTimeout(tId);
+
+                        const rt = r.headers.get("Content-Type")?.toLowerCase() || "";
+                        let c;
+                        try {
+                            if (rt.includes("application/json")) c = await r.json();
+                            else if (rt.includes("text/html")) {
+                                const v = await r.text();
+                                c = document.createRange().createContextualFragment(v);
+                            }
+                            else if (rt.includes("text/")) c = await r.text();
+                            else if (rt.includes("application/octet-stream")) c = await r.blob();
+                            else c = await r.text();
+                        } catch {}
+
+                        return {
+                            content: c ?? null,
+                            ok: r.status >= 200 && r.status < 300,
+                            status: r.status,
+                            headers: r.headers,
+                            raw: r
+                        };
+                    } catch (err) {
+                        if (tId) clearTimeout(tId);
+                        if (err?.name === "AbortError") {
+                            return {
+                                content: null,
+                                ok: false,
+                                status: 408,
+                                headers: new Headers(),
+                                raw: null
+                            };
+                        }
+                        throw err;
+                    }
+                }],
+                ["fire", (n, t, o) => n.dispatchEvent(
+                    window.${GLOBAL_UTIL_CREATE_EVENT}(t, {
+                        detail: o?.data,
+                        bubbles:(o?.mode ?? "up") === "up",
+                        cancelable:!0
+                    })
+                )],
+                ["on", (n, t, fn) => {
+                    n.addEventListener(t, fn);
+                    return () => n?.removeEventListener(t, fn);
+                }],
+                ["once", (n, t, fn) => {
+                    const w = e => {
+                        try { fn(e); }
+                        finally { n?.removeEventListener(t, w); }
+                    };
+                    n.addEventListener(t, w);
+                }],
+                ["query", (n, q) => (n?.querySelector?.(q) ?? null)],
+                ["queryAll", (n, q) => n?.querySelectorAll ? [...n.querySelectorAll(q)] : []],
+                ["storeGet", window.${GLOBAL_STORE_NAME}.get],
+                ["storeSet", window.${GLOBAL_STORE_NAME}.set],
+            ];
+            for (let i = 0; i < tuples.length; i++) Object.defineProperty(obj, tuples[i][0], {value: tuples[i][1], configurable: !1, writable: !1});
+            window.${GLOBAL_UTILS_NAME} = Object.freeze(obj);
+        }
+
         if (!window.__name) {
             window.__name = (fn, n) => {
                 try {Object.defineProperty(fn, "name", {value: n});} catch {}
@@ -407,25 +534,12 @@ export const ATOMIC_GLOBAL = minify(`
 
 export const ATOMIC_VM_BEFORE = minify(
     `if (!n.${VM_NAME}) {
-        const i = crypto.randomUUID?.() || Math.random().toString(36).slice(2);
+        const i = w.${GLOBAL_UTILS_NAME}.uid();
         Object.defineProperties(n, {
             ${VM_ID_NAME}:{get: () => i, configurable: !1},
             ${VM_RELAY_SUBSCRIBE_NAME}:{value: (msg, fn) => w.${GLOBAL_RELAY_NAME}.subscribe(i, msg, fn), configurable: !1, writable: !1},
             ${VM_RELAY_UNSUBSCRIBE_NAME}:{value: msg => w.${GLOBAL_RELAY_NAME}.unsubscribe(i, msg), configurable: !1, writable: !1},
             ${VM_RELAY_PUBLISH_NAME}:{value: (msg, data) => w.${GLOBAL_RELAY_NAME}.publish(msg, data), configurable: !1, writable: !1},
-            ${VM_STORE_GET_NAME}:{value: w.${GLOBAL_STORE_NAME}.get, configurable: !1, writable: !1},
-            ${VM_STORE_SET_NAME}:{value: w.${GLOBAL_STORE_NAME}.set, configurable: !1, writable: !1},
-            ${VM_DISPATCH_NAME}:{
-                value:(type,options)=>n.dispatchEvent(
-                    w.${GLOBAL_UTIL_CREATE_EVENT}(type,{
-                        detail: options?.data,
-                        bubbles:(options?.mode ?? "up") === "up",
-                        cancelable:!0
-                    })
-                ),
-                configurable:!1,
-                writable:!1
-            },
             ${VM_NAME}:{get: () => !0, configurable:!1}
         });
     }`,

@@ -1,6 +1,13 @@
 import {hexId} from '../../../utils/Generic';
 import {nonce} from '../ctx/nonce';
-import {ATOMIC_GLOBAL, ATOMIC_VM_BEFORE, ATOMIC_VM_AFTER, GLOBAL_HYDRATED_NAME, GLOBAL_DATA_REACTOR_NAME} from './atomic';
+import {
+    ATOMIC_GLOBAL,
+    ATOMIC_VM_BEFORE,
+    ATOMIC_VM_AFTER,
+    GLOBAL_HYDRATED_NAME,
+    GLOBAL_DATA_REACTOR_NAME,
+    GLOBAL_UTILS_NAME,
+} from './atomic';
 
 export class ScriptEngine {
     /* Map storing the function bodies by id */
@@ -70,6 +77,9 @@ export class ScriptEngine {
 
             // --- Runner ---
             out += [
+                /* Global Utils */
+                `const TFU=w.${GLOBAL_UTILS_NAME};`,
+                /* Loop through each function and instantiate vm */
                 'for(const id in TFF){',
                 'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                 'for(let n of N){',
@@ -77,7 +87,7 @@ export class ScriptEngine {
                 /* Run function and pass data */
                 'const dId=n.getAttribute("data-tfhd");',
                 'try{',
-                `TFF[id](n,w.${GLOBAL_DATA_REACTOR_NAME}(n,dId?TFD[dId]:{}))}catch{}`,
+                `TFF[id](n,w.${GLOBAL_DATA_REACTOR_NAME}(n,dId?TFD[dId]:{}),TFU)}catch{}`,
                 this.atomic_enabled ? ATOMIC_VM_AFTER : '',
                 '}',
                 '}',

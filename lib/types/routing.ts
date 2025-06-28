@@ -6,6 +6,7 @@ import {type RouteTree} from '../routing/Tree';
 import {type TriFrostBodyParserOptions} from '../utils/BodyParser/types';
 import {type HttpMethod, Sym_TriFrostDescription, Sym_TriFrostName} from './constants';
 import {type TriFrostContext, type TriFrostContextKind} from './context';
+import {type Promisify} from './generic';
 
 export type TriFrostType = 'handler' | 'middleware';
 
@@ -29,16 +30,14 @@ export type TriFrostMiddleware<
     Env extends Record<string, any> = {},
     State extends Record<string, unknown> = {},
     Patch extends Record<string, unknown> = {},
-> = ((
-    ctx: TriFrostContext<Env, State>,
-) => void | TriFrostContext<Env, State & Patch> | Promise<void | TriFrostContext<Env, State & Patch>>) & {
+> = ((ctx: TriFrostContext<Env, State>) => Promisify<void | TriFrostContext<Env, State & Patch>>) & {
     [Sym_TriFrostDescription]?: string;
     [Sym_TriFrostName]?: string;
 };
 
 export type TriFrostHandler<Env extends Record<string, any>, State extends Record<string, unknown> = {}> = (
     ctx: TriFrostContext<Env, State>,
-) => void | Promise<void>;
+) => Promisify<void>;
 
 export type TriFrostHandlerConfig<Env extends Record<string, any> = {}, State extends Record<string, unknown> = {}> = {
     fn: TriFrostHandler<Env, State>;
@@ -70,7 +69,7 @@ export type TriFrostRoute<Env extends Record<string, any>, State extends Record<
 
 export type TriFrostGrouper<Env extends Record<string, any>, State extends Record<string, unknown> = {}> = (
     router: TriFrostRouter<Env, State>,
-) => void | Promise<void> | TriFrostRouter<Env, State> | Promise<TriFrostRouter<Env, State>>;
+) => Promisify<void | TriFrostRouter<Env, State>>;
 
 export type TriFrostGrouperConfig<Env extends Record<string, any> = {}, State extends Record<string, unknown> = {}> = Pick<
     TriFrostRouterOptions<Env, State>,

@@ -2,7 +2,7 @@
 
 import {nonce} from '../ctx/nonce';
 import {type JSXProps} from '../types';
-import {type TriFrostAtomicProxy, type TriFrostAtomicVM} from './atomic';
+import {type TriFrostAtomicProxy, type TriFrostAtomicUtils, type TriFrostAtomicVM} from './atomic';
 import {getActiveScriptEngine} from './use';
 
 export const SCRIPT_MARKER = '__TRIFROST_HYDRATED_SCRIPT__';
@@ -12,7 +12,11 @@ export type ScriptProps<
     TFRelay extends Record<string, unknown> = Record<string, unknown>,
     TFStore extends Record<string, unknown> = Record<string, unknown>,
 > = JSXProps & {
-    children?: (el: HTMLElement & TriFrostAtomicVM<TFRelay, TFStore>, data: TriFrostAtomicProxy<TFData>) => void;
+    children?: (
+        el: HTMLElement & TriFrostAtomicVM<TFRelay, TFStore>,
+        data: TriFrostAtomicProxy<TFData>,
+        $: TriFrostAtomicUtils<TFStore>,
+    ) => void;
     nonce?: string;
     src?: string;
     async?: boolean;
