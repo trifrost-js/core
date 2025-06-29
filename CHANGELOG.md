@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.41.1] - 2025-06-29
+This release refines Atomic’s DOM tooling for broader compatibility and better developer experience
+
+### Improved
+- **dx**: Loosened type constraints on `$.query` and `$.queryAll` in Atomic Utils. These functions now accept any `ParentNode`, allowing direct use on `document`, `DocumentFragment`, etc. Without type assertions.
+- **dx**: Automatically prepends `:scope` to selectors when appropriate (for example when root is an Element and selector doesn’t already start with `:scope`). This improves ergonomics when selecting relative children without needing to manually write scoped queries.
+- **safety**: Added internal guards to `$.query`/`$.queryAll` to validate selector strings and gracefully handle invalid queries. These guards avoid runtime crashes from malformed selectors or unsupported nodes.
+- **ergonomics**: Developers can now reliably write queries like `$.query(document, 'body')` or `$.query(root, 'div > img')` without worrying about scoping quirks or environment-specific selector issues.
+
+### Fixed
+- Edge case in new atomicMinify utility with certain keywords requiring space postfixes that were being stripped. Fixed by adding a sentinel value pre-minification.
+- Ensure atomicMinify safely handles non-ascii chars as well (eg CJK)
+
+---
+
+As always, stay frosty ❄️
+
 ## [0.41.0] - 2025-06-29
 This release brings refinement to the Atomic layer, improving ergonomics, performance, and type safety. The new destructured `Script` API makes logic blocks cleaner to write and easier to extend, while internals like `atomicMinify` and `$fetch` util receive notable upgrades. A small breaking change for a frostier future.
 
