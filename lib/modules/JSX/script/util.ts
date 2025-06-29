@@ -1,14 +1,23 @@
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
-const isIdent = (c: number) =>
-    (c >= 97 && c <= 122) /* a-z */ ||
-    (c >= 65 && c <= 90) /* A-Z */ ||
-    (c >= 48 && c <= 57) /* 0-9 */ ||
-    c === 95 ||
-    c === 36; /* _ or $ */
 
-export function atomicMinify(raw: string): string {
-    const bytes = encoder.encode(raw);
+/* Fast-path ASCII identifier check */
+const isIdentChar = new Uint8Array(128);
+for (let i = 48; i <= 57; i++) isIdentChar[i] = 1;
+for (let i = 65; i <= 90; i++) isIdentChar[i] = 1;
+for (let i = 97; i <= 122; i++) isIdentChar[i] = 1;
+isIdentChar[95] = 1; // _
+isIdentChar[36] = 1; // $
+
+const isIdent = (c: number): boolean => (c < 128 && isIdentChar[c] === 1) || (c > 127 && ((c >= 0x00a0 && c <= 0x10ffff) || c >= 0x3000)); // accept wide char identifier chunks
+
+export function atomicMinify(raw: string, apply_sentinel: boolean = true): string {
+    const bytes = encoder.encode(
+        /* Inject a sentinel token */
+        apply_sentinel
+            ? raw.replace(/(?<!\.)\b(return|throw|typeof|instanceof|delete|void|new)\b\s*(?=[[{("'`a-zA-Z0-9_$!])/g, '$1\u0001')
+            : raw,
+    );
     const out = new Uint8Array(bytes.length);
     let o = 0;
     let i = 0;
@@ -20,6 +29,13 @@ export function atomicMinify(raw: string): string {
     while (i < bytes.length) {
         const ch = bytes[i];
         const next = bytes[i + 1];
+
+        /* Sentinel check */
+        if (ch === 1) {
+            out[o++] = 32;
+            i++;
+            continue;
+        }
 
         /* Escape handling in strings and templates */
         if ((inStr || inTpl) && ch === 92 /* \ */) {
@@ -45,12 +61,8 @@ export function atomicMinify(raw: string): string {
                     i++;
                 }
 
-                const exprBytes = bytes.subarray(exprStart, i - 1);
-                const expr = decoder.decode(exprBytes);
-                const minified = encoder.encode(atomicMinify(expr));
-                for (let j = 0; j < minified.length; j++) {
-                    out[o++] = minified[j];
-                }
+                const minified = encoder.encode(atomicMinify(decoder.decode(bytes.subarray(exprStart, i - 1)), false));
+                for (let j = 0; j < minified.length; j++) out[o++] = minified[j];
 
                 out[o++] = 125;
                 continue;

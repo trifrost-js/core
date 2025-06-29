@@ -225,7 +225,7 @@ Line 3\`;
                     };
                 }
             `;
-            const output = `function f(){return{a:1};}`;
+            const output = `function f(){return {a:1};}`;
             expect(atomicMinify(input)).toBe(output);
         });
 
@@ -397,6 +397,104 @@ Line 3\`;
             expect(atomicMinify(input)).toBe(output);
         });
 
+        it('Preserves spacing between keywords and identifiers', () => {
+            const input = `return null;`;
+            const output = `return null;`;
+            expect(atomicMinify(input)).toBe(output);
+        });
+
+        it('Preserves spacing between keywords and identifiers when if-wrapped', () => {
+            const input = `if (x > 10) return null;`;
+            const output = `if(x>10)return null;`;
+            expect(atomicMinify(input)).toBe(output);
+        });
+
+        it('Preserves spacing between keywords and identifiers when if-with-braces wrapped', () => {
+            const input = `if (x > 10) { return null; }`;
+            const output = `if(x>10){return null;}`;
+            expect(atomicMinify(input)).toBe(output);
+        });
+
+        it('Preserves spacing between keywords when function wrapped', () => {
+            const input = `["query", (n, q) => {
+                    if (!n?.querySelector || typeof q !== "string") return null;
+                    const scopable = n.nodeType === Node.ELEMENT_NODE && !q.trimStart().startsWith(":scope");
+
+                    try {
+                        return n.querySelector(scopable ? ":scope " + q : q);
+                    } catch {
+                        return null;
+                    }
+                }],`;
+            expect(atomicMinify(input)).toBe(
+                [
+                    '["query",(n,q)=>{',
+                    'if(!n?.querySelector||typeof q!=="string")return null;',
+                    'const scopable=n.nodeType===Node.ELEMENT_NODE&&!q.trimStart().startsWith(":scope");',
+                    'try{',
+                    'return n.querySelector(scopable?":scope "+q:q);',
+                    '}catch{',
+                    'return null;',
+                    '}',
+                    '}],',
+                ].join(''),
+            );
+        });
+
+        it('Preserves spacing between keyword and unicode identifier', () => {
+            const input = `return 名字;`;
+            const output = `return 名字;`;
+            expect(atomicMinify(input)).toBe(output);
+        });
+
+        it('Minifies expressions using unicode identifiers', () => {
+            const input = `if (数据 === 值) { return 结果; }`;
+            const output = `if(数据===值){return 结果;}`;
+            expect(atomicMinify(input)).toBe(output);
+        });
+
+        it('Handles unicode in strings', () => {
+            const input = `const emoji = "✅ ✅ ✅";`;
+            const output = `const emoji="✅ ✅ ✅";`;
+            expect(atomicMinify(input)).toBe(output);
+        });
+
+        it('Handles unicode escapes in strings', () => {
+            const input = `const check = "\\u2714";`;
+            const output = `const check="\\u2714";`;
+            expect(atomicMinify(input)).toBe(output);
+        });
+
+        it('Handles unicode content inside template literal', () => {
+            const input = 'const msg = `你好，世界`;';
+            const output = 'const msg=`你好，世界`;';
+            expect(atomicMinify(input)).toBe(output);
+        });
+
+        it('Handles unicode content inside template expression', () => {
+            const input = 'const msg = `名字: ${名字}`;';
+            const output = 'const msg=`名字: ${名字}`;';
+            expect(atomicMinify(input)).toBe(output);
+        });
+
+        it('Does not inject sentinel after method call with unicode identifier', () => {
+            const input = `对象.返回({ a: 1 });`;
+            const output = `对象.返回({a:1});`;
+            expect(atomicMinify(input)).toBe(output);
+        });
+
+        it('Handles emojis and surrogate pairs in strings correctly', () => {
+            const input = `const smile = "😊";`;
+            const output = `const smile="😊";`;
+            expect(atomicMinify(input)).toBe(output);
+        });
+
+        it('Handles unicode and emoji identifiers (ES2022+)', () => {
+            const input = `const 🧊TriFrost = "cold"; return 🧊TriFrost;`;
+            const output = `const 🧊TriFrost="cold";return 🧊TriFrost;`;
+            expect(atomicMinify(input)).toBe(output);
+        });
+
         it('Minifies complex multiline logic with nested expressions, templates, strings, comments', () => {
             const input = `
                 // User greeting
@@ -422,7 +520,7 @@ Line 3\`;
             `;
             const output = `function greet(user){const name=user?.name??"Guest";const info={id:user.id,active:true};const msg=\`Welcome, \${name}!
         Your ID is: \${info.id}
-        Status: \${info.active?"Active":"Inactive"}\`;console.log(msg);return{raw:msg,summary:\`[\${name}] - \${info.active?"✅":"❌"}\`};}`;
+        Status: \${info.active?"Active":"Inactive"}\`;console.log(msg);return {raw:msg,summary:\`[\${name}] - \${info.active?"✅":"❌"}\`};}`;
             expect(atomicMinify(input)).toBe(output);
         });
     });
