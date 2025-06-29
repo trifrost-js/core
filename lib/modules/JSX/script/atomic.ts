@@ -72,12 +72,12 @@ export type TriFrostAtomicProxy<T> = T & {
 
 export type TriFrostAtomicUtils<Store extends Record<string, unknown> = {}> = {
     /* Clears the children from a dom node */
-    clear: (el:HTMLElement) => void;
+    clear: (el: HTMLElement) => void;
     debounce: <T extends (...args: any[]) => any>(fn: T, delay: number) => T;
     eq: (a: unknown, b: unknown) => boolean;
     uid: () => string;
     sleep: (ms: number) => Promise<void>;
-    fetch: <T = unknown>(
+    fetch: <T = DocumentFragment | string | Blob | object | null>(
         url: string,
         options?: {
             method?: string;
@@ -87,7 +87,7 @@ export type TriFrostAtomicUtils<Store extends Record<string, unknown> = {}> = {
             credentials?: RequestCredentials;
         },
     ) => Promise<{
-        content: [T] extends [unknown] ? DocumentFragment | string | Blob | object | null : T | null;
+        content: T | null;
         status: number;
         ok: boolean;
         headers: Headers;
