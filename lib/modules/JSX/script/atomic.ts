@@ -106,8 +106,8 @@ export type TriFrostAtomicUtils<Store extends Record<string, unknown> = {}> = {
         handler: (evt: K extends keyof HTMLElementEventMap ? HTMLElementEventMap[K] : CustomEvent<Payload>) => void,
     ) => void;
     /* DOM selectors */
-    query: <T extends Element = HTMLElement>(root: HTMLElement, selector: string) => T | null;
-    queryAll: <T extends Element = HTMLElement>(root: HTMLElement, selector: string) => T[];
+    query: <T extends Element = HTMLElement>(root: ParentNode, selector: string) => T | null;
+    queryAll: <T extends Element = HTMLElement>(root: ParentNode, selector: string) => T[];
     /* Store Get */
     storeGet<K extends keyof Store>(key: K): Store[K];
     storeGet(key: string): unknown;
@@ -507,8 +507,26 @@ export const ATOMIC_GLOBAL = atomicMinify(`
                     };
                     n.addEventListener(t, w);
                 }],
-                ["query", (n, q) => (n?.querySelector?.(q) ?? null)],
-                ["queryAll", (n, q) => n?.querySelectorAll ? [...n.querySelectorAll(q)] : []],
+                ["query", (n, q) => {
+                    if (!n?.querySelector || typeof q !== "string") return null;
+                    const scopable = n.nodeType === Node.ELEMENT_NODE && !q.trimStart().startsWith(":scope");
+
+                    try {
+                        return n.querySelector(scopable ? ":scope " + q : q);
+                    } catch {
+                        return null;
+                    }
+                }],
+                ["queryAll", (n, q) => {
+                    if (!n?.querySelectorAll || typeof q !== "string") return [];
+                    const scopable = n.nodeType === Node.ELEMENT_NODE && !q.trimStart().startsWith(":scope");
+
+                    try {
+                        return [...n.querySelectorAll(scopable ? ":scope " + q : q)];
+                    } catch {
+                        return [];
+                    }
+                }],
                 ["storeGet", window.${GLOBAL_STORE_NAME}.get],
                 ["storeSet", window.${GLOBAL_STORE_NAME}.set],
             ];
