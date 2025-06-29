@@ -90,7 +90,8 @@ export class ScriptEngine {
                 /* Run function and pass data */
                 'const dId=n.getAttribute("data-tfhd");',
                 'try{',
-                `TFF[id](n,w.${GLOBAL_DATA_REACTOR_NAME}(n,dId?TFD[dId]:{}),TFU)}catch{}`,
+                `TFF[id]({el:n,data:w.${GLOBAL_DATA_REACTOR_NAME}(n,dId?TFD[dId]:{}),$:TFU})`,
+                '}catch{}',
                 this.atomic_enabled ? ATOMIC_VM_AFTER : '',
                 '}',
                 '}',

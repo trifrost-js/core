@@ -12,11 +12,11 @@ export type ScriptProps<
     TFRelay extends Record<string, unknown> = Record<string, unknown>,
     TFStore extends Record<string, unknown> = Record<string, unknown>,
 > = JSXProps & {
-    children?: (
+    children?: (opts:{
         el: HTMLElement & TriFrostAtomicVM<TFRelay, TFStore>,
         data: TriFrostAtomicProxy<TFData>,
         $: TriFrostAtomicUtils<TFStore>,
-    ) => void;
+    }) => void;
     nonce?: string;
     src?: string;
     async?: boolean;

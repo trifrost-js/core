@@ -127,7 +127,7 @@ describe('Modules - JSX - script - <Script>', () => {
         it('Registers function and data with engine', () => {
             const out = Script({
                 data: {enabled: true},
-                children: (el, data) => (el.dataset.enabled = String(data.enabled)),
+                children: ({el, data}) => (el.dataset.enabled = String(data.enabled)),
             });
 
             expect(out).toEqual({
@@ -145,13 +145,13 @@ describe('Modules - JSX - script - <Script>', () => {
                     '<script nonce="my-nonce">',
                     '(function(d,w){',
                     'const TFD={"id-2":{"enabled":true}};',
-                    'const TFF={"id-1":(el,data)=>el.dataset.enabled=String(data.enabled)};',
+                    'const TFF={"id-1":({el,data})=>el.dataset.enabled=String(data.enabled)};',
                     'const TFU=w.$tfutils;',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
                     'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}),TFU)}catch{}',
+                    'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
                     '}',
                     '}',
                     '})(document,window);</script>',
@@ -163,7 +163,7 @@ describe('Modules - JSX - script - <Script>', () => {
             expect(
                 Script({
                     data: {x: 1},
-                    children: el => (el.textContent = 'hi'),
+                    children: ({el}) => (el.textContent = 'hi'),
                 }),
             ).toEqual({
                 key: null,
@@ -177,7 +177,7 @@ describe('Modules - JSX - script - <Script>', () => {
             expect(
                 Script({
                     data: {y: 2},
-                    children: el => (el.textContent = 'hi'),
+                    children: ({el}) => (el.textContent = 'hi'),
                 }),
             ).toEqual({
                 key: null,
@@ -193,13 +193,13 @@ describe('Modules - JSX - script - <Script>', () => {
                     '<script nonce="my-nonce">',
                     '(function(d,w){',
                     'const TFD={"id-2":{"x":1},"id-3":{"y":2}};',
-                    'const TFF={"id-1":(el)=>el.textContent="hi"};',
+                    'const TFF={"id-1":({el})=>el.textContent="hi"};',
                     'const TFU=w.$tfutils;',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
                     'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}),TFU)}catch{}',
+                    'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
                     '}',
                     '}',
                     '})(document,window);</script>',
@@ -211,7 +211,7 @@ describe('Modules - JSX - script - <Script>', () => {
             expect(
                 Script({
                     data: {a: 1, b: 2},
-                    children: el => (el.innerText = 'X'),
+                    children: ({el}) => (el.innerText = 'X'),
                 }),
             ).toEqual({
                 key: null,
@@ -225,7 +225,7 @@ describe('Modules - JSX - script - <Script>', () => {
             expect(
                 Script({
                     data: {a: 1, b: 2},
-                    children: el => (el.innerText = 'Y'),
+                    children: ({el}) => (el.innerText = 'Y'),
                 }),
             ).toEqual({
                 key: null,
@@ -241,13 +241,13 @@ describe('Modules - JSX - script - <Script>', () => {
                     '<script nonce="my-nonce">',
                     '(function(d,w){',
                     'const TFD={"id-2":{"a":1,"b":2}};',
-                    'const TFF={"id-1":(el)=>el.innerText="X","id-3":(el)=>el.innerText="Y"};',
+                    'const TFF={"id-1":({el})=>el.innerText="X","id-3":({el})=>el.innerText="Y"};',
                     'const TFU=w.$tfutils;',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
                     'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}),TFU)}catch{}',
+                    'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
                     '}',
                     '}',
                     '})(document,window);</script>',
@@ -259,7 +259,7 @@ describe('Modules - JSX - script - <Script>', () => {
             expect(
                 Script({
                     data: {a: 1, b: 2},
-                    children: el => (el.innerText = 'X'),
+                    children: ({el}) => (el.innerText = 'X'),
                 }),
             ).toEqual({
                 key: null,
@@ -273,7 +273,7 @@ describe('Modules - JSX - script - <Script>', () => {
             expect(
                 Script({
                     data: {b: 2, a: 1},
-                    children: el => (el.innerText = 'Y'),
+                    children: ({el}) => (el.innerText = 'Y'),
                 }),
             ).toEqual({
                 key: null,
@@ -289,13 +289,13 @@ describe('Modules - JSX - script - <Script>', () => {
                     '<script nonce="my-nonce">',
                     '(function(d,w){',
                     'const TFD={"id-2":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
-                    'const TFF={"id-1":(el)=>el.innerText="X","id-3":(el)=>el.innerText="Y"};',
+                    'const TFF={"id-1":({el})=>el.innerText="X","id-3":({el})=>el.innerText="Y"};',
                     'const TFU=w.$tfutils;',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
                     'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}),TFU)}catch{}',
+                    'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
                     '}',
                     '}',
                     '})(document,window);</script>',
@@ -305,7 +305,7 @@ describe('Modules - JSX - script - <Script>', () => {
 
         it('Handles null data correctly', () => {
             const out = Script({
-                children: el => (el.className = 'injected'),
+                children: ({el}) => (el.className = 'injected'),
             });
 
             expect(out).toEqual({
@@ -322,13 +322,13 @@ describe('Modules - JSX - script - <Script>', () => {
                     '<script nonce="my-nonce">',
                     '(function(d,w){',
                     'const TFD={};',
-                    'const TFF={"id-1":(el)=>el.className="injected"};',
+                    'const TFF={"id-1":({el})=>el.className="injected"};',
                     'const TFU=w.$tfutils;',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
                     'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}),TFU)}catch{}',
+                    'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
                     '}',
                     '}',
                     '})(document,window);</script>',
@@ -339,7 +339,7 @@ describe('Modules - JSX - script - <Script>', () => {
         it('Resets internal maps on reset()', () => {
             Script({
                 data: {reset: true},
-                children: el => (el.id = 'resettable'),
+                children: ({el}) => (el.id = 'resettable'),
             });
 
             engine.reset();
@@ -350,7 +350,7 @@ describe('Modules - JSX - script - <Script>', () => {
         it('Injects script at end if no </body>', () => {
             Script({
                 data: {a: 1},
-                children: el => (el.textContent = 'hi'),
+                children: ({el}) => (el.textContent = 'hi'),
             });
 
             const result = engine.inject('<div>Hello</div>');
@@ -360,7 +360,7 @@ describe('Modules - JSX - script - <Script>', () => {
         it('Injects script before </body>', () => {
             Script({
                 data: {b: 2},
-                children: el => (el.textContent = 'bye'),
+                children: ({el}) => (el.textContent = 'bye'),
             });
 
             const result = engine.inject('<html><body><h1>Test</h1></body></html>');
@@ -380,23 +380,23 @@ describe('Modules - JSX - script - <Script>', () => {
         });
 
         it('Minifies', () => {
-            const fn = (node: HTMLElement) => {
+            const fn = ({el}) => {
                 function greet() {
                     console.log('hello');
                 }
 
-                node.addEventListener('click', greet);
+                el.addEventListener('click', greet);
             };
 
             Script({children: fn});
             expect(engine.flush()).toBe(
                 [
-                    '<script nonce="my-nonce">(function(d,w){const TFD={};const TFF={"id-1":(node)=>{',
+                    '<script nonce="my-nonce">(function(d,w){const TFD={};const TFF={"id-1":({el})=>{',
                     'function greet(){',
                     'console.log("hello");',
                     '}',
-                    'node.addEventListener("click",greet);',
-                    '}};const TFU=w.$tfutils;for(const id in TFF){const N=d.querySelectorAll(`[data-tfhf="${id}"]`);for(let n of N){const dId=n.getAttribute("data-tfhd");try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}),TFU)}catch{}}}})(document,window);</script>',
+                    'el.addEventListener("click",greet);',
+                    '}};const TFU=w.$tfutils;for(const id in TFF){const N=d.querySelectorAll(`[data-tfhf="${id}"]`);for(let n of N){const dId=n.getAttribute("data-tfhd");try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}}}})(document,window);</script>',
                 ].join(''),
             );
         });
@@ -415,7 +415,7 @@ describe('Modules - JSX - script - <Script>', () => {
 
             const out = Script({
                 data: {enabled: true},
-                children: (el, data) => {
+                children: ({el, data}) => {
                     el.dataset.enabled = String(data.enabled);
                 },
             });
@@ -436,14 +436,14 @@ describe('Modules - JSX - script - <Script>', () => {
                     '(function(d,w){',
                     ATOMIC_GLOBAL,
                     'const TFD={"id-2":{"enabled":true}};',
-                    'const TFF={"id-1":(el,data)=>{el.dataset.enabled=String(data.enabled);}};',
+                    'const TFF={"id-1":({el,data})=>{el.dataset.enabled=String(data.enabled);}};',
                     'const TFU=w.$tfutils;',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
                     ATOMIC_VM_BEFORE,
                     'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}),TFU)}catch{}',
+                    'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
                     ATOMIC_VM_AFTER,
                     '}',
                     '}',
@@ -458,7 +458,7 @@ describe('Modules - JSX - script - <Script>', () => {
 
             const out = Script({
                 data: {enabled: true},
-                children: (el, data) => {
+                children: ({el, data}) => {
                     el.dataset.enabled = String(data.enabled);
                 },
             });
@@ -478,14 +478,14 @@ describe('Modules - JSX - script - <Script>', () => {
                     '<script nonce="my-nonce">',
                     '(function(d,w){',
                     'const TFD={"id-2":{"enabled":true}};',
-                    'const TFF={"id-1":(el,data)=>{el.dataset.enabled=String(data.enabled);}};',
+                    'const TFF={"id-1":({el,data})=>{el.dataset.enabled=String(data.enabled);}};',
                     'const TFU=w.$tfutils;',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
                     ATOMIC_VM_BEFORE,
                     'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}),TFU)}catch{}',
+                    'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
                     ATOMIC_VM_AFTER,
                     '}',
                     '}',
@@ -499,13 +499,13 @@ describe('Modules - JSX - script - <Script>', () => {
 
             Script({
                 data: {x: 1},
-                children: (el, data) => {
+                children: ({el, data}) => {
                     el.textContent = String(data);
                 },
             });
             Script({
                 data: {y: 2},
-                children: (el, data) => {
+                children: ({el, data}) => {
                     el.textContent = String(data);
                 },
             });
@@ -515,14 +515,14 @@ describe('Modules - JSX - script - <Script>', () => {
                     '<script nonce="my-nonce">',
                     '(function(d,w){',
                     'const TFD={"id-2":{"x":1},"id-3":{"y":2}};',
-                    'const TFF={"id-1":(el,data)=>{el.textContent=String(data);}};',
+                    'const TFF={"id-1":({el,data})=>{el.textContent=String(data);}};',
                     'const TFU=w.$tfutils;',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
                     ATOMIC_VM_BEFORE,
                     'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}),TFU)}catch{}',
+                    'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
                     ATOMIC_VM_AFTER,
                     '}',
                     '}',
@@ -536,11 +536,11 @@ describe('Modules - JSX - script - <Script>', () => {
 
             Script({
                 data: {x: 1},
-                children: (el, data) => (el.textContent = String(data)),
+                children: ({el, data}) => (el.textContent = String(data)),
             });
             Script({
                 data: {x: 1},
-                children: (el, data) => (el.innerHTML = String(data)),
+                children: ({el, data}) => (el.innerHTML = String(data)),
             });
 
             expect(engine.flush()).toBe(
@@ -548,14 +548,14 @@ describe('Modules - JSX - script - <Script>', () => {
                     '<script nonce="my-nonce">',
                     '(function(d,w){',
                     'const TFD={"id-2":{"x":1}};',
-                    'const TFF={"id-1":(el,data)=>el.textContent=String(data),"id-3":(el,data)=>el.innerHTML=String(data)};',
+                    'const TFF={"id-1":({el,data})=>el.textContent=String(data),"id-3":({el,data})=>el.innerHTML=String(data)};',
                     'const TFU=w.$tfutils;',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
                     ATOMIC_VM_BEFORE,
                     'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}),TFU)}catch{}',
+                    'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
                     ATOMIC_VM_AFTER,
                     '}',
                     '}',
@@ -567,7 +567,7 @@ describe('Modules - JSX - script - <Script>', () => {
         it('Supports Script before enabling atomic mode', () => {
             Script({
                 data: {msg: 'early'},
-                children: (el, data) => (el.textContent = data.msg),
+                children: ({el, data}) => (el.textContent = data.msg),
             });
 
             engine.setAtomic(true);
@@ -577,14 +577,14 @@ describe('Modules - JSX - script - <Script>', () => {
                     '<script nonce="my-nonce">',
                     '(function(d,w){',
                     'const TFD={"id-2":{"msg":"early"}};',
-                    'const TFF={"id-1":(el,data)=>el.textContent=data.msg};',
+                    'const TFF={"id-1":({el,data})=>el.textContent=data.msg};',
                     'const TFU=w.$tfutils;',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
                     ATOMIC_VM_BEFORE,
                     'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}),TFU)}catch{}',
+                    'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
                     ATOMIC_VM_AFTER,
                     '}',
                     '}',
@@ -596,7 +596,7 @@ describe('Modules - JSX - script - <Script>', () => {
         it('Allows multiple root/atomic calls safely', () => {
             Script({
                 data: {msg: 'early'},
-                children: (el, data) => (el.textContent = data.msg),
+                children: ({el, data}) => (el.textContent = data.msg),
             });
 
             engine.setAtomic(true);
@@ -610,14 +610,14 @@ describe('Modules - JSX - script - <Script>', () => {
                     '(function(d,w){',
                     ATOMIC_GLOBAL,
                     'const TFD={"id-2":{"msg":"early"}};',
-                    'const TFF={"id-1":(el,data)=>el.textContent=data.msg};',
+                    'const TFF={"id-1":({el,data})=>el.textContent=data.msg};',
                     'const TFU=w.$tfutils;',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
                     ATOMIC_VM_BEFORE,
                     'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}),TFU)}catch{}',
+                    'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
                     ATOMIC_VM_AFTER,
                     '}',
                     '}',
@@ -632,7 +632,7 @@ describe('Modules - JSX - script - <Script>', () => {
 
             Script({
                 data: {msg: 'hello'},
-                children: (el, data, $) => {
+                children: ({el, data, $}) => {
                     el.$publish('eventA', data.msg);
                     $.storeSet('lastMessage', data.msg);
                 },
@@ -644,14 +644,14 @@ describe('Modules - JSX - script - <Script>', () => {
                     '(function(d,w){',
                     ATOMIC_GLOBAL,
                     'const TFD={"id-2":{"msg":"hello"}};',
-                    'const TFF={"id-1":(el,data,$)=>{el.$publish("eventA",data.msg);$.storeSet("lastMessage",data.msg);}};',
+                    'const TFF={"id-1":({el,data,$})=>{el.$publish("eventA",data.msg);$.storeSet("lastMessage",data.msg);}};',
                     'const TFU=w.$tfutils;',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
                     ATOMIC_VM_BEFORE,
                     'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}),TFU)}catch{}',
+                    'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
                     ATOMIC_VM_AFTER,
                     '}',
                     '}',
@@ -667,7 +667,7 @@ describe('Modules - JSX - script - <Script>', () => {
 
             Script({
                 data: {msg: 'hello'},
-                children: (el, data, $) => {
+                children: ({el, data, $}) => {
                     el.$publish('eventA', data.msg);
                     $.storeSet('lastMessage', data.msg);
                 },
@@ -679,14 +679,14 @@ describe('Modules - JSX - script - <Script>', () => {
                     '(function(d,w){',
                     'const run=()=>{',
                     'const TFD={"id-2":{"msg":"hello"}};',
-                    'const TFF={"id-1":(el,data,$)=>{el.$publish("eventA",data.msg);$.storeSet("lastMessage",data.msg);}};',
+                    'const TFF={"id-1":({el,data,$})=>{el.$publish("eventA",data.msg);$.storeSet("lastMessage",data.msg);}};',
                     'const TFU=w.$tfutils;',
                     'for(const id in TFF){',
                     'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                     'for(let n of N){',
                     ATOMIC_VM_BEFORE,
                     'const dId=n.getAttribute("data-tfhd");',
-                    'try{TFF[id](n,w.$tfdr(n,dId?TFD[dId]:{}),TFU)}catch{}',
+                    'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
                     ATOMIC_VM_AFTER,
                     '}',
                     '}};',
@@ -738,12 +738,12 @@ describe('Modules - JSX - script - <Script>', () => {
 
         it('Returns null if no active engine', () => {
             setActiveScriptEngine(null);
-            const fn = (node: HTMLElement) => {
+            const fn = ({el}) => {
                 function greet() {
                     console.log('hello');
                 }
 
-                node.addEventListener('click', greet);
+                el.addEventListener('click', greet);
             };
 
             expect(Script({children: fn})).toBe(null);

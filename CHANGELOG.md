@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **dx**: Ensure proper generic usage for the `fetch` util in Atomic Utils. `$.fetch<DocumentFragment>(...)` will now correctly type `res.content` as `DocumentFragment | null`.
 - **perf**: Introduced a new byte-level minification utility (`atomicMinify`) optimized for inline runtime payloads like Atomic Runtime or Script blocks. Minification is now also applied to Script blocks, previously only to the atomic runtime.
 
+### Breaking
+- Atomic Script blocks now get {el, data, $} as a bag of options rather than as separate arguments. This allows for further future additions if necessary without having to include all options just to (for example) get to the `$` atomic utils. Ps: This is the last breaking change for Atomic now that we have all 3 layers in place (element vm, reactive data and a hook into global utils), everything that follows in future releases will be additive to one or more of those layers.
+
 ### Notes on atomicMinify
 - **3–4× faster** than previous regex-based minification (benchmark in `/test/bench/modules/JSX/script/util.bench.ts`)
 - Strips line comments and unnecessary whitespace
