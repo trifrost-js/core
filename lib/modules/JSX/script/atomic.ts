@@ -71,6 +71,8 @@ export type TriFrostAtomicProxy<T> = T & {
 };
 
 export type TriFrostAtomicUtils<Store extends Record<string, unknown> = {}> = {
+    /* Clears the children from a dom node */
+    clear: (el:HTMLElement) => void;
     debounce: <T extends (...args: any[]) => any>(fn: T, delay: number) => T;
     eq: (a: unknown, b: unknown) => boolean;
     uid: () => string;

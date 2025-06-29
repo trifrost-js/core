@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 ### Improved
+- **feat**: Add missing type definition for `clear` util in Atomic Utils. `$.clear` clears a dom node from its children using the much-used `while (node.firstChild) node.removeChild(node.firstChild)` pattern.
+
 - **perf**: Introduced a new byte-level minification utility (`atomicMinify`) optimized for inline runtime payloads like Atomic Runtime or Script blocks. Minification is now also applied to Script blocks, previously only to the atomic runtime.
 
 ### Notes on atomicMinify
