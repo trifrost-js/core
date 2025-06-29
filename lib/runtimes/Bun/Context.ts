@@ -14,13 +14,13 @@ const encoder = new TextEncoder();
 
 export class BunContext extends Context {
     /* Bun Apis */
-    #bun: {file: typeof import('bun').file};
+    private bun: {file: typeof import('bun').file};
 
     /* Bun Request instance */
-    #bun_req: Request;
+    private bun_req: Request;
 
     /* Internal Response instance */
-    #response: Response | null = null;
+    private res: Response | null = null;
 
     constructor(cfg: TriFrostContextConfig, logger: TriFrostRootLogger, bunApis: {file: typeof import('bun').file}, req: Request) {
         /* Extract path and query */
@@ -41,22 +41,22 @@ export class BunContext extends Context {
             query,
         });
 
-        this.#bun = bunApis;
-        this.#bun_req = req;
+        this.bun = bunApis;
+        this.bun_req = req;
     }
 
     /**
      * Getter for the final response
      */
     get response(): Response | null {
-        return this.#response;
+        return this.res;
     }
 
     /**
      * Initializes the context, this happens when a route is matched and tied to this context.
      */
     async init(val: TriFrostRouteMatch) {
-        await super.init(val, async () => parseBody(this, this.#bun_req, val.route.bodyParser || DEFAULT_BODY_PARSER_OPTIONS));
+        await super.init(val, async () => parseBody(this, this.bun_req, val.route.bodyParser || DEFAULT_BODY_PARSER_OPTIONS));
     }
 
     /**
@@ -66,7 +66,7 @@ export class BunContext extends Context {
      */
     async getStream(path: string): Promise<{stream: ReadableStream; size: number} | null> {
         try {
-            const file_obj = this.#bun.file(path);
+            const file_obj = this.bun.file(path);
             if (!file_obj) {
                 this.logger.warn('BunContext@getStream: File not found', {path});
                 return null;
@@ -97,13 +97,13 @@ export class BunContext extends Context {
         super.stream(stream, size);
 
         /* Set response with stream */
-        this.#response = new Response(stream, {
+        this.res = new Response(stream, {
             status: this.res_code,
             headers: this.res_headers,
         });
 
         /* Write cookies */
-        this.#writeCookies();
+        this.writeCookies();
     }
 
     /**
@@ -117,13 +117,13 @@ export class BunContext extends Context {
         super.abort(status);
 
         /* Set response */
-        this.#response = new Response(null, {
+        this.res = new Response(null, {
             status: this.res_code,
             headers: this.res_headers,
         });
 
         /* Write cookies */
-        this.#writeCookies();
+        this.writeCookies();
     }
 
     /**
@@ -138,24 +138,24 @@ export class BunContext extends Context {
             case HttpMethods.HEAD: {
                 this.res_headers['Content-Length'] = typeof this.res_body === 'string' ? '' + encoder.encode(this.res_body).length : '0';
 
-                this.#response = new Response(null, {
+                this.res = new Response(null, {
                     status: this.res_code,
                     headers: this.res_headers,
                 });
 
                 /* Write cookies */
-                this.#writeCookies();
+                this.writeCookies();
                 break;
             }
             default:
                 /* Set response */
-                this.#response = new Response(this.res_body, {
+                this.res = new Response(this.res_body, {
                     status: this.res_code,
                     headers: this.res_headers,
                 });
 
                 /* Write cookies */
-                this.#writeCookies();
+                this.writeCookies();
                 break;
         }
     }
@@ -183,17 +183,16 @@ export class BunContext extends Context {
      */
 
     protected getIP(): string | null {
-        return (this.#bun_req as {socket?: {remoteAddress?: string}}).socket?.remoteAddress ?? null;
+        return (this.bun_req as {socket?: {remoteAddress?: string}}).socket?.remoteAddress ?? null;
     }
 
     /**
      * MARK: Private
      */
 
-    #writeCookies() {
+    private writeCookies() {
         if (!this.$cookies) return;
         const outgoing = this.$cookies.outgoing;
-        if (!outgoing.length) return;
-        for (let i = 0; i < outgoing.length; i++) this.#response!.headers.append('Set-Cookie', outgoing[i]);
+        for (let i = 0; i < outgoing.length; i++) this.res!.headers.append('Set-Cookie', outgoing[i]);
     }
 }

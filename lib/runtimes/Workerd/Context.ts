@@ -203,7 +203,6 @@ export class WorkerdContext extends Context {
     private writeCookies() {
         if (!this.$cookies) return;
         const outgoing = this.$cookies.outgoing;
-        if (!outgoing.length) return;
         for (let i = 0; i < outgoing.length; i++) this.response!.headers.append('Set-Cookie', outgoing[i]);
     }
 }
