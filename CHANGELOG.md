@@ -4,14 +4,53 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.41.0] - 2025-06-29
+This release brings refinement to the Atomic layer, improving ergonomics, performance, and type safety. The new destructured `Script` API makes logic blocks cleaner to write and easier to extend, while internals like `atomicMinify` and `$fetch` util receive notable upgrades. A small breaking change for a frostier future.
+
 ### Improved
 - **dx**: Add missing type definition for `clear` util in Atomic Utils. `$.clear` clears a dom node from its children using the much-used `while (node.firstChild) node.removeChild(node.firstChild)` pattern.
 - **dx**: Ensure proper generic usage for the `fetch` util in Atomic Utils. `$.fetch<DocumentFragment>(...)` will now correctly type `res.content` as `DocumentFragment | null`.
 - **perf**: Introduced a new byte-level minification utility (`atomicMinify`) optimized for inline runtime payloads like Atomic Runtime or Script blocks. Minification is now also applied to Script blocks, previously only to the atomic runtime.
 
 ### Breaking
-- Atomic Script blocks now get {el, data, $} as a bag of options rather than as separate arguments. This allows for further future additions if necessary without having to include all options just to (for example) get to the `$` atomic utils. Ps: This is the last breaking change for Atomic now that we have all 3 layers in place (element vm, reactive data and a hook into global utils), everything that follows in future releases will be additive to one or more of those layers.
+- Atomic Script invocation now uses a **destructured** `{el, data, $}` **bag instead of positional arguments**. This change simplifies authoring and enables future-proof extensibility. Rather than receiving three positional arguments `(el, data, $)`, your Script blocks now get a single object that you can destructure.
+
+Examples:
+```tsx
+/*  BEFORE */
+<Script>
+  {/* Must list all 3 args to access `$`, even if unused */}
+  (el, data, $) => {
+    $.clear(el);
+  }
+</Script>
+
+/* AFTER */
+<Script>
+  ({el, $}) => {
+    $.clear(el); // Cleaner, only what you need
+  }
+</Script>
+```
+```tsx
+/* BEFORE */
+<Script data={{form: {type: 'all'}}}>
+  (el, data, $) => {
+    data.$bind('form.type', 'select');
+    ...
+  }
+</Script>
+
+/* AFTER */
+<Script data={{form:{type: 'all'}}}>
+  ({data}) => {
+    data.$bind('form.type', 'select');
+    ...
+  }
+</Script>
+```
+
+This approach unlocks future enhancements **without breaking consumer code again**, as new keys can be added to the object without forcing users to update all parameters. This is the **final structural change** to Atomic’s runtime shape, all future improvements will be additive to this core contract.
 
 ### Notes on atomicMinify
 - **3–4× faster** than previous regex-based minification (benchmark in `/test/bench/modules/JSX/script/util.bench.ts`)
@@ -20,6 +59,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - Handles template literals, nested expressions, regexes, and escapes correctly
 - Designed for controlled, internally-generated JS — perfect for VM scripts and embedded logic
 - Zero regex, zero GC pressure, single-pass streaming performance
+
+---
+
+We're continuing our march toward 1.0, fewer keystrokes, more power. This release locks in the **final structure of Atomic’s reactive runtime**. The foundation is now frozen; the surface can evolve freely.
+
+As always, stay frosty ❄️
 
 ## [0.40.0] - 2025-06-28
 This release cracks open a leaner, meaner era for the Atomic layer. We’ve surgically extracted node-bound behavior and reassembled it into a centralized `$` utility namespace, smaller boot footprints, faster VMs, and crystal-clear ergonomics. The new `$.fetch`? One helper to parse them all. The updated `data.$bind`? Reactive sugar with zero overhead. This is DX that moves like lightning.

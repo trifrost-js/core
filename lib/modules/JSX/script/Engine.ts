@@ -35,7 +35,7 @@ export class ScriptEngine {
     }
 
     register(fn: string, data: string | null) {
-        let minified_fn = atomicMinify(fn);
+        const minified_fn = atomicMinify(fn);
 
         let fn_id = this.map_fn.get(minified_fn);
         if (!fn_id) {
