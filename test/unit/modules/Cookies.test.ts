@@ -857,5 +857,19 @@ describe('Modules - Cookies', () => {
             const verified = await cookies.verify(decodeURIComponent(tampered), SECRET);
             expect(verified).toBe(null);
         });
+
+        it('Handles HMAC failure gracefully and returns null', async () => {
+            const cookies = new Cookies(createCtx(), {});
+
+            vi.stubGlobal('crypto', {
+                subtle: {
+                    sign: vi.fn().mockRejectedValue(new Error('HMAC failed')),
+                    importKey: vi.fn().mockResolvedValue({}),
+                },
+            });
+
+            const result = await (cookies as any).generateHMAC('data', 'secret', {algorithm: 'SHA-256'});
+            expect(result).toBe(null);
+        });
     });
 });
