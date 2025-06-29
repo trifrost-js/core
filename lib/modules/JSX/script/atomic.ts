@@ -389,9 +389,13 @@ export const ATOMIC_GLOBAL = atomicMinify(`
                                 (subs[path] ??= []).push(v => setIV(els, v));
 
                                 if (typeof watcher === "function") {
-                                    this.$watch(path, watcher);
+                                    watcher._last = window.${GLOBAL_UTIL_CLONE}(get(path));
+                                    subs[path].push(watcher);
                                 } else if (typeof watcher?.handler === "function") {
-                                    this.$watch(path, watcher.handler, watcher);
+                                    const {immediate,handler} = watcher;
+                                    handler._last = window.${GLOBAL_UTIL_CLONE}(get(path));
+                                    subs[path].push(handler);
+                                    if (immediate === true) handler(handler._last);
                                 }
                             };
                             case "$watch": return (path, fn, opts = {}) => {
