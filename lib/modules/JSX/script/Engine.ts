@@ -8,6 +8,7 @@ import {
     GLOBAL_DATA_REACTOR_NAME,
     GLOBAL_UTILS_NAME,
 } from './atomic';
+import {atomicMinify} from './util';
 
 export class ScriptEngine {
     /* Map storing the function bodies by id */
@@ -34,10 +35,12 @@ export class ScriptEngine {
     }
 
     register(fn: string, data: string | null) {
-        let fn_id = this.map_fn.get(fn);
+        let minified_fn = atomicMinify(fn);
+
+        let fn_id = this.map_fn.get(minified_fn);
         if (!fn_id) {
             fn_id = hexId(8);
-            this.map_fn.set(fn, fn_id);
+            this.map_fn.set(minified_fn, fn_id);
         }
 
         let data_id: string | null = null;

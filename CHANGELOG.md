@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Improved
+- **perf**: Introduced a new byte-level minification utility (`atomicMinify`) optimized for inline runtime payloads like Atomic Runtime or Script blocks. Minification is now also applied to Script blocks, previously only to the atomic runtime.
+
+### Notes on atomicMinify
+- **3–4× faster** than previous regex-based minification (benchmark in `/test/bench/modules/JSX/script/util.bench.ts`)
+- Strips line comments and unnecessary whitespace
+- Preserves string literals and required spacing between identifiers
+- Handles template literals, nested expressions, regexes, and escapes correctly
+- Designed for controlled, internally-generated JS — perfect for VM scripts and embedded logic
+- Zero regex, zero GC pressure, single-pass streaming performance
+
 ## [0.40.0] - 2025-06-28
 This release cracks open a leaner, meaner era for the Atomic layer. We’ve surgically extracted node-bound behavior and reassembled it into a centralized `$` utility namespace, smaller boot footprints, faster VMs, and crystal-clear ergonomics. The new `$.fetch`? One helper to parse them all. The updated `data.$bind`? Reactive sugar with zero overhead. This is DX that moves like lightning.
 

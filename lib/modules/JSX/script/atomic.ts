@@ -1,9 +1,6 @@
 import {type Promisify} from '../../../types/generic';
+import {atomicMinify} from './util';
 
-const RGX_COMMENT = /\/\/.*$/gm;
-const RGX_BREAK = /\n/g;
-const RGX_SPACE = /\s+/g;
-const RGX_SYMBOLS = /\s*([{}();,:=<>+\-[\]])\s*/g;
 export const GLOBAL_HYDRATED_NAME = '$tfhydra';
 export const GLOBAL_UTILS_NAME = '$tfutils';
 export const GLOBAL_DATA_REACTOR_NAME = '$tfdr';
@@ -22,10 +19,6 @@ const VM_RELAY_UNSUBSCRIBE_NAME = '$unsubscribe';
 const VM_RELAY_PUBLISH_NAME = '$publish';
 const VM_HOOK_UNMOUNT_NAME = '$unmount';
 const VM_HOOK_MOUNT_NAME = '$mount';
-
-function minify(raw: string): string {
-    return raw.replace(RGX_COMMENT, '').replace(RGX_BREAK, ' ').replace(RGX_SPACE, ' ').replace(RGX_SYMBOLS, '$1').trim();
-}
 
 type StoreTopics<K extends string> = `$store:${K}`;
 
@@ -121,7 +114,7 @@ export type TriFrostAtomicUtils<Store extends Record<string, unknown> = {}> = {
     storeSet(key: string, value: unknown): void;
 };
 
-export const ATOMIC_GLOBAL = minify(`
+export const ATOMIC_GLOBAL = atomicMinify(`
     if (!window.${GLOBAL_HYDRATED_NAME}) {
         if (!window.${GLOBAL_UTIL_EQUAL}) {
             const equal = (a,b) => {
@@ -532,7 +525,7 @@ export const ATOMIC_GLOBAL = minify(`
     }
 `);
 
-export const ATOMIC_VM_BEFORE = minify(
+export const ATOMIC_VM_BEFORE = atomicMinify(
     `if (!n.${VM_NAME}) {
         const i = w.${GLOBAL_UTILS_NAME}.uid();
         Object.defineProperties(n, {
@@ -545,6 +538,6 @@ export const ATOMIC_VM_BEFORE = minify(
     }`,
 );
 
-export const ATOMIC_VM_AFTER = minify(`
+export const ATOMIC_VM_AFTER = atomicMinify(`
     if (typeof n.${VM_HOOK_MOUNT_NAME} === "function") try {n.${VM_HOOK_MOUNT_NAME}()} catch {}
 `);
