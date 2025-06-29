@@ -72,7 +72,7 @@ export type TriFrostAtomicProxy<T> = T & {
 
 export type TriFrostAtomicUtils<Store extends Record<string, unknown> = {}> = {
     /* Clears the children from a dom node */
-    clear: (el: HTMLElement) => void;
+    clear: (el: Element) => void;
     debounce: <T extends (...args: any[]) => any>(fn: T, delay: number) => T;
     eq: (a: unknown, b: unknown) => boolean;
     uid: () => string;
@@ -94,20 +94,20 @@ export type TriFrostAtomicUtils<Store extends Record<string, unknown> = {}> = {
         raw: Response;
     }>;
     /* Event Listening */
-    fire: <T = unknown>(el: HTMLElement, type: string, options?: {data?: T; mode?: 'up' | 'down'}) => void;
+    fire: <T = unknown>(el: Element, type: string, options?: {data?: T; mode?: 'up' | 'down'}) => void;
     on: <Payload = unknown, K extends string = string>(
-        el: HTMLElement,
+        el: Element,
         type: K,
         handler: (evt: K extends keyof HTMLElementEventMap ? HTMLElementEventMap[K] : CustomEvent<Payload>) => void,
     ) => () => void;
     once: <Payload = unknown, K extends string = string>(
-        el: HTMLElement,
+        el: Element,
         type: K,
         handler: (evt: K extends keyof HTMLElementEventMap ? HTMLElementEventMap[K] : CustomEvent<Payload>) => void,
     ) => void;
     /* DOM selectors */
-    query: <T extends Element = HTMLElement>(root: ParentNode, selector: string) => T | null;
-    queryAll: <T extends Element = HTMLElement>(root: ParentNode, selector: string) => T[];
+    query: <T extends Element = HTMLElement>(root: Node, selector: string) => T | null;
+    queryAll: <T extends Element = HTMLElement>(root: Node, selector: string) => T[];
     /* Store Get */
     storeGet<K extends keyof Store>(key: K): Store[K];
     storeGet(key: string): unknown;
