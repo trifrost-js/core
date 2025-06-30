@@ -328,7 +328,7 @@ function cssFactory<Breakpoints extends Record<string, string> = typeof DEFAULT_
             return replay.cname;
         }
 
-        const cname = 'kftf' + djb2Hash(raw);
+        const cname = 'tf' + djb2Hash(raw);
         engine.cache.set(raw, cname);
 
         let rule = '@keyframes ' + cname + ' {';
@@ -427,8 +427,14 @@ export type CssInstance<
     cid: () => string;
     /**
      * Sets mount path for the css instance
+     * @param {string|null} path - Mount path to choose
      */
-    setMountPath: (path: string | null) => void;
+    setMountPath: (path:string|null) => void;
+    /**
+     * Disables/enables style injection for the currently active style engine
+     * @param {boolean?} val - Disable (true) or Enable (false)
+     */
+    disableInjection: (val?:boolean) => void;
 };
 
 const CSS_RESET = {
@@ -697,6 +703,12 @@ export function createCss<
     /* Sets mount path */
     mod.setMountPath = (path: string | null) => {
         mountPath = typeof path === 'string' ? path : null;
+    };
+
+    /* Disable injection on the current active engine */
+    mod.disableInjection = (val:boolean = true) => {
+        if (!active_engine) setActiveStyleEngine(new StyleEngine());
+        active_engine?.setDisabled(val);
     };
 
     return mod;

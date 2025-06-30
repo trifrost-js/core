@@ -1,5 +1,7 @@
 import {MARKER} from './Style';
 import {nonce} from '../ctx/nonce';
+import {atomicMinify} from '../script/util';
+import {djb2Hash} from '../../../utils/Generic';
 
 type StyleEngineRegisterOptions = {
     /**
@@ -12,17 +14,72 @@ type StyleEngineRegisterOptions = {
     selector?: string | null;
 };
 
-export class StyleEngine {
-    /* rule -> className */
-    protected base = {out: '', keys: new Set<string>()};
+type RuleEntry = {
+    base: Set<string>;
+    media: Record<string, Set<string>>; // query -> rule
+};
 
-    /* mediaQuery -> rule -> className */
-    protected media: Record<string, {out: string; keys: Set<string>}> = {};
+export const PRIME = 'data-tfs-p';
+export const SHARD = 'data-tfs-s';
+export const OBSERVER = atomicMinify(`(function(){
+  const cn = new Set();
+  const prime = document.querySelector('style[${PRIME}]');
+  if (!prime) return;
+
+  /* Scan primary for known classes */
+  const cnr = /\\.([a-zA-Z0-9_-]+)[,{]/g;
+  let m;
+  while ((m = cnr.exec(prime.textContent))) cn.add(m[1]);
+
+  const o = new MutationObserver(muts => {
+    let pp = new Set(); /* Buffer for new shard content */
+    for (const m of muts) {
+      for (const nA of m.addedNodes) {
+        if (
+          nA.nodeType === Node.ELEMENT_NODE &&
+          nA.tagName === 'STYLE' &&
+          nA.hasAttribute('data-tfs-shard')
+        ) {
+          const s = nA.getAttribute('data-tfs-shard');
+          if (!s || cn.has(s)) {
+            nA.remove();
+            continue;
+          }
+
+          cn.add(s);
+
+          if (nA.textContent) pp.add(nA.textContent);
+          nA.remove();
+        }
+      }
+    }
+    if (pp.size) prime.appendChild(document.createTextNode([...pp.values()].join('')));
+  });
+
+  o.observe(document.body, { childList: true, subtree: true });
+})();`);
+
+export class StyleEngine {
+    /* Global hash register of hashes to their rules */
+    protected rules: Record<string, RuleEntry> = {};
+
+    /* Order of rule injection */
+    protected order: Set<string> = new Set();
+
+    /* Whether or not style injection was explicitly disabled for this engine */
+    protected disabled = false;
 
     /* Mount path for root styles */
     protected mount_path: string | null = null;
 
     cache: Map<string, string> = new Map();
+
+    /**
+     * Set the disabled state of this engine. In disabled mode we will not flush non-mounted styles
+     */
+    setDisabled(val: boolean) {
+        this.disabled = !!val;
+    }
 
     /**
      * Register a rule (base or media) under a known class name
@@ -40,34 +97,101 @@ export class StyleEngine {
             return;
 
         const {query, selector} = opts;
-        const normalized = selector !== null ? (selector ?? '.' + name) + '{' + rule.trim() + '}' : rule;
+
+        const key = name || (rule.startsWith('@keyframes') ? rule.slice(11).split('{', 1)[0].trim() : djb2Hash(rule));
+
+        let entry: RuleEntry = this.rules[key];
+        if (!entry) {
+            entry = {base: new Set(), media: {}} as RuleEntry;
+            this.rules[key] = entry;
+            if (!this.order.has(key)) this.order.add(key);
+        }
 
         if (!query) {
-            if (this.base.keys.has(normalized)) return;
-            this.base.keys.add(normalized);
-            this.base.out += normalized;
-        } else {
-            const entry = this.media[query];
-            if (!entry) {
-                this.media[query] = {out: normalized, keys: new Set([normalized])};
-            } else if (!entry.keys.has(normalized)) {
-                entry.keys.add(normalized);
-                entry.out += normalized;
+            if (rule[0] === '@') {
+                entry.base.add((selector !== null ? (selector ?? '.' + name) : '') + rule.trim());
+            } else {
+                entry.base.add((selector !== null ? (selector ?? '.' + name) : '') + '{' + rule.trim() + '}');
             }
+        } else {
+            if (!entry.media[query]) entry.media[query] = new Set();
+            entry.media[query].add((selector !== null ? (selector ?? '.' + name) : '') + '{' + rule.trim() + '}');
         }
     }
 
     /**
      * Flush all collected styles into a single <style> tag
      */
-    flush(as_file: boolean = false): string {
-        let out = this.base.out;
-        for (const query in this.media) out += query + '{' + this.media[query].out + '}';
-        if (!out) return '';
-        if (as_file) return out;
-
+    flush(opts: {mode?: 'style' | 'file' | 'prime' | 'shards'} = {}): string {
         const n_nonce = nonce();
-        return n_nonce ? '<style nonce="' + n_nonce + '">' + out + '</style>' : '<style>' + out + '</style>';
+        const order = this.order.values();
+        switch (opts?.mode) {
+            case 'style':
+            case 'file':
+            case 'prime': {
+                let out = '';
+                const media: Record<string, string[]> = {};
+
+                for (const name of order) {
+                    const entry = this.rules[name];
+                    if (entry) {
+                        if (entry.base) out += [...entry.base].join('');
+                        if (entry.media) {
+                            for (const query in entry.media) {
+                                (media[query] ??= []).push(...entry.media[query]);
+                            }
+                        }
+                    }
+                }
+
+                for (const query in media) {
+                    out += query + '{' + media[query].join('') + '}';
+                }
+
+                if (opts.mode === 'file') {
+                    return out;
+                } else if (opts.mode === 'style') {
+                    if (!out) return '';
+                    return n_nonce ? `<style nonce="${n_nonce}">${out}</style>` : `<style>${out}</style>`;
+                } else if (opts.mode === 'prime') {
+                    const observer = (n_nonce ? '<script nonce="' + n_nonce + '">' : '<script>') + OBSERVER + '</script>';
+
+                    return n_nonce
+                        ? `<style nonce="${n_nonce}" ${PRIME}>${out}</style>${observer}`
+                        : `<style ${PRIME}>${out}</style>${observer}`;
+                }
+            }
+            case 'shards': {
+                const shards: string[] = [];
+
+                for (const name of order) {
+                    const entry = this.rules[name];
+                    if (!entry) continue;
+
+                    // Build the style block
+                    let content = '';
+
+                    if (entry.base) content += [...entry.base].join('');
+
+                    if (entry.media) {
+                        for (const query in entry.media) {
+                            content += query + '{' + [...entry.media[query].values()].join('') + '}';
+                        }
+                    }
+
+                    if (content) {
+                        const style = n_nonce
+                            ? `<style ${SHARD}="${name}" nonce="${n_nonce}">${content}</style>`
+                            : `<style ${SHARD}="${name}">${content}</style>`;
+                        shards.push(style);
+                    }
+                }
+
+                return shards.join('');
+            }
+            default:
+                return '';
+        }
     }
 
     /**
@@ -76,31 +200,69 @@ export class StyleEngine {
      * @param {string} html - HTML string containing the marker or needing prepended styles
      */
     inject(html: string): string {
-        let styles = this.flush();
-        if (typeof html !== 'string' || !html.length) return styles;
+        /* If disabled, return */
+        if (this.disabled) return typeof html === 'string' ? html.replaceAll(MARKER, '') : '';
 
-        const idx = html.indexOf(MARKER);
-        if (idx < 0) return html;
+        /**
+         * On full-page render we work with a single block,
+         * On fragment render we work with individual shards per rule hash
+         *
+         * This allows a global mutation observer to 'filter' shards out when they arrive to only include the ones
+         * that matter.
+         */
+        const mode =
+            typeof html !== 'string' || !html.length
+                ? 'style'
+                : html.startsWith('<!DOCTYPE') || html.startsWith('<html')
+                  ? 'prime'
+                  : 'shards';
+        if (mode === 'style') return this.flush({mode});
 
-        /* Add our mounted root */
-        if (this.mount_path && (html.startsWith('<!DOCTYPE') || html.startsWith('<html'))) {
+        /* Get mount styles */
+        let mount_styles = '';
+        if (this.mount_path && mode === 'prime') {
             const n_nonce = nonce();
-            if (n_nonce) styles = '<link rel="stylesheet" nonce="' + n_nonce + '" href="' + this.mount_path + '">' + styles;
-            else styles = '<link rel="stylesheet" href="' + this.mount_path + '">' + styles;
+            if (n_nonce) mount_styles = '<link rel="stylesheet" nonce="' + n_nonce + '" href="' + this.mount_path + '">';
+            else mount_styles = '<link rel="stylesheet" href="' + this.mount_path + '">';
         }
 
-        const before = html.slice(0, idx);
-        const after = html.slice(idx + MARKER.length).replaceAll(MARKER, '');
+        const styles = this.flush({mode});
 
-        return before + styles + after;
+        /* Inject at marker */
+        const marker_idx = html.indexOf(MARKER);
+        if (marker_idx >= 0) {
+            const before = html.slice(0, marker_idx);
+            const after = html.slice(marker_idx + MARKER.length).replaceAll(MARKER, '');
+
+            return before + mount_styles + styles + after;
+        }
+
+        /* Try inject before </head> */
+        const head_idx = html.indexOf('</head>');
+        if (head_idx >= 0) {
+            const before = html.slice(0, head_idx);
+            const after = html.slice(head_idx);
+            return before + mount_styles + styles + after;
+        }
+
+        /* Try inject before </body> */
+        const body_idx = html.indexOf('</body>');
+        if (body_idx >= 0) {
+            const before = html.slice(0, body_idx);
+            const after = html.slice(body_idx);
+            return before + mount_styles + styles + after;
+        }
+
+        /* Fragment */
+        return html + styles;
     }
 
     /**
      * Clears all internal state
      */
     reset(): void {
-        this.base = {out: '', keys: new Set<string>()};
-        this.media = {};
+        this.rules = {};
+        this.order = new Set();
     }
 
     /**
