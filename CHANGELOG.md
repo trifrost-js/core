@@ -4,12 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.42.0] - 2025-06-30
+This release further **evolves the internals of the TriFrost style engine**, focusing on performance, DX simplicity, and hydration resilience.
+
+It introduces a **deterministic style sharding strategy**, automatic context-aware injection, and measurable speed gains across core hashing utilities, all designed to make styling in TriFrost faster, safer, and fully fragment-compatible out of the box.
+
 ### Improved
-- **perf**: Improved `djb2Hash` utility (which is used to compute hashes in both the style and scripting engine) by applying bit twiddling below 4K chars and above 60K chars. Yielding **anywhere from 3% to 30% performance improvement depending on the size of the value**. Benchmark for this is available at `test/bench/utils/generic.bench.ts`.
+- **feat**: New `data-tfs` sharding strategy in the style engine. Style injection now **intelligently distinguishes between full-page and fragment renders**: Full-page renders will receive a single `<style data-tfs-p>` block called the prime. Fragment renders now receive individual isolated `<style data-tfs-s="...">` blocks per class or global rule, called shards. A runtime `MutationObserver` automatically merges these into the prime if present, ensuring deduplicating on arrival.
+- **dx**: No more manual `<Style />` boilerplate. The style engine now **auto-injects styles** as needed, there's no longer any requirement to manually include a `<Style />` component for either full page or partial renders.
+- **feat**: Added `css.disableInjection()` opt-out. You may now disable all style injection during a render pass by calling `css.disableInjection()` on the style engine. This is useful for rendering static content or precomputed styles, though the new sharding strategy should make most opt-outs unnecessary.
+- **perf**: Improved `djb2Hash` utility (which is used to compute hashes in both the style and scripting engine) by applying bit twiddling below 4K chars and above 60K chars. Yielding **anywhere from 3% to 30% performance improvement depending on the size of the value** (30%+ on values below 4k chars). Benchmark for this is available at `test/bench/utils/generic.bench.ts`.
 
 ### Fixed
 - Fix an issue where in non-atomic mode we would wrap with atomic utils and atomic data proxy when instantiating script functions.
+
+---
+
+With these changes, TriFrost is now even more equipped to support **zero-boilerplate styling, incremental style streaming**, and **high-performance atomic fragment injection** without giving up control or determinism.
+
+As always, stay frosty ❄️
 
 ## [0.41.3] - 2025-06-29
 ### Improved
