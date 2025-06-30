@@ -22,41 +22,48 @@ type RuleEntry = {
 export const PRIME = 'data-tfs-p';
 export const SHARD = 'data-tfs-s';
 export const OBSERVER = atomicMinify(`(function(){
-  const cn = new Set();
-  const prime = document.querySelector('style[${PRIME}]');
-  if (!prime) return;
+    const cn = new Set();
+    const prime = document.querySelector('style[${PRIME}]');
+    if (!prime) return;
 
-  /* Scan primary for known classes */
-  const cnr = /\\.([a-zA-Z0-9_-]+)[,{]/g;
-  let m;
-  while ((m = cnr.exec(prime.textContent))) cn.add(m[1]);
+    /* Scan primary for known classes */
+    const cnr = /\\.([a-zA-Z0-9_-]+)[,{]/g;
+    let m;
+    while ((m = cnr.exec(prime.textContent))) cn.add(m[1]);
 
-  const o = new MutationObserver(muts => {
-    let pp = new Set(); /* Buffer for new shard content */
-    for (const m of muts) {
-      for (const nA of m.addedNodes) {
-        if (
-          nA.nodeType === Node.ELEMENT_NODE &&
-          nA.tagName === 'STYLE' &&
-          nA.hasAttribute('data-tfs-shard')
-        ) {
-          const s = nA.getAttribute('data-tfs-shard');
-          if (!s || cn.has(s)) {
-            nA.remove();
-            continue;
-          }
+    function boot() {
+        const o = new MutationObserver(muts => {
+            let pp = new Set();
+            for (const m of muts) {
+                for (const nA of m.addedNodes) {
+                    if (
+                        nA.nodeType === Node.ELEMENT_NODE &&
+                        nA.tagName === 'STYLE' &&
+                        nA.hasAttribute('data-tfs-shard')
+                    ) {
+                        const s = nA.getAttribute('data-tfs-shard');
+                        if (!s || cn.has(s)) {
+                            nA.remove();
+                            continue;
+                        }
 
-          cn.add(s);
+                        cn.add(s);
+                        if (nA.textContent) pp.add(nA.textContent);
+                        nA.remove();
+                    }
+                }
+            }
+            if (pp.size) prime.appendChild(document.createTextNode([...pp.values()].join('')));
+        });
 
-          if (nA.textContent) pp.add(nA.textContent);
-          nA.remove();
-        }
-      }
+        o.observe(document.body, {childList: true, subtree: true});
     }
-    if (pp.size) prime.appendChild(document.createTextNode([...pp.values()].join('')));
-  });
 
-  o.observe(document.body, { childList: true, subtree: true });
+    if (document.body) {
+        boot();
+    } else {
+        document.addEventListener('DOMContentLoaded', boot);
+    }
 })();`);
 
 export class StyleEngine {
