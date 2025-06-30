@@ -196,7 +196,7 @@ export function rootRender<Env extends Record<string, any>, State extends Record
     const script_engine = getActiveScriptEngine() || setActiveScriptEngine(new ScriptEngine());
     setActiveCtx(ctx);
 
-    // Auto-call root() if script or css provided in ctx config
+    /* Auto-call root() if script or css provided in ctx config */
     options?.script?.root?.();
     options?.css?.root?.();
 

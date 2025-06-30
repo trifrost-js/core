@@ -79,8 +79,18 @@ export function hexId(lng: number): string {
  */
 export function djb2Hash(val: string) {
     let h = 5381;
-    let i = val.length;
-    while (i) h = (h * 33) ^ val.charCodeAt(--i);
+    const l = val.length;
+
+    /**
+     * Flip dynamically based on threshold. Bit twiddling below 4K chars and above 60K chars is faster
+     * @see bench/utils/generic.bench.ts
+     */
+    if (l < 4096 || l > 60_000) {
+        for (let i = 0; i < l; i++) h = ((h << 5) + h) ^ val.charCodeAt(i);
+    } else {
+        for (let i = 0; i < l; i++) h = (h * 33) ^ val.charCodeAt(i);
+    }
+
     return (h >>> 0).toString(36);
 }
 
