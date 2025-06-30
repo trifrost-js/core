@@ -429,12 +429,12 @@ export type CssInstance<
      * Sets mount path for the css instance
      * @param {string|null} path - Mount path to choose
      */
-    setMountPath: (path:string|null) => void;
+    setMountPath: (path: string | null) => void;
     /**
      * Disables/enables style injection for the currently active style engine
      * @param {boolean?} val - Disable (true) or Enable (false)
      */
-    disableInjection: (val?:boolean) => void;
+    disableInjection: (val?: boolean) => void;
 };
 
 const CSS_RESET = {
@@ -706,7 +706,7 @@ export function createCss<
     };
 
     /* Disable injection on the current active engine */
-    mod.disableInjection = (val:boolean = true) => {
+    mod.disableInjection = (val: boolean = true) => {
         if (!active_engine) setActiveStyleEngine(new StyleEngine());
         active_engine?.setDisabled(val);
     };

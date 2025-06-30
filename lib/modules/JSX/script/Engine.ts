@@ -92,9 +92,7 @@ export class ScriptEngine {
                 'try{',
                 'TFF[id]({',
                 'el:n,',
-                this.atomic_enabled
-                    ? `data:w.${GLOBAL_DATA_REACTOR_NAME}(n,dId?TFD[dId]:{})`
-                    : 'data:dId?TFD[dId]:{}',
+                this.atomic_enabled ? `data:w.${GLOBAL_DATA_REACTOR_NAME}(n,dId?TFD[dId]:{})` : 'data:dId?TFD[dId]:{}',
                 this.atomic_enabled ? ',$:TFU' : '',
                 '})',
                 '}catch{}',

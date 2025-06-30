@@ -159,6 +159,8 @@ export class StyleEngine {
                     return n_nonce
                         ? `<style nonce="${n_nonce}" ${PRIME}>${out}</style>${observer}`
                         : `<style ${PRIME}>${out}</style>${observer}`;
+                } else {
+                    return '';
                 }
             }
             case 'shards': {
@@ -210,12 +212,7 @@ export class StyleEngine {
          * This allows a global mutation observer to 'filter' shards out when they arrive to only include the ones
          * that matter.
          */
-        const mode =
-            typeof html !== 'string' || !html.length
-                ? 'style'
-                : html.startsWith('<!DOCTYPE') || html.startsWith('<html')
-                  ? 'prime'
-                  : 'shards';
+        const mode = typeof html !== 'string' || !html.length ? 'style' : html.startsWith('<!DOCTYPE') || html.startsWith('<html') ? 'prime' : 'shards'; // eslint-disable-line prettier/prettier
         if (mode === 'style') return this.flush({mode});
 
         /* Get mount styles */

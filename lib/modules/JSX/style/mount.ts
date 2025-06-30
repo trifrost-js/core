@@ -25,7 +25,7 @@ export function mount<
             module.setMountPath(null);
             module.root();
             module.setMountPath(path);
-            content = style_engine.flush(true);
+            content = style_engine.flush({mode: 'file'});
             setActiveCtx(null);
             setActiveStyleEngine(null);
         }

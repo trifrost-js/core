@@ -12,6 +12,7 @@ import * as Generic from '../../../../lib/utils/Generic';
 import {MockContext} from '../../../MockContext';
 import {createScript} from '../../../../lib/modules/JSX/script/use';
 import {ATOMIC_GLOBAL, ATOMIC_VM_AFTER, ATOMIC_VM_BEFORE} from '../../../../lib/modules/JSX/script/atomic';
+import {OBSERVER} from '../../../../lib/modules/JSX/style/Engine';
 
 describe('Modules - JSX - Renderer', () => {
     describe('escape()', () => {
@@ -249,8 +250,8 @@ describe('Modules - JSX - Renderer', () => {
             const html = rootRender(ctx, ['__TRIFROST_STYLE_MARKER__', {type: Component, props: {}}]);
             expect(html).toBe(
                 [
-                    `<style nonce="${ctx.nonce}">.tf15g6c60{padding:1rem;background-color:blue}</style>`,
-                    '<div class="tf15g6c60">Hello</div>',
+                    `<style data-tfs-s="tf46gioo" nonce="${ctx.nonce}">.tf46gioo{padding:1rem;background-color:blue}</style>`,
+                    '<div class="tf46gioo">Hello</div>',
                 ].join(''),
             );
         });
@@ -266,7 +267,9 @@ describe('Modules - JSX - Renderer', () => {
             const ctx = new MockContext();
 
             const html = rootRender(ctx, ['__TRIFROST_STYLE_MARKER__', {type: Component, props: {}}]);
-            expect(html).toBe(`<style nonce="${ctx.nonce}">.${cls}{margin:2rem;color:black}</style><div class="${cls}">Styled</div>`);
+            expect(html).toBe(
+                `<style data-tfs-s="${cls}" nonce="${ctx.nonce}">.${cls}{margin:2rem;color:black}</style><div class="${cls}">Styled</div>`,
+            );
         });
 
         it('Injects full page with marker placement respected', () => {
@@ -289,12 +292,14 @@ describe('Modules - JSX - Renderer', () => {
             const html = rootRender(ctx, {type: Page, props: {}});
             expect(html).toBe(
                 [
-                    '<header class="tfs8h0jj">Title</header>',
-                    `<style nonce="${ctx.nonce}">`,
-                    '.tfs8h0jj{font-size:1.5rem;font-weight:bold}',
-                    '.tfy8y40d{line-height:1.5;padding:2rem}',
+                    '<header class="tfiypj3">Title</header>',
+                    `<style data-tfs-s="tfiypj3" nonce="${ctx.nonce}">`,
+                    '.tfiypj3{font-size:1.5rem;font-weight:bold}',
                     '</style>',
-                    '<main class="tfy8y40d">Content</main>',
+                    `<style data-tfs-s="tfrnr4jx" nonce="${ctx.nonce}">`,
+                    '.tfrnr4jx{line-height:1.5;padding:2rem}',
+                    '</style>',
+                    '<main class="tfrnr4jx">Content</main>',
                 ].join(''),
             );
         });
@@ -359,14 +364,15 @@ describe('Modules - JSX - Renderer', () => {
                     '<html>',
                     '<head>',
                     '<title>TriFrost Demo</title>',
-                    `<style nonce="${ctx.nonce}">`,
-                    '.tf1f9e66l:hover{background-color:darkblue}',
-                    '.tf1f9e66l{padding:0.75rem 1.25rem;border:none;background-color:blue;color:white;font-weight:bold;border-radius:0.25rem}',
+                    `<style nonce="${ctx.nonce}" data-tfs-p>`,
+                    '.tfgz38p9:hover{background-color:darkblue}',
+                    '.tfgz38p9{padding:0.75rem 1.25rem;border:none;background-color:blue;color:white;font-weight:bold;border-radius:0.25rem}',
                     '</style>',
+                    `<script nonce="${ctx.nonce}">${OBSERVER}</script>`,
                     '</head>',
                     '<body>',
                     '<h1>Welcome to TriFrost</h1>',
-                    '<button class="tf1f9e66l">Click Me</button>',
+                    '<button class="tfgz38p9">Click Me</button>',
                     '</body>',
                     '</html>',
                 ].join(''),
@@ -383,7 +389,9 @@ describe('Modules - JSX - Renderer', () => {
             const ctx = new MockContext();
 
             const html = rootRender(ctx, ['__TRIFROST_STYLE_MARKER__', {type: Component, props: {}}]);
-            expect(html).toBe(`<style nonce="${ctx.nonce}">.${cls}{margin:2rem;color:black}</style><div class="${cls}">Styled</div>`);
+            expect(html).toBe(
+                `<style data-tfs-s="${cls}" nonce="${ctx.nonce}">.${cls}{margin:2rem;color:black}</style><div class="${cls}">Styled</div>`,
+            );
 
             const ctx2 = new MockContext();
 
@@ -394,9 +402,10 @@ describe('Modules - JSX - Renderer', () => {
             };
             const html2 = rootRender(ctx2, ['__TRIFROST_STYLE_MARKER__', {type: Component2, props: {}}]);
             expect(html2).toBe(
-                [`<style nonce="${ctx2.nonce}">.${cls2}{color:white;font-family:sans-serif}</style>`, `<p class="${cls2}">Styled</p>`].join(
-                    '',
-                ),
+                [
+                    `<style data-tfs-s="${cls2}" nonce="${ctx2.nonce}">.${cls2}{color:white;font-family:sans-serif}</style>`,
+                    `<p class="${cls2}">Styled</p>`,
+                ].join(''),
             );
         });
 
@@ -524,10 +533,21 @@ describe('Modules - JSX - Renderer', () => {
             expect(html).toBe(
                 [
                     '<ul>',
-                    '<div class="tf15fd003">Styled</div>',
+                    '<div class="tf1ahm5s3">Styled</div>',
                     '<li data-tfhf="id-3" data-tfhd="id-4">A</li>',
                     '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
-                    '<style nonce="aWQtMQ==">*, *::before, *::after{box-sizing:border-box}html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}footer, header, nav, section, main{display:block}ol, ul{list-style:none}q, blockquote::before{content:none}q, blockquote::after{content:none}q, blockquote{quotes:none}table{border-collapse:collapse;border-spacing:0}.tf15fd003{margin:2rem;color:black}</style>',
+                    '<style data-tfs-s="1wa46xf" nonce="aWQtMQ==">',
+                    '*, *::before, *::after{box-sizing:border-box}',
+                    '</style>',
+                    '<style data-tfs-s="1pzcqjm" nonce="aWQtMQ==">',
+                    'html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}',
+                    '</style>',
+                    '<style data-tfs-s="1gr3z8s" nonce="aWQtMQ==">footer, header, nav, section, main{display:block}</style>',
+                    '<style data-tfs-s="19ljm6l" nonce="aWQtMQ==">ol, ul{list-style:none}</style>',
+                    '<style data-tfs-s="1kg9k7w" nonce="aWQtMQ==">q, blockquote::before{content:none}q, blockquote::after{content:none}</style>',
+                    '<style data-tfs-s="nle58" nonce="aWQtMQ==">q, blockquote{quotes:none}</style>',
+                    '<style data-tfs-s="1lr8eb3" nonce="aWQtMQ==">table{border-collapse:collapse;border-spacing:0}</style>',
+                    '<style data-tfs-s="tf1ahm5s3" nonce="aWQtMQ==">.tf1ahm5s3{margin:2rem;color:black}</style>',
                     '</ul>',
                     '<script nonce="aWQtMQ==">(function(d,w){',
                     ATOMIC_GLOBAL,
@@ -625,13 +645,14 @@ describe('Modules - JSX - Renderer', () => {
             expect(html).toBe(
                 [
                     '<html><body><ul>',
-                    '<div class="tf15fd003">Styled</div>',
+                    '<div class="tf1ahm5s3">Styled</div>',
                     '<li data-tfhf="id-3" data-tfhd="id-4">A</li>',
                     '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
-                    '<style nonce="aWQtMQ==">',
+                    '<style nonce="aWQtMQ==" data-tfs-p>',
                     '*, *::before, *::after{box-sizing:border-box}html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}footer, header, nav, section, main{display:block}ol, ul{list-style:none}q, blockquote::before{content:none}q, blockquote::after{content:none}q, blockquote{quotes:none}table{border-collapse:collapse;border-spacing:0}',
-                    '.tf15fd003{margin:2rem;color:black}',
+                    '.tf1ahm5s3{margin:2rem;color:black}',
                     '</style>',
+                    `<script nonce="aWQtMQ==">${OBSERVER}</script>`,
                     '</ul>',
                     '<script nonce="aWQtMQ==">(function(d,w){',
                     ATOMIC_GLOBAL,
@@ -732,11 +753,12 @@ describe('Modules - JSX - Renderer', () => {
             expect(html).toBe(
                 [
                     '<html><body><ul>',
-                    '<div class="tf15fd003">Styled</div>',
+                    '<div class="tf1ahm5s3">Styled</div>',
                     '<li data-tfhf="id-3" data-tfhd="id-4">A</li>',
                     '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
                     '<link rel="stylesheet" nonce="aWQtMQ==" href="/static.css">',
-                    '<style nonce="aWQtMQ==">.tf15fd003{margin:2rem;color:black}</style>',
+                    '<style nonce="aWQtMQ==" data-tfs-p>.tf1ahm5s3{margin:2rem;color:black}</style>',
+                    `<script nonce="aWQtMQ==">${OBSERVER}</script>`,
                     '</ul>',
                     '<script nonce="aWQtMQ==" src="/static.js" defer></script>',
                     '<script nonce="aWQtMQ==">(function(d,w){',
@@ -857,12 +879,11 @@ describe('Modules - JSX - Renderer', () => {
                         '<button data-tfhf="id-2" data-tfhd="id-3">Click me</button>',
                         '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"foo":"bar"}};',
                         'const TFF={"id-2":({el,data})=>console.log("Hydrated:",el,data)};',
-                        'const TFU=w.$tfutils;',
                         'for(const id in TFF){',
                         'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                         'for(let n of N){',
                         'const dId=n.getAttribute("data-tfhd");',
-                        'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
+                        'try{TFF[id]({el:n,data:dId?TFD[dId]:{}})}catch{}',
                         '}',
                         '}',
                         '})(document,window);</script>',
@@ -899,12 +920,11 @@ describe('Modules - JSX - Renderer', () => {
                         '<span data-tfhf="id-2" data-tfhd="id-3">Item</span><span data-tfhf="id-2" data-tfhd="id-3">Item</span><span data-tfhf="id-2" data-tfhd="id-3">Item</span>',
                         '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"x":1}};',
                         'const TFF={"id-2":({el})=>el.dataset.bound="true"};',
-                        'const TFU=w.$tfutils;',
                         'for(const id in TFF){',
                         'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                         'for(let n of N){',
                         'const dId=n.getAttribute("data-tfhd");',
-                        'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
+                        'try{TFF[id]({el:n,data:dId?TFD[dId]:{}})}catch{}',
                         '}',
                         '}',
                         '})(document,window);</script>',
@@ -935,12 +955,11 @@ describe('Modules - JSX - Renderer', () => {
                         '<div data-tfhf="id-2">No Data</div>',
                         '<script nonce="aWQtMQ==">(function(d,w){const TFD={};',
                         'const TFF={"id-2":({el})=>el.id="injected"};',
-                        'const TFU=w.$tfutils;',
                         'for(const id in TFF){',
                         'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                         'for(let n of N){',
                         'const dId=n.getAttribute("data-tfhd");',
-                        'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
+                        'try{TFF[id]({el:n,data:dId?TFD[dId]:{}})}catch{}',
                         '}',
                         '}',
                         '})(document,window);</script>',
@@ -977,12 +996,11 @@ describe('Modules - JSX - Renderer', () => {
                         '<div data-tfhf="id-2" data-tfhd="id-3">Nested</div>',
                         '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"enabled":true}};',
                         'const TFF={"id-2":({el,data})=>el.setAttribute("data-enabled",data.enabled)};',
-                        'const TFU=w.$tfutils;',
                         'for(const id in TFF){',
                         'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                         'for(let n of N){',
                         'const dId=n.getAttribute("data-tfhd");',
-                        'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
+                        'try{TFF[id]({el:n,data:dId?TFD[dId]:{}})}catch{}',
                         '}',
                         '}',
                         '})(document,window);</script>',
@@ -1036,12 +1054,11 @@ describe('Modules - JSX - Renderer', () => {
                         '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-4" data-tfhd="id-5">Second</div>',
                         '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"count":1},"id-5":{"count":2}};',
                         'const TFF={"id-2":({el,data})=>el.textContent=`count:${data.count}`,"id-4":({el,data})=>el.textContent=`count is ${data.count}`};',
-                        'const TFU=w.$tfutils;',
                         'for(const id in TFF){',
                         'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                         'for(let n of N){',
                         'const dId=n.getAttribute("data-tfhd");',
-                        'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
+                        'try{TFF[id]({el:n,data:dId?TFD[dId]:{}})}catch{}',
                         '}',
                         '}',
                         '})(document,window);</script>',
@@ -1095,12 +1112,11 @@ describe('Modules - JSX - Renderer', () => {
                         '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-4" data-tfhd="id-3">Second</div>',
                         '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"count":1}};',
                         'const TFF={"id-2":({el,data})=>el.textContent=`count:${data.count}`,"id-4":({el,data})=>el.textContent=`count is ${data.count}`};',
-                        'const TFU=w.$tfutils;',
                         'for(const id in TFF){',
                         'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                         'for(let n of N){',
                         'const dId=n.getAttribute("data-tfhd");',
-                        'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
+                        'try{TFF[id]({el:n,data:dId?TFD[dId]:{}})}catch{}',
                         '}',
                         '}',
                         '})(document,window);</script>',
@@ -1154,12 +1170,11 @@ describe('Modules - JSX - Renderer', () => {
                         '<div data-tfhf="id-2" data-tfhd="id-3">First</div><div data-tfhf="id-2" data-tfhd="id-3">Second</div>',
                         '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"count":1}};',
                         'const TFF={"id-2":({el,data})=>el.textContent=`count is ${data.count}`};',
-                        'const TFU=w.$tfutils;',
                         'for(const id in TFF){',
                         'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                         'for(let n of N){',
                         'const dId=n.getAttribute("data-tfhd");',
-                        'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
+                        'try{TFF[id]({el:n,data:dId?TFD[dId]:{}})}catch{}',
                         '}',
                         '}',
                         '})(document,window);</script>',
@@ -1219,12 +1234,11 @@ describe('Modules - JSX - Renderer', () => {
                         '<section><article><header data-tfhf="id-2" data-tfhd="id-3">Header</header><footer data-tfhf="id-4">Footer</footer></article></section>',
                         '<script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"active":true}};',
                         'const TFF={"id-2":({el,data})=>el.dataset.active=String(data.active),"id-4":(el)=>el.dataset.foot="true"};',
-                        'const TFU=w.$tfutils;',
                         'for(const id in TFF){',
                         'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                         'for(let n of N){',
                         'const dId=n.getAttribute("data-tfhd");',
-                        'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
+                        'try{TFF[id]({el:n,data:dId?TFD[dId]:{}})}catch{}',
                         '}',
                         '}',
                         '})(document,window);</script>',
@@ -1260,12 +1274,11 @@ describe('Modules - JSX - Renderer', () => {
                     [
                         '<div data-tfhf="id-2" data-tfhd="id-3">Hello</div><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"x":5}};',
                         'const TFF={"id-2":({el,data})=>el.setAttribute("data-value",data.x)};',
-                        'const TFU=w.$tfutils;',
                         'for(const id in TFF){',
                         'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                         'for(let n of N){',
                         'const dId=n.getAttribute("data-tfhd");',
-                        'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
+                        'try{TFF[id]({el:n,data:dId?TFD[dId]:{}})}catch{}',
                         '}',
                         '}',
                         '})(document,window);</script>',
@@ -1332,12 +1345,11 @@ describe('Modules - JSX - Renderer', () => {
                     [
                         '<ul><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==">(function(d,w){const TFD={"id-3":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
                         'const TFF={"id-2":({el,data})=>el.innerText=JSON.stringify(data)};',
-                        'const TFU=w.$tfutils;',
                         'for(const id in TFF){',
                         'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                         'for(let n of N){',
                         'const dId=n.getAttribute("data-tfhd");',
-                        'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
+                        'try{TFF[id]({el:n,data:dId?TFD[dId]:{}})}catch{}',
                         '}',
                         '}',
                         '})(document,window);</script>',
@@ -1400,7 +1412,86 @@ describe('Modules - JSX - Renderer', () => {
                 /* Note: order in json stringification matters */
                 expect(html).toBe(
                     [
-                        '<ul><div class="tf15fd003">Styled</div><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul><script nonce="aWQtMQ==">(function(d,w){',
+                        '<ul><div class="tf1ahm5s3">Styled</div><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul>',
+                        '<style data-tfs-s="tf1ahm5s3" nonce="aWQtMQ==">.tf1ahm5s3{margin:2rem;color:black}</style>',
+                        '<script nonce="aWQtMQ==">(function(d,w){',
+                        ATOMIC_GLOBAL,
+                        'const TFD={"id-3":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
+                        'const TFF={"id-2":({el,data})=>el.innerText=JSON.stringify(data)};',
+                        'const TFU=w.$tfutils;',
+                        'for(const id in TFF){',
+                        'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
+                        'for(let n of N){',
+                        ATOMIC_VM_BEFORE,
+                        'const dId=n.getAttribute("data-tfhd");',
+                        'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
+                        ATOMIC_VM_AFTER,
+                        '}',
+                        '}',
+                        '})(document,window);</script>',
+                    ].join(''),
+                );
+            });
+
+            it('Normalizes and deduplicates equal JSON payloads as well as embeds atomic but does not embed css if css injection is disabled', () => {
+                const ctx = new MockContext();
+
+                const client = createScript({atomic: true});
+
+                const Component = () => {
+                    css.disableInjection();
+
+                    client.script.root();
+                    const cls = css({margin: '2rem', color: 'black'});
+                    return {type: 'div', props: {className: cls, children: 'Styled'}};
+                };
+
+                const html = rootRender(ctx, {
+                    type: 'ul',
+                    props: {
+                        children: [
+                            {
+                                type: Component,
+                            },
+                            {
+                                type: 'li',
+                                props: {
+                                    children: [
+                                        'A',
+                                        {
+                                            type: client.Script,
+                                            props: {
+                                                data: {a: 1, b: 2},
+                                                children: ({el, data}) => (el.innerText = JSON.stringify(data)),
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                            {
+                                type: 'li',
+                                props: {
+                                    children: [
+                                        'B',
+                                        {
+                                            type: client.Script,
+                                            props: {
+                                                data: {b: 2, a: 1},
+                                                children: ({el, data}) => (el.innerText = JSON.stringify(data)),
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                });
+
+                /* Note: order in json stringification matters */
+                expect(html).toBe(
+                    [
+                        '<ul><div class="tf1ahm5s3">Styled</div><li data-tfhf="id-2" data-tfhd="id-3">A</li><li data-tfhf="id-2" data-tfhd="id-4">B</li></ul>',
+                        '<script nonce="aWQtMQ==">(function(d,w){',
                         ATOMIC_GLOBAL,
                         'const TFD={"id-3":{"a":1,"b":2},"id-4":{"b":2,"a":1}};',
                         'const TFF={"id-2":({el,data})=>el.innerText=JSON.stringify(data)};',
@@ -1440,12 +1531,11 @@ describe('Modules - JSX - Renderer', () => {
                     [
                         '<div data-tfhf="id-2">Reset me</div><script nonce="aWQtMQ==">(function(d,w){const TFD={};',
                         'const TFF={"id-2":(el)=>el.id="reset"};',
-                        'const TFU=w.$tfutils;',
                         'for(const id in TFF){',
                         'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
                         'for(let n of N){',
                         'const dId=n.getAttribute("data-tfhd");',
-                        'try{TFF[id]({el:n,data:w.$tfdr(n,dId?TFD[dId]:{}),$:TFU})}catch{}',
+                        'try{TFF[id]({el:n,data:dId?TFD[dId]:{}})}catch{}',
                         '}',
                         '}',
                         '})(document,window);</script>',

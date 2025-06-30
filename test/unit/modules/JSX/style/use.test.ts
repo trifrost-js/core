@@ -1,6 +1,6 @@
 import {describe, it, expect, beforeEach} from 'vitest';
 import {createCss, getActiveStyleEngine, setActiveStyleEngine} from '../../../../../lib/modules/JSX/style/use';
-import {StyleEngine} from '../../../../../lib/modules/JSX/style/Engine';
+import {OBSERVER, StyleEngine} from '../../../../../lib/modules/JSX/style/Engine';
 import CONSTANTS from '../../../../constants';
 import {MARKER} from '../../../../../lib/modules/JSX/style/Style';
 import {setActiveCtx} from '../../../../../lib/modules/JSX/ctx/use';
@@ -41,7 +41,7 @@ describe('Modules - JSX - style - use', () => {
             const cls = css({color: 'red', fontSize: '1rem'});
             expect(cls).toMatch(/^tf/);
             const html = engine.inject(`${MARKER}<div class="${cls}">Hello</div>`);
-            expect(html).toBe(`<style>.${cls}{color:red;font-size:1rem}</style><div class="${cls}">Hello</div>`);
+            expect(html).toBe(`<style data-tfs-s="${cls}">.${cls}{color:red;font-size:1rem}</style><div class="${cls}">Hello</div>`);
         });
 
         it('Ignores null or undefined style values', () => {
@@ -53,7 +53,7 @@ describe('Modules - JSX - style - use', () => {
             });
 
             const html = engine.inject(`${MARKER}<div class="${cls}">Sanitized</div>`);
-            expect(html).toBe(`<style>.${cls}{color:black;padding:1rem}</style><div class="${cls}">Sanitized</div>`);
+            expect(html).toBe(`<style data-tfs-s="${cls}">.${cls}{color:black;padding:1rem}</style><div class="${cls}">Sanitized</div>`);
         });
 
         it('Supports :hover and span selectors', () => {
@@ -67,7 +67,7 @@ describe('Modules - JSX - style - use', () => {
             const html = engine.inject(`${MARKER}<div class="${cls}">Hover</div>`);
             expect(html).toBe(
                 [
-                    '<style>',
+                    `<style data-tfs-s="${cls}">`,
                     `.${cls}:hover{color:red}`,
                     `.${cls} span{font-weight:bold}`,
                     `.${cls}:hover span{color:blue}`,
@@ -90,7 +90,7 @@ describe('Modules - JSX - style - use', () => {
             const html = engine.inject(`${MARKER}<div class="${cls}">Hover</div>`);
             expect(html).toBe(
                 [
-                    '<style>',
+                    `<style data-tfs-s="${cls}">`,
                     `.${cls}[data-active="true"]{color:red;background-color:white}`,
                     `.${cls}[data-active="true"]:hover{font-weight:bold}`,
                     `.${cls} span{font-weight:bold;flex-direction:column}`,
@@ -114,7 +114,7 @@ describe('Modules - JSX - style - use', () => {
             const html = engine.inject(`${MARKER}<div class="${cls}">Responsive</div>`);
             expect(html).toBe(
                 [
-                    '<style>',
+                    `<style data-tfs-s="${cls}">`,
                     `.${cls}{font-size:1rem}`,
                     '@media (max-width: 600px){',
                     `.${cls}:hover{font-size:0.75rem}`,
@@ -139,7 +139,7 @@ describe('Modules - JSX - style - use', () => {
             const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
             expect(html).toBe(
                 [
-                    '<style>',
+                    `<style data-tfs-s="${cls}">`,
                     `.${cls}{font-size:1rem}`,
                     '@media (max-width: 600px){',
                     `.${cls}:hover{font-size:0.75rem}`,
@@ -172,7 +172,7 @@ describe('Modules - JSX - style - use', () => {
             const html = engine.inject(`${MARKER}<div class="${cls}">Hover</div>`);
             expect(html).toBe(
                 [
-                    '<style>',
+                    `<style data-tfs-s="${cls}">`,
                     `.${cls}[data-active="true"]{color:red;background-color:white}`,
                     `.${cls}[data-active="true"]:hover{font-weight:bold}`,
                     `.${cls} span{font-weight:bold;flex-direction:column}`,
@@ -200,7 +200,7 @@ describe('Modules - JSX - style - use', () => {
             const cls2 = css(base);
             expect(cls1).toBe(cls2);
             const html = engine.inject(`${MARKER}<div class="${cls1} ${cls2}">Hello</div>`);
-            expect(html).toBe(`<style>.${cls1}{color:red}</style><div class="${cls1} ${cls2}">Hello</div>`);
+            expect(html).toBe(`<style data-tfs-s="${cls1}">.${cls1}{color:red}</style><div class="${cls1} ${cls2}">Hello</div>`);
         });
 
         it('Correctly handles background url', () => {
@@ -209,49 +209,53 @@ describe('Modules - JSX - style - use', () => {
             });
 
             const html = engine.inject(`${MARKER}<div class="${cls}">Images</div>`);
-            expect(html).toBe(`<style>.${cls}{background-image:url('./foo.jpg')}</style><div class="${cls}">Images</div>`);
+            expect(html).toBe(
+                `<style data-tfs-s="${cls}">.${cls}{background-image:url('./foo.jpg')}</style><div class="${cls}">Images</div>`,
+            );
         });
 
         it('Normalizes CSS functions wrapped in quotes', () => {
             const cls = css({backgroundImage: "'url(/foo.png)'"});
             const html = engine.inject(`${MARKER}<div class="${cls}">BG</div>`);
-            expect(html).toBe(`<style>.${cls}{background-image:url(/foo.png)}</style><div class="${cls}">BG</div>`);
+            expect(html).toBe(`<style data-tfs-s="${cls}">.${cls}{background-image:url(/foo.png)}</style><div class="${cls}">BG</div>`);
         });
 
         it('Preserves quotes for valid string literals like content', () => {
             const cls = css({content: '"TriFrost"'});
             const html = engine.inject(`${MARKER}<div class="${cls}">Quoted</div>`);
-            expect(html).toBe(`<style>.${cls}{content:"TriFrost"}</style><div class="${cls}">Quoted</div>`);
+            expect(html).toBe(`<style data-tfs-s="${cls}">.${cls}{content:"TriFrost"}</style><div class="${cls}">Quoted</div>`);
         });
 
         it('Strips quotes around url() if present', () => {
             const cls = css({backgroundImage: "'url(/bg.png)'"});
             const html = engine.inject(`${MARKER}<div class="${cls}">BG</div>`);
-            expect(html).toBe(`<style>.${cls}{background-image:url(/bg.png)}</style><div class="${cls}">BG</div>`);
+            expect(html).toBe(`<style data-tfs-s="${cls}">.${cls}{background-image:url(/bg.png)}</style><div class="${cls}">BG</div>`);
         });
 
         it('Strips quotes around calc(...) expressions', () => {
             const cls = css({width: '"calc(100% - 2rem)"'});
             const html = engine.inject(`${MARKER}<div class="${cls}">Layout</div>`);
-            expect(html).toBe(`<style>.${cls}{width:calc(100% - 2rem)}</style><div class="${cls}">Layout</div>`);
+            expect(html).toBe(`<style data-tfs-s="${cls}">.${cls}{width:calc(100% - 2rem)}</style><div class="${cls}">Layout</div>`);
         });
 
         it('Strips quotes around var(...) tokens', () => {
             const cls = css({margin: "'var(--space-md)'"});
             const html = engine.inject(`${MARKER}<div class="${cls}">Token</div>`);
-            expect(html).toBe(`<style>.${cls}{margin:var(--space-md)}</style><div class="${cls}">Token</div>`);
+            expect(html).toBe(`<style data-tfs-s="${cls}">.${cls}{margin:var(--space-md)}</style><div class="${cls}">Token</div>`);
         });
 
         it('Strips quotes around nested functions like filter()', () => {
             const cls = css({filter: "'blur(5px)'"});
             const html = engine.inject(`${MARKER}<div class="${cls}">Filter</div>`);
-            expect(html).toBe(`<style>.${cls}{filter:blur(5px)}</style><div class="${cls}">Filter</div>`);
+            expect(html).toBe(`<style data-tfs-s="${cls}">.${cls}{filter:blur(5px)}</style><div class="${cls}">Filter</div>`);
         });
 
         it('Leaves other string literals untouched', () => {
             const cls = css({fontFamily: '"Helvetica, sans-serif"'});
             const html = engine.inject(`${MARKER}<div class="${cls}">Font</div>`);
-            expect(html).toBe(`<style>.${cls}{font-family:"Helvetica, sans-serif"}</style><div class="${cls}">Font</div>`);
+            expect(html).toBe(
+                `<style data-tfs-s="${cls}">.${cls}{font-family:"Helvetica, sans-serif"}</style><div class="${cls}">Font</div>`,
+            );
         });
 
         it('Returns the same class for identical rule strings', () => {
@@ -271,7 +275,9 @@ describe('Modules - JSX - style - use', () => {
             it('Supports :nth-child(n)', () => {
                 const cls = css({[css.nthChild(2)]: {fontWeight: 'bold'}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
-                expect(html).toBe(`<style>.${cls}:nth-child(2){font-weight:bold}</style><div class="${cls}">Test</div>`);
+                expect(html).toBe(
+                    `<style data-tfs-s="${cls}">.${cls}:nth-child(2){font-weight:bold}</style><div class="${cls}">Test</div>`,
+                );
             });
 
             it('Supports :nth-last-child(n)', () => {
@@ -281,7 +287,7 @@ describe('Modules - JSX - style - use', () => {
                     },
                 });
                 const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
-                expect(html).toBe(`<style>.${cls}:nth-last-child(1){color:blue}</style><div class="${cls}">Test</div>`);
+                expect(html).toBe(`<style data-tfs-s="${cls}">.${cls}:nth-last-child(1){color:blue}</style><div class="${cls}">Test</div>`);
             });
 
             it('Supports :nth-of-type(n)', () => {
@@ -291,7 +297,9 @@ describe('Modules - JSX - style - use', () => {
                     },
                 });
                 const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
-                expect(html).toBe(`<style>.${cls}:nth-of-type(3n+1){font-style:italic}</style><div class="${cls}">Test</div>`);
+                expect(html).toBe(
+                    `<style data-tfs-s="${cls}">.${cls}:nth-of-type(3n+1){font-style:italic}</style><div class="${cls}">Test</div>`,
+                );
             });
 
             it('Supports :nth-last-of-type', () => {
@@ -302,7 +310,9 @@ describe('Modules - JSX - style - use', () => {
                 });
 
                 const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
-                expect(html).toBe(`<style>.${cls}:nth-last-of-type(2){border-bottom:1px solid gray}</style><div class="${cls}">Test</div>`);
+                expect(html).toBe(
+                    `<style data-tfs-s="${cls}">.${cls}:nth-last-of-type(2){border-bottom:1px solid gray}</style><div class="${cls}">Test</div>`,
+                );
             });
 
             it('Supports :not(selector)', () => {
@@ -312,7 +322,9 @@ describe('Modules - JSX - style - use', () => {
                     },
                 });
                 const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
-                expect(html).toBe(`<style>.${cls}:not(:last-child){margin-bottom:1rem}</style><div class="${cls}">Test</div>`);
+                expect(html).toBe(
+                    `<style data-tfs-s="${cls}">.${cls}:not(:last-child){margin-bottom:1rem}</style><div class="${cls}">Test</div>`,
+                );
             });
 
             it('Supports :is(selector)', () => {
@@ -322,7 +334,7 @@ describe('Modules - JSX - style - use', () => {
                     },
                 });
                 const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
-                expect(html).toBe(`<style>.${cls}:is(a, button){cursor:pointer}</style><div class="${cls}">Test</div>`);
+                expect(html).toBe(`<style data-tfs-s="${cls}">.${cls}:is(a, button){cursor:pointer}</style><div class="${cls}">Test</div>`);
             });
 
             it('Supports :where(...)', () => {
@@ -333,7 +345,9 @@ describe('Modules - JSX - style - use', () => {
                 });
 
                 const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
-                expect(html).toBe(`<style>.${cls}:where(section, article){line-height:1.5}</style><div class="${cls}">Test</div>`);
+                expect(html).toBe(
+                    `<style data-tfs-s="${cls}">.${cls}:where(section, article){line-height:1.5}</style><div class="${cls}">Test</div>`,
+                );
             });
 
             it('Supports :has(selector)', () => {
@@ -343,7 +357,7 @@ describe('Modules - JSX - style - use', () => {
                     },
                 });
                 const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
-                expect(html).toBe(`<style>.${cls}:has(img){display:flex}</style><div class="${cls}">Test</div>`);
+                expect(html).toBe(`<style data-tfs-s="${cls}">.${cls}:has(img){display:flex}</style><div class="${cls}">Test</div>`);
             });
 
             it('Supports :dir(ltr)', () => {
@@ -353,7 +367,7 @@ describe('Modules - JSX - style - use', () => {
                     },
                 });
                 const html = engine.inject(`${MARKER}<div class="${cls}">Test</div>`);
-                expect(html).toBe(`<style>.${cls}:dir(ltr){padding-left:1rem}</style><div class="${cls}">Test</div>`);
+                expect(html).toBe(`<style data-tfs-s="${cls}">.${cls}:dir(ltr){padding-left:1rem}</style><div class="${cls}">Test</div>`);
             });
 
             it('Works inside media queries', () => {
@@ -372,14 +386,14 @@ describe('Modules - JSX - style - use', () => {
                 const html = engine.inject(`${MARKER}<div class="${cls}">Media</div>`);
                 expect(html).toBe(
                     [
-                        '<style>',
+                        `<style data-tfs-s="${cls}">`,
                         `.${cls}{font-size:1rem}`,
                         '@media (min-width: 601px) and (max-width: 1199px){',
                         `.${cls}:nth-child(2){font-size:0.75rem}`,
                         `.${cls}:not(:last-child){margin-bottom:0.5rem}`,
                         '}',
                         '</style>',
-                        '<div class="tf1ng9lfv">Media</div>',
+                        `<div class="${cls}">Media</div>`,
                     ].join(''),
                 );
             });
@@ -399,7 +413,7 @@ describe('Modules - JSX - style - use', () => {
                 const html = engine.inject(`${MARKER}<div class="${cls}">Nested</div>`);
                 expect(html).toBe(
                     [
-                        '<style>',
+                        `<style data-tfs-s="${cls}">`,
                         `.${cls}{font-size:1rem}`,
                         '@media (max-width: 600px){',
                         `.${cls}:nth-child(3):where(span, strong){color:tomato}`,
@@ -428,7 +442,7 @@ describe('Modules - JSX - style - use', () => {
                     });
 
                     const html = getActiveStyleEngine()!.inject(`${MARKER}<div>Root Vars</div>`);
-                    expect(html).toBe('<style>:root{--color-primary:blue;--spacing:1rem}</style><div>Root Vars</div>');
+                    expect(html).toBe('<style data-tfs-s="pavyd2">:root{--color-primary:blue;--spacing:1rem}</style><div>Root Vars</div>');
                 });
 
                 it('Injects simple CSS variables under :root', () => {
@@ -439,7 +453,12 @@ describe('Modules - JSX - style - use', () => {
 
                     const html = engine.inject(`${MARKER}<div>Root Vars</div>`);
                     expect(html).toBe(
-                        ['<style>', ':root{--color-primary:blue;--spacing:1rem}', '</style>', '<div>Root Vars</div>'].join(''),
+                        [
+                            '<style data-tfs-s="pavyd2">',
+                            ':root{--color-primary:blue;--spacing:1rem}',
+                            '</style>',
+                            '<div>Root Vars</div>',
+                        ].join(''),
                     );
                 });
 
@@ -454,9 +473,11 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div>Media Root</div>`);
                     expect(html).toBe(
                         [
-                            '<style>',
-                            ':root{--color:black}',
+                            '<style data-tfs-s="f3d8yt">',
                             '@media (prefers-color-scheme: dark){:root{--color:white}}',
+                            '</style>',
+                            '<style data-tfs-s="eq01hh">',
+                            ':root{--color:black}',
                             '</style>',
                             '<div>Media Root</div>',
                         ].join(''),
@@ -476,20 +497,16 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div>Media Root</div>`);
                     expect(html).toBe(
                         [
-                            '<style>',
-                            ':root[data-enabled]{opacity:1}',
-                            ':root{--color:black}',
-                            '@media (prefers-color-scheme: dark){',
-                            ':root[data-enabled]{opacity:.5}',
-                            ':root{--color:white}',
-                            '}',
-                            '</style>',
+                            '<style data-tfs-s="1424xjx">@media (prefers-color-scheme: dark){:root[data-enabled]{opacity:.5}}</style>',
+                            '<style data-tfs-s="f3d8yt">@media (prefers-color-scheme: dark){:root{--color:white}}</style>',
+                            '<style data-tfs-s="mql0jb">:root[data-enabled]{opacity:1}</style>',
+                            '<style data-tfs-s="eq01hh">:root{--color:black}</style>',
                             '<div>Media Root</div>',
                         ].join(''),
                     );
                 });
 
-                it('can nest tag styles alongside root and media', () => {
+                it('Can nest tag styles alongside root and media', () => {
                     css.root({
                         '--font-size': '14px',
                         html: {
@@ -509,17 +526,11 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div>Nested Root</div>`);
                     expect(html).toBe(
                         [
-                            '<style>',
-                            'html{font-family:sans-serif}',
-                            ':root{--font-size:14px}',
-                            '@media (prefers-color-scheme: dark){',
-                            'body{background-color:black}',
-                            ':root{--font-size:16px}',
-                            '}',
-                            '@media (min-width: 601px) and (max-width: 1199px){',
-                            'html{font-size:16px}',
-                            '}',
-                            '</style>',
+                            '<style data-tfs-s="1qsvgh2">@media (prefers-color-scheme: dark){body{background-color:black}}</style>',
+                            '<style data-tfs-s="16ks6wb">@media (prefers-color-scheme: dark){:root{--font-size:16px}}</style>',
+                            '<style data-tfs-s="1971uff">@media (min-width: 601px) and (max-width: 1199px){html{font-size:16px}}</style>',
+                            '<style data-tfs-s="1vkceam">html{font-family:sans-serif}</style>',
+                            '<style data-tfs-s="16ks8h5">:root{--font-size:14px}</style>',
                             '<div>Nested Root</div>',
                         ].join(''),
                     );
@@ -532,7 +543,9 @@ describe('Modules - JSX - style - use', () => {
                         [css.not(css.nthChild(1))]: {opacity: 0.75},
                     });
                     const html = engine.inject(`${MARKER}<div class="${cls}">List</div>`);
-                    expect(html).toBe(`<style>.${cls}:not(:nth-child(1)){opacity:0.75}</style><div class="${cls}">List</div>`);
+                    expect(html).toBe(
+                        `<style data-tfs-s="${cls}">.${cls}:not(:nth-child(1)){opacity:0.75}</style><div class="${cls}">List</div>`,
+                    );
                 });
 
                 it('Uses :is() inside :not()', () => {
@@ -540,7 +553,9 @@ describe('Modules - JSX - style - use', () => {
                         [css.not(css.is('a, button'))]: {color: 'gray'},
                     });
                     const html = engine.inject(`${MARKER}<div class="${cls}">Filtered</div>`);
-                    expect(html).toBe(`<style>.${cls}:not(:is(a, button)){color:gray}</style><div class="${cls}">Filtered</div>`);
+                    expect(html).toBe(
+                        `<style data-tfs-s="${cls}">.${cls}:not(:is(a, button)){color:gray}</style><div class="${cls}">Filtered</div>`,
+                    );
                 });
 
                 it('Uses :where() with :nth-last-child()', () => {
@@ -550,7 +565,7 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div class="${cls}">Scoped</div>`);
                     expect(html).toBe(
                         [
-                            '<style>',
+                            `<style data-tfs-s="${cls}">`,
                             `.${cls}:where(:nth-last-child(2)){padding-bottom:0.5rem}`,
                             '</style>',
                             `<div class="${cls}">Scoped</div>`,
@@ -566,7 +581,7 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div class="${cls}">Scoped</div>`);
                     expect(html).toBe(
                         [
-                            '<style>',
+                            `<style data-tfs-s="${cls}">`,
                             `.${cls} div:first-of-type{padding-top:0.5rem}`,
                             `.${cls} div:last-of-type{padding-bottom:0.5rem}`,
                             '</style>',
@@ -584,7 +599,7 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div class="${cls}">RTL</div>`);
                     expect(html).toBe(
                         [
-                            '<style>',
+                            `<style data-tfs-s="${cls}">`,
                             '@media (min-width: 601px) and (max-width: 1199px){',
                             `.${cls}:dir(rtl){text-align:right}`,
                             '}',
@@ -601,7 +616,9 @@ describe('Modules - JSX - style - use', () => {
                         },
                     });
                     const html = engine.inject(`${MARKER}<div class="${cls}">Nested</div>`);
-                    expect(html).toBe(`<style>.${cls}:nth-child(3):dir(ltr){margin-left:1rem}</style><div class="${cls}">Nested</div>`);
+                    expect(html).toBe(
+                        `<style data-tfs-s="${cls}">.${cls}:nth-child(3):dir(ltr){margin-left:1rem}</style><div class="${cls}">Nested</div>`,
+                    );
                 });
 
                 it('Multiple combinators inside a media query', () => {
@@ -615,7 +632,7 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div class="${cls}">Combo</div>`);
                     expect(html).toBe(
                         [
-                            '<style>',
+                            `<style data-tfs-s="${cls}">`,
                             '@media (max-width: 600px){',
                             `.${cls}:not(:is(:last-child)):where(span, b){color:red}`,
                             '}',
@@ -637,7 +654,7 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div class="${cls}">Fancy</div>`);
                     expect(html).toBe(
                         [
-                            '<style>',
+                            `<style data-tfs-s="${cls}">`,
                             `.${cls}:hover{color:red}`,
                             `.${cls}:focus{outline:2px solid blue}`,
                             `.${cls}::before{content:">>"}`,
@@ -661,7 +678,7 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div class="${cls}">Responsive</div>`);
                     expect(html).toBe(
                         [
-                            '<style>',
+                            `<style data-tfs-s="${cls}">`,
                             `.${cls}{color:black}`,
                             '@media (max-width: 1199px){',
                             `.${cls}:hover{color:green}`,
@@ -686,7 +703,7 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div class="${cls}">Theme</div>`);
                     expect(html).toBe(
                         [
-                            '<style>',
+                            `<style data-tfs-s="${cls}">`,
                             `.${cls}[data-theme="light"]{color:black}`,
                             '@media (prefers-color-scheme: dark){',
                             `.${cls}[data-theme="light"]:hover{color:white}`,
@@ -723,7 +740,7 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div class="${cls}">Multimedia</div>`);
                     expect(html).toBe(
                         [
-                            '<style>',
+                            `<style data-tfs-s="${cls}">`,
                             `.${cls}{font-size:1rem;padding:1rem;background-color:white}`,
                             `@media (prefers-color-scheme: dark){.${cls}{background-color:black;color:white}}`,
                             `@media (prefers-color-scheme: light){.${cls}{background-color:white;color:black}}`,
@@ -749,7 +766,9 @@ describe('Modules - JSX - style - use', () => {
             css.root();
 
             const html = engine.inject(`${MARKER}<div>Vars</div>`);
-            expect(html).toBe(['<style>', ':root{--v-spacing_m:1rem;--v-radius_l:8px}', '</style>', '<div>Vars</div>'].join(''));
+            expect(html).toBe(
+                ['<style data-tfs-s="10v96l9">', ':root{--v-spacing_m:1rem;--v-radius_l:8px}', '</style>', '<div>Vars</div>'].join(''),
+            );
         });
 
         it('Does not prefix root-level CSS vars if they start with --', () => {
@@ -769,7 +788,7 @@ describe('Modules - JSX - style - use', () => {
             const html = engine.inject(`${MARKER}<div>Vars</div>`);
             expect(html).toBe(
                 [
-                    '<style>',
+                    '<style data-tfs-s="e1ro7i">',
                     ':root{--v-spacing_m:1rem;--v-radius_l:8px;--someLib-spacing:2rem;--someLib--radius:16px}',
                     '</style>',
                     '<div>Vars</div>',
@@ -806,10 +825,8 @@ describe('Modules - JSX - style - use', () => {
             const html = engine.inject(`${MARKER}<div>Theme</div>`);
             expect(html).toBe(
                 [
-                    '<style>',
-                    '@media (prefers-color-scheme: light){:root{--t-bg:#fff;--t-text:#111}}',
-                    '@media (prefers-color-scheme: dark){:root{--t-bg:#000;--t-text:#eee}}',
-                    '</style>',
+                    '<style data-tfs-s="m2a9zl">@media (prefers-color-scheme: light){:root{--t-bg:#fff;--t-text:#111}}</style>',
+                    '<style data-tfs-s="xwilsj">@media (prefers-color-scheme: dark){:root{--t-bg:#000;--t-text:#eee}}</style>',
                     '<div>Theme</div>',
                 ].join(''),
             );
@@ -830,15 +847,13 @@ describe('Modules - JSX - style - use', () => {
             const html = engine.inject(`${MARKER}<div>Attr Theme</div>`);
             expect(html).toBe(
                 [
-                    '<style>',
-                    '@media (prefers-color-scheme: light){',
-                    ':root[data-theme="dark"]{--t-color:#333}',
-                    ':root{--t-color:#ccc}',
-                    '}',
-                    '@media (prefers-color-scheme: dark){',
-                    ':root[data-theme="light"]{--t-color:#ccc}',
-                    ':root{--t-color:#333}',
-                    '}',
+                    '<style data-tfs-s="1y0u62z">',
+                    '@media (prefers-color-scheme: light){:root[data-theme="dark"]{--t-color:#333}}',
+                    '@media (prefers-color-scheme: dark){:root{--t-color:#333}}',
+                    '</style>',
+                    '<style data-tfs-s="1y0t2xn">',
+                    '@media (prefers-color-scheme: light){:root{--t-color:#ccc}}',
+                    '@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-color:#ccc}}',
                     '</style>',
                     '<div>Attr Theme</div>',
                 ].join(''),
@@ -861,15 +876,13 @@ describe('Modules - JSX - style - use', () => {
             const html = engine.inject(`${MARKER}<div>Attr Theme</div>`);
             expect(html).toBe(
                 [
-                    '<style>',
-                    '@media (prefers-color-scheme: light){',
-                    ':root[data-theme="dark"]{--t-color:#333;--someLib-fg:#333}',
-                    ':root{--t-color:#ccc;--someLib-fg:#ccc}',
-                    '}',
-                    '@media (prefers-color-scheme: dark){',
-                    ':root[data-theme="light"]{--t-color:#ccc;--someLib-fg:#ccc}',
-                    ':root{--t-color:#333;--someLib-fg:#333}',
-                    '}',
+                    '<style data-tfs-s="1i9zcp1">',
+                    '@media (prefers-color-scheme: light){:root[data-theme="dark"]{--t-color:#333;--someLib-fg:#333}}',
+                    '@media (prefers-color-scheme: dark){:root{--t-color:#333;--someLib-fg:#333}}',
+                    '</style>',
+                    '<style data-tfs-s="sj79h">',
+                    '@media (prefers-color-scheme: light){:root{--t-color:#ccc;--someLib-fg:#ccc}}',
+                    '@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-color:#ccc;--someLib-fg:#ccc}}',
                     '</style>',
                     '<div>Attr Theme</div>',
                 ].join(''),
@@ -889,15 +902,13 @@ describe('Modules - JSX - style - use', () => {
             const html = engine.inject(`${MARKER}<div>Mode Theme</div>`);
             expect(html).toBe(
                 [
-                    '<style>',
-                    '@media (prefers-color-scheme: light){',
-                    ':root[data-mode="dark"]{--t-border:white}',
-                    ':root{--t-border:gray}',
-                    '}',
-                    '@media (prefers-color-scheme: dark){',
-                    ':root[data-mode="light"]{--t-border:gray}',
-                    ':root{--t-border:white}',
-                    '}',
+                    '<style data-tfs-s="nfja4t">',
+                    '@media (prefers-color-scheme: light){:root[data-mode="dark"]{--t-border:white}}',
+                    '@media (prefers-color-scheme: dark){:root{--t-border:white}}',
+                    '</style>',
+                    '<style data-tfs-s="19whppj">',
+                    '@media (prefers-color-scheme: light){:root{--t-border:gray}}',
+                    '@media (prefers-color-scheme: dark){:root[data-mode="light"]{--t-border:gray}}',
                     '</style>',
                     '<div>Mode Theme</div>',
                 ].join(''),
@@ -913,9 +924,10 @@ describe('Modules - JSX - style - use', () => {
 
             css.root();
 
-            expect(engine.inject(`${MARKER}<div>Reset</div>`)).toBe(
+            expect(engine.inject(`<html><head></head><body><div>Reset</div></body></html>`)).toBe(
                 [
-                    '<style>',
+                    '<html><head>',
+                    '<style data-tfs-p>',
                     '*, *::before, *::after{box-sizing:border-box}',
                     'html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}',
                     'footer, header, nav, section, main{display:block}',
@@ -925,7 +937,10 @@ describe('Modules - JSX - style - use', () => {
                     'q, blockquote{quotes:none}',
                     'table{border-collapse:collapse;border-spacing:0}',
                     '</style>',
+                    `<script>${OBSERVER}</script>`,
+                    '</head><body>',
                     '<div>Reset</div>',
+                    '</body></html>',
                 ].join(''),
             );
         });
@@ -968,7 +983,12 @@ describe('Modules - JSX - style - use', () => {
             });
 
             expect(engine.inject(`${MARKER}<div class="${cls}">OnlyAttr</div>`)).toBe(
-                ['<style>', `.${cls}[data-active="true"]{background-color:red}`, '</style>', `<div class="${cls}">OnlyAttr</div>`].join(''),
+                [
+                    `<style data-tfs-s="${cls}">`,
+                    `.${cls}[data-active="true"]{background-color:red}`,
+                    '</style>',
+                    `<div class="${cls}">OnlyAttr</div>`,
+                ].join(''),
             );
         });
 
@@ -986,9 +1006,10 @@ describe('Modules - JSX - style - use', () => {
                 [
                     '<html>',
                     '<link rel="stylesheet" href="/styles.css">',
-                    '<style>',
+                    `<style data-tfs-p>`,
                     `.${cls}[data-active="true"]{background-color:red}`,
                     '</style>',
+                    `<script>${OBSERVER}</script>`,
                     `<div class="${cls}">OnlyAttr</div>`,
                     '</html>',
                 ].join(''),
@@ -1010,9 +1031,10 @@ describe('Modules - JSX - style - use', () => {
                 [
                     '<html>',
                     '<link rel="stylesheet" nonce="abc123" href="/styles.css">',
-                    '<style nonce="abc123">',
+                    '<style nonce="abc123" data-tfs-p>',
                     `.${cls}[data-active="true"]{background-color:red}`,
                     '</style>',
+                    `<script nonce="abc123">${OBSERVER}</script>`,
                     `<div class="${cls}">OnlyAttr</div>`,
                     '</html>',
                 ].join(''),
@@ -1032,9 +1054,9 @@ describe('Modules - JSX - style - use', () => {
             css.root();
             css.root();
 
-            expect(engine.inject(`${MARKER}<div>Once</div>`)).toBe(
+            expect(engine.inject(`<html><head></head><body><div>Once</div></body></html>`)).toBe(
                 [
-                    '<style>',
+                    '<html><head><style data-tfs-p>',
                     '*, *::before, *::after{box-sizing:border-box}',
                     'html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}',
                     'footer, header, nav, section, main{display:block}',
@@ -1044,16 +1066,11 @@ describe('Modules - JSX - style - use', () => {
                     'q, blockquote{quotes:none}',
                     'table{border-collapse:collapse;border-spacing:0}',
                     ':root{--v-spacing:1rem}',
-                    '@media (prefers-color-scheme: light){',
-                    ':root[data-theme="dark"]{--t-bg:#000}',
-                    ':root{--t-bg:#fff}',
-                    '}',
-                    '@media (prefers-color-scheme: dark){',
-                    ':root[data-theme="light"]{--t-bg:#fff}',
-                    ':root{--t-bg:#000}',
-                    '}',
+                    '@media (prefers-color-scheme: light){:root[data-theme="dark"]{--t-bg:#000}:root{--t-bg:#fff}}',
+                    '@media (prefers-color-scheme: dark){:root{--t-bg:#000}:root[data-theme="light"]{--t-bg:#fff}}',
                     '</style>',
-                    '<div>Once</div>',
+                    `<script>${OBSERVER}</script>`,
+                    '</head><body><div>Once</div></body></html>',
                 ].join(''),
             );
         });
@@ -1075,18 +1092,12 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`${MARKER}<div>Multiple</div>`)).toBe(
                 [
-                    '<style>',
-                    ':root{--v-radius:4px}',
-                    ':root{--v-spacing:2rem}',
-                    '@media (prefers-color-scheme: light){',
-                    ':root{--t-bg:#fff}',
-                    ':root{--t-fg:#000}',
-                    '}',
-                    '@media (prefers-color-scheme: dark){',
-                    ':root{--t-bg:#000}',
-                    ':root{--t-fg:#fff}',
-                    '}',
-                    '</style>',
+                    '<style data-tfs-s="i1ex52">@media (prefers-color-scheme: light){:root{--t-bg:#fff}}</style>',
+                    '<style data-tfs-s="i1gonk">@media (prefers-color-scheme: dark){:root{--t-bg:#000}}</style>',
+                    '<style data-tfs-s="sklc0">:root{--v-radius:4px}</style>',
+                    '<style data-tfs-s="8tcmvo">@media (prefers-color-scheme: light){:root{--t-fg:#000}}</style>',
+                    '<style data-tfs-s="8taoua">@media (prefers-color-scheme: dark){:root{--t-fg:#fff}}</style>',
+                    '<style data-tfs-s="1ivf8jx">:root{--v-spacing:2rem}</style>',
                     '<div>Multiple</div>',
                 ].join(''),
             );
@@ -1104,7 +1115,7 @@ describe('Modules - JSX - style - use', () => {
             expect(cls1).toBe(cls2);
 
             const html = engine.inject(`${MARKER}<div class="${cls1}">Test</div>`);
-            expect(html).toBe(`<style>.${cls1}{color:red;padding:1rem}</style><div class="${cls1}">Test</div>`);
+            expect(html).toBe(`<style data-tfs-s="${cls1}">.${cls1}{color:red;padding:1rem}</style><div class="${cls1}">Test</div>`);
         });
 
         it('Supports deeply nested attribute selectors inside media queries', () => {
@@ -1122,7 +1133,7 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`${MARKER}<div class="${cls}">Deep</div>`)).toBe(
                 [
-                    '<style>',
+                    `<style data-tfs-s="${cls}">`,
                     `.${cls} [data-role="admin"]{background-color:gray}`,
                     `.${cls}{color:black}`,
                     '@media (max-width: 600px){',
@@ -1142,7 +1153,12 @@ describe('Modules - JSX - style - use', () => {
             });
 
             expect(engine.inject(`${MARKER}<div class="${cls}">OnlyAttr</div>`)).toBe(
-                ['<style>', `.${cls}[data-active="true"]{background-color:red}`, '</style>', `<div class="${cls}">OnlyAttr</div>`].join(''),
+                [
+                    `<style data-tfs-s="${cls}">`,
+                    `.${cls}[data-active="true"]{background-color:red}`,
+                    '</style>',
+                    `<div class="${cls}">OnlyAttr</div>`,
+                ].join(''),
             );
         });
 
@@ -1160,18 +1176,22 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`${MARKER}<div>Global</div>`)).toBe(
                 [
-                    '<style>',
-                    'html{font-size:16px}',
-                    ':root{--v-radius:8px}',
+                    '<style data-tfs-s="i1gonk">',
                     '@media (prefers-color-scheme: light){',
-                    ':root[data-theme="dark"]{',
-                    '--t-bg:#000}:root{--t-bg:#fff}',
+                    ':root[data-theme="dark"]{--t-bg:#000}',
                     '}',
                     '@media (prefers-color-scheme: dark){',
-                    ':root[data-theme="light"]{--t-bg:#fff}',
                     ':root{--t-bg:#000}',
                     '}',
                     '</style>',
+                    '<style data-tfs-s="i1ex52">',
+                    '@media (prefers-color-scheme: light){:root{--t-bg:#fff}}',
+                    '@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-bg:#fff}}',
+                    '</style>',
+                    '<style data-tfs-s="1971uff">',
+                    'html{font-size:16px}',
+                    '</style>',
+                    '<style data-tfs-s="skhzg">:root{--v-radius:8px}</style>',
                     '<div>Global</div>',
                 ].join(''),
             );
@@ -1204,19 +1224,29 @@ describe('Modules - JSX - style - use', () => {
 
             expect(html).toBe(
                 [
-                    '<style>',
-                    '.tfje8nhj{background-color:var(--t-bg);color:var(--t-fg);padding:var(--v-spacing_m);border-radius:var(--v-radius_s)}',
-                    ':root{--v-spacing_m:1rem;--v-radius_s:4px}',
+                    '<style data-tfs-s="tfxlk7jb">',
+                    '.tfxlk7jb{background-color:var(--t-bg);color:var(--t-fg);padding:var(--v-spacing_m);border-radius:var(--v-radius_s)}',
+                    '</style>',
+                    '<style data-tfs-s="2br1fz">',
                     '@media (prefers-color-scheme: light){',
                     ':root[data-theme="dark"]{--t-bg:#000;--t-fg:#eee}',
+                    '}',
+                    '@media (prefers-color-scheme: dark){',
+                    ':root{--t-bg:#000;--t-fg:#eee}',
+                    '}',
+                    '</style>',
+                    '<style data-tfs-s="15gmsel">',
+                    '@media (prefers-color-scheme: light){',
                     ':root{--t-bg:#fff;--t-fg:#111}',
                     '}',
                     '@media (prefers-color-scheme: dark){',
                     ':root[data-theme="light"]{--t-bg:#fff;--t-fg:#111}',
-                    ':root{--t-bg:#000;--t-fg:#eee}',
                     '}',
                     '</style>',
-                    '<div class="tfje8nhj">Vars in Use</div>',
+                    '<style data-tfs-s="10mg49a">',
+                    ':root{--v-spacing_m:1rem;--v-radius_s:4px}',
+                    '</style>',
+                    '<div class="tfxlk7jb">Vars in Use</div>',
                 ].join(''),
             );
         });
@@ -1248,19 +1278,28 @@ describe('Modules - JSX - style - use', () => {
 
             expect(html).toBe(
                 [
-                    '<style>',
-                    '.tfje8nhj{background-color:var(--t-bg);color:var(--t-fg);padding:var(--v-spacing_m);border-radius:var(--v-radius_s)}',
-                    ':root{--v-spacing_m:1rem;--v-radius_s:4px}',
+                    '<style data-tfs-s="tfxlk7jb">',
+                    '.tfxlk7jb{background-color:var(--t-bg);color:var(--t-fg);padding:var(--v-spacing_m);border-radius:var(--v-radius_s)}',
+                    '</style>',
+                    '<style data-tfs-s="2br1fz">',
                     '@media (prefers-color-scheme: light){',
                     ':root[data-theme="dark"]{--t-bg:#000;--t-fg:#eee}',
-                    ':root{--t-bg:#fff;--t-fg:#111}',
                     '}',
                     '@media (prefers-color-scheme: dark){',
-                    ':root[data-theme="light"]{--t-bg:#fff;--t-fg:#111}',
                     ':root{--t-bg:#000;--t-fg:#eee}',
                     '}',
                     '</style>',
-                    '<div class="tfje8nhj">Vars in Use</div>',
+                    '<style data-tfs-s="15gmsel">',
+                    '@media (prefers-color-scheme: light){',
+                    ':root{--t-bg:#fff;--t-fg:#111}}',
+                    '@media (prefers-color-scheme: dark){',
+                    ':root[data-theme="light"]{--t-bg:#fff;--t-fg:#111}',
+                    '}',
+                    '</style>',
+                    '<style data-tfs-s="10mg49a">',
+                    ':root{--v-spacing_m:1rem;--v-radius_s:4px}',
+                    '</style>',
+                    '<div class="tfxlk7jb">Vars in Use</div>',
                 ].join(''),
             );
         });
@@ -1273,7 +1312,9 @@ describe('Modules - JSX - style - use', () => {
                 },
             });
             css.root();
-            expect(engine.inject(`${MARKER}<div>Theme</div>`)).toBe('<style>:root{--t-bg:#fff;--t-fg:#000}</style><div>Theme</div>');
+            expect(engine.inject(`${MARKER}<div>Theme</div>`)).toBe(
+                '<style data-tfs-s="15gmq0c">:root{--t-bg:#fff;--t-fg:#000}</style><div>Theme</div>',
+            );
         });
 
         it('Allows the use of string-only theme tokens (some are string and some are full)', () => {
@@ -1287,12 +1328,49 @@ describe('Modules - JSX - style - use', () => {
             css.root();
             expect(engine.inject(`${MARKER}<div>Theme</div>`)).toBe(
                 [
-                    '<style>',
+                    '<style data-tfs-s="9dv7er">',
+                    '@media (prefers-color-scheme: light){',
+                    ':root{--t-alt:#f9f9f9}',
+                    '}',
+                    '</style>',
+                    '<style data-tfs-s="10fxs27">',
+                    '@media (prefers-color-scheme: dark){',
+                    ':root{--t-alt:#333}',
+                    '}',
+                    '</style>',
+                    '<style data-tfs-s="15gmq0c">',
                     ':root{--t-bg:#fff;--t-fg:#000}',
-                    '@media (prefers-color-scheme: light){:root{--t-alt:#f9f9f9}}',
-                    '@media (prefers-color-scheme: dark){:root{--t-alt:#333}}',
                     '</style>',
                     '<div>Theme</div>',
+                ].join(''),
+            );
+        });
+
+        it('Allows the use of string-only theme tokens (some are string and some are full) and does NOT shard if full', () => {
+            const css = createCss({
+                theme: {
+                    bg: '#fff',
+                    fg: '#000',
+                    alt: {dark: '#333', light: '#f9f9f9'},
+                },
+            });
+            css.root();
+            expect(engine.inject(`<html><head><title>Howdie</title></head><body><div>Theme</div></body></html>`)).toBe(
+                [
+                    '<html>',
+                    '<head>',
+                    '<title>Howdie</title>',
+                    '<style data-tfs-p>',
+                    ':root{--t-bg:#fff;--t-fg:#000}',
+                    '@media (prefers-color-scheme: light){',
+                    ':root{--t-alt:#f9f9f9}',
+                    '}',
+                    '@media (prefers-color-scheme: dark){',
+                    ':root{--t-alt:#333}',
+                    '}',
+                    '</style>',
+                    `<script>${OBSERVER}</script>`,
+                    '</head><body><div>Theme</div></body></html>',
                 ].join(''),
             );
         });
@@ -1321,15 +1399,13 @@ describe('Modules - JSX - style - use', () => {
             const cls = css.use('base', 'padded');
             expect(engine.inject(`${MARKER}<div class="${cls}">Defined</div>`)).toBe(
                 [
-                    '<style>',
-                    ':root{',
-                    '--v-spacing:2rem;',
-                    '--t-bg:#fff;',
-                    '--t-fg:#222',
-                    '}',
-                    '.tf1c79mh8{display:flex;align-items:center;color:var(--t-fg);background:var(--t-bg);padding:var(--v-spacing)}',
+                    '<style data-tfs-s="qganbx">',
+                    ':root{--v-spacing:2rem;--t-bg:#fff;--t-fg:#222}',
                     '</style>',
-                    '<div class="tf1c79mh8">Defined</div>',
+                    '<style data-tfs-s="tfcd4cfg">',
+                    '.tfcd4cfg{display:flex;align-items:center;color:var(--t-fg);background:var(--t-bg);padding:var(--v-spacing)}',
+                    '</style>',
+                    '<div class="tfcd4cfg">Defined</div>',
                 ].join(''),
             );
         });
@@ -1467,10 +1543,10 @@ describe('Modules - JSX - style - use', () => {
             expect(cls).toMatch(/^tf/);
             expect(engine.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe(
                 [
-                    '<style>',
-                    '.tf1ozn3bl{display:flex;flex-direction:row;justify-content:center;align-items:center;gap:var(--v-x)}',
+                    '<style data-tfs-s="tf1v7zb4h">',
+                    '.tf1v7zb4h{display:flex;flex-direction:row;justify-content:center;align-items:center;gap:var(--v-x)}',
                     '</style>',
-                    '<div class="tf1ozn3bl">Mix</div>',
+                    '<div class="tf1v7zb4h">Mix</div>',
                 ].join(''),
             );
         });
@@ -1487,7 +1563,11 @@ describe('Modules - JSX - style - use', () => {
             expect(cls).toMatch(/^tf/);
 
             const html = engine.inject(`${MARKER}<div class="${cls}">Falsy</div>`);
-            expect(html).toBe(['<style>', `.${cls}{display:block;color:blue}`, '</style>', `<div class="${cls}">Falsy</div>`].join(''));
+            expect(html).toBe(
+                [`<style data-tfs-s="${cls}">`, `.${cls}{display:block;color:blue}`, '</style>', `<div class="${cls}">Falsy</div>`].join(
+                    '',
+                ),
+            );
         });
 
         it('Allows for a combination of mix and use', () => {
@@ -1534,18 +1614,18 @@ describe('Modules - JSX - style - use', () => {
             expect(cls).toMatch(/^tf/);
             expect(engine.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe(
                 [
-                    '<style>',
-                    '.tf1bdiex9{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                    '<style data-tfs-s="tfoupfrh">',
+                    '.tfoupfrh{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
                     '@media (min-width: 1200px){',
-                    '.tf1bdiex9 > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
-                    '.tf1bdiex9{padding:var(--v-space_xl);justify-content:center}',
+                    '.tfoupfrh > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                    '.tfoupfrh{padding:var(--v-space_xl);justify-content:center}',
                     '}',
                     '@media (max-width: 1199px){',
-                    '.tf1bdiex9 > span{display:none}',
-                    '.tf1bdiex9{padding:var(--v-space_l);justify-content:space-around}',
+                    '.tfoupfrh > span{display:none}',
+                    '.tfoupfrh{padding:var(--v-space_l);justify-content:space-around}',
                     '}',
                     '</style>',
-                    '<div class="tf1bdiex9">Mix</div>',
+                    '<div class="tfoupfrh">Mix</div>',
                 ].join(''),
             );
         });
@@ -1595,18 +1675,17 @@ describe('Modules - JSX - style - use', () => {
             expect(cls).toMatch(/^tf/);
             expect(engine.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe(
                 [
-                    '<style>',
-                    '.tf1gwdlxj{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                    '<style data-tfs-s="tf1wuvp3b">',
+                    '.tf1wuvp3b{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
                     '@media (min-width: 1200px){',
-                    '.tf1gwdlxj > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
-                    '.tf1gwdlxj{padding:var(--v-space_xl);justify-content:center}',
+                    '.tf1wuvp3b > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                    '.tf1wuvp3b{padding:var(--v-space_xl);justify-content:center}',
                     '}',
                     '@media (max-width: 1199px){',
-                    // '.tf1gwdlxj > span{display:none}',
-                    '.tf1gwdlxj{padding:var(--v-space_l);justify-content:space-around}',
+                    '.tf1wuvp3b{padding:var(--v-space_l);justify-content:space-around}',
                     '}',
                     '</style>',
-                    '<div class="tf1gwdlxj">Mix</div>',
+                    '<div class="tf1wuvp3b">Mix</div>',
                 ].join(''),
             );
         });
@@ -1657,17 +1736,17 @@ describe('Modules - JSX - style - use', () => {
             expect(cls).toMatch(/^tf/);
             expect(getActiveStyleEngine()!.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe(
                 [
-                    '<style>',
-                    '.tfhev09x{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                    '<style data-tfs-s="tfkn00o5">',
+                    '.tfkn00o5{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
                     '@media (min-width: 1200px){',
-                    '.tfhev09x > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
-                    '.tfhev09x{padding:var(--v-space_xl);justify-content:center}',
+                    '.tfkn00o5 > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                    '.tfkn00o5{padding:var(--v-space_xl);justify-content:center}',
                     '}',
                     '@media (max-width: 1199px){',
-                    '.tfhev09x{padding:var(--v-space_l);justify-content:space-around}',
+                    '.tfkn00o5{padding:var(--v-space_l);justify-content:space-around}',
                     '}',
                     '</style>',
-                    '<div class="tfhev09x">Mix</div>',
+                    '<div class="tfkn00o5">Mix</div>',
                 ].join(''),
             );
         });
@@ -1726,18 +1805,18 @@ describe('Modules - JSX - style - use', () => {
             for (const el of output) {
                 expect(el).toBe(
                     [
-                        '<style>',
-                        '.tf1bdiex9{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                        '<style data-tfs-s="tfoupfrh">',
+                        '.tfoupfrh{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
                         '@media (min-width: 1200px){',
-                        '.tf1bdiex9 > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
-                        '.tf1bdiex9{padding:var(--v-space_xl);justify-content:center}',
+                        '.tfoupfrh > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                        '.tfoupfrh{padding:var(--v-space_xl);justify-content:center}',
                         '}',
                         '@media (max-width: 1199px){',
-                        '.tf1bdiex9 > span{display:none}',
-                        '.tf1bdiex9{padding:var(--v-space_l);justify-content:space-around}',
+                        '.tfoupfrh > span{display:none}',
+                        '.tfoupfrh{padding:var(--v-space_l);justify-content:space-around}',
                         '}',
                         '</style>',
-                        '<div class="tf1bdiex9">Mix</div>',
+                        '<div class="tfoupfrh">Mix</div>',
                     ].join(''),
                 );
             }
@@ -1798,7 +1877,7 @@ describe('Modules - JSX - style - use', () => {
             const duration = Date.now() - start;
             expect(duration).toBeLessThan(100);
             for (const el of output) {
-                expect(el).toBe(['<div class="tf1bdiex9">Mix</div>'].join(''));
+                expect(el).toBe(['<div class="tfoupfrh">Mix</div>'].join(''));
             }
         });
 
@@ -1863,7 +1942,7 @@ describe('Modules - JSX - style - use', () => {
                 const html = engine.inject(`${MARKER}<div class="${cls}">Custom Breakpoints</div>`);
                 expect(html).toBe(
                     [
-                        '<style>',
+                        `<style data-tfs-s="${cls}">`,
                         `.${cls}{color:black}`,
                         '@media (max-width: 640px){',
                         `.${cls}{color:red}`,
@@ -1907,7 +1986,7 @@ describe('Modules - JSX - style - use', () => {
                 const html = engine.inject(`${MARKER}<div class="${cls}">Tags</div>`);
                 expect(html).toBe(
                     [
-                        '<style>',
+                        `<style data-tfs-s="${cls}">`,
                         `.${cls} h1{font-size:2rem}`,
                         `.${cls} section{padding:1rem}`,
                         `.${cls} footer{margin-top:2rem}`,
@@ -1928,7 +2007,7 @@ describe('Modules - JSX - style - use', () => {
                 const html = engine.inject(`${MARKER}<div class="${cls}">Nested Tags</div>`);
                 expect(html).toBe(
                     [
-                        '<style>',
+                        `<style data-tfs-s="${cls}">`,
                         `.${cls} section h2{font-weight:bold}`,
                         `.${cls} section p{line-height:1.4}`,
                         '</style>',
@@ -1947,7 +2026,7 @@ describe('Modules - JSX - style - use', () => {
                 const html = engine.inject(`${MARKER}<div class="${cls}">Combinators</div>`);
                 expect(html).toBe(
                     [
-                        '<style>',
+                        `<style data-tfs-s="${cls}">`,
                         `.${cls} > h1{font-size:3rem}`,
                         `.${cls} + p{margin-top:1rem}`,
                         `.${cls} ~ ul{list-style:circle}`,
@@ -1970,7 +2049,7 @@ describe('Modules - JSX - style - use', () => {
                 const html = engine.inject(`${MARKER}<div class="${cls}">Nested Tags</div>`);
                 expect(html).toBe(
                     [
-                        '<style>',
+                        `<style data-tfs-s="${cls}">`,
                         `.${cls} > section h2{font-weight:bold}`,
                         `.${cls} > section p{line-height:1.4}`,
                         '</style>',
@@ -1992,7 +2071,7 @@ describe('Modules - JSX - style - use', () => {
                 const html = engine.inject(`${MARKER}<div class="${cls}">Pseudo Tags</div>`);
                 expect(html).toBe(
                     [
-                        '<style>',
+                        `<style data-tfs-s="${cls}">`,
                         `.${cls} a:hover{text-decoration:underline}`,
                         `.${cls} a{text-decoration:none}`,
                         '</style>',
@@ -2004,65 +2083,107 @@ describe('Modules - JSX - style - use', () => {
             it('auto-spaces HTML tag + pseudo class selectors', () => {
                 const cls = css({'div:hover': {opacity: 0.5}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">Hover</div>`);
-                expect(html).toBe(['<style>', `.${cls} div:hover{opacity:0.5}`, '</style>', `<div class="${cls}">Hover</div>`].join(''));
+                expect(html).toBe(
+                    [`<style data-tfs-s="${cls}">`, `.${cls} div:hover{opacity:0.5}`, '</style>', `<div class="${cls}">Hover</div>`].join(
+                        '',
+                    ),
+                );
             });
 
             it('auto-spaces HTML tag + class selector', () => {
                 const cls = css({'ul.list': {listStyle: 'disc'}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">List</div>`);
-                expect(html).toBe(['<style>', `.${cls} ul.list{list-style:disc}`, '</style>', `<div class="${cls}">List</div>`].join(''));
+                expect(html).toBe(
+                    [`<style data-tfs-s="${cls}">`, `.${cls} ul.list{list-style:disc}`, '</style>', `<div class="${cls}">List</div>`].join(
+                        '',
+                    ),
+                );
             });
 
             it('auto-spaces HTML tag + attribute selector', () => {
                 const cls = css({'a[href]': {textDecoration: 'underline'}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">Attr</div>`);
                 expect(html).toBe(
-                    ['<style>', `.${cls} a[href]{text-decoration:underline}`, '</style>', `<div class="${cls}">Attr</div>`].join(''),
+                    [
+                        `<style data-tfs-s="${cls}">`,
+                        `.${cls} a[href]{text-decoration:underline}`,
+                        '</style>',
+                        `<div class="${cls}">Attr</div>`,
+                    ].join(''),
                 );
             });
 
             it('auto-spaces HTML tag + space selector', () => {
                 const cls = css({'nav a': {color: 'blue'}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">Nested</div>`);
-                expect(html).toBe(['<style>', `.${cls} nav a{color:blue}`, '</style>', `<div class="${cls}">Nested</div>`].join(''));
+                expect(html).toBe(
+                    [`<style data-tfs-s="${cls}">`, `.${cls} nav a{color:blue}`, '</style>', `<div class="${cls}">Nested</div>`].join(''),
+                );
             });
 
             it('does NOT auto-space #id when used alone', () => {
                 const cls = css({'#main': {display: 'grid'}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">ID</div>`);
                 expect(html).toContain(`.${cls}#main{display:grid}`);
-                expect(html).toBe(['<style>', `.${cls}#main{display:grid}`, '</style>', `<div class="${cls}">ID</div>`].join(''));
+                expect(html).toBe(
+                    [`<style data-tfs-s="${cls}">`, `.${cls}#main{display:grid}`, '</style>', `<div class="${cls}">ID</div>`].join(''),
+                );
             });
 
             it('does NOT auto-space .class when used alone', () => {
                 const cls = css({'.box': {border: '1px solid'}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">Class</div>`);
-                expect(html).toBe(['<style>', `.${cls}.box{border:1px solid}`, '</style>', `<div class="${cls}">Class</div>`].join(''));
+                expect(html).toBe(
+                    [`<style data-tfs-s="${cls}">`, `.${cls}.box{border:1px solid}`, '</style>', `<div class="${cls}">Class</div>`].join(
+                        '',
+                    ),
+                );
             });
 
             it('does NOT falsely match similar-looking non-tag selectors', () => {
                 const cls = css({inputy: {border: 'none'}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">Not Tag</div>`);
-                expect(html).toBe(['<style>', `.${cls}inputy{border:none}`, '</style>', `<div class="${cls}">Not Tag</div>`].join(''));
+                expect(html).toBe(
+                    [`<style data-tfs-s="${cls}">`, `.${cls}inputy{border:none}`, '</style>', `<div class="${cls}">Not Tag</div>`].join(''),
+                );
             });
 
             it('auto-spaces combinator >', () => {
                 const cls = css({'> p': {lineHeight: 1.2}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">Combinator</div>`);
-                expect(html).toBe(['<style>', `.${cls} > p{line-height:1.2}`, '</style>', `<div class="${cls}">Combinator</div>`].join(''));
+                expect(html).toBe(
+                    [
+                        `<style data-tfs-s="${cls}">`,
+                        `.${cls} > p{line-height:1.2}`,
+                        '</style>',
+                        `<div class="${cls}">Combinator</div>`,
+                    ].join(''),
+                );
             });
 
             it('auto-spaces combinator +', () => {
                 const cls = css({'+ p': {marginTop: '1rem'}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">Combinator</div>`);
-                expect(html).toBe(['<style>', `.${cls} + p{margin-top:1rem}`, '</style>', `<div class="${cls}">Combinator</div>`].join(''));
+                expect(html).toBe(
+                    [
+                        `<style data-tfs-s="${cls}">`,
+                        `.${cls} + p{margin-top:1rem}`,
+                        '</style>',
+                        `<div class="${cls}">Combinator</div>`,
+                    ].join(''),
+                );
             });
 
             it('auto-spaces combinator ~', () => {
                 const cls = css({'~ ul': {marginTop: '2rem'}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">Combinator</div>`);
                 expect(html).toBe(
-                    ['<style>', `.${cls} ~ ul{margin-top:2rem}`, '</style>', `<div class="${cls}">Combinator</div>`].join(''),
+                    [
+                        `<style data-tfs-s="${cls}">`,
+                        `.${cls} ~ ul{margin-top:2rem}`,
+                        '</style>',
+                        `<div class="${cls}">Combinator</div>`,
+                    ].join(''),
                 );
             });
 
@@ -2070,7 +2191,12 @@ describe('Modules - JSX - style - use', () => {
                 const cls = css({div: {[`*${css.is('h1', 'h2')}`]: {marginTop: '2rem'}}});
                 const html = engine.inject(`${MARKER}<div class="${cls}">Combinator</div>`);
                 expect(html).toBe(
-                    ['<style>', `.${cls} div *:is(h1, h2){margin-top:2rem}`, '</style>', `<div class="${cls}">Combinator</div>`].join(''),
+                    [
+                        `<style data-tfs-s="${cls}">`,
+                        `.${cls} div *:is(h1, h2){margin-top:2rem}`,
+                        '</style>',
+                        `<div class="${cls}">Combinator</div>`,
+                    ].join(''),
                 );
             });
         });
@@ -2104,7 +2230,12 @@ describe('Modules - JSX - style - use', () => {
                     },
                 });
                 expect(engine.inject(`${MARKER}<div class="${cls}">Headers</div>`)).toBe(
-                    ['<style>', '.tfaac61s *:is(h1, h2, h3){font-weight:bold}', '</style>', '<div class="tfaac61s">Headers</div>'].join(''),
+                    [
+                        '<style data-tfs-s="tf1b6zzds">',
+                        '.tf1b6zzds *:is(h1, h2, h3){font-weight:bold}',
+                        '</style>',
+                        '<div class="tf1b6zzds">Headers</div>',
+                    ].join(''),
                 );
             });
 
@@ -2115,9 +2246,12 @@ describe('Modules - JSX - style - use', () => {
                     },
                 });
                 expect(engine.inject(`${MARKER}<div class="${cls}">Direct Headers</div>`)).toBe(
-                    ['<style>', '.tfdtlncb > :is(h1, h2){font-size:2rem}', '</style>', '<div class="tfdtlncb">Direct Headers</div>'].join(
-                        '',
-                    ),
+                    [
+                        '<style data-tfs-s="tf4jrbvv">',
+                        '.tf4jrbvv > :is(h1, h2){font-size:2rem}',
+                        '</style>',
+                        '<div class="tf4jrbvv">Direct Headers</div>',
+                    ].join(''),
                 );
             });
         });
@@ -2135,9 +2269,12 @@ describe('Modules - JSX - style - use', () => {
                 });
 
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Equals</div>`)).toBe(
-                    ['<style>', '.tf1ci7xlj[data-active="true"]{color:red}', '</style>', '<div class="tf1ci7xlj">Attr Equals</div>'].join(
-                        '',
-                    ),
+                    [
+                        '<style data-tfs-s="tf1prf8nr">',
+                        '.tf1prf8nr[data-active="true"]{color:red}',
+                        '</style>',
+                        '<div class="tf1prf8nr">Attr Equals</div>',
+                    ].join(''),
                 );
             });
 
@@ -2147,7 +2284,12 @@ describe('Modules - JSX - style - use', () => {
                 });
 
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Presence</div>`)).toBe(
-                    ['<style>', '.tf1kwc03l[disabled]{opacity:0.5}', '</style>', '<div class="tf1kwc03l">Attr Presence</div>'].join(''),
+                    [
+                        '<style data-tfs-s="tf10d7b0h">',
+                        '.tf10d7b0h[disabled]{opacity:0.5}',
+                        '</style>',
+                        '<div class="tf10d7b0h">Attr Presence</div>',
+                    ].join(''),
                 );
             });
 
@@ -2158,10 +2300,10 @@ describe('Modules - JSX - style - use', () => {
 
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Starts With</div>`)).toBe(
                     [
-                        '<style>',
-                        '.tf1oml3hz[data-role^="adm"]{font-weight:bold}',
+                        '<style data-tfs-s="tf1i3yt6f">',
+                        '.tf1i3yt6f[data-role^="adm"]{font-weight:bold}',
                         '</style>',
-                        '<div class="tf1oml3hz">Attr Starts With</div>',
+                        '<div class="tf1i3yt6f">Attr Starts With</div>',
                     ].join(''),
                 );
             });
@@ -2172,9 +2314,12 @@ describe('Modules - JSX - style - use', () => {
                 });
 
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Ends With</div>`)).toBe(
-                    ['<style>', '.tf13fuixq[data-id$="42"]{opacity:0.5}', '</style>', '<div class="tf13fuixq">Attr Ends With</div>'].join(
-                        '',
-                    ),
+                    [
+                        '<style data-tfs-s="tfqboq1q">',
+                        '.tfqboq1q[data-id$="42"]{opacity:0.5}',
+                        '</style>',
+                        '<div class="tfqboq1q">Attr Ends With</div>',
+                    ].join(''),
                 );
             });
 
@@ -2185,10 +2330,10 @@ describe('Modules - JSX - style - use', () => {
 
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Contains</div>`)).toBe(
                     [
-                        '<style>',
-                        '.tf1xzovwh[data-label*="part"]{text-decoration:underline}',
+                        '<style data-tfs-s="tf9ofipt">',
+                        '.tf9ofipt[data-label*="part"]{text-decoration:underline}',
                         '</style>',
-                        '<div class="tf1xzovwh">Attr Contains</div>',
+                        '<div class="tf9ofipt">Attr Contains</div>',
                     ].join(''),
                 );
             });
@@ -2203,13 +2348,13 @@ describe('Modules - JSX - style - use', () => {
 
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Combo</div>`)).toBe(
                     [
-                        '<style>',
-                        '.tfmqkgag[data-active="true"]{color:green}',
-                        '.tfmqkgag[data-role^="adm"]{font-weight:bold}',
-                        '.tfmqkgag[data-id$="42"]{opacity:0.5}',
-                        '.tfmqkgag[data-label*="part"]{text-decoration:underline}',
+                        '<style data-tfs-s="tfijybug">',
+                        '.tfijybug[data-active="true"]{color:green}',
+                        '.tfijybug[data-role^="adm"]{font-weight:bold}',
+                        '.tfijybug[data-id$="42"]{opacity:0.5}',
+                        '.tfijybug[data-label*="part"]{text-decoration:underline}',
                         '</style>',
-                        '<div class="tfmqkgag">Attr Combo</div>',
+                        '<div class="tfijybug">Attr Combo</div>',
                     ].join(''),
                 );
             });
@@ -2236,15 +2381,17 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`${MARKER}<div class="${cls}">Drop</div>`)).toBe(
                 [
-                    '<style>',
-                    '@keyframes kftf1nm8f27 {',
+                    '<style data-tfs-s="tfi13zsv">',
+                    '@keyframes tfi13zsv {',
                     '0%{top:-50%;opacity:1}',
                     '60%{top:110%;opacity:0}',
                     '100%{top:110%;opacity:0}',
                     '}',
-                    '.tfgi3aad{animation:kftf1nm8f27 10s infinite}',
                     '</style>',
-                    '<div class="tfgi3aad">Drop</div>',
+                    '<style data-tfs-s="tf1tizmdh">',
+                    '.tf1tizmdh{animation:tfi13zsv 10s infinite}',
+                    '</style>',
+                    '<div class="tf1tizmdh">Drop</div>',
                 ].join(''),
             );
         });
@@ -2274,15 +2421,45 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`${MARKER}<div class="${cls}">Slide</div>`)).toBe(
                 [
-                    '<style>',
-                    '@keyframes kftfky3yn {',
+                    '<style data-tfs-s="tf18k37kf">',
+                    '@keyframes tf18k37kf {',
                     '0%{transform:translateX(-100%)}',
                     '50%{transform:translateX(0%)}',
                     '100%{transform:translateX(100%)}',
                     '}',
-                    '.tf1el6a0z{animation:kftfky3yn 5s linear infinite}',
                     '</style>',
-                    '<div class="tf1el6a0z">Slide</div>',
+                    '<style data-tfs-s="tfqy0903">',
+                    '.tfqy0903{animation:tf18k37kf 5s linear infinite}',
+                    '</style>',
+                    '<div class="tfqy0903">Slide</div>',
+                ].join(''),
+            );
+        });
+
+        it('Supports complex transforms in keyframes and appends at the end if no marker is found', () => {
+            const slide = css.keyframes({
+                '0%': {transform: 'translateX(-100%)'},
+                '50%': {transform: 'translateX(0%)'},
+                '100%': {transform: 'translateX(100%)'},
+            });
+
+            const cls = css({
+                animation: `${slide} 5s linear infinite`,
+            });
+
+            expect(engine.inject(`<div class="${cls}">Slide</div>`)).toBe(
+                [
+                    '<div class="tfqy0903">Slide</div>',
+                    '<style data-tfs-s="tf18k37kf">',
+                    '@keyframes tf18k37kf {',
+                    '0%{transform:translateX(-100%)}',
+                    '50%{transform:translateX(0%)}',
+                    '100%{transform:translateX(100%)}',
+                    '}',
+                    '</style>',
+                    '<style data-tfs-s="tfqy0903">',
+                    '.tfqy0903{animation:tf18k37kf 5s linear infinite}',
+                    '</style>',
                 ].join(''),
             );
         });
@@ -2300,15 +2477,17 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe(
                 [
-                    '<style>',
-                    '@keyframes kftfkzsft1 {',
+                    '<style data-tfs-s="tf9boemd">',
+                    '@keyframes tf9boemd {',
                     '0%{transform:translateY(0px) scale(1)}',
                     '50%{transform:translateY(-10px) scale(1.1)}',
                     '100%{transform:translateY(0px) scale(1)}',
                     '}',
-                    '.tf4e2llh{animation:kftfkzsft1 2s ease-in-out infinite}',
                     '</style>',
-                    '<div class="tf4e2llh">Bounce</div>',
+                    '<style data-tfs-s="tf1jpk5mp">',
+                    '.tf1jpk5mp{animation:tf9boemd 2s ease-in-out infinite}',
+                    '</style>',
+                    '<div class="tf1jpk5mp">Bounce</div>',
                 ].join(''),
             );
         });
@@ -2324,15 +2503,17 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe(
                 [
-                    '<style>',
-                    '@keyframes kftfkzsft1 {',
+                    '<style data-tfs-s="tf9boemd">',
+                    '@keyframes tf9boemd {',
                     '0%{transform:translateY(0px) scale(1)}',
                     '50%{transform:translateY(-10px) scale(1.1)}',
                     '100%{transform:translateY(0px) scale(1)}',
                     '}',
-                    '.tf4e2llh{animation:kftfkzsft1 2s ease-in-out infinite}',
                     '</style>',
-                    '<div class="tf4e2llh">Bounce</div>',
+                    '<style data-tfs-s="tf1jpk5mp">',
+                    '.tf1jpk5mp{animation:tf9boemd 2s ease-in-out infinite}',
+                    '</style>',
+                    '<div class="tf1jpk5mp">Bounce</div>',
                 ].join(''),
             );
         });
@@ -2357,25 +2538,29 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe(
                 [
-                    '<style>',
-                    '@keyframes kftfkzsft1 {',
+                    '<style data-tfs-s="tf9boemd">',
+                    '@keyframes tf9boemd {',
                     '0%{transform:translateY(0px) scale(1)}',
                     '50%{transform:translateY(-10px) scale(1.1)}',
                     '100%{transform:translateY(0px) scale(1)}',
                     '}',
-                    '@keyframes kftf1dngq2t {',
+                    '</style>',
+                    '<style data-tfs-s="tf17n8939">',
+                    '@keyframes tf17n8939 {',
                     '0%{transform:translateY(0px) scale(1)}',
                     '50%{transform:translateY(-5px) scale(1.05)}',
                     '100%{transform:translateY(0px) scale(1)}',
                     '}',
+                    '</style>',
+                    '<style data-tfs-s="tfmp86ei">',
                     '@media (min-width: 1200px){',
-                    '.tfh48it7{animation:kftfkzsft1 2s ease-in-out infinite}',
+                    '.tfmp86ei{animation:tf9boemd 2s ease-in-out infinite}',
                     '}',
                     '@media (max-width: 1199px){',
-                    '.tfh48it7{animation:kftf1dngq2t 1s ease-in-out infinite}',
+                    '.tfmp86ei{animation:tf17n8939 1s ease-in-out infinite}',
                     '}',
                     '</style>',
-                    '<div class="tfh48it7">Bounce</div>',
+                    '<div class="tfmp86ei">Bounce</div>',
                 ].join(''),
             );
         });
@@ -2400,20 +2585,22 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe(
                 [
-                    '<style>',
-                    '@keyframes kftfkzsft1 {',
+                    '<style data-tfs-s="tf9boemd">',
+                    '@keyframes tf9boemd {',
                     '0%{transform:translateY(0px) scale(1)}',
                     '50%{transform:translateY(-10px) scale(1.1)}',
                     '100%{transform:translateY(0px) scale(1)}',
                     '}',
+                    '</style>',
+                    '<style data-tfs-s="tfbh69jl">',
                     '@media (min-width: 1200px){',
-                    '.tf1fgnlu9{animation:kftfkzsft1 2s ease-in-out infinite}',
+                    '.tfbh69jl{animation:tf9boemd 2s ease-in-out infinite}',
                     '}',
                     '@media (max-width: 1199px){',
-                    '.tf1fgnlu9{animation:kftfkzsft1 1s ease-in-out infinite}',
+                    '.tfbh69jl{animation:tf9boemd 1s ease-in-out infinite}',
                     '}',
                     '</style>',
-                    '<div class="tf1fgnlu9">Bounce</div>',
+                    '<div class="tfbh69jl">Bounce</div>',
                 ].join(''),
             );
         });
@@ -2434,6 +2621,22 @@ describe('Modules - JSX - style - use', () => {
                 },
                 {inject: false},
             );
+
+            expect(engine.inject(`${MARKER}<div class="${cls}">Pulse</div>`)).toBe(`<div class="${cls}">Pulse</div>`);
+        });
+
+        it('Does not inject when disable injection is true', () => {
+            css.disableInjection();
+
+            const pulse = css.keyframes({
+                '0%': {transform: 'scale(1)'},
+                '50%': {transform: 'scale(1.1)'},
+                '100%': {transform: 'scale(1)'},
+            });
+
+            const cls = css({
+                animation: `${pulse} 3s ease-in-out`,
+            });
 
             expect(engine.inject(`${MARKER}<div class="${cls}">Pulse</div>`)).toBe(`<div class="${cls}">Pulse</div>`);
         });
@@ -2508,30 +2711,34 @@ describe('Modules - JSX - style - use', () => {
             for (const el of output) {
                 expect(el).toBe(
                     [
-                        '<style>',
-                        '@keyframes kftfss8l3s {',
+                        '<style data-tfs-s="tf1w2hawo">',
+                        '@keyframes tf1w2hawo {',
                         '0%{transform:scale(1);opacity:0.5}',
                         '50%{transform:scale(1.1);opacity:0.2}',
                         '100%{transform:scale(1);opacity:0.1}',
                         '}',
-                        '@keyframes kftf1jxp4lb {',
+                        '</style>',
+                        '<style data-tfs-s="tfbo5hof">',
+                        '@keyframes tfbo5hof {',
                         '0%{transform:scale(1)}',
                         '50%{transform:scale(1.1)}',
                         '100%{transform:scale(1)}',
                         '}',
-                        '.tf1cg6hcg{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                        '</style>',
+                        '<style data-tfs-s="tf1dg793l">',
+                        '.tf1dg793l{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
                         '@media (min-width: 1200px){',
-                        '.tf1cg6hcg > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
-                        '.tf1cg6hcg div{animation:kftfss8l3s 3s ease-in-out}',
-                        '.tf1cg6hcg{padding:var(--v-space_xl);justify-content:center}',
+                        '.tf1dg793l > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                        '.tf1dg793l div{animation:tf1w2hawo 3s ease-in-out}',
+                        '.tf1dg793l{padding:var(--v-space_xl);justify-content:center}',
                         '}',
                         '@media (max-width: 1199px){',
-                        '.tf1cg6hcg > span{display:none}',
-                        '.tf1cg6hcg div{animation:kftf1jxp4lb 3s ease-in-out}',
-                        '.tf1cg6hcg{padding:var(--v-space_l);justify-content:space-around}',
+                        '.tf1dg793l > span{display:none}',
+                        '.tf1dg793l div{animation:tfbo5hof 3s ease-in-out}',
+                        '.tf1dg793l{padding:var(--v-space_l);justify-content:space-around}',
                         '}',
                         '</style>',
-                        '<div class="tf1cg6hcg">Mix</div>',
+                        '<div class="tf1dg793l">Mix</div>',
                     ].join(''),
                 );
             }
