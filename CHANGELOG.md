@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ### Improved
 - **perf**: Improved `djb2Hash` utility (which is used to compute hashes in both the style and scripting engine) by applying bit twiddling below 4K chars and above 60K chars. Yielding **anywhere from 3% to 30% performance improvement depending on the size of the value**. Benchmark for this is available at `test/bench/utils/generic.bench.ts`.
 
+### Fixed
+- Fix an issue where in non-atomic mode we would wrap with atomic utils and atomic data proxy when instantiating script functions.
+
 ## [0.41.3] - 2025-06-29
 ### Improved
 - **deps**: Upgrade @cloudflare/workers-types to 4.20250628.0

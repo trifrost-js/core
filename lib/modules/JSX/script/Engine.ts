@@ -81,7 +81,7 @@ export class ScriptEngine {
             // --- Runner ---
             out += [
                 /* Global Utils */
-                `const TFU=w.${GLOBAL_UTILS_NAME};`,
+                this.atomic_enabled ? `const TFU=w.${GLOBAL_UTILS_NAME};` : '',
                 /* Loop through each function and instantiate vm */
                 'for(const id in TFF){',
                 'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
@@ -90,7 +90,13 @@ export class ScriptEngine {
                 /* Run function and pass data */
                 'const dId=n.getAttribute("data-tfhd");',
                 'try{',
-                `TFF[id]({el:n,data:w.${GLOBAL_DATA_REACTOR_NAME}(n,dId?TFD[dId]:{}),$:TFU})`,
+                'TFF[id]({',
+                'el:n,',
+                this.atomic_enabled
+                    ? `data:w.${GLOBAL_DATA_REACTOR_NAME}(n,dId?TFD[dId]:{})`
+                    : 'data:dId?TFD[dId]:{}',
+                this.atomic_enabled ? ',$:TFU' : '',
+                '})',
                 '}catch{}',
                 this.atomic_enabled ? ATOMIC_VM_AFTER : '',
                 '}',
