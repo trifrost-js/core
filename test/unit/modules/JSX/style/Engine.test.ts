@@ -145,6 +145,52 @@ describe('Modules – JSX – style – Engine', () => {
             engine.register(null, 'tfnull', {});
             expect(engine.flush({mode: 'file'})).toBe('');
         });
+
+        it('Registers global rule with selector explicitly set to null', () => {
+            engine.register('@keyframes fadeIn{0%{opacity:0}100%{opacity:1}}', 'fadeInKeyframes', {selector: null});
+            const out = engine.flush({mode: 'file'});
+            expect(out).toContain('@keyframes fadeIn{0%{opacity:0}100%{opacity:1}}');
+        });
+
+        it('Handles @font-face block with selector null', () => {
+            engine.register('@font-face { font-family: "MyFont"; src: url(font.woff2); }', 'tfFont', {
+                selector: null,
+            });
+
+            const out = engine.flush({mode: 'file'});
+            expect(out).toBe('@font-face { font-family: "MyFont"; src: url(font.woff2); }');
+        });
+
+        it('Registers rule with undefined selector falls back to class name', () => {
+            const name = 'tfabc123';
+            engine.register('color:green', name, {
+                /* no selector */
+            });
+            const out = engine.flush({mode: 'file'});
+            expect(out).toContain(`.${name}{color:green}`);
+        });
+
+        it('Registers rule with explicit selector', () => {
+            engine.register('color:blue', 'tftest', {selector: '.foo'});
+            expect(engine.flush({mode: 'file'})).toBe('.foo{color:blue}');
+        });
+
+        it('Registers rule with selector undefined (uses default)', () => {
+            engine.register('color:green', 'tfgreen', {});
+            expect(engine.flush({mode: 'file'})).toBe('.tfgreen{color:green}');
+        });
+
+        it('Registers rule with selector null (outputs rule directly)', () => {
+            engine.register('body{margin:0}', 'tfbody', {selector: null});
+            expect(engine.flush({mode: 'file'})).toBe('body{margin:0}');
+        });
+
+        it('Registers media rule with selector null (global rule)', () => {
+            const query = '@media (min-width: 1024px)';
+            engine.register('html{font-size:18px}', 'globalFontSize', {query, selector: null});
+            const out = engine.flush({mode: 'file'});
+            expect(out).toContain(`${query}{html{font-size:18px}}`);
+        });
     });
 
     describe('flush()', () => {
@@ -564,6 +610,13 @@ describe('Modules – JSX – style – Engine', () => {
     });
 
     describe('inject()', () => {
+        it('Returns an empty string if disabled and not passed an html string', () => {
+            engine.setDisabled(true);
+            for (const el of CONSTANTS.NOT_STRING) {
+                expect(engine.inject(el as any)).toBe('');
+            }
+        });
+
         it('Replaces marker if present', () => {
             const cls = 'tf' + djb2Hash('color:red');
             engine.register('color:red', cls, {});

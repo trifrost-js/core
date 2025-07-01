@@ -126,13 +126,15 @@ export class StyleEngine {
 
         if (!query) {
             if (rule[0] === '@') {
-                entry.base.add((selector !== null ? (selector ?? '.' + name) : '') + rule.trim());
+                entry.base.add(rule.trim());
             } else {
-                entry.base.add((selector !== null ? (selector ?? '.' + name) : '') + '{' + rule.trim() + '}');
+                const prefix = selector !== null ? (selector ?? '.' + name) : '';
+                entry.base.add(prefix + (selector === null ? rule.trim() : `{${rule.trim()}}`));
             }
         } else {
             if (!entry.media[query]) entry.media[query] = new Set();
-            entry.media[query].add((selector !== null ? (selector ?? '.' + name) : '') + '{' + rule.trim() + '}');
+            const prefix = selector !== null ? (selector ?? '.' + name) : '';
+            entry.media[query].add(prefix ? prefix + '{' + rule.trim() + '}' : rule.trim());
         }
     }
 
@@ -151,12 +153,11 @@ export class StyleEngine {
 
                 for (const name of order) {
                     const entry = this.rules[name];
-                    if (entry) {
-                        if (entry.base) out += [...entry.base].join('');
-                        if (entry.media) {
-                            for (const query in entry.media) {
-                                (media[query] ??= []).push(...entry.media[query]);
-                            }
+
+                    if (entry.base) out += [...entry.base].join('');
+                    if (entry.media) {
+                        for (const query in entry.media) {
+                            (media[query] ??= []).push(...entry.media[query]);
                         }
                     }
                 }
@@ -170,14 +171,12 @@ export class StyleEngine {
                 } else if (opts.mode === 'style') {
                     if (!out) return '';
                     return n_nonce ? `<style nonce="${n_nonce}">${out}</style>` : `<style>${out}</style>`;
-                } else if (opts.mode === 'prime') {
+                } else {
                     const observer = (n_nonce ? '<script nonce="' + n_nonce + '">' : '<script>') + OBSERVER + '</script>';
 
                     return n_nonce
                         ? `<style nonce="${n_nonce}" ${PRIME}>${out}</style>${observer}`
                         : `<style ${PRIME}>${out}</style>${observer}`;
-                } else {
-                    return '';
                 }
             }
             case 'shards': {
@@ -185,7 +184,6 @@ export class StyleEngine {
 
                 for (const name of order) {
                     const entry = this.rules[name];
-                    if (!entry) continue;
 
                     // Build the style block
                     let content = '';
