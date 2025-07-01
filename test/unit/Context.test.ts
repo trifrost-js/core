@@ -8,6 +8,7 @@ import {type TriFrostRootLogger} from '../../lib/modules/Logger/RootLogger';
 import {type TriFrostContextConfig} from '../../lib/types/context';
 import CONSTANTS from '../constants';
 import {Cookies} from '../../lib/modules';
+import {NONCE_WIN_SCRIPT} from '../../lib/modules/JSX/ctx/nonce';
 
 class TestContext extends Context {
     constructor(logger: TriFrostRootLogger, cfg: TriFrostContextConfig, req: any) {
@@ -908,7 +909,6 @@ describe('Context', () => {
         const originalFetch = globalThis.fetch;
 
         beforeEach(() => {
-            /* @ts-expect-error Should be good */
             globalThis.fetch = vi.fn();
             ctx.logger.setAttributes = vi.fn();
             ctx.logger.span = vi.fn((_, fn) => fn());
@@ -1233,6 +1233,71 @@ describe('Context', () => {
             ctx.setStatus(418);
             ctx.html('<html><body></body></html>');
             expect(ctx.statusCode).toBe(418);
+        });
+
+        it('Injects nonce script and cookie on full-page HTML with CSP', () => {
+            const html = '<!DOCTYPE html><html><head></head><body><h1>Hello</h1></body></html>';
+            const spySetCookie = vi.spyOn(ctx.cookies, 'set');
+
+            ctx.setHeader('Content-Security-Policy', "script-src 'self' 'nonce-abc123'");
+            ctx.html(html);
+
+            const expectedNonce = ctx.nonce;
+            /* @ts-expect-error Should be good */
+            expect(ctx.res_body).toBe(
+                [
+                    '<!DOCTYPE html>',
+                    '<html>',
+                    '<head>',
+                    NONCE_WIN_SCRIPT(expectedNonce),
+                    '</head>',
+                    '<body><h1>Hello</h1></body>',
+                    '</html>',
+                ].join(''),
+            );
+            expect(spySetCookie).toHaveBeenCalledWith(
+                'tfnonce',
+                expectedNonce,
+                expect.objectContaining({
+                    httponly: true,
+                    secure: true,
+                    maxage: 86400,
+                }),
+            );
+        });
+
+        it('Rewrites nonce attributes and CSP on fragment HTML', () => {
+            const fragment = '<div><style nonce="xyz">.test{}</style></div>';
+            ctx.cookies.set('tfnonce', 'noncified');
+            ctx.setHeader('Content-Security-Policy', "style-src 'self' 'nonce-xyz'");
+
+            ctx.html(fragment);
+
+            const expectedNonce = ctx.nonce;
+            /* @ts-expect-error Should be good */
+            expect(ctx.res_body).toBe(['<div>', '<style nonce="noncified">.test{}</style></div>'].join(''));
+            /* @ts-expect-error Should be good */
+            expect(ctx.res_headers['Content-Security-Policy']).toBe("style-src 'self' 'nonce-noncified'");
+        });
+
+        it('Does not rewrite nonce attributes if no tfnonce is set for fragment HTML', () => {
+            const fragment = '<div><style nonce="xyz">.test{}</style></div>';
+            ctx.setState({nonce: 'xyz'});
+            ctx.setHeader('Content-Security-Policy', "style-src 'self' 'nonce-xyz'");
+
+            ctx.html(fragment);
+
+            /* @ts-expect-error Should be good */
+            expect(ctx.res_body).toBe(['<div>', '<style nonce="xyz">.test{}</style></div>'].join(''));
+            /* @ts-expect-error Should be good */
+            expect(ctx.res_headers['Content-Security-Policy']).toBe("style-src 'self' 'nonce-xyz'");
+        });
+
+        it('Skips nonce injection if CSP is missing', () => {
+            const html = '<!DOCTYPE html><html><body>OK</body></html>';
+            ctx.html(html);
+            /* @ts-expect-error Should be good */
+            expect(ctx.res_body).not.toContain('window.$tfnonce');
         });
 
         it('Throws if context is locked', () => {
@@ -1831,6 +1896,26 @@ describe('Context', () => {
             const result = ctx.render(jsx);
             expect(result).toBe('<!empty>');
             spy.mockRestore();
+        });
+
+        it('Passes css/script to render override', async () => {
+            const dummyCss = {inject: vi.fn()};
+            const dummyScript = vi.fn();
+
+            const overrideOpts = {
+                css: dummyCss,
+                script: dummyScript,
+            };
+
+            const jsx = {type: 'style-test', props: {children: 'test'}};
+            const rootRender = vi
+                .spyOn(await import('../../lib/modules/JSX/render'), 'rootRender')
+                .mockReturnValue('<style-test>test</style-test>');
+
+            ctx.render(jsx as any, overrideOpts as any);
+            expect(rootRender).toHaveBeenCalledWith(ctx, jsx, expect.objectContaining(overrideOpts));
+
+            rootRender.mockRestore();
         });
     });
 

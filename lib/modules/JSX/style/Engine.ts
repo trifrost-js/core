@@ -55,16 +55,14 @@ export const OBSERVER = atomicMinify(`(function(){
                     }
                 }
             }
-            /* Rebuild prime */
+            /* Build a prime shard and append after prime */
             if (pp.size) {
                 const nN = document.createElement("style");
                 const nS = window.$${NONCEMARKER};
                 if (typeof nS === "string" && nS.length) nN.setAttribute("nonce", nS);
-                nN.setAttribute("${PRIME}", "");
-                nN.textContent = prime.textContent + [...pp.values()].join("");
-
-                prime.replaceWith(nN);
-                prime = nN;
+                nN.setAttribute("${PRIME}s", "");
+                nN.textContent = [...pp.values()].join("");
+                prime.after(nN);
             }
         });
 

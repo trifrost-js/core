@@ -2,6 +2,7 @@ import {isObject} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
 import {type TriFrostCache} from './modules/Cache';
 import {Cookies} from './modules/Cookies';
+import {NONCE_WIN_SCRIPT, NONCEMARKER} from './modules/JSX/ctx/nonce';
 import {rootRender} from './modules/JSX/render';
 import {type TriFrostLogger, type TriFrostRootLogger} from './modules/Logger';
 import {ParseAndApplyCacheControl} from './middleware/CacheControl';
@@ -27,7 +28,7 @@ import {
     type TriFrostContextRenderOptions,
 } from './types/context';
 import {encodeFilename} from './utils/Http';
-import {hexId} from './utils/Generic';
+import {hexId, injectBefore} from './utils/Generic';
 import {type TriFrostBodyParserOptions, type ParsedBody} from './utils/BodyParser/types';
 
 type RequestConfig = {
@@ -700,6 +701,30 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
             /* Auto-prepend <!DOCTYPE html> if starts with <html */
             html = html.trimStart();
             if (html.startsWith('<html')) html = '<!DOCTYPE html>' + html;
+
+            /**
+             * If html starts with doctype we know its a full page render
+             * - full page: set tfnonce cookie and add tfnonce script for clientside usage
+             * - partial page: swap out nonce usage with cookie nonce to ensure compliance with used values
+             */
+            const csp = this.res_headers['Content-Security-Policy'];
+            if (csp && csp.indexOf('nonce') > 0) {
+                if (html.startsWith('<!DOCTYPE')) {
+                    this.cookies.set(NONCEMARKER, this.nonce, {
+                        httponly: true,
+                        secure: true,
+                        maxage: 86400,
+                        samesite: 'Lax',
+                    });
+                    html = injectBefore(html, NONCE_WIN_SCRIPT(this.nonce), ['</head>', '</body>', '</html>']);
+                } else {
+                    const cookieNonce = this.cookies.get(NONCEMARKER);
+                    if (cookieNonce) {
+                        html = html.replace(/nonce="[^"]+"/g, 'nonce="' + cookieNonce + '"');
+                        this.setHeader('Content-Security-Policy', csp.replace(/'nonce-[^']*'/g, "'nonce-" + cookieNonce + "'"));
+                    }
+                }
+            }
 
             this.res_body = html;
 
