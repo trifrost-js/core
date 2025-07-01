@@ -17,6 +17,50 @@ describe('Modules – JSX – style – Engine', () => {
         setActiveCtx(null);
     });
 
+    describe('OBSERVER', () => {
+        it('Should be minified correctly', () => {
+            expect(OBSERVER).toBe(
+                [
+                    '(function(){',
+                    'const cn=new Set();',
+                    'let prime=document.querySelector("style[data-tfs-p]");',
+                    'if(!prime)return;',
+                    'const cnr=/\\.([a-zA-Z0-9_-]+)[,{]/g;',
+                    'let m;',
+                    'while((m=cnr.exec(prime.textContent)))cn.add(m[1]);',
+                    'function boot(){',
+                    'const o=new MutationObserver(e=>{',
+                    'let pp=new Set();',
+                    'for(let i=0;i<e.length;i++){',
+                    'for(let y=0;y<e[i].addedNodes.length;y++){',
+                    'const nA=e[i].addedNodes[y];',
+                    'if(nA.nodeType===Node.ELEMENT_NODE&&nA.tagName==="STYLE"&&nA.hasAttribute("data-tfs-s")){',
+                    'const s=nA.getAttribute("data-tfs-s");',
+                    'if(!s||cn.has(s)){',
+                    'nA.remove();',
+                    'continue;',
+                    '}',
+                    'cn.add(s);',
+                    'if(nA.textContent)pp.add(nA.textContent);',
+                    'nA.remove();',
+                    '}}}',
+                    'if(pp.size){',
+                    'const nN=document.createElement("style");',
+                    'const nS=window.$tfnonce;',
+                    'if(typeof nS==="string"&&nS.length)nN.setAttribute("nonce",nS);',
+                    'nN.setAttribute("data-tfs-p","");',
+                    'nN.textContent=prime.textContent+[...pp.values()].join("");',
+                    'prime.replaceWith(nN);',
+                    'prime=nN;',
+                    '}});',
+                    'o.observe(document.body,{childList:true,subtree:true});',
+                    '}',
+                    'if(document.body){boot();}else{document.addEventListener("DOMContentLoaded",boot);}})();',
+                ].join(''),
+            );
+        });
+    });
+
     describe('register()', () => {
         it('Registers base styles correctly under default selector', () => {
             const cls = 'tf' + djb2Hash('color:red');

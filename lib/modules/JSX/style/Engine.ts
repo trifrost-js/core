@@ -1,7 +1,7 @@
 import {MARKER} from './Style';
-import {nonce} from '../ctx/nonce';
+import {nonce, NONCEMARKER} from '../ctx/nonce';
 import {atomicMinify} from '../script/util';
-import {djb2Hash} from '../../../utils/Generic';
+import {djb2Hash, injectBefore} from '../../../utils/Generic';
 
 type StyleEngineRegisterOptions = {
     /**
@@ -23,7 +23,7 @@ export const PRIME = 'data-tfs-p';
 export const SHARD = 'data-tfs-s';
 export const OBSERVER = atomicMinify(`(function(){
     const cn = new Set();
-    const prime = document.querySelector('style[${PRIME}]');
+    let prime = document.querySelector("style[${PRIME}]");
     if (!prime) return;
 
     /* Scan primary for known classes */
@@ -32,16 +32,18 @@ export const OBSERVER = atomicMinify(`(function(){
     while ((m = cnr.exec(prime.textContent))) cn.add(m[1]);
 
     function boot() {
-        const o = new MutationObserver(muts => {
+        const o = new MutationObserver(e => {
+            /* Scan mutations for shard style blocks */
             let pp = new Set();
-            for (const m of muts) {
-                for (const nA of m.addedNodes) {
+            for (let i = 0; i < e.length; i++) {
+                for (let y = 0; y < e[i].addedNodes.length; y++) {
+                    const nA = e[i].addedNodes[y];
                     if (
                         nA.nodeType === Node.ELEMENT_NODE &&
-                        nA.tagName === 'STYLE' &&
-                        nA.hasAttribute('data-tfs-shard')
+                        nA.tagName === "STYLE" &&
+                        nA.hasAttribute("${SHARD}")
                     ) {
-                        const s = nA.getAttribute('data-tfs-shard');
+                        const s = nA.getAttribute("${SHARD}");
                         if (!s || cn.has(s)) {
                             nA.remove();
                             continue;
@@ -53,7 +55,17 @@ export const OBSERVER = atomicMinify(`(function(){
                     }
                 }
             }
-            if (pp.size) prime.appendChild(document.createTextNode([...pp.values()].join('')));
+            /* Rebuild prime */
+            if (pp.size) {
+                const nN = document.createElement("style");
+                const nS = window.$${NONCEMARKER};
+                if (typeof nS === "string" && nS.length) nN.setAttribute("nonce", nS);
+                nN.setAttribute("${PRIME}", "");
+                nN.textContent = prime.textContent + [...pp.values()].join("");
+
+                prime.replaceWith(nN);
+                prime = nN;
+            }
         });
 
         o.observe(document.body, {childList: true, subtree: true});
@@ -62,7 +74,7 @@ export const OBSERVER = atomicMinify(`(function(){
     if (document.body) {
         boot();
     } else {
-        document.addEventListener('DOMContentLoaded', boot);
+        document.addEventListener("DOMContentLoaded", boot);
     }
 })();`);
 
@@ -241,24 +253,10 @@ export class StyleEngine {
             return before + mount_styles + styles + after;
         }
 
-        /* Try inject before </head> */
-        const head_idx = html.indexOf('</head>');
-        if (head_idx >= 0) {
-            const before = html.slice(0, head_idx);
-            const after = html.slice(head_idx);
-            return before + mount_styles + styles + after;
-        }
+        /* If in shard/fragment mode */
+        if (mode === 'shards') return html + styles;
 
-        /* Try inject before </body> */
-        const body_idx = html.indexOf('</body>');
-        if (body_idx >= 0) {
-            const before = html.slice(0, body_idx);
-            const after = html.slice(body_idx);
-            return before + mount_styles + styles + after;
-        }
-
-        /* Fragment */
-        return html + styles;
+        return injectBefore(html, mount_styles + styles, ['</head>', '</body>']);
     }
 
     /**
