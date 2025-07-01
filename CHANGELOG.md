@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.42.2] - 2025-07-01
+### Improved
+- **feat**: The new style sharding strategy is now `nonce` compliant as well. A `tfnonce` is now issued as an **httpOnly secure cookie** during full page SSR. This allows fragment renders to work with nonce propagation for the nonce that is currently in use on the full page.
+
 ## [0.42.1] - 2025-06-30
 ### Fixed
 - Fix behavior where document.body is not available yet, causing mutation observer to not function properly
