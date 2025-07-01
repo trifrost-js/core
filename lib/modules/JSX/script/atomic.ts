@@ -204,12 +204,13 @@ export const ATOMIC_GLOBAL = atomicMinify(`
         }
         if (!window.${GLOBAL_OBSERVER_NAME}) {
             const observer = new MutationObserver(e => {
-                for (let x of e) {
-                    for (let nRemoved of x.removedNodes) {
-                        if (nRemoved.${VM_NAME}) {
-                            if (typeof nRemoved.${VM_HOOK_UNMOUNT_NAME} === "function") try {nRemoved.${VM_HOOK_UNMOUNT_NAME}()} catch {}
-                            window.${GLOBAL_RELAY_NAME}?.unsubscribe(nRemoved.${VM_ID_NAME});
-                            window.${GLOBAL_CLOCK}?.delete(nRemoved.${VM_ID_NAME});
+                for (let i = 0; i < e.length; i++) {
+                    for (let y = 0; y < e[i].removedNodes.length; y++) {
+                        const nR = e[i].removedNodes[y];
+                        if (nR.${VM_NAME}) {
+                            if (typeof nR.${VM_HOOK_UNMOUNT_NAME} === "function") try {nR.${VM_HOOK_UNMOUNT_NAME}()} catch {}
+                            window.${GLOBAL_RELAY_NAME}?.unsubscribe(nR.${VM_ID_NAME});
+                            window.${GLOBAL_CLOCK}?.delete(nR.${VM_ID_NAME});
                         }
                     }
                 }
