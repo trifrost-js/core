@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.42.4] - 2025-07-01
+### Improved
+- **qol**: `ctx.render` will now also automatically prepend `<!DOCTYPE html>` if it sees a full page html string
+
 ## [0.42.3] - 2025-07-01
 ### Improved
 - **qol**: All core globals within the **atomic runtime** are now defined using a unified `def()` helper that marks them as fully immutable. This ensures they can’t be overwritten, redefined, or deleted at runtime, closing off accidental or malicious tampering from userland and solidifying the runtime's integrity.
