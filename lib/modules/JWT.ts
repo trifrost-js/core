@@ -33,7 +33,7 @@ export type JWTData<Payload = {}> = JWTPayload<Payload> & {
  * @see https://jwt.io/introduction
  */
 export type JWTVerifyOptions = {
-    algorithm: SupportedAlgorithms;
+    algorithm?: SupportedAlgorithms;
     leeway?: number;
     issuer?: string;
     audience?: string | string[];
@@ -154,7 +154,10 @@ export function jwtDecode<Payload = {}>(token: string): JWTData<Payload> {
  * @throws Error if the payload is invalid or secret is missing.
  * @see https://jwt.io
  */
-export async function jwtSign<Payload = {}>(secret: string | JsonWebKey | CryptoKey, options: JWTSignOptions<Payload>): Promise<string> {
+export async function jwtSign<Payload = {}>(
+    secret: string | JsonWebKey | CryptoKey,
+    options: JWTSignOptions<Payload> = {},
+): Promise<string> {
     if (!secret) throw new Error('JWT@sign: Secret must be provided');
     if (!isObject(options)) throw new Error('JWT@sign: Options must be provided');
 
@@ -222,10 +225,11 @@ export async function jwtSign<Payload = {}>(secret: string | JsonWebKey | Crypto
 export async function jwtVerify<Payload = {}>(
     token: string,
     secret: string | JsonWebKey | CryptoKey,
-    options: JWTVerifyOptions,
+    options: JWTVerifyOptions = {},
 ): Promise<JWTData<Payload> | null> {
     const parts = token.split('.');
     if (parts.length !== 3) throw new JWTMalformedError();
+    if (!isObject(options)) throw new Error('JWT@verify: Options must be provided');
 
     const [raw_header, raw_payload, sig] = parts;
     if (!raw_header || !raw_payload) throw new JWTMalformedError();
@@ -259,8 +263,9 @@ export async function jwtVerify<Payload = {}>(
 
     /* Verify algorithm */
     const alg = decoded._header.alg;
+    const optalg = options.algorithm || 'HS256';
     if (!alg || !(alg in ALGOS)) throw new JWTAlgorithmError('UNSUPPORTED');
-    if (alg !== options.algorithm) throw new JWTAlgorithmError('MISMATCH');
+    if (alg !== optalg) throw new JWTAlgorithmError('MISMATCH');
 
     /* If alg is none, no need to continue verifying */
     if (alg === 'none') return decoded;

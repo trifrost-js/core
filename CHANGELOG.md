@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ## [Unreleased]
 ### Improved
 - **qol**: Add exports for `JWTError`, `JWTMalformedError`, `JWTTypeError`, `JWTTimeError`, `JWTClaimError`, `JWTAlgorithmError`, `JWTSignatureError`
+- **qol**: Make `algorithm` option when verifying JWT optional and default to `HS256` (the same default as when signing)
 
 ## [0.42.4] - 2025-07-01
 ### Improved

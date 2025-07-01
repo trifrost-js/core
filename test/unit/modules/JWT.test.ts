@@ -168,6 +168,7 @@ describe('Modules - JWT', () => {
 
         it('Throws if payload is not an object', async () => {
             for (const el of CONSTANTS.NOT_OBJECT) {
+                if (el === undefined) continue;
                 await expect(() => jwtSign(SECRET, el as any)).rejects.toThrow();
             }
         });
@@ -217,6 +218,20 @@ describe('Modules - JWT', () => {
             const token = await jwtSign(SECRET, {payload: {role: 'admin'}});
             const result = await jwtVerify<{role: string}>(token, SECRET, {algorithm: 'HS256'});
             expect(result!.role).toBe('admin');
+        });
+
+        it('Verifies a valid token with default algorithm', async () => {
+            const token = await jwtSign(SECRET, {payload: {role: 'admin'}});
+            const result = await jwtVerify<{role: string}>(token, SECRET);
+            expect(result!.role).toBe('admin');
+        });
+
+        it('Throws if options is passed as a non-object', async () => {
+            const token = await jwtSign(SECRET, {subject: 1});
+            for (const el of CONSTANTS.NOT_OBJECT) {
+                if (el === undefined) continue;
+                await expect(jwtVerify(token, 'wrong', el as any)).rejects.toThrow(Error);
+            }
         });
 
         it('Fails with invalid signature', async () => {
