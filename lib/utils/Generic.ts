@@ -95,6 +95,16 @@ export function djb2Hash(val: string) {
 }
 
 /**
+ * Prepends the provided html string with Doctype if necessary
+ *
+ * @param {string} html - HTML string to prepend
+ */
+export function prependDocType(html: string) {
+    if (typeof html !== 'string') return '';
+    return html.startsWith('<html') ? '<!DOCTYPE html>' + html : html;
+}
+
+/**
  * Inject a value into a target before specific candidate markers
  * eg: injectBefore(html, '<script>blabla</script>', ['</head>', '</body>'])
  *

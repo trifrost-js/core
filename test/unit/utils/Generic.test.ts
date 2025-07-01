@@ -8,6 +8,7 @@ import {
     determineVersion,
     determinePort,
     injectBefore,
+    prependDocType,
 } from '../../../lib/utils/Generic';
 import CONSTANTS from '../../constants';
 
@@ -102,6 +103,28 @@ describe('Utils - Generic', () => {
             const hash = djb2Hash(long);
             expect(typeof hash).toBe('string');
             expect(hash.length).toBeGreaterThan(0);
+        });
+    });
+
+    describe('prependDocType', () => {
+        it('Returns an empty string if provided a non-string', () => {
+            for (const el of CONSTANTS.NOT_STRING) {
+                expect(prependDocType(el as any)).toBe('');
+            }
+        });
+
+        it('Returns the provided string if it doesnt start with html', () => {
+            expect(prependDocType('<span>Hello</span>')).toBe('<span>Hello</span>');
+            expect(prependDocType('<body>Hello</body>')).toBe('<body>Hello</body>');
+            expect(prependDocType('Hello World')).toBe('Hello World');
+        });
+
+        it('Returns the provided string prefixed with <!DOCTYPE html> if it starts with <html', () => {
+            expect(prependDocType('<html><body>Hello</body></html>')).toBe('<!DOCTYPE html><html><body>Hello</body></html>');
+        });
+
+        it('Does not prepend already prefixed html', () => {
+            expect(prependDocType('<!DOCTYPE html><html><body>Hello</body></html>')).toBe('<!DOCTYPE html><html><body>Hello</body></html>');
         });
     });
 

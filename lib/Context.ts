@@ -28,7 +28,7 @@ import {
     type TriFrostContextRenderOptions,
 } from './types/context';
 import {encodeFilename} from './utils/Http';
-import {hexId, injectBefore} from './utils/Generic';
+import {hexId, injectBefore, prependDocType} from './utils/Generic';
 import {type TriFrostBodyParserOptions, type ParsedBody} from './utils/BodyParser/types';
 
 type RequestConfig = {
@@ -624,7 +624,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
      * Render a JSX body to a string
      */
     render(body: JSX.Element, opts?: TriFrostContextRenderOptions): string {
-        return rootRender<Env, State>(this, body, (opts || this.ctx_config) as TriFrostContextConfig<Env>);
+        return prependDocType(rootRender<Env, State>(this, body, (opts || this.ctx_config) as TriFrostContextConfig<Env>));
     }
 
     /**
@@ -699,8 +699,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
             let html = typeof body === 'string' ? body : this.render(body, this.ctx_config);
 
             /* Auto-prepend <!DOCTYPE html> if starts with <html */
-            html = html.trimStart();
-            if (html.startsWith('<html')) html = '<!DOCTYPE html>' + html;
+            html = prependDocType(html.trimStart());
 
             /**
              * If html starts with doctype we know its a full page render

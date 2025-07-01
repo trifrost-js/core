@@ -1917,6 +1917,13 @@ describe('Context', () => {
 
             rootRender.mockRestore();
         });
+
+        it('Prepends with DOCTYPE if full page html', async () => {
+            const configOverride = {env: {}, cookies: {}, cache: null, trustProxy: false};
+            const jsx = {type: 'html', props: {children: {type: 'span', props: {children: 'Custom'}}}};
+            const result = ctx.render(jsx as any, configOverride as any);
+            expect(result).toBe('<!DOCTYPE html><html><span>Custom</span></html>');
+        });
     });
 
     describe('setStatus()', () => {
