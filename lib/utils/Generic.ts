@@ -95,6 +95,22 @@ export function djb2Hash(val: string) {
 }
 
 /**
+ * Inject a value into a target before specific candidate markers
+ * eg: injectBefore(html, '<script>blabla</script>', ['</head>', '</body>'])
+ *
+ * @param {string} target - Target to inject into
+ * @param {string} val - Value to inject
+ * @param {string[]} candidates - Candidate markers to inject before (fallback behavior)
+ */
+export function injectBefore(target: string, val: string, candidates: string[]) {
+    for (let i = 0; i < candidates.length; i++) {
+        const idx = target.indexOf(candidates[i]);
+        if (idx >= 0) return target.slice(0, idx) + val + target.slice(idx);
+    }
+    return target;
+}
+
+/**
  * Determines based on a provided env object whether or not we're running in dev mode
  *
  * @param {Record<string, unknown>} env - Env object to check from

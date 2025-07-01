@@ -1,5 +1,14 @@
 import {describe, it, expect} from 'vitest';
-import {hexId, djb2Hash, isDevMode, determineDebug, determineName, determineVersion, determinePort} from '../../../lib/utils/Generic';
+import {
+    hexId,
+    djb2Hash,
+    isDevMode,
+    determineDebug,
+    determineName,
+    determineVersion,
+    determinePort,
+    injectBefore,
+} from '../../../lib/utils/Generic';
 import CONSTANTS from '../../constants';
 
 describe('Utils - Generic', () => {
@@ -93,6 +102,58 @@ describe('Utils - Generic', () => {
             const hash = djb2Hash(long);
             expect(typeof hash).toBe('string');
             expect(hash.length).toBeGreaterThan(0);
+        });
+    });
+
+    describe('injectBefore', () => {
+        it('Injects before the first candidate found', () => {
+            const html = '<html><head></head><body></body></html>';
+            const val = '<script>alert(1)</script>';
+            const out = injectBefore(html, val, ['</head>', '</body>']);
+            expect(out).toContain(val);
+            expect(out.indexOf(val)).toBeLessThan(out.indexOf('</head>'));
+        });
+
+        it('Falls back to the next candidate if the first is not found', () => {
+            const html = '<html><body></body></html>';
+            const val = '<style>.x{}</style>';
+            const out = injectBefore(html, val, ['</head>', '</body>']);
+            expect(out).toContain(val);
+            expect(out.indexOf(val)).toBeLessThan(out.indexOf('</body>'));
+        });
+
+        it('Returns the original string if no candidates match', () => {
+            const html = '<div>Hello</div>';
+            const val = '<style>.test{}</style>';
+            const out = injectBefore(html, val, ['</head>', '</footer>']);
+            expect(out).toBe(html);
+        });
+
+        it('Handles empty candidate list gracefully', () => {
+            const html = '<div>Foo</div>';
+            const out = injectBefore(html, '<x>', []);
+            expect(out).toBe(html);
+        });
+
+        it('Handles empty value gracefully', () => {
+            const html = '<html><body></body></html>';
+            const out = injectBefore(html, '', ['</body>']);
+            expect(out).toBe('<html><body></body></html>');
+        });
+
+        it('Handles multiple candidate matches (only inserts before first)', () => {
+            const html = '<div></div><footer></footer>';
+            const val = '<!-- injected -->';
+            const out = injectBefore(html, val, ['</footer>', '</div>']);
+            expect(out.indexOf(val)).toBe(html.indexOf('</footer>'));
+        });
+
+        it('Injects into complex HTML structures', () => {
+            const html = '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><main></main></body></html>';
+            const val = '<script src="x.js"></script>';
+            const out = injectBefore(html, val, ['</head>', '</body>']);
+            expect(out).toContain(val);
+            expect(out.indexOf(val)).toBeLessThan(out.indexOf('</head>'));
         });
     });
 
