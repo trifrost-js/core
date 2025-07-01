@@ -12,7 +12,18 @@ import {cache, cacheFn, cacheSkip} from '../../lib/modules/Cache/util';
 import {ConsoleExporter, JsonExporter, OtelHttpExporter, span, spanFn} from '../../lib/modules/Logger';
 import {createCss, Style} from '../../lib/modules/JSX/style';
 import {createScript} from '../../lib/modules/JSX/script';
-import {jwtSign, jwtVerify, jwtDecode} from '../../lib/modules/JWT';
+import {
+    jwtSign,
+    jwtVerify,
+    jwtDecode,
+    JWTError,
+    JWTMalformedError,
+    JWTTypeError,
+    JWTTimeError,
+    JWTClaimError,
+    JWTAlgorithmError,
+    JWTSignatureError,
+} from '../../lib/modules/JWT';
 import {DurableObjectCache, DurableObjectRateLimit} from '../../lib/storage/DurableObject';
 import {TriFrostDurableObject} from '../../lib/runtimes/Workerd/DurableObject';
 import {KVCache, KVRateLimit} from '../../lib/storage/KV';
@@ -174,6 +185,34 @@ describe('index', () => {
 
         it('jwtDecode', () => {
             expect(Index.jwtDecode).toBe(jwtDecode);
+        });
+
+        it('JWTError', () => {
+            expect(Index.JWTError).toEqual(JWTError);
+        });
+
+        it('JWTMalformedError', () => {
+            expect(Index.JWTMalformedError).toEqual(JWTMalformedError);
+        });
+
+        it('JWTTypeError', () => {
+            expect(Index.JWTTypeError).toEqual(JWTTypeError);
+        });
+
+        it('JWTTimeError', () => {
+            expect(Index.JWTTimeError).toEqual(JWTTimeError);
+        });
+
+        it('JWTClaimError', () => {
+            expect(Index.JWTClaimError).toEqual(JWTClaimError);
+        });
+
+        it('JWTAlgorithmError', () => {
+            expect(Index.JWTAlgorithmError).toEqual(JWTAlgorithmError);
+        });
+
+        it('JWTSignatureError', () => {
+            expect(Index.JWTSignatureError).toEqual(JWTSignatureError);
         });
     });
 

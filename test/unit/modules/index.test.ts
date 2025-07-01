@@ -5,7 +5,18 @@ import {RateLimitKeyGeneratorRegistry} from '../../../lib/modules/RateLimit/_Rat
 import {createCss} from '../../../lib/modules/JSX/style/use';
 import {Style} from '../../../lib/modules/JSX/style/Style';
 import {createScript} from '../../../lib/modules/JSX/script/use';
-import {jwtSign, jwtVerify, jwtDecode} from '../../../lib/modules/JWT';
+import {
+    jwtSign,
+    jwtVerify,
+    jwtDecode,
+    JWTError,
+    JWTMalformedError,
+    JWTTypeError,
+    JWTTimeError,
+    JWTClaimError,
+    JWTAlgorithmError,
+    JWTSignatureError,
+} from '../../../lib/modules/JWT';
 import * as Modules from '../../../lib/modules';
 
 describe('Modules - Index', () => {
@@ -84,6 +95,34 @@ describe('Modules - Index', () => {
 
         it('jwtDecode should link to the correct module', () => {
             expect(Modules.jwtDecode).toEqual(jwtDecode);
+        });
+
+        it('JWTError should link to the correct module', () => {
+            expect(Modules.JWTError).toEqual(JWTError);
+        });
+
+        it('JWTMalformedError should link to the correct module', () => {
+            expect(Modules.JWTMalformedError).toEqual(JWTMalformedError);
+        });
+
+        it('JWTTypeError should link to the correct module', () => {
+            expect(Modules.JWTTypeError).toEqual(JWTTypeError);
+        });
+
+        it('JWTTimeError should link to the correct module', () => {
+            expect(Modules.JWTTimeError).toEqual(JWTTimeError);
+        });
+
+        it('JWTClaimError should link to the correct module', () => {
+            expect(Modules.JWTClaimError).toEqual(JWTClaimError);
+        });
+
+        it('JWTAlgorithmError should link to the correct module', () => {
+            expect(Modules.JWTAlgorithmError).toEqual(JWTAlgorithmError);
+        });
+
+        it('JWTSignatureError should link to the correct module', () => {
+            expect(Modules.JWTSignatureError).toEqual(JWTSignatureError);
         });
     });
 });
