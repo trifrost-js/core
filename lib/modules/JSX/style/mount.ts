@@ -8,7 +8,7 @@ import {isDevMode} from '../../../utils/Generic';
 export function mount<
     V extends Record<string, string> = {},
     T extends Record<string, any> = {},
-    R extends Record<string, Record<string, unknown>> = {},
+    R extends Record<string, (...args: any[]) => Record<string, unknown>> = {},
     B extends Record<string, string> = {},
 >(router: Router, path: string, module: CssInstance<V, T, R, B>) {
     /* We cache root content in mem*/

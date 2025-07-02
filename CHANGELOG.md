@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.43.0] - 2025-07-02
+The **Crystal** release refines TriFrost’s styling core with expressive animation support, dynamic composition, and smoother ergonomics across the board.
+
+With `css.animation(...)`, prebuilt keyframes are now first-class, fully typed, overrideable, and composable.
+
+Style definitions have evolved into callable units via `css.defs`, unlocking dynamic, runtime-aware styling while keeping the authoring experience pure and declarative.
+
 ### Added
 - **feat**: Register prebuilt animations via `createCss({animations: {...}})` for reusable keyframe definitions
 - **feat**: `css.animation(name, overrides?)` method on `css` instance, fully typed, override-capable, returns granular animation CSS props
@@ -12,9 +18,131 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Improved
 - **qol**: Atomic removal now applies depth-first traversal when unmounting removed dom nodes.
+- **feat**: `definitions` in `createCss` now allow for usage of `keyframes` and `animation` in definitions.
 
 ### Breaking
-- **feat**: `definitions` in `createCss` now need to be passed as functions returning the definition. This allows for usage of `keyframes` and `animation` in definitions as well and opens the path for dynamic definitions (see Added).
+- **feat**: `definitions` in `createCss` now need to be passed as functions returning the definition. (see Added and improved)
+
+### Animation Examples
+##### Baseline registration and use
+```typescript
+const css = createCss({
+  animations: {
+    pulse: {
+      keyframes: {
+        from: { opacity: 0.5 },
+        to: { opacity: 1 },
+      },
+      duration: '0.6s',
+      easingFunction: 'ease-in-out',
+    },
+  },
+});
+
+const cls = css({
+  ...css.animation('pulse'),
+  opacity: 0,
+});
+
+const cls2 = css({
+  ...css.animation('pulse', { duration: '1s', iterationCount: 'infinite' }),
+  opacity: 0,
+});
+```
+
+##### In combination with css.use
+```typescript
+// css.ts
+const css = createCss({
+  animations: {
+    fadeInUp: {
+      keyframes: {
+        from: { opacity: 0, transform: 'translateY(10px)' },
+        to: { opacity: 1, transform: 'translateY(0)' },
+      },
+      duration: '0.4s',
+      easingFunction: 'ease-out',
+    },
+  },
+  definitions: css => ({
+    card: () => ({
+      padding: '1rem',
+      borderRadius: '0.5rem',
+      backgroundColor: '#fff',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    }),
+  }),
+});
+```
+
+```tsx
+// Component.tsx
+const cls = css.use('card', css.animation('fadeInUp', { delay: '100ms' }));
+
+return <div className={cls}>Animated Card</div>;
+```
+
+##### 🎬 Using .animation(...) inside a definition
+```typescript
+// css.ts
+const css = createCss({
+  animations: {
+    fadeIn: {
+      keyframes: {
+        from: { opacity: 0 },
+        to: { opacity: 1 },
+      },
+      duration: '0.3s',
+      easingFunction: 'ease-in',
+    },
+  },
+  definitions: css => ({
+    // Animation-enhanced button definition
+    button: () => ({
+      ...css.animation('fadeIn'),
+      padding: '0.5rem 1rem',
+      borderRadius: '4px',
+      backgroundColor: css.$t.bg_button,
+      color: css.$t.text_button,
+      [css.hover]: {
+        filter: 'brightness(1.1)',
+      },
+    }),
+  }),
+});
+```
+```tsx
+// Component.tsx
+const cls = css.use('button');
+return <button className={cls}>Click Me</button>;
+```
+
+##### Dynamic definition
+```typescript
+const css = createCss({
+  definitions: css => ({
+    alert: (variant: 'info' | 'warning' | 'danger') => ({
+      backgroundColor: {
+        info: 'lightblue',
+        warning: 'gold',
+        danger: 'crimson',
+      }[variant],
+      color: '#fff',
+      padding: '1rem',
+    }),
+  }),
+});
+
+const cls = css(css.defs.alert('warning'));
+```
+
+---
+
+**Trifrost’s style system now breathes**. Animations are first-class, definitions are dynamic, and your design tokens flow seamlessly from logic to UI. Fewer barriers. More expressiveness.
+
+Let the authoring feel as fluid as the interface it creates.
+
+As always, stay frosty ❄️
 
 ## [0.42.6] - 2025-07-02
 ### Improved

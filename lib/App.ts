@@ -301,7 +301,7 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
                     timeout: this.timeout,
                     ...(options?.port && {port: options.port}),
                     ...(this.#trustProxy !== null && {trustProxy: this.#trustProxy}),
-                    ...(this.#css !== null && {css: this.#css}),
+                    ...(this.#css !== null && {css: this.#css as any}),
                     ...(this.#script !== null && {script: this.#script}),
                 },
                 onIncoming: (async (ctx: TriFrostContext<Env, State>) => {
