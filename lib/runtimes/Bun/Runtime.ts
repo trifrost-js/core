@@ -40,11 +40,6 @@ export class BunRuntime implements TriFrostRuntime {
             throw new Error('BunRuntime@boot: Failed to load required modules');
         }
 
-        /* Ensure port is valid */
-        if (!isIntBetween(opts?.cfg?.port, 1, 65535)) {
-            throw new Error('BunRuntime@boot: Port needs to be in range of 1-65535');
-        }
-
         /* Reject if server is already set */
         if (this.#server !== null) {
             throw new Error('BunRuntime@boot: Server already listening');
