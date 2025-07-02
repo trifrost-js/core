@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Improved
+- **qol**: Atomic removal now applies depth-first traversal when unmounting removed dom nodes.
+
 ## [0.42.6] - 2025-07-02
 ### Improved
 - **qol**: Bun runtime will no longer validate port to be passed (as now checked by determinePort util)

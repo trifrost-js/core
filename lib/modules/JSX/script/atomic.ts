@@ -197,17 +197,24 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
     })());
 
     def("${GLOBAL_OBSERVER_NAME}", (() => {
+        const clean = nR => {
+            if (nR.${VM_NAME}) {
+                if (typeof nR.${VM_HOOK_UNMOUNT_NAME}==="function") {
+                    try{nR.$unmount()}catch{}
+                }
+                window.${GLOBAL_RELAY_NAME}?.unsubscribe(nR.${VM_ID_NAME});
+                window.${GLOBAL_CLOCK}?.delete(nR.${VM_ID_NAME});
+            }
+            if (nR.children?.length) {
+                for (let i = 0; i < nR.children.length; i++) {
+                    clean(nR.children[i]);
+                }
+            }
+        };
         const o = new MutationObserver(e => {
             for (let i = 0; i < e.length; i++) {
                 for (let y = 0; y < e[i].removedNodes.length; y++) {
-                    const nR = e[i].removedNodes[y];
-                    if (nR.${VM_NAME}) {
-                        if (typeof nR.${VM_HOOK_UNMOUNT_NAME} === "function") {
-                            try {nR.${VM_HOOK_UNMOUNT_NAME}()} catch {}
-                        }
-                        window.${GLOBAL_RELAY_NAME}?.unsubscribe(nR.${VM_ID_NAME});
-                        window.${GLOBAL_CLOCK}?.delete(nR.${VM_ID_NAME});
-                    }
+                    clean(e[i].removedNodes[y]);
                 }
             }
         });
