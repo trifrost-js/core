@@ -2744,4 +2744,118 @@ describe('Modules - JSX - style - use', () => {
             }
         });
     });
+
+    describe('animation()', () => {
+        const css = createCss({
+            animations: {
+                pulse: {
+                    keyframes: {
+                        from: {opacity: 0.5},
+                        to: {opacity: 1},
+                    },
+                    duration: '1s',
+                    easingFunction: 'ease-in-out',
+                    iterationCount: 'infinite',
+                },
+                slide: {
+                    keyframes: {
+                        '0%': {transform: 'translateX(0)'},
+                        '100%': {transform: 'translateX(100px)'},
+                    },
+                    delay: '200ms',
+                    fillMode: 'forwards',
+                    direction: 'alternate',
+                },
+            },
+            definitions: css => ({
+                animatedCard: () => ({
+                    backgroundColor: 'white',
+                    borderRadius: '8px',
+                    padding: '1rem',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    [css.hover]: {
+                        transform: 'scale(1.02)',
+                    },
+                }),
+            }),
+        });
+
+        it('Returns a full animation property object', () => {
+            const style = css.animation('pulse');
+
+            expect(style.animationName).toMatch(/^tf[a-z0-9]+$/);
+            expect(style.animationDuration).toBe('1s');
+            expect(style.animationTimingFunction).toBe('ease-in-out');
+            expect(style.animationIterationCount).toBe('infinite');
+        });
+
+        it('Includes only provided fields if animation config is partial', () => {
+            const style = css.animation('slide');
+            expect(style.animationDelay).toBe('200ms');
+            expect(style.animationFillMode).toBe('forwards');
+            expect(style.animationDirection).toBe('alternate');
+            expect(style.animationDuration).toBeUndefined(); // not defined
+            expect(style.animationTimingFunction).toBeUndefined();
+        });
+
+        it('Allows user override of config fields', () => {
+            const style = css.animation('pulse', {
+                duration: '500ms',
+                iterationCount: 3,
+            });
+
+            expect(style.animationDuration).toBe('500ms');
+            expect(style.animationIterationCount).toBe(3);
+            expect(style.animationTimingFunction).toBe('ease-in-out'); // original value preserved
+        });
+
+        it('Throws on unknown animation', () => {
+            expect(() => css.animation('nope' as any)).toThrow('[TriFrost css.animation]');
+        });
+
+        it('Produces stable animationName hashes for identical keyframes', () => {
+            const a = css.animation('pulse');
+            const b = css.animation('pulse');
+            expect(a.animationName).toBe(b.animationName);
+        });
+
+        it('Produces different animationName for different keyframes', () => {
+            const a = css.animation('pulse');
+            const b = css.animation('slide');
+            expect(a.animationName).not.toBe(b.animationName);
+        });
+
+        it('Produces valid style object for spreading into css()', () => {
+            const cls = css({
+                ...css.animation('pulse', {duration: '2s'}),
+                opacity: 0,
+            });
+
+            expect(typeof cls).toBe('string');
+            expect(cls).toMatch(/^tf[a-z0-9]+$/);
+        });
+
+        it('combines .use and .animation into a single class name', () => {
+            css.use('animatedCard', css.animation('slide'));
+            expect(engine.flush({mode: 'file'})).toBe(
+                [
+                    '@keyframes tf1cstwvb {',
+                    '0%{transform:translateX(0)}',
+                    '100%{transform:translateX(100px)}',
+                    '}',
+                    '.tf2f5i71:hover{transform:scale(1.02)}',
+                    '.tf2f5i71{',
+                    'background-color:white;',
+                    'border-radius:8px;',
+                    'padding:1rem;',
+                    'box-shadow:0 2px 8px rgba(0,0,0,0.1);',
+                    'animation-name:tf1cstwvb;',
+                    'animation-delay:200ms;',
+                    'animation-direction:alternate;',
+                    'animation-fill-mode:forwards',
+                    '}',
+                ].join(''),
+            );
+        });
+    });
 });

@@ -37,6 +37,68 @@ type CSSOptions = {
     inject?: boolean;
 };
 
+type CSSKeyFrames = Record<string, Record<string, string | number>>;
+
+type CSSAnimationConfig = {
+    /**
+     * Duration of the animation (e.g. "1s", "500ms")
+     * @see https://developer.mozilla.org/en-US/docs/Web/CSS/animation-duration
+     */
+    duration: string;
+    /**
+     * Easing function used for the animation progression
+     * @see https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timing-function
+     */
+    easingFunction:
+        | 'ease'
+        | 'ease-in'
+        | 'ease-out'
+        | 'ease-in-out'
+        | 'linear'
+        | 'step-start'
+        | 'step-end'
+        | `steps(${number}${string})`
+        | `cubic-bezier(${number},${number},${number},${number})`
+        | string; // fallback for custom timing functions
+    /**
+     * Delay before the animation starts (e.g. "300ms")
+     * @see https://developer.mozilla.org/en-US/docs/Web/CSS/animation-delay
+     */
+    delay: string;
+    /**
+     * Number of times the animation should repeat
+     * @see https://developer.mozilla.org/en-US/docs/Web/CSS/animation-iteration-count
+     */
+    iterationCount: number | 'infinite';
+    /**
+     * Direction of the animation playback
+     * @see https://developer.mozilla.org/en-US/docs/Web/CSS/animation-direction
+     */
+    direction: 'normal' | 'reverse' | 'alternate' | 'alternate-reverse';
+    /**
+     * Behavior after the animation ends
+     * @see https://developer.mozilla.org/en-US/docs/Web/CSS/animation-fill-mode
+     */
+    fillMode: 'none' | 'forwards' | 'backwards' | 'both';
+    /**
+     * Whether the animation is running or paused
+     * @see https://developer.mozilla.org/en-US/docs/Web/CSS/animation-play-state
+     */
+    playState: 'running' | 'paused';
+};
+
+type CSSAnimationFullConfig = Partial<CSSAnimationConfig> & {keyframes: CSSKeyFrames};
+
+const ANIM_TUPLES: [keyof CSSAnimationConfig, string][] = [
+    ['duration', 'animationDuration'],
+    ['easingFunction', 'animationTimingFunction'],
+    ['delay', 'animationDelay'],
+    ['iterationCount', 'animationIterationCount'],
+    ['direction', 'animationDirection'],
+    ['fillMode', 'animationFillMode'],
+    ['playState', 'animationPlayState'],
+];
+
 export type CssGeneric<Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS> = {
     (style: Record<string, unknown>, opts?: {inject?: boolean}): string;
     /* Pseudo Classes */
@@ -364,6 +426,7 @@ export type CssInstance<
     T extends ThemeMap,
     R extends Record<string, Record<string, unknown>> = {},
     Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS,
+    Animations extends Record<string, CSSAnimationFullConfig> = {},
 > = CssGeneric<Breakpoints> & {
     $uid: string;
     /**
@@ -425,6 +488,23 @@ export type CssInstance<
      * ```
      */
     cid: () => string;
+    /**
+     * Generates animation-related style declarations from a named animation defined in `createCss(...)`.
+     *
+     * Rather than returning a single `animation` shorthand string, this returns specific CSS properties
+     * like `animationName`, `animationDuration`, `animationTimingFunction`, etc.
+     *
+     * This gives finer control and plays nicely with inline style merging or overrides.
+     *
+     * @example
+     * ```ts
+     * css({
+     *   ...css.animation('fadeIn'),
+     *   opacity: 0
+     * });
+     * ```
+     */
+    animation: (key: keyof Animations, overrides?: Partial<CSSAnimationConfig>) => Record<string, unknown>;
     /**
      * Sets mount path for the css instance
      * @param {string|null} path - Mount path to choose
@@ -527,6 +607,7 @@ export function createCss<
     const T extends ThemeMap,
     const R extends Record<string, Record<string, unknown>> = {},
     const Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS,
+    const Animations extends Record<string, CSSAnimationFullConfig> = {},
 >(
     config: {
         breakpoints?: Breakpoints;
@@ -566,13 +647,14 @@ export function createCss<
          * ```
          */
         definitions?: (mod: CssInstance<V, T, {}, Breakpoints>) => R;
+        animations?: Animations;
     } = {},
-): CssInstance<V, T, R, Breakpoints> {
+): CssInstance<V, T, R, Breakpoints, Animations> {
     const mod = cssFactory(
         Object.prototype.toString.call(config.breakpoints) === '[object Object]'
             ? (config.breakpoints as Breakpoints)
             : DEFAULT_BREAKPOINTS,
-    ) as CssInstance<V, T, R, Breakpoints>;
+    ) as CssInstance<V, T, R, Breakpoints, Animations>;
 
     /* Is mounted on */
     let mountPath: string | null = null;
@@ -624,6 +706,10 @@ export function createCss<
     if (typeof config.definitions === 'function') {
         const def = config.definitions(mod);
         for (const key in def) (definitions as any)[key] = def[key];
+    /* Define animation registry */
+    const animations: Animations = config.animations ?? ({} as Animations);
+    if (Object.prototype.toString.call(config.animations) === '[object Object]') {
+        for (const key in config.animations!) (animations as any)[key] = config.animations[key];
     }
 
     /* Determine default root injection */
@@ -696,6 +782,22 @@ export function createCss<
 
     /* Use a definition or set of definitions and register them with a classname*/
     mod.use = (...args: (keyof R | Record<string, unknown> | null | undefined | false)[]) => mod(mod.mix(...args));
+
+    /* Make use of previously defined animations */
+    mod.animation = (key: keyof Animations, opts: Partial<CSSAnimationConfig> = {}): Record<string, unknown> => {
+        const cfg = animations[key];
+        if (!cfg) throw new Error('[TriFrost css.animation] Unknown animation "' + String(key) + '"');
+
+        /* Build animation */
+        const acc: Record<string, unknown> = {animationName: mod.keyframes(cfg.keyframes)};
+        for (let i = 0; i < ANIM_TUPLES.length; i++) {
+            const [prop, name] = ANIM_TUPLES[i];
+            if (opts[prop] !== undefined) acc[name] = opts[prop];
+            else if (cfg[prop] !== undefined) acc[name] = cfg[prop];
+        }
+
+        return acc;
+    };
 
     /* Generates a unique classname */
     mod.cid = () => 'tf-' + hexId(8);
