@@ -424,7 +424,7 @@ type ThemeVal<T extends string> = T extends `--${infer Rest}` ? `var(${T})` : `v
 export type CssInstance<
     V extends VarMap,
     T extends ThemeMap,
-    R extends Record<string, Record<string, unknown>> = {},
+    R extends Record<string, (...args: any[]) => Record<string, unknown>>,
     Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS,
     Animations extends Record<string, CSSAnimationFullConfig> = {},
 > = CssGeneric<Breakpoints> & {
@@ -451,6 +451,10 @@ export type CssInstance<
      * Each resolves to `var(--t-key)`, adapting to light/dark modes.
      */
     theme: {[K in keyof T]: ThemeVal<K & string>};
+    /**
+     * Access to definition methods
+     */
+    defs: {[K in keyof R]: R[K]};
     /**
      * Merges one or more registered definitions and/or raw style objects into a single style object.
      *
@@ -605,7 +609,7 @@ const CSS_RESET = {
 export function createCss<
     const V extends VarMap,
     const T extends ThemeMap,
-    const R extends Record<string, Record<string, unknown>> = {},
+    const R extends Record<string, (...args: any[]) => Record<string, unknown>>,
     const Breakpoints extends Record<string, string> = typeof DEFAULT_BREAKPOINTS,
     const Animations extends Record<string, CSSAnimationFullConfig> = {},
 >(
@@ -646,7 +650,7 @@ export function createCss<
          * })
          * ```
          */
-        definitions?: (mod: CssInstance<V, T, {}, Breakpoints>) => R;
+        definitions?: (mod: CssInstance<V, T, {}, Breakpoints, Animations>) => R;
         animations?: Animations;
     } = {},
 ): CssInstance<V, T, R, Breakpoints, Animations> {
@@ -661,14 +665,15 @@ export function createCss<
 
     /* Specific symbol for this css instance */
     mod.$uid = hexId(8);
-
     const sym = Symbol('trifrost.jsx.style.css{' + mod.$uid + '}');
+
+    /* Define definitions */
+    mod.defs = {} as R;
 
     /* Variable collectors */
     const root_vars: Record<string, string> = {};
     const theme_light: Record<string, string> = {};
     const theme_dark: Record<string, string> = {};
-    const definitions: R = {} as R;
 
     /* Attach var tokens */
     mod.var = {} as any;
@@ -705,7 +710,9 @@ export function createCss<
     /* Attach definitions */
     if (typeof config.definitions === 'function') {
         const def = config.definitions(mod);
-        for (const key in def) (definitions as any)[key] = def[key];
+        for (const key in def) mod.defs[key] = def[key];
+    }
+
     /* Define animation registry */
     const animations: Animations = config.animations ?? ({} as Animations);
     if (Object.prototype.toString.call(config.animations) === '[object Object]') {
@@ -763,8 +770,8 @@ export function createCss<
         for (let i = 0; i < args.length; i++) {
             const val = args[i];
             if (val) {
-                if (typeof val === 'string' && val in definitions) {
-                    acc.push(definitions[val]);
+                if (typeof val === 'string' && val in mod.defs) {
+                    acc.push(mod.defs[val]());
                 } else if (Object.prototype.toString.call(val) === '[object Object]') {
                     acc.push(val as Record<string, unknown>);
                 }

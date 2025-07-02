@@ -8,8 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ### Added
 - **feat**: Register prebuilt animations via `createCss({animations: {...}})` for reusable keyframe definitions
 - **feat**: `css.animation(name, overrides?)` method on `css` instance, fully typed, override-capable, returns granular animation CSS props
+- **feat**: `css.defs` now exposes all registered `definitions` as direct, callable methods (e.g. `css.defs.card()`), improving ergonomics and enabling dynamic, fully typed, parameterized style generation. 
+
 ### Improved
 - **qol**: Atomic removal now applies depth-first traversal when unmounting removed dom nodes.
+
+### Breaking
+- **feat**: `definitions` in `createCss` now need to be passed as functions returning the definition. This allows for usage of `keyframes` and `animation` in definitions as well and opens the path for dynamic definitions (see Added).
 
 ## [0.42.6] - 2025-07-02
 ### Improved

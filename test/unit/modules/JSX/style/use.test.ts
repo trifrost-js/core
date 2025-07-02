@@ -1383,15 +1383,15 @@ describe('Modules - JSX - style - use', () => {
                     fg: '#222',
                 },
                 definitions: mod => ({
-                    base: {
+                    base: () => ({
                         display: 'flex',
                         alignItems: 'center',
                         color: mod.$t.fg,
                         background: mod.$t.bg,
-                    },
-                    padded: {
+                    }),
+                    padded: () => ({
                         padding: mod.$v.spacing,
-                    },
+                    }),
                 }),
             });
             css.root();
@@ -1414,8 +1414,8 @@ describe('Modules - JSX - style - use', () => {
             const css = createCss({
                 var: {x: '1rem'},
                 definitions: () => ({
-                    row: {display: 'flex', flexDirection: 'row'},
-                    center: {justifyContent: 'center', alignItems: 'center'},
+                    row: () => ({display: 'flex', flexDirection: 'row'}),
+                    center: () => ({justifyContent: 'center', alignItems: 'center'}),
                 }),
             });
 
@@ -1440,13 +1440,13 @@ describe('Modules - JSX - style - use', () => {
                     mobile: '@media (max-width: 600px)',
                 },
                 definitions: mod => ({
-                    base: {
+                    base: () => ({
                         padding: '1rem',
                         [mod.media.mobile]: {
                             padding: '.5rem',
                             color: 'black',
                         },
-                    },
+                    }),
                 }),
             });
 
@@ -1469,10 +1469,10 @@ describe('Modules - JSX - style - use', () => {
             const css = createCss({
                 var: {pad: '2rem'},
                 definitions: () => ({
-                    card: {
+                    card: () => ({
                         background: 'white',
                         borderRadius: '8px',
-                    },
+                    }),
                 }),
             });
 
@@ -1503,7 +1503,7 @@ describe('Modules - JSX - style - use', () => {
         it('mix() skips string keys not found in definitions', () => {
             const css = createCss({
                 definitions: () => ({
-                    good: {display: 'block'},
+                    good: () => ({display: 'block'}),
                 }),
             });
 
@@ -1518,8 +1518,8 @@ describe('Modules - JSX - style - use', () => {
         it('mix() skips falsy values like null, undefined, false', () => {
             const css = createCss({
                 definitions: () => ({
-                    base: {padding: '1rem'},
-                    hidden: {display: 'none'},
+                    base: () => ({padding: '1rem'}),
+                    hidden: () => ({display: 'none'}),
                 }),
             });
 
@@ -1534,8 +1534,8 @@ describe('Modules - JSX - style - use', () => {
             const css = createCss({
                 var: {x: '1rem'},
                 definitions: () => ({
-                    row: {display: 'flex', flexDirection: 'row'},
-                    center: {justifyContent: 'center', alignItems: 'center'},
+                    row: () => ({display: 'flex', flexDirection: 'row'}),
+                    center: () => ({justifyContent: 'center', alignItems: 'center'}),
                 }),
             });
 
@@ -1554,8 +1554,8 @@ describe('Modules - JSX - style - use', () => {
         it('use() skips falsy values like null, undefined, false', () => {
             const css = createCss({
                 definitions: () => ({
-                    base: {display: 'block'},
-                    active: {color: 'blue'},
+                    base: () => ({display: 'block'}),
+                    active: () => ({color: 'blue'}),
                 }),
             });
 
@@ -1583,21 +1583,21 @@ describe('Modules - JSX - style - use', () => {
                     fg: '#fff',
                 },
                 definitions: mod => ({
-                    f: {display: 'flex'},
-                    fh: {flexDirection: 'row'},
-                    fv: {flexDirection: 'column'},
-                    fa_c: {alignItems: 'center'},
-                    fj_c: {justifyContent: 'center'},
-                    fj_sa: {justifyContent: 'space-around'},
-                    oh: {overflow: 'hidden'},
-                    sp_xl: {padding: mod.$v.space_xl},
-                    sp_l: {padding: mod.$v.space_l},
-                    sp_h_l: {paddingLeft: mod.$v.space_l, paddingRight: mod.$v.space_l},
-                    hide: {display: 'none'},
-                    shouldNotBeIncluded: {
+                    f: () => ({display: 'flex'}),
+                    fh: () => ({flexDirection: 'row'}),
+                    fv: () => ({flexDirection: 'column'}),
+                    fa_c: () => ({alignItems: 'center'}),
+                    fj_c: () => ({justifyContent: 'center'}),
+                    fj_sa: () => ({justifyContent: 'space-around'}),
+                    oh: () => ({overflow: 'hidden'}),
+                    sp_xl: () => ({padding: mod.$v.space_xl}),
+                    sp_l: () => ({padding: mod.$v.space_l}),
+                    sp_h_l: () => ({paddingLeft: mod.$v.space_l, paddingRight: mod.$v.space_l}),
+                    hide: () => ({display: 'none'}),
+                    shouldNotBeIncluded: () => ({
                         color: 'red',
                         fontSize: '20rem',
-                    },
+                    }),
                 }),
             });
 
@@ -1643,21 +1643,21 @@ describe('Modules - JSX - style - use', () => {
                     fg: '#fff',
                 },
                 definitions: mod => ({
-                    f: {display: 'flex'},
-                    fh: {flexDirection: 'row'},
-                    fv: {flexDirection: 'column'},
-                    fa_c: {alignItems: 'center'},
-                    fj_c: {justifyContent: 'center'},
-                    fj_sa: {justifyContent: 'space-around'},
-                    oh: {overflow: 'hidden'},
-                    sp_xl: {padding: mod.$v.space_xl},
-                    sp_l: {padding: mod.$v.space_l},
-                    sp_h_l: {paddingLeft: mod.$v.space_l, paddingRight: mod.$v.space_l},
-                    hide: {display: 'none'},
-                    shouldNotBeIncluded: {
+                    f: () => ({display: 'flex'}),
+                    fh: () => ({flexDirection: 'row'}),
+                    fv: () => ({flexDirection: 'column'}),
+                    fa_c: () => ({alignItems: 'center'}),
+                    fj_c: () => ({justifyContent: 'center'}),
+                    fj_sa: () => ({justifyContent: 'space-around'}),
+                    oh: () => ({overflow: 'hidden'}),
+                    sp_xl: () => ({padding: mod.$v.space_xl}),
+                    sp_l: () => ({padding: mod.$v.space_l}),
+                    sp_h_l: () => ({paddingLeft: mod.$v.space_l, paddingRight: mod.$v.space_l}),
+                    hide: () => ({display: 'none'}),
+                    shouldNotBeIncluded: () => ({
                         color: 'red',
                         fontSize: '20rem',
-                    },
+                    }),
                 }),
             });
 
@@ -1705,21 +1705,21 @@ describe('Modules - JSX - style - use', () => {
                     fg: '#fff',
                 },
                 definitions: mod => ({
-                    f: {display: 'flex'},
-                    fh: {flexDirection: 'row'},
-                    fv: {flexDirection: 'column'},
-                    fa_c: {alignItems: 'center'},
-                    fj_c: {justifyContent: 'center'},
-                    fj_sa: {justifyContent: 'space-around'},
-                    oh: {overflow: 'hidden'},
-                    sp_xl: {padding: mod.$v.space_xl},
-                    sp_l: {padding: mod.$v.space_l},
-                    sp_h_l: {paddingLeft: mod.$v.space_l, paddingRight: mod.$v.space_l},
-                    hide: {display: 'none'},
-                    shouldNotBeIncluded: {
+                    f: () => ({display: 'flex'}),
+                    fh: () => ({flexDirection: 'row'}),
+                    fv: () => ({flexDirection: 'column'}),
+                    fa_c: () => ({alignItems: 'center'}),
+                    fj_c: () => ({justifyContent: 'center'}),
+                    fj_sa: () => ({justifyContent: 'space-around'}),
+                    oh: () => ({overflow: 'hidden'}),
+                    sp_xl: () => ({padding: mod.$v.space_xl}),
+                    sp_l: () => ({padding: mod.$v.space_l}),
+                    sp_h_l: () => ({paddingLeft: mod.$v.space_l, paddingRight: mod.$v.space_l}),
+                    hide: () => ({display: 'none'}),
+                    shouldNotBeIncluded: () => ({
                         color: 'red',
                         fontSize: '20rem',
-                    },
+                    }),
                 }),
             });
 
@@ -1764,21 +1764,21 @@ describe('Modules - JSX - style - use', () => {
                     fg: '#fff',
                 },
                 definitions: mod => ({
-                    f: {display: 'flex'},
-                    fh: {flexDirection: 'row'},
-                    fv: {flexDirection: 'column'},
-                    fa_c: {alignItems: 'center'},
-                    fj_c: {justifyContent: 'center'},
-                    fj_sa: {justifyContent: 'space-around'},
-                    oh: {overflow: 'hidden'},
-                    sp_xl: {padding: mod.$v.space_xl},
-                    sp_l: {padding: mod.$v.space_l},
-                    sp_h_l: {paddingLeft: mod.$v.space_l, paddingRight: mod.$v.space_l},
-                    hide: {display: 'none'},
-                    shouldNotBeIncluded: {
+                    f: () => ({display: 'flex'}),
+                    fh: () => ({flexDirection: 'row'}),
+                    fv: () => ({flexDirection: 'column'}),
+                    fa_c: () => ({alignItems: 'center'}),
+                    fj_c: () => ({justifyContent: 'center'}),
+                    fj_sa: () => ({justifyContent: 'space-around'}),
+                    oh: () => ({overflow: 'hidden'}),
+                    sp_xl: () => ({padding: mod.$v.space_xl}),
+                    sp_l: () => ({padding: mod.$v.space_l}),
+                    sp_h_l: () => ({paddingLeft: mod.$v.space_l, paddingRight: mod.$v.space_l}),
+                    hide: () => ({display: 'none'}),
+                    shouldNotBeIncluded: () => ({
                         color: 'red',
                         fontSize: '20rem',
-                    },
+                    }),
                 }),
             });
 
@@ -1835,21 +1835,21 @@ describe('Modules - JSX - style - use', () => {
                     fg: '#fff',
                 },
                 definitions: mod => ({
-                    f: {display: 'flex'},
-                    fh: {flexDirection: 'row'},
-                    fv: {flexDirection: 'column'},
-                    fa_c: {alignItems: 'center'},
-                    fj_c: {justifyContent: 'center'},
-                    fj_sa: {justifyContent: 'space-around'},
-                    oh: {overflow: 'hidden'},
-                    sp_xl: {padding: mod.$v.space_xl},
-                    sp_l: {padding: mod.$v.space_l},
-                    sp_h_l: {paddingLeft: mod.$v.space_l, paddingRight: mod.$v.space_l},
-                    hide: {display: 'none'},
-                    shouldNotBeIncluded: {
+                    f: () => ({display: 'flex'}),
+                    fh: () => ({flexDirection: 'row'}),
+                    fv: () => ({flexDirection: 'column'}),
+                    fa_c: () => ({alignItems: 'center'}),
+                    fj_c: () => ({justifyContent: 'center'}),
+                    fj_sa: () => ({justifyContent: 'space-around'}),
+                    oh: () => ({overflow: 'hidden'}),
+                    sp_xl: () => ({padding: mod.$v.space_xl}),
+                    sp_l: () => ({padding: mod.$v.space_l}),
+                    sp_h_l: () => ({paddingLeft: mod.$v.space_l, paddingRight: mod.$v.space_l}),
+                    hide: () => ({display: 'none'}),
+                    shouldNotBeIncluded: () => ({
                         color: 'red',
                         fontSize: '20rem',
-                    },
+                    }),
                 }),
             });
 
@@ -2654,21 +2654,21 @@ describe('Modules - JSX - style - use', () => {
                     fg: '#fff',
                 },
                 definitions: mod => ({
-                    f: {display: 'flex'},
-                    fh: {flexDirection: 'row'},
-                    fv: {flexDirection: 'column'},
-                    fa_c: {alignItems: 'center'},
-                    fj_c: {justifyContent: 'center'},
-                    fj_sa: {justifyContent: 'space-around'},
-                    oh: {overflow: 'hidden'},
-                    sp_xl: {padding: mod.$v.space_xl},
-                    sp_l: {padding: mod.$v.space_l},
-                    sp_h_l: {paddingLeft: mod.$v.space_l, paddingRight: mod.$v.space_l},
-                    hide: {display: 'none'},
-                    shouldNotBeIncluded: {
+                    f: () => ({display: 'flex'}),
+                    fh: () => ({flexDirection: 'row'}),
+                    fv: () => ({flexDirection: 'column'}),
+                    fa_c: () => ({alignItems: 'center'}),
+                    fj_c: () => ({justifyContent: 'center'}),
+                    fj_sa: () => ({justifyContent: 'space-around'}),
+                    oh: () => ({overflow: 'hidden'}),
+                    sp_xl: () => ({padding: mod.$v.space_xl}),
+                    sp_l: () => ({padding: mod.$v.space_l}),
+                    sp_h_l: () => ({paddingLeft: mod.$v.space_l, paddingRight: mod.$v.space_l}),
+                    hide: () => ({display: 'none'}),
+                    shouldNotBeIncluded: () => ({
                         color: 'red',
                         fontSize: '20rem',
-                    },
+                    }),
                 }),
             });
 
@@ -2853,6 +2853,86 @@ describe('Modules - JSX - style - use', () => {
                     'animation-delay:200ms;',
                     'animation-direction:alternate;',
                     'animation-fill-mode:forwards',
+                    '}',
+                ].join(''),
+            );
+        });
+    });
+
+    describe('dynamic definitions', () => {
+        const css = createCss({
+            animations: {
+                fadeIn: {
+                    keyframes: {
+                        from: {opacity: 0},
+                        to: {opacity: 1},
+                    },
+                    duration: '0.3s',
+                    easingFunction: 'ease-in',
+                },
+            },
+            definitions: css => ({
+                padded: (size: string) => ({
+                    padding: size,
+                    ...css.animation('fadeIn', {delay: '200ms'}),
+                }),
+            }),
+        });
+
+        it('should expose dynamic definitions on css.defs', () => {
+            expect(typeof css.defs.padded).toBe('function');
+            css.use(css.defs.padded('2rem'));
+            expect(engine.flush({mode: 'file'})).toBe(
+                [
+                    '@keyframes tf5xp4qr {',
+                    'from{opacity:0}',
+                    'to{opacity:1}',
+                    '}',
+                    '.tf1wol8mk{',
+                    'padding:2rem;',
+                    'animation-name:tf5xp4qr;',
+                    'animation-duration:0.3s;',
+                    'animation-timing-function:ease-in;',
+                    'animation-delay:200ms',
+                    '}',
+                ].join(''),
+            );
+        });
+
+        it('should allow using dynamic definitions with css.use()', () => {
+            css.use(css.defs.padded('1rem'));
+            expect(engine.flush({mode: 'file'})).toBe(
+                [
+                    '@keyframes tf5xp4qr {',
+                    'from{opacity:0}',
+                    'to{opacity:1}',
+                    '}',
+                    '.tfsp7ywf{',
+                    'padding:1rem;',
+                    'animation-name:tf5xp4qr;',
+                    'animation-duration:0.3s;',
+                    'animation-timing-function:ease-in;',
+                    'animation-delay:200ms',
+                    '}',
+                ].join(''),
+            );
+        });
+
+        it('should allow mixing dynamic definitions with css.mix()', () => {
+            css.use(css.defs.padded('0.5rem'), {color: 'blue'});
+            expect(engine.flush({mode: 'file'})).toBe(
+                [
+                    '@keyframes tf5xp4qr {',
+                    'from{opacity:0}',
+                    'to{opacity:1}',
+                    '}',
+                    '.tfwets00{',
+                    'padding:0.5rem;',
+                    'animation-name:tf5xp4qr;',
+                    'animation-duration:0.3s;',
+                    'animation-timing-function:ease-in;',
+                    'animation-delay:200ms;',
+                    'color:blue',
                     '}',
                 ].join(''),
             );
