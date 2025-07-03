@@ -32,6 +32,25 @@ type DotPaths<T, D extends number = 10> = [D] extends [never]
         }[keyof T & string]
       : '';
 
+/**
+ * Infers the correct event type for a given target and event name.
+ *
+ * Falls back to CustomEvent<Payload> for unknown events.
+ */
+type InferDOMEvent<Target extends EventTarget, K extends string, Payload = unknown> = Target extends Window
+    ? K extends keyof WindowEventMap
+        ? WindowEventMap[K]
+        : CustomEvent<Payload>
+    : Target extends Document
+      ? K extends keyof DocumentEventMap
+          ? DocumentEventMap[K]
+          : CustomEvent<Payload>
+      : Target extends Element
+        ? K extends keyof HTMLElementEventMap
+            ? HTMLElementEventMap[K]
+            : CustomEvent<Payload>
+        : CustomEvent<Payload>;
+
 export type TriFrostAtomicVM<
     Relay extends Record<string, unknown> = {},
     Store extends Record<string, unknown> = {},
@@ -95,15 +114,15 @@ export type TriFrostAtomicUtils<Store extends Record<string, unknown> = {}> = {
     }>;
     /* Event Listening */
     fire: <T = unknown>(el: Element, type: string, options?: {data?: T; mode?: 'up' | 'down'}) => void;
-    on: <Payload = unknown, K extends string = string>(
-        el: Element,
+    on: <Payload = unknown, Target extends EventTarget = EventTarget, K extends string = string>(
+        el: Target,
         type: K,
-        handler: (evt: K extends keyof HTMLElementEventMap ? HTMLElementEventMap[K] : CustomEvent<Payload>) => void,
+        handler: (evt: InferDOMEvent<Target, K, Payload>) => void,
     ) => () => void;
-    once: <Payload = unknown, K extends string = string>(
-        el: Element,
+    once: <Payload = unknown, Target extends EventTarget = EventTarget, K extends string = string>(
+        el: Target,
         type: K,
-        handler: (evt: K extends keyof HTMLElementEventMap ? HTMLElementEventMap[K] : CustomEvent<Payload>) => void,
+        handler: (evt: InferDOMEvent<Target, K, Payload>) => void,
     ) => void;
     /* DOM selectors */
     query: <T extends Element = HTMLElement>(root: Node, selector: string) => T | null;
