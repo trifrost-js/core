@@ -1,8 +1,42 @@
 const KEBAB_REGEX = /[A-Z]/g;
 const KEBAB_VENDOR_REGEX = /^(webkit|moz|ms|o)([A-Z])/;
 
-const RGX_FUNCTION =
-    /\b(blur|brightness|calc|clamp|contrast|counter|counters|drop-shadow|env|fit-content|grayscale|hsl|hsla|invert|max|min|opacity|repeat|rgb|rgba|rotate|saturate|scale|sepia|translate|url|var|attr|image|conic-gradient|repeating-linear-gradient)\(/i;
+/**
+ * Known css functions
+ */
+const CSS_FUNCTIONS = new Set([
+    'blur',
+    'brightness',
+    'calc',
+    'clamp',
+    'contrast',
+    'counter',
+    'counters',
+    'drop-shadow',
+    'env',
+    'fit-content',
+    'grayscale',
+    'hsl',
+    'hsla',
+    'invert',
+    'max',
+    'min',
+    'opacity',
+    'repeat',
+    'rgb',
+    'rgba',
+    'rotate',
+    'saturate',
+    'scale',
+    'sepia',
+    'translate',
+    'url',
+    'var',
+    'attr',
+    'image',
+    'conic-gradient',
+    'repeating-linear-gradient',
+]);
 
 /**
  * Known HTML Tags
@@ -275,7 +309,12 @@ export function styleToString(obj: Record<string, unknown> | null): string | nul
             let str = typeof attr_val === 'string' ? attr_val : String(attr_val);
 
             /* If wrapped in quotes and contains a CSS function, unwrap it */
-            if ((str[0] === "'" || str[0] === '"') && RGX_FUNCTION.test(str)) str = str.slice(1, -1);
+            if (str[0] === "'" || str[0] === '"') {
+                const fn_idx = str.indexOf('(');
+                if (fn_idx && CSS_FUNCTIONS.has(str.slice(1, fn_idx))) {
+                    str = str.slice(1, -1);
+                }
+            }
 
             if (str) style += toKebab(attr) + ':' + str + ';';
         }
