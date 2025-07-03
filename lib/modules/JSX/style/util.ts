@@ -2,7 +2,7 @@ const KEBAB_REGEX = /[A-Z]/g;
 const KEBAB_VENDOR_REGEX = /^(webkit|moz|ms|o)([A-Z])/;
 
 const RGX_FUNCTION =
-    /\b(blur|brightness|calc|clamp|contrast|counter|counters|drop-shadow|env|fit-content|grayscale|hsl|hsla|invert|max|min|opacity|repeat|rgb|rgba|rotate|saturate|scale|sepia|translate|url|var)\(/i;
+    /\b(blur|brightness|calc|clamp|contrast|counter|counters|drop-shadow|env|fit-content|grayscale|hsl|hsla|invert|max|min|opacity|repeat|rgb|rgba|rotate|saturate|scale|sepia|translate|url|var|attr|image|conic-gradient|repeating-linear-gradient)\(/i;
 
 /**
  * Known HTML Tags
