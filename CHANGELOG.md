@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.43.1] - 2025-07-03
+### Improved
+- **qol**: `<Script>` components that **do not reference any arguments** (like `el`, `data`, or `$`) are now rendered **inline** instead of being registered in the (atomic) script engine. This enables immediate execution, useful for boot-time logic like theme/locale detection:
+```tsx
+/* Theme detection */
+<Script>
+  {() => {
+    const saved = localStorage.getItem('theme');
+    const preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', saved || preferred);
+  }}
+</Script>
+
+/* Locale detection */
+<Script>
+  {() => {
+    const locale = navigator.language?.startsWith('fr') ? 'fr' : 'en';
+    document.documentElement.setAttribute('data-lang', locale);
+  }}
+</Script>
+```
+
 ## [0.43.0] - 2025-07-02
 The **Crystal** release refines TriFrost’s styling core with expressive animation support, dynamic composition, and smoother ergonomics across the board.
 
