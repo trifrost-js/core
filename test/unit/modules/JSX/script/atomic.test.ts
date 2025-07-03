@@ -1,5 +1,11 @@
 import {describe, it, expect} from 'vitest';
-import {ATOMIC_GLOBAL, ATOMIC_VM_BEFORE, ATOMIC_VM_AFTER} from '../../../../../lib/modules/JSX/script/atomic';
+import {
+    ATOMIC_GLOBAL,
+    ATOMIC_VM_BEFORE,
+    ATOMIC_VM_AFTER,
+    ARC_GLOBAL,
+    ARC_GLOBAL_OBSERVER,
+} from '../../../../../lib/modules/JSX/script/atomic';
 
 describe('Modules - JSX - script - atomic', () => {
     describe('ATOMIC_GLOBAL', () => {
@@ -58,6 +64,7 @@ describe('Modules - JSX - script - atomic', () => {
                     'if(typeof nR.$unmount==="function"){try{nR.$unmount()}catch{}}',
                     'window.$tfr?.unsubscribe(nR.$uid);',
                     'window.$tfc?.delete(nR.$uid);',
+                    'window.$tfarc?.release(nR.$uid);',
                     '}',
                     'if(nR.children?.length){',
                     'for(let i=0;i<nR.children.length;i++){',
@@ -146,11 +153,9 @@ describe('Modules - JSX - script - atomic', () => {
             expect(ATOMIC_VM_BEFORE).toBe(
                 [
                     'if(!n.$tfVM){',
-                    'const i=w.$tfutils.uid();',
                     'Object.defineProperties(n,{',
-                    '$uid:{get:()=>i,configurable:!1},',
-                    '$subscribe:{value:(msg,fn)=>w.$tfr.subscribe(i,msg,fn),configurable:!1,writable:!1},',
-                    '$unsubscribe:{value:msg=>w.$tfr.unsubscribe(i,msg),configurable:!1,writable:!1},',
+                    '$subscribe:{value:(msg,fn)=>w.$tfr.subscribe(n.$uid,msg,fn),configurable:!1,writable:!1},',
+                    '$unsubscribe:{value:msg=>w.$tfr.unsubscribe(n.$uid,msg),configurable:!1,writable:!1},',
                     '$publish:{value:(msg,data)=>w.$tfr.publish(msg,data),configurable:!1,writable:!1},',
                     '$tfVM:{get:()=>!0,configurable:!1}',
                     '});',
@@ -163,6 +168,47 @@ describe('Modules - JSX - script - atomic', () => {
     describe('ATOMIC_VM_AFTER', () => {
         it('Should be minified correct', () => {
             expect(ATOMIC_VM_AFTER).toBe(['if(typeof n.$mount==="function")try{n.$mount()}catch{}'].join(''));
+        });
+    });
+
+    describe('ARC_GLOBAL', () => {
+        it('Should be minified correct', () => {
+            expect(ARC_GLOBAL).toBe(
+                [
+                    '(function(){',
+                    'if(!window.$tfarc){',
+                    'const f=new Map(),d=new Map(),v=new Map();',
+                    'Object.defineProperty(window,"$tfarc",{',
+                    'value:Object.freeze({',
+                    'addF(id,fn){if(!f.has(id))f.set(id,{fn:fn,refs:0});},',
+                    'addD(id,val){if(!d.has(id))d.set(id,{val:val,refs:0});},',
+                    'addR(fi,di,vi){if(v.has(vi))return;v.set(vi,{fn_id:fi,data_id:di});f.get(fi)?.refs++;d.get(di)?.refs++;},',
+                    'release(vi){const r=v.get(vi);if(!r)return;v.delete(vi);const fe=f.get(r.fn_id);if(fe&&--fe.refs<=0)f.delete(r.fn_id);const de=d.get(r.data_id);if(de&&--de.refs<=0)d.delete(r.data_id);},',
+                    'getF(id){return f.get(id)?.fn;},',
+                    'getD(id){return d.get(id)?.val;}',
+                    '}),configurable:!1,writable:!1});}})();',
+                ].join(''),
+            );
+        });
+    });
+
+    describe('ARC_GLOBAL_OBSERVER', () => {
+        it('Should be minified correct', () => {
+            expect(ARC_GLOBAL_OBSERVER).toBe(
+                [
+                    '(function(){',
+                    'const c=n=>{',
+                    'if(n&&n.$uid)window.$tfarc?.release(n.$uid);',
+                    'if(n.children?.length){for(let i=0;i<n.children.length;i++)c(n.children[i]);}',
+                    '};',
+                    'const o=new MutationObserver(e=>{',
+                    'for(let i=0;i<e.length;i++){',
+                    'for(let y=0;y<e[i].removedNodes.length;y++){',
+                    'c(e[i].removedNodes[y]);',
+                    '}}});',
+                    'o.observe(document.body,{childList:!0,subtree:!0});return o;})();',
+                ].join(''),
+            );
         });
     });
 });

@@ -4,6 +4,7 @@ import {atomicMinify} from './util';
 export const GLOBAL_HYDRATED_NAME = '$tfhydra';
 export const GLOBAL_UTILS_NAME = '$tfutils';
 export const GLOBAL_DATA_REACTOR_NAME = '$tfdr';
+export const GLOBAL_ARC_NAME = '$tfarc';
 const GLOBAL_OBSERVER_NAME = '$tfo';
 const GLOBAL_RELAY_NAME = '$tfr';
 const GLOBAL_STORE_NAME = '$tfs';
@@ -13,7 +14,7 @@ const GLOBAL_UTIL_CREATE_EVENT = '$tfevent';
 const GLOBAL_CLOCK = '$tfc';
 const GLOBAL_CLOCK_TICK = '$tfcr';
 const VM_NAME = '$tfVM';
-const VM_ID_NAME = '$uid';
+export const VM_ID_NAME = '$uid';
 const VM_RELAY_SUBSCRIBE_NAME = '$subscribe';
 const VM_RELAY_UNSUBSCRIBE_NAME = '$unsubscribe';
 const VM_RELAY_PUBLISH_NAME = '$publish';
@@ -223,6 +224,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
                 }
                 window.${GLOBAL_RELAY_NAME}?.unsubscribe(nR.${VM_ID_NAME});
                 window.${GLOBAL_CLOCK}?.delete(nR.${VM_ID_NAME});
+                window.${GLOBAL_ARC_NAME}?.release(nR.${VM_ID_NAME});
             }
             if (nR.children?.length) {
                 for (let i = 0; i < nR.children.length; i++) {
@@ -567,11 +569,9 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
 
 export const ATOMIC_VM_BEFORE = atomicMinify(
     `if (!n.${VM_NAME}) {
-        const i = w.${GLOBAL_UTILS_NAME}.uid();
         Object.defineProperties(n, {
-            ${VM_ID_NAME}:{get: () => i, configurable: !1},
-            ${VM_RELAY_SUBSCRIBE_NAME}:{value: (msg, fn) => w.${GLOBAL_RELAY_NAME}.subscribe(i, msg, fn), configurable: !1, writable: !1},
-            ${VM_RELAY_UNSUBSCRIBE_NAME}:{value: msg => w.${GLOBAL_RELAY_NAME}.unsubscribe(i, msg), configurable: !1, writable: !1},
+            ${VM_RELAY_SUBSCRIBE_NAME}:{value: (msg, fn) => w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, msg, fn), configurable: !1, writable: !1},
+            ${VM_RELAY_UNSUBSCRIBE_NAME}:{value: msg => w.${GLOBAL_RELAY_NAME}.unsubscribe(n.${VM_ID_NAME}, msg), configurable: !1, writable: !1},
             ${VM_RELAY_PUBLISH_NAME}:{value: (msg, data) => w.${GLOBAL_RELAY_NAME}.publish(msg, data), configurable: !1, writable: !1},
             ${VM_NAME}:{get: () => !0, configurable:!1}
         });
@@ -581,3 +581,60 @@ export const ATOMIC_VM_BEFORE = atomicMinify(
 export const ATOMIC_VM_AFTER = atomicMinify(`
     if (typeof n.${VM_HOOK_MOUNT_NAME} === "function") try {n.${VM_HOOK_MOUNT_NAME}()} catch {}
 `);
+
+export const ARC_GLOBAL = atomicMinify(`(function(){
+    if (!window.${GLOBAL_ARC_NAME}) {
+        const f=new Map(),d=new Map(),v=new Map();
+        Object.defineProperty(window,"${GLOBAL_ARC_NAME}",{
+            value:Object.freeze({
+                addF(id,fn){
+                    if(!f.has(id))f.set(id,{fn:fn,refs:0});
+                },
+                addD(id,val){
+                    if(!d.has(id))d.set(id,{val:val,refs:0});
+                },
+                addR(fi,di,vi){
+                    if(v.has(vi)) return;
+                    v.set(vi, {fn_id: fi, data_id: di});
+                    f.get(fi)?.refs++;
+                    d.get(di)?.refs++;
+                },
+                release(vi){
+                    const r = v.get(vi);
+                    if(!r) return;
+                    v.delete(vi);
+                    const fe = f.get(r.fn_id);
+                    if(fe && --fe.refs <= 0) f.delete(r.fn_id);
+                    const de = d.get(r.data_id);
+                    if(de && --de.refs <= 0) d.delete(r.data_id);
+                },
+                getF(id){
+                    return f.get(id)?.fn;
+                },
+                getD(id){
+                    return d.get(id)?.val;
+                }
+            }),
+            configurable:!1,
+            writable:!1
+        });
+    }
+})();`);
+
+export const ARC_GLOBAL_OBSERVER = atomicMinify(`(function(){
+    const c = n => {
+        if (n && n.${VM_ID_NAME}) window.${GLOBAL_ARC_NAME}?.release(n.${VM_ID_NAME});
+        if (n.children?.length) {
+            for (let i = 0; i < n.children.length; i++) c(n.children[i]);
+        }
+    };
+    const o = new MutationObserver(e => {
+        for (let i = 0; i < e.length; i++) {
+            for (let y = 0; y < e[i].removedNodes.length; y++) {
+                c(e[i].removedNodes[y]);
+            }
+        }
+    });
+    o.observe(document.body, {childList:!0, subtree:!0});
+    return o;
+})();`);
