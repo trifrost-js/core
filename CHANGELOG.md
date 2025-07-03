@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.43.2] - 2025-07-03
+### Improved
+- **qol**: list of tags that will be automatically prepended with a space by the style engine has been expanded to include the following svg tags: `mask`, `text`, `tspan`, `textPath`, `defs`, `symbol`, `use`, `clipPath`, `pattern`, `linearGradient`, `radialGradient`, `stop`, `filter`, `feBlend`, `feColorMatrix`, `feComponentTransfer`, `feComposite`, `feConvolveMatrix`, `feDiffuseLighting`, `feDisplacementMap`, `feDropShadow`, `feFlood`, `feGaussianBlur`, `feImage`, `feMerge`, `feMergeNode`, `feMorphology`, `feOffset`, `feSpecularLighting`, `feTile`, `feTurbulence`,
+- **qol**: list of tags that will be automatically prepended with a space by the style engine has been expanded to include the following html tag: `dialog`
+- **qol**: css function normalization behavior now also includes `attr`, `image`, `conic-gradient`, `repeating-linear-gradient` and now internally uses a set rather than a regex. These get normalized to css without their wrapping `"..."` signs.
+
 ## [0.43.1] - 2025-07-03
 ### Improved
 - **qol**: `<Script>` components that **do not reference any arguments** (like `el`, `data`, or `$`) are now rendered **inline** instead of being registered in the (atomic) script engine. This enables immediate execution, useful for boot-time logic like theme/locale detection:
