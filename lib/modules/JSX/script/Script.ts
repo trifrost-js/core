@@ -4,6 +4,7 @@ import {nonce} from '../ctx/nonce';
 import {type JSXProps} from '../types';
 import {type TriFrostAtomicProxy, type TriFrostAtomicUtils, type TriFrostAtomicVM} from './atomic';
 import {getActiveScriptEngine} from './use';
+import {atomicMinify} from './util';
 
 export const SCRIPT_MARKER = '__TRIFROST_HYDRATED_SCRIPT__';
 
@@ -60,18 +61,36 @@ export function Script<
     /* If at this point we dont have a function, do nothing */
     if (typeof options.children !== 'function') return null as unknown as JSX.Element;
 
-    const engine = getActiveScriptEngine();
-    if (!engine) return null as unknown as JSX.Element;
-
-    /* Normalize function body */
     const raw = options.children.toString().trim();
 
-    /* Get data */
-    const data = options.data ? JSON.stringify(options.data).replace(RGX_DATA_SCRIPT, '<\\/script>') : null;
+    /* If pure (no args), execute eagerly (inline) as we dont need to atomify the method */
+    if (options.children.length === 0) {
+        const open_idx = raw.indexOf('{');
+        const close_idx = raw.lastIndexOf('}');
+        const body = open_idx >= 0 && close_idx >= 0 ? atomicMinify(raw.slice(open_idx + 1, close_idx)) : '';
+        if (!body) return null as unknown as JSX.Element;
 
-    return {
-        type: SCRIPT_MARKER,
-        props: engine.register(raw.startsWith('function') || raw.startsWith('(') ? raw : `(${raw})`, data),
-        key: null,
-    };
+        return {
+            type: 'script',
+            props: {
+                dangerouslySetInnerHTML: {
+                    __html: '(function(){' + body + '})();',
+                },
+                nonce: options.nonce || nonce(),
+            },
+            key: null,
+        };
+    } else {
+        const engine = getActiveScriptEngine();
+        if (!engine) return null as unknown as JSX.Element;
+
+        /* Get data */
+        const data = options.data ? JSON.stringify(options.data).replace(RGX_DATA_SCRIPT, '<\\/script>') : null;
+
+        return {
+            type: SCRIPT_MARKER,
+            props: engine.register(raw.startsWith('function') || raw.startsWith('(') ? raw : `(${raw})`, data),
+            key: null,
+        };
+    }
 }

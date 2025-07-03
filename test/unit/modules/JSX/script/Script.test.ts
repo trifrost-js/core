@@ -123,6 +123,80 @@ describe('Modules - JSX - script - <Script>', () => {
         });
     });
 
+    describe('pure', () => {
+        it('Eagerly executes pure function (no args) as inline script', () => {
+            const out = Script({
+                children: () => {
+                    console.log('hello world');
+                },
+            });
+
+            expect(out).toEqual({
+                key: null,
+                type: 'script',
+                props: {
+                    dangerouslySetInnerHTML: {
+                        __html: expect.stringContaining('console.log("hello world")'),
+                    },
+                    nonce: 'my-nonce',
+                },
+            });
+
+            // Ensure no engine functions were flushed
+            expect(engine.flush()).toBe('');
+        });
+
+        it('Skips eager script if function body is malformed', () => {
+            const fn = Object.assign(() => {}, {
+                toString: () => 'malformed',
+            });
+
+            const out = Script({children: fn});
+            expect(out).toBe(null);
+        });
+
+        it('Minifies and inlines function with extra spacing or comments', () => {
+            const out = Script({
+                children: () => {
+                    // comment
+                    const msg = 'hi';
+                    console.log(msg);
+                },
+            });
+
+            expect(out).toEqual({
+                key: null,
+                props: {
+                    dangerouslySetInnerHTML: {
+                        __html: '(function(){const msg="hi";console.log(msg);})();',
+                    },
+                    nonce: 'my-nonce',
+                },
+                type: 'script',
+            });
+        });
+
+        it('Applies custom nonce on pure eager inline function', () => {
+            const out = Script({
+                nonce: 'custom-nonce-xyz',
+                children: () => {
+                    (window as any).x = 1;
+                },
+            });
+
+            expect(out).toEqual({
+                key: null,
+                props: {
+                    dangerouslySetInnerHTML: {
+                        __html: '(function(){window.x=1;})();',
+                    },
+                    nonce: 'custom-nonce-xyz',
+                },
+                type: 'script',
+            });
+        });
+    });
+
     describe('engine', () => {
         it('Registers function and data with engine', () => {
             const out = Script({
@@ -360,18 +434,6 @@ describe('Modules - JSX - script - <Script>', () => {
 
             const result = engine.inject('<html><body><h1>Test</h1></body></html>');
             expect(result).toMatch(/<\/script><\/body><\/html>$/);
-        });
-
-        it('Handles functions that are not formatted as fat-arrows', () => {
-            const fn = Object.assign(() => {}, {
-                toString: () => '{ console.log("no arrow"); }',
-            });
-
-            const out = Script({children: fn});
-            expect(out?.props?.fn_id).toBe('id-1');
-
-            const flushed = engine.flush();
-            expect(flushed).toContain('console.log("no arrow");');
         });
 
         it('Minifies', () => {
@@ -694,7 +756,9 @@ describe('Modules - JSX - script - <Script>', () => {
         it('Escapes closing script tags in data', () => {
             Script({
                 data: {msg: '</script><script>alert(1)</script>'},
-                children: () => {},
+                children: ({el}) => {
+                    console.log(el);
+                },
             });
 
             const flushed = engine.flush();
