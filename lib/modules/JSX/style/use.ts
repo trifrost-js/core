@@ -180,7 +180,7 @@ function normalizeSelector(val: string) {
              */
             const separator_idx = val.search(RGX_SEPARATOR);
             const base = separator_idx === -1 ? val : val.slice(0, separator_idx);
-            return HTML_TAGS[base as keyof typeof HTML_TAGS] ? ' ' + val : val;
+            return HTML_TAGS.has(base) ? ' ' + val : val;
         }
     }
 }
