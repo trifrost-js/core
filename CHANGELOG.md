@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Improved
+- **qol**: Atomic style observer now detects deeply nested style shards via recursive traversal
+
 ## [0.43.3] - 2025-07-03
 ### Improved
 - **dx**: Improved type inference for `$.on` and `$.once` in the Atomic Runtime. These utilities now intelligently infer the correct event type based on the `EventTarget`, including support for `HTMLElement`, `Document`, and `Window`. Custom events continue to work seamlessly for unknown keys.

@@ -31,28 +31,28 @@ export const OBSERVER = atomicMinify(`(function(){
     let m;
     while ((m = cnr.exec(prime.textContent))) cn.add(m[1]);
 
-    function boot() {
+    function c (n, p) {
+        if (
+            n.nodeType === Node.ELEMENT_NODE &&
+            n.tagName === "STYLE" &&
+            n.hasAttribute("${SHARD}")
+        ) {
+            const s = n.getAttribute("${SHARD}");
+            if (!s || cn.has(s)) return n.remove();
+            cn.add(s);
+            if (n.textContent) p.add(n.textContent);
+            return n.remove();
+        }
+        n.childNodes?.forEach(k => c(k, p));
+    }
+
+    function b() {
         const o = new MutationObserver(e => {
             /* Scan mutations for shard style blocks */
-            let pp = new Set();
+            const pp = new Set();
             for (let i = 0; i < e.length; i++) {
                 for (let y = 0; y < e[i].addedNodes.length; y++) {
-                    const nA = e[i].addedNodes[y];
-                    if (
-                        nA.nodeType === Node.ELEMENT_NODE &&
-                        nA.tagName === "STYLE" &&
-                        nA.hasAttribute("${SHARD}")
-                    ) {
-                        const s = nA.getAttribute("${SHARD}");
-                        if (!s || cn.has(s)) {
-                            nA.remove();
-                            continue;
-                        }
-
-                        cn.add(s);
-                        if (nA.textContent) pp.add(nA.textContent);
-                        nA.remove();
-                    }
+                    c(e[i].addedNodes[y], pp);
                 }
             }
             /* Build a prime shard and append after prime */
@@ -70,9 +70,9 @@ export const OBSERVER = atomicMinify(`(function(){
     }
 
     if (document.body) {
-        boot();
+        b();
     } else {
-        document.addEventListener("DOMContentLoaded", boot);
+        document.addEventListener("DOMContentLoaded", b);
     }
 })();`);
 
