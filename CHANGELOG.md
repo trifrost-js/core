@@ -4,9 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.44.0] - 2025-07-04
+This release adds lean, deterministic ARC-style lifecycle behavior to the scripting engine. It cuts down your per-fragment script size dramatically while enabling automatic DOM removal of hydrated scripts and data when no longer necessary.
+
+In addition to the above we've included several runtime quality-of-life upgrades.
+
+### Added
+- **feat**: Integrate an [ARC-style (Automatic Reference Counting)](https://en.wikipedia.org/wiki/Automatic_Reference_Counting) lifecycle to automatically release functions/data on DOM removal from injected `<Script>` blocks.
+
 ### Improved
-- **qol**: Atomic style observer now detects deeply nested style shards via recursive traversal
+- **qol**: Atomic style observer now detects deeply nested style shards via recursive traversal.
+- **qol**: Bun and Node runtimes now fallback to `null` if version detection fails, aligning `runtime.version` behavior across runtimes.
+- **qol**: Workerd runtime now returns a 500 response if no incoming handler is registered, instead of returning `undefined`.
+
+### What is ARC?
+ARC (Automatic Reference Counting) is a memory management technique where objects are retained or released based on how many references exist to them.
+
+In TriFrost, it ensures that each DOM-bound function or data payload is automatically cleaned up when no longer used, without relying on a garbage collector.
+
+It’s deterministic, lightweight, and perfect for fragment-based hydration.
+
+---
+
+TriFrost continues to push toward a leaner, smarter edge, onward to `1.0`.
+
+As always, stay frosty ❄️
 
 ## [0.43.3] - 2025-07-03
 ### Improved
