@@ -555,6 +555,29 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
         });
         oD("storeGet", window.${GLOBAL_STORE_NAME}.get);
         oD("storeSet", window.${GLOBAL_STORE_NAME}.set);
+        oD("cssVar", (() => {
+            let c;
+            return v => {
+                if (typeof v !== "string") return null;
+                if (!c) c = getComputedStyle(document.documentElement);
+                return c.getPropertyValue(v.startsWith("--") ? v : "--v-" + v).trim() || null;
+            };
+        })());
+        oD("cssTheme", (() => {
+            let c;
+            let t;
+            return v => {
+                if (typeof v !== "string") return null;
+                const n = document.documentElement;
+                const tc = n.getAttribute("data-theme");
+                if (!c || tc !== t) {
+                    c = getComputedStyle(n);
+                    t = tc;
+                }
+                return c.getPropertyValue(v.startsWith("--") ? v : "--t-" + v).trim() || null;
+            };
+        })());
+
         return Object.freeze(obj);
     })());
 
@@ -576,8 +599,6 @@ export const ARC_GLOBAL = atomicMinify(`(function(w){
                     const r = v.get(uid);
                     if(!r) return;
                     v.delete(uid);
-                    const fe = f.get(r.fn_id);
-                    if(fe && --fe.refs <= 0) f.delete(r.fn_id);
                     const de = d.get(r.data_id);
                     if(de && --de.refs <= 0) d.delete(r.data_id);
                 },
@@ -588,7 +609,7 @@ export const ARC_GLOBAL = atomicMinify(`(function(w){
                     }
 
                     for (const [FID, fn] of FNS) {
-                        if(fn !== undefined && !f.has(FID)) f.set(FID, {fn, refs: 0});
+                        if(fn !== undefined && !f.has(FID)) f.set(FID, {fn});
 
                         const FREG = f.get(FID);
                         if (!FREG?.fn) continue;
@@ -611,7 +632,6 @@ export const ARC_GLOBAL = atomicMinify(`(function(w){
                                     ? {el:n, data: w.${GLOBAL_DATA_REACTOR_NAME}(n,DREG?.val??{}), $: w.${GLOBAL_UTILS_NAME}}
                                     : {el:n, data: DREG?.val??{}});
                                 v.set(UID, {fn_id: FID, data_id: DID});
-                                FREG.refs++;
                                 if (DID && DREG) DREG.refs++;
                                 if (ATOMIC && typeof n.${VM_HOOK_MOUNT_NAME} === "function") {
                                     try {n.${VM_HOOK_MOUNT_NAME}()} catch {}

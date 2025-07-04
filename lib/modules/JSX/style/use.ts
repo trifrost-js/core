@@ -626,11 +626,6 @@ export function createCss<
          */
         theme?: T;
         /**
-         * If `true`, injects theme tokens as both media queries and HTML attributes (e.g. `data-theme="dark"`).
-         * You can also pass a string like `'data-mode'` to use a custom attribute.
-         */
-        themeAttribute?: boolean | string;
-        /**
          * Opt-In to an SSR-safe CSS reset styles. Defaults to `false`.
          */
         reset?: boolean;
@@ -725,25 +720,11 @@ export function createCss<
         ...root_vars,
         [mod.media.light]: {
             ...theme_light,
-            /**
-             * Theme Attribute support, defaults to false but if passed as true
-             * we will inject for 'data-theme' if passed as
-             * a string we will use that as attribute
-             */
-            ...(config.themeAttribute && {
-                [`:root[${typeof config.themeAttribute === 'string' ? config.themeAttribute : 'data-theme'}="dark"]`]: theme_dark,
-            }),
+            [':root[data-theme="dark"]']: theme_dark,
         },
         [mod.media.dark]: {
             ...theme_dark,
-            /**
-             * Theme Attribute support, defaults to false but if passed as true
-             * we will inject for 'data-theme' if passed as
-             * a string we will use that as attribute
-             */
-            ...(config.themeAttribute && {
-                [`:root[${typeof config.themeAttribute === 'string' ? config.themeAttribute : 'data-theme'}="light"]`]: theme_light,
-            }),
+            [':root[data-theme="light"]']: theme_dark,
         },
     };
 
