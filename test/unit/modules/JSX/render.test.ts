@@ -613,7 +613,7 @@ describe('Modules - JSX - Renderer', () => {
                     '[["1xym5hl",({el,data})=>el.innerText=JSON.stringify(data)]],',
                     '[["zh3e7",{"a":1,"b":2}],["1kvkwa7",{"b":2,"a":1}]]',
                     ');',
-                    'self?.remove();',
+                    'setTimeout(()=>self?.remove?.(),0);',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -716,7 +716,7 @@ describe('Modules - JSX - Renderer', () => {
                     '[["1xym5hl",({el,data})=>el.innerText=JSON.stringify(data)]],',
                     '[["zh3e7",{"a":1,"b":2}],["1kvkwa7",{"b":2,"a":1}]]',
                     ');',
-                    'self?.remove();',
+                    'setTimeout(()=>self?.remove?.(),0);',
                     '})(window);</script>',
                     '</body></html>',
                 ].join(''),
@@ -819,7 +819,7 @@ describe('Modules - JSX - Renderer', () => {
                     '[["1xym5hl",({el,data})=>el.innerText=JSON.stringify(data)]],',
                     '[["zh3e7",{"a":1,"b":2}],["1kvkwa7",{"b":2,"a":1}]]',
                     ');',
-                    'self?.remove();',
+                    'setTimeout(()=>self?.remove?.(),0);',
                     '};',
                     'if(!w.$tfarc){const wait=()=>{w.$tfarc?run():setTimeout(wait,1)};wait();}else{run()}',
                     '})(window);</script>',
@@ -928,7 +928,7 @@ describe('Modules - JSX - Renderer', () => {
                         'w.$tfarc.spark(',
                         '[["184ti1k",({el,data})=>console.log("Hydrated:",el,data)]],',
                         '[["bv7w9a",{"foo":"bar"}]]',
-                        ');self?.remove();})(window);</script>',
+                        ');setTimeout(()=>self?.remove?.(),0);})(window);</script>',
                     ].join(''),
                 );
             });
@@ -964,7 +964,7 @@ describe('Modules - JSX - Renderer', () => {
                         '<span data-tfhf="i4kkoa" data-tfhd="ujl1v4">Item</span>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark([["i4kkoa",({el})=>el.dataset.bound="true"]],[["ujl1v4",{"x":1}]]);',
-                        'self?.remove();',
+                        'setTimeout(()=>self?.remove?.(),0);',
                         '})(window);</script>',
                     ].join(''),
                 );
@@ -996,7 +996,7 @@ describe('Modules - JSX - Renderer', () => {
                         '[["syupwh",({el})=>el.id="injected"]],',
                         '[]',
                         ');',
-                        'self?.remove();',
+                        'setTimeout(()=>self?.remove?.(),0);',
                         '})(window);</script>',
                     ].join(''),
                 );
@@ -1034,7 +1034,7 @@ describe('Modules - JSX - Renderer', () => {
                         '[["1fegs1v",({el,data})=>el.setAttribute("data-enabled",data.enabled)]],',
                         '[["28o3uy",{"enabled":true}]]',
                         ');',
-                        'self?.remove();})(window);</script>',
+                        'setTimeout(()=>self?.remove?.(),0);})(window);</script>',
                     ].join(''),
                 );
             });
@@ -1092,7 +1092,7 @@ describe('Modules - JSX - Renderer', () => {
                         '],',
                         '[["14azfrf",{"count":1}],["14azfs8",{"count":2}]]',
                         ');',
-                        'self?.remove();})(window);</script>',
+                        'setTimeout(()=>self?.remove?.(),0);})(window);</script>',
                     ].join(''),
                 );
             });
@@ -1150,7 +1150,7 @@ describe('Modules - JSX - Renderer', () => {
                         '],',
                         '[["14azfrf",{"count":1}]]',
                         ');',
-                        'self?.remove();})(window);</script>',
+                        'setTimeout(()=>self?.remove?.(),0);})(window);</script>',
                     ].join(''),
                 );
             });
@@ -1204,7 +1204,7 @@ describe('Modules - JSX - Renderer', () => {
                         'w.$tfarc.spark(',
                         '[["1a9hy7w",({el,data})=>el.textContent=`count is ${data.count}`]],',
                         '[["14azfrf",{"count":1}]]',
-                        ');self?.remove();})(window);</script>',
+                        ');setTimeout(()=>self?.remove?.(),0);})(window);</script>',
                     ].join(''),
                 );
             });
@@ -1270,7 +1270,7 @@ describe('Modules - JSX - Renderer', () => {
                         '],',
                         '[["12racoz",{"active":true}]]',
                         ');',
-                        'self?.remove();',
+                        'setTimeout(()=>self?.remove?.(),0);',
                         '})(window);</script>',
                     ].join(''),
                 );
@@ -1308,7 +1308,7 @@ describe('Modules - JSX - Renderer', () => {
                         '[["126qtv4",({el,data})=>el.setAttribute("data-value",data.x)]],',
                         '[["ujl1ro",{"x":5}]]',
                         ');',
-                        'self?.remove();',
+                        'setTimeout(()=>self?.remove?.(),0);',
                         '})(window);</script>',
                     ].join(''),
                 );
@@ -1380,7 +1380,7 @@ describe('Modules - JSX - Renderer', () => {
                         '[["1xym5hl",({el,data})=>el.innerText=JSON.stringify(data)]],',
                         '[["zh3e7",{"a":1,"b":2}],["1kvkwa7",{"b":2,"a":1}]]',
                         ');',
-                        'self?.remove();',
+                        'setTimeout(()=>self?.remove?.(),0);',
                         '})(window);</script>',
                     ].join(''),
                 );
@@ -1452,7 +1452,7 @@ describe('Modules - JSX - Renderer', () => {
                         '[["1xym5hl",({el,data})=>el.innerText=JSON.stringify(data)]],',
                         '[["zh3e7",{"a":1,"b":2}],["1kvkwa7",{"b":2,"a":1}]]',
                         ');',
-                        'self?.remove();',
+                        'setTimeout(()=>self?.remove?.(),0);',
                         '})(window);</script>',
                     ].join(''),
                 );
@@ -1525,7 +1525,7 @@ describe('Modules - JSX - Renderer', () => {
                         '[["1xym5hl",({el,data})=>el.innerText=JSON.stringify(data)]],',
                         '[["zh3e7",{"a":1,"b":2}],["1kvkwa7",{"b":2,"a":1}]]',
                         ');',
-                        'self?.remove();',
+                        'setTimeout(()=>self?.remove?.(),0);',
                         '})(window);</script>',
                     ].join(''),
                 );
@@ -1553,7 +1553,7 @@ describe('Modules - JSX - Renderer', () => {
                         '<div data-tfhf="1i5z1bg">Reset me</div>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark([["1i5z1bg",(el)=>el.id="reset"]],[]);',
-                        'self?.remove();',
+                        'setTimeout(()=>self?.remove?.(),0);',
                         '})(window);</script>',
                     ].join(''),
                 );
@@ -1602,7 +1602,7 @@ describe('Modules - JSX - Renderer', () => {
                         '<div id="foo" data-tfhf="8gisj4" data-tfhd="bv7w9a"></div>',
                         '<script nonce="aWQtMQ==">(function(w){',
                         'const self=document.currentScript;',
-                        'w.$tfarc.spark([["8gisj4"]],[["bv7w9a",{"foo":"bar"}]]);self?.remove();',
+                        'w.$tfarc.spark([["8gisj4"]],[["bv7w9a",{"foo":"bar"}]]);setTimeout(()=>self?.remove?.(),0);',
                         '})(window);</script>',
                     ].join(''),
                 );
@@ -1638,7 +1638,7 @@ describe('Modules - JSX - Renderer', () => {
                         '[["1h50wgl",(el)=>el.dataset.ready="true"]],',
                         '[]',
                         ');',
-                        'self?.remove();})(window);</script>',
+                        'setTimeout(()=>self?.remove?.(),0);})(window);</script>',
                     ].join(''),
                 );
 

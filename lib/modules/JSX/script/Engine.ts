@@ -74,7 +74,7 @@ export class ScriptEngine {
                 'const self=document.currentScript;',
                 'const run=()=>{',
                 out,
-                'self?.remove();',
+                'setTimeout(()=>self?.remove?.(),0);',
                 '};',
                 `if(!w.${GLOBAL_ARC_NAME}){`,
                 `const wait=()=>{w.${GLOBAL_ARC_NAME}?run():setTimeout(wait,1)};`,
@@ -83,7 +83,7 @@ export class ScriptEngine {
                 '})(window);',
             ].join('');
         } else {
-            out = '(function(w){const self=document.currentScript;' + out + 'self?.remove();})(window);';
+            out = '(function(w){const self=document.currentScript;' + out + 'setTimeout(()=>self?.remove?.(),0);})(window);';
         }
 
         const n_nonce = nonce();

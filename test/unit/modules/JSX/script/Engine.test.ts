@@ -113,7 +113,7 @@ describe('Modules - JSX - script - Engine', () => {
                     '[["id-1",function({el,data}){el.textContent="x";}]],',
                     '[["id-2",{"x":1}]]',
                     ');',
-                    'self?.remove();',
+                    'setTimeout(()=>self?.remove?.(),0);',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -129,7 +129,7 @@ describe('Modules - JSX - script - Engine', () => {
                     '[["id-1",function(){}]],',
                     '[]',
                     ');',
-                    'self?.remove();',
+                    'setTimeout(()=>self?.remove?.(),0);',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -144,7 +144,7 @@ describe('Modules - JSX - script - Engine', () => {
                     'w.$tfarc.spark(',
                     '[["id-1",function({el,data}){el.id="a"}]],',
                     '[["id-2",{"value":42}]]',
-                    ');self?.remove();',
+                    ');setTimeout(()=>self?.remove?.(),0);',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -172,7 +172,7 @@ describe('Modules - JSX - script - Engine', () => {
                     '[["id-1",function({el,data}){el.id="a"}]],',
                     '[["id-2",{"value":42}]]',
                     ');',
-                    'self?.remove();',
+                    'setTimeout(()=>self?.remove?.(),0);',
                     '};',
                     'if(!w.$tfarc){',
                     'const wait=()=>{w.$tfarc?run():setTimeout(wait,1)};',
@@ -228,7 +228,7 @@ describe('Modules - JSX - script - Engine', () => {
                     '</script>',
                     '<script nonce="abc123">',
                     '(function(w){const self=document.currentScript;',
-                    'w.$tfarc.spark([["id-1",function(){}]],[]);self?.remove();})(window);',
+                    'w.$tfarc.spark([["id-1",function(){}]],[]);setTimeout(()=>self?.remove?.(),0);})(window);',
                     '</script>',
                     '</html>',
                 ].join(''),
@@ -246,7 +246,7 @@ describe('Modules - JSX - script - Engine', () => {
                     '</script>',
                     '<script nonce="abc123">',
                     '(function(w){const self=document.currentScript;',
-                    'w.$tfarc.spark([["id-1",function(){}]],[]);self?.remove();})(window);',
+                    'w.$tfarc.spark([["id-1",function(){}]],[]);setTimeout(()=>self?.remove?.(),0);})(window);',
                     '</script>',
                 ].join(''),
             );
@@ -265,7 +265,7 @@ describe('Modules - JSX - script - Engine', () => {
                     '</script>',
                     '<script nonce="abc123">',
                     '(function(w){const self=document.currentScript;',
-                    'w.$tfarc.spark([["id-1",function(){}]],[]);self?.remove();})(window);',
+                    'w.$tfarc.spark([["id-1",function(){}]],[]);setTimeout(()=>self?.remove?.(),0);})(window);',
                     '</script>',
                     '</body>',
                     '</html>',
@@ -284,7 +284,7 @@ describe('Modules - JSX - script - Engine', () => {
                     '[["id-1",function(el){el.dataset.x="1"}]],',
                     '[]',
                     ');',
-                    'self?.remove();',
+                    'setTimeout(()=>self?.remove?.(),0);',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -327,7 +327,7 @@ describe('Modules - JSX - script - Engine', () => {
                     '[["id-1",function({el,data}){el.id="a"}]],',
                     '[["id-2",{"value":42}]]',
                     ');',
-                    'self?.remove();',
+                    'setTimeout(()=>self?.remove?.(),0);',
                     '};',
                     'if(!w.$tfarc){',
                     'const wait=()=>{w.$tfarc?run():setTimeout(wait,1)};',
@@ -375,7 +375,7 @@ describe('Modules - JSX - script - Engine', () => {
                     '[["id-1",function({el,data}){el.id="a"}]],',
                     '[["id-2",{"value":42}]]',
                     ');',
-                    'self?.remove();',
+                    'setTimeout(()=>self?.remove?.(),0);',
                     '};',
                     'if(!w.$tfarc){',
                     'const wait=()=>{w.$tfarc?run():setTimeout(wait,1)};',
@@ -404,7 +404,7 @@ describe('Modules - JSX - script - Engine', () => {
                     '[["id-1",function({el,data}){el.id="a"}]],',
                     '[["id-2",{"value":42}]]',
                     ');',
-                    'self?.remove();',
+                    'setTimeout(()=>self?.remove?.(),0);',
                     '};',
                     'if(!w.$tfarc){',
                     'const wait=()=>{w.$tfarc?run():setTimeout(wait,1)};',
@@ -437,7 +437,7 @@ describe('Modules - JSX - script - Engine', () => {
                     '[["id-1",function({el,data}){el.id="a"}]],',
                     '[["id-2",{"value":42}]]',
                     ');',
-                    'self?.remove();',
+                    'setTimeout(()=>self?.remove?.(),0);',
                     '})(window);',
                     '</script>',
                     '</body></html>',
@@ -448,7 +448,7 @@ describe('Modules - JSX - script - Engine', () => {
         it('Gracefully handles empty html in inject()', () => {
             engine.register('function(){}', null);
             expect(engine.inject('')).toBe(
-                '<script nonce="abc123">(function(w){const self=document.currentScript;w.$tfarc.spark([["id-1",function(){}]],[]);self?.remove();})(window);</script>',
+                '<script nonce="abc123">(function(w){const self=document.currentScript;w.$tfarc.spark([["id-1",function(){}]],[]);setTimeout(()=>self?.remove?.(),0);})(window);</script>',
             );
         });
 
