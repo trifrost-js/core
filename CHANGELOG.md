@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.44.1] - 2025-07-04
+### Fixed
+- Issue with window vs w shorthand in new Arc spark method
+
 ## [0.44.0] - 2025-07-04
 This release adds lean, deterministic ARC-style lifecycle behavior to the scripting engine. It cuts down your per-fragment script size dramatically while enabling automatic DOM removal of hydrated scripts and data when no longer necessary.
 
@@ -82,7 +86,7 @@ Style definitions have evolved into callable units via `css.defs`, unlocking dyn
 ### Added
 - **feat**: Register prebuilt animations via `createCss({animations: {...}})` for reusable keyframe definitions
 - **feat**: `css.animation(name, overrides?)` method on `css` instance, fully typed, override-capable, returns granular animation CSS props
-- **feat**: `css.defs` now exposes all registered `definitions` as direct, callable methods (e.g. `css.defs.card()`), improving ergonomics and enabling dynamic, fully typed, parameterized style generation. 
+- **feat**: `css.defs` now exposes all registered `definitions` as direct, callable methods (e.g. `css.defs.card()`), improving ergonomics and enabling dynamic, fully typed, parameterized style generation.
 
 ### Improved
 - **qol**: Atomic removal now applies depth-first traversal when unmounting removed dom nodes.
