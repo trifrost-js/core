@@ -215,12 +215,12 @@ describe('Modules - JSX - script - <Script>', () => {
             const flushed = engine.flush();
             expect(flushed).toBe(
                 [
-                    '<script nonce="my-nonce">(function(w){',
+                    '<script nonce="my-nonce">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[["id-1",({el,data})=>el.dataset.enabled=String(data.enabled)]],',
                     '[["id-2",{"enabled":true}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -257,14 +257,14 @@ describe('Modules - JSX - script - <Script>', () => {
 
             expect(engine.flush()).toBe(
                 [
-                    '<script nonce="my-nonce">(function(w){',
+                    '<script nonce="my-nonce">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[["id-1",({el})=>el.textContent="hi"]],',
                     '[',
                     '["id-2",{"x":1}],',
                     '["id-3",{"y":2}]',
                     ']);',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -301,7 +301,7 @@ describe('Modules - JSX - script - <Script>', () => {
 
             expect(engine.flush()).toBe(
                 [
-                    '<script nonce="my-nonce">(function(w){',
+                    '<script nonce="my-nonce">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[',
                     '["id-1",({el})=>el.innerText="X"],',
@@ -309,7 +309,7 @@ describe('Modules - JSX - script - <Script>', () => {
                     '],',
                     '[["id-2",{"a":1,"b":2}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -346,7 +346,7 @@ describe('Modules - JSX - script - <Script>', () => {
 
             expect(engine.flush()).toBe(
                 [
-                    '<script nonce="my-nonce">(function(w){',
+                    '<script nonce="my-nonce">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[',
                     '["id-1",({el})=>el.innerText="X"],',
@@ -356,7 +356,7 @@ describe('Modules - JSX - script - <Script>', () => {
                     '["id-2",{"a":1,"b":2}],',
                     '["id-4",{"b":2,"a":1}]',
                     ']);',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -378,12 +378,12 @@ describe('Modules - JSX - script - <Script>', () => {
 
             expect(engine.flush()).toBe(
                 [
-                    '<script nonce="my-nonce">(function(w){',
+                    '<script nonce="my-nonce">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[["id-1",({el})=>el.className="injected"]],',
                     '[]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -432,12 +432,12 @@ describe('Modules - JSX - script - <Script>', () => {
             Script({children: fn});
             expect(engine.flush()).toBe(
                 [
-                    '<script nonce="my-nonce">(function(w){',
+                    '<script nonce="my-nonce">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[["id-1",({el})=>{function greet(){console.log("hello");}el.addEventListener("click",greet);}]],',
                     '[]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -474,12 +474,12 @@ describe('Modules - JSX - script - <Script>', () => {
             const flushed = engine.flush();
             expect(flushed).toBe(
                 [
-                    '<script nonce="my-nonce">(function(w){',
+                    '<script nonce="my-nonce">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[["id-1",({el,data})=>{el.dataset.enabled=String(data.enabled);}]],',
                     '[["id-2",{"enabled":true}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -508,12 +508,12 @@ describe('Modules - JSX - script - <Script>', () => {
             const flushed = engine.flush();
             expect(flushed).toBe(
                 [
-                    '<script nonce="my-nonce">(function(w){',
+                    '<script nonce="my-nonce">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[["id-1",({el,data})=>{el.dataset.enabled=String(data.enabled);}]],',
                     '[["id-2",{"enabled":true}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -537,12 +537,12 @@ describe('Modules - JSX - script - <Script>', () => {
 
             expect(engine.flush()).toBe(
                 [
-                    '<script nonce="my-nonce">(function(w){',
+                    '<script nonce="my-nonce">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[["id-1",({el,data})=>{el.textContent=String(data);}]],',
                     '[["id-2",{"x":1}],["id-3",{"y":2}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -562,7 +562,7 @@ describe('Modules - JSX - script - <Script>', () => {
 
             expect(engine.flush()).toBe(
                 [
-                    '<script nonce="my-nonce">(function(w){',
+                    '<script nonce="my-nonce">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[',
                     '["id-1",({el,data})=>el.textContent=String(data)],',
@@ -570,7 +570,7 @@ describe('Modules - JSX - script - <Script>', () => {
                     '],',
                     '[["id-2",{"x":1}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -586,12 +586,12 @@ describe('Modules - JSX - script - <Script>', () => {
 
             expect(engine.flush()).toBe(
                 [
-                    '<script nonce="my-nonce">(function(w){',
+                    '<script nonce="my-nonce">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[["id-1",({el,data})=>el.textContent=data.msg]],',
                     '[["id-2",{"msg":"early"}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -610,12 +610,12 @@ describe('Modules - JSX - script - <Script>', () => {
 
             expect(engine.flush()).toBe(
                 [
-                    '<script nonce="my-nonce">(function(w){',
+                    '<script nonce="my-nonce">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[["id-1",({el,data})=>el.textContent=data.msg]],',
                     '[["id-2",{"msg":"early"}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -635,12 +635,12 @@ describe('Modules - JSX - script - <Script>', () => {
 
             expect(engine.flush()).toBe(
                 [
-                    '<script nonce="my-nonce">(function(w){',
+                    '<script nonce="my-nonce">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[["id-1",({el,data,$})=>{el.$publish("eventA",data.msg);$.storeSet("lastMessage",data.msg);}]],',
                     '[["id-2",{"msg":"hello"}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -663,12 +663,13 @@ describe('Modules - JSX - script - <Script>', () => {
                 [
                     '<script nonce="my-nonce">',
                     '(function(w){',
+                    'const self=document.currentScript;',
                     'const run=()=>{',
                     'w.$tfarc.spark(',
                     '[["id-1",({el,data,$})=>{el.$publish("eventA",data.msg);$.storeSet("lastMessage",data.msg);}]],',
                     '[["id-2",{"msg":"hello"}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '};',
                     'if(!w.$tfarc){',
                     'const wait=()=>{w.$tfarc?run():setTimeout(wait,1)};',

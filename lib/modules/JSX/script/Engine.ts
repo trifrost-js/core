@@ -57,14 +57,16 @@ export class ScriptEngine {
         /* Start script */
         const FNS = '[' + [...this.map_fn].map(([val, id]) => '["' + id + '",' + val + ']').join(',') + ']';
         const DAT = '[' + [...this.map_data].map(([val, id]) => '["' + id + '",' + val + ']').join(',') + ']';
-        let out = `w.${GLOBAL_ARC_NAME}.spark(${FNS},${DAT});document.currentScript?.remove();`;
+        let out = `w.${GLOBAL_ARC_NAME}.spark(${FNS},${DAT});`;
 
         /* Finalize iife */
         if (this.mount_path && this.root_renderer) {
             out = [
                 '(function(w){',
+                'const self=document.currentScript;',
                 'const run=()=>{',
                 out,
+                'self?.remove();',
                 '};',
                 `if(!w.${GLOBAL_ARC_NAME}){`,
                 `const wait=()=>{w.${GLOBAL_ARC_NAME}?run():setTimeout(wait,1)};`,
@@ -73,7 +75,7 @@ export class ScriptEngine {
                 '})(window);',
             ].join('');
         } else {
-            out = '(function(w){' + out + '})(window);';
+            out = '(function(w){const self=document.currentScript;' + out + 'self?.remove();})(window);';
         }
 
         const n_nonce = nonce();

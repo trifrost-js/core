@@ -108,12 +108,12 @@ describe('Modules - JSX - script - Engine', () => {
             const out = engine.flush();
             expect(out).toBe(
                 [
-                    '<script nonce="abc123">(function(w){',
+                    '<script nonce="abc123">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[["id-1",function({el,data}){el.textContent="x";}]],',
                     '[["id-2",{"x":1}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -124,12 +124,12 @@ describe('Modules - JSX - script - Engine', () => {
             engine.register('function(){}', null);
             expect(engine.flush()).toBe(
                 [
-                    '<script>(function(w){',
+                    '<script>(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[["id-1",function(){}]],',
                     '[]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -140,11 +140,11 @@ describe('Modules - JSX - script - Engine', () => {
             engine.register('function({el,data}){el.id="a"}', '{"value":42}');
             expect(engine.flush()).toBe(
                 [
-                    '<script nonce="abc123">(function(w){',
+                    '<script nonce="abc123">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[["id-1",function({el,data}){el.id="a"}]],',
                     '[["id-2",{"value":42}]]',
-                    ');document.currentScript?.remove();',
+                    ');self?.remove();',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -166,13 +166,13 @@ describe('Modules - JSX - script - Engine', () => {
 
             expect(engine.flush()).toBe(
                 [
-                    '<script nonce="abc123">(function(w){',
+                    '<script nonce="abc123">(function(w){const self=document.currentScript;',
                     'const run=()=>{',
                     'w.$tfarc.spark(',
                     '[["id-1",function({el,data}){el.id="a"}]],',
                     '[["id-2",{"value":42}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '};',
                     'if(!w.$tfarc){',
                     'const wait=()=>{w.$tfarc?run():setTimeout(wait,1)};',
@@ -201,8 +201,8 @@ describe('Modules - JSX - script - Engine', () => {
                     ARC_GLOBAL_OBSERVER,
                     '</script>',
                     '<script nonce="abc123">',
-                    '(function(w){',
-                    'w.$tfarc.spark([["id-1",function(){}]],[]);document.currentScript?.remove();})(window);',
+                    '(function(w){const self=document.currentScript;',
+                    'w.$tfarc.spark([["id-1",function(){}]],[]);self?.remove();})(window);',
                     '</script>',
                     '</html>',
                 ].join(''),
@@ -219,8 +219,8 @@ describe('Modules - JSX - script - Engine', () => {
                     ARC_GLOBAL_OBSERVER,
                     '</script>',
                     '<script nonce="abc123">',
-                    '(function(w){',
-                    'w.$tfarc.spark([["id-1",function(){}]],[]);document.currentScript?.remove();})(window);',
+                    '(function(w){const self=document.currentScript;',
+                    'w.$tfarc.spark([["id-1",function(){}]],[]);self?.remove();})(window);',
                     '</script>',
                 ].join(''),
             );
@@ -238,8 +238,8 @@ describe('Modules - JSX - script - Engine', () => {
                     ARC_GLOBAL_OBSERVER,
                     '</script>',
                     '<script nonce="abc123">',
-                    '(function(w){',
-                    'w.$tfarc.spark([["id-1",function(){}]],[]);document.currentScript?.remove();})(window);',
+                    '(function(w){const self=document.currentScript;',
+                    'w.$tfarc.spark([["id-1",function(){}]],[]);self?.remove();})(window);',
                     '</script>',
                     '</body>',
                     '</html>',
@@ -253,12 +253,12 @@ describe('Modules - JSX - script - Engine', () => {
             expect(engine.inject('<div>Partial content</div>')).toBe(
                 [
                     '<div>Partial content</div>',
-                    '<script nonce="abc123">(function(w){',
+                    '<script nonce="abc123">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[["id-1",function(el){el.dataset.x="1"}]],',
                     '[]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -295,13 +295,13 @@ describe('Modules - JSX - script - Engine', () => {
                 [
                     '<!DOCTYPE html><html><body><main>Hello</main>',
                     '<script nonce="abc123" src="/static/atomic.js" defer></script>',
-                    '<script nonce="abc123">(function(w){',
+                    '<script nonce="abc123">(function(w){const self=document.currentScript;',
                     'const run=()=>{',
                     'w.$tfarc.spark(',
                     '[["id-1",function({el,data}){el.id="a"}]],',
                     '[["id-2",{"value":42}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '};',
                     'if(!w.$tfarc){',
                     'const wait=()=>{w.$tfarc?run():setTimeout(wait,1)};',
@@ -343,13 +343,13 @@ describe('Modules - JSX - script - Engine', () => {
             expect(engine.inject('<main>Hello</main>')).toBe(
                 [
                     '<main>Hello</main>',
-                    '<script nonce="abc123">(function(w){',
+                    '<script nonce="abc123">(function(w){const self=document.currentScript;',
                     'const run=()=>{',
                     'w.$tfarc.spark(',
                     '[["id-1",function({el,data}){el.id="a"}]],',
                     '[["id-2",{"value":42}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '};',
                     'if(!w.$tfarc){',
                     'const wait=()=>{w.$tfarc?run():setTimeout(wait,1)};',
@@ -372,13 +372,13 @@ describe('Modules - JSX - script - Engine', () => {
                 [
                     '<html><body><main>Hello</main>',
                     '<script src="/static/atomic.js" defer></script>',
-                    '<script>(function(w){',
+                    '<script>(function(w){const self=document.currentScript;',
                     'const run=()=>{',
                     'w.$tfarc.spark(',
                     '[["id-1",function({el,data}){el.id="a"}]],',
                     '[["id-2",{"value":42}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '};',
                     'if(!w.$tfarc){',
                     'const wait=()=>{w.$tfarc?run():setTimeout(wait,1)};',
@@ -406,12 +406,12 @@ describe('Modules - JSX - script - Engine', () => {
                     ATOMIC_GLOBAL,
                     '</script>',
                     '<script>',
-                    '(function(w){',
+                    '(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[["id-1",function({el,data}){el.id="a"}]],',
                     '[["id-2",{"value":42}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);',
                     '</script>',
                     '</body></html>',
@@ -422,7 +422,7 @@ describe('Modules - JSX - script - Engine', () => {
         it('Gracefully handles empty html in inject()', () => {
             engine.register('function(){}', null);
             expect(engine.inject('')).toBe(
-                '<script nonce="abc123">(function(w){w.$tfarc.spark([["id-1",function(){}]],[]);document.currentScript?.remove();})(window);</script>',
+                '<script nonce="abc123">(function(w){const self=document.currentScript;w.$tfarc.spark([["id-1",function(){}]],[]);self?.remove();})(window);</script>',
             );
         });
 

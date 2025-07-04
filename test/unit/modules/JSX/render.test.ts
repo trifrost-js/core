@@ -550,12 +550,12 @@ describe('Modules - JSX - Renderer', () => {
                     '<style data-tfs-s="1lr8eb3" nonce="aWQtMQ==">table{border-collapse:collapse;border-spacing:0}</style>',
                     '<style data-tfs-s="tf1ahm5s3" nonce="aWQtMQ==">.tf1ahm5s3{margin:2rem;color:black}</style>',
                     '</ul>',
-                    '<script nonce="aWQtMQ==">(function(w){',
+                    '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[["id-3",({el,data})=>el.innerText=JSON.stringify(data)]],',
                     '[["id-4",{"a":1,"b":2}],["id-5",{"b":2,"a":1}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);</script>',
                 ].join(''),
             );
@@ -653,12 +653,12 @@ describe('Modules - JSX - Renderer', () => {
                     ARC_GLOBAL,
                     ATOMIC_GLOBAL,
                     '</script>',
-                    '<script nonce="aWQtMQ==">(function(w){',
+                    '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
                     '[["id-3",({el,data})=>el.innerText=JSON.stringify(data)]],',
                     '[["id-4",{"a":1,"b":2}],["id-5",{"b":2,"a":1}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '})(window);</script>',
                     '</body></html>',
                 ].join(''),
@@ -755,13 +755,13 @@ describe('Modules - JSX - Renderer', () => {
                     `<script nonce="aWQtMQ==">${OBSERVER}</script>`,
                     '</ul>',
                     '<script nonce="aWQtMQ==" src="/static.js" defer></script>',
-                    '<script nonce="aWQtMQ==">(function(w){',
+                    '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                     'const run=()=>{',
                     'w.$tfarc.spark(',
                     '[["id-3",({el,data})=>el.innerText=JSON.stringify(data)]],',
                     '[["id-4",{"a":1,"b":2}],["id-5",{"b":2,"a":1}]]',
                     ');',
-                    'document.currentScript?.remove();',
+                    'self?.remove();',
                     '};',
                     'if(!w.$tfarc){const wait=()=>{w.$tfarc?run():setTimeout(wait,1)};wait();}else{run()}',
                     '})(window);</script>',
@@ -866,11 +866,11 @@ describe('Modules - JSX - Renderer', () => {
                 expect(html).toBe(
                     [
                         '<button data-tfhf="id-2" data-tfhd="id-3">Click me</button>',
-                        '<script nonce="aWQtMQ==">(function(w){',
+                        '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
                         '[["id-2",({el,data})=>console.log("Hydrated:",el,data)]],',
                         '[["id-3",{"foo":"bar"}]]',
-                        ');document.currentScript?.remove();})(window);</script>',
+                        ');self?.remove();})(window);</script>',
                     ].join(''),
                 );
             });
@@ -904,9 +904,9 @@ describe('Modules - JSX - Renderer', () => {
                         '<span data-tfhf="id-2" data-tfhd="id-3">Item</span>',
                         '<span data-tfhf="id-2" data-tfhd="id-3">Item</span>',
                         '<span data-tfhf="id-2" data-tfhd="id-3">Item</span>',
-                        '<script nonce="aWQtMQ==">(function(w){',
+                        '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark([["id-2",({el})=>el.dataset.bound="true"]],[["id-3",{"x":1}]]);',
-                        'document.currentScript?.remove();',
+                        'self?.remove();',
                         '})(window);</script>',
                     ].join(''),
                 );
@@ -933,12 +933,12 @@ describe('Modules - JSX - Renderer', () => {
                 expect(html).toBe(
                     [
                         '<div data-tfhf="id-2">No Data</div>',
-                        '<script nonce="aWQtMQ==">(function(w){',
+                        '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
                         '[["id-2",({el})=>el.id="injected"]],',
                         '[]',
                         ');',
-                        'document.currentScript?.remove();',
+                        'self?.remove();',
                         '})(window);</script>',
                     ].join(''),
                 );
@@ -971,12 +971,12 @@ describe('Modules - JSX - Renderer', () => {
                 expect(html).toBe(
                     [
                         '<div data-tfhf="id-2" data-tfhd="id-3">Nested</div>',
-                        '<script nonce="aWQtMQ==">(function(w){',
+                        '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
                         '[["id-2",({el,data})=>el.setAttribute("data-enabled",data.enabled)]],',
                         '[["id-3",{"enabled":true}]]',
                         ');',
-                        'document.currentScript?.remove();})(window);</script>',
+                        'self?.remove();})(window);</script>',
                     ].join(''),
                 );
             });
@@ -1026,7 +1026,7 @@ describe('Modules - JSX - Renderer', () => {
                     [
                         '<div data-tfhf="id-2" data-tfhd="id-3">First</div>',
                         '<div data-tfhf="id-4" data-tfhd="id-5">Second</div>',
-                        '<script nonce="aWQtMQ==">(function(w){',
+                        '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
                         '[',
                         '["id-2",({el,data})=>el.textContent=`count:${data.count}`],',
@@ -1034,7 +1034,7 @@ describe('Modules - JSX - Renderer', () => {
                         '],',
                         '[["id-3",{"count":1}],["id-5",{"count":2}]]',
                         ');',
-                        'document.currentScript?.remove();})(window);</script>',
+                        'self?.remove();})(window);</script>',
                     ].join(''),
                 );
             });
@@ -1084,7 +1084,7 @@ describe('Modules - JSX - Renderer', () => {
                     [
                         '<div data-tfhf="id-2" data-tfhd="id-3">First</div>',
                         '<div data-tfhf="id-4" data-tfhd="id-3">Second</div>',
-                        '<script nonce="aWQtMQ==">(function(w){',
+                        '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
                         '[',
                         '["id-2",({el,data})=>el.textContent=`count:${data.count}`],',
@@ -1092,7 +1092,7 @@ describe('Modules - JSX - Renderer', () => {
                         '],',
                         '[["id-3",{"count":1}]]',
                         ');',
-                        'document.currentScript?.remove();})(window);</script>',
+                        'self?.remove();})(window);</script>',
                     ].join(''),
                 );
             });
@@ -1142,11 +1142,11 @@ describe('Modules - JSX - Renderer', () => {
                     [
                         '<div data-tfhf="id-2" data-tfhd="id-3">First</div>',
                         '<div data-tfhf="id-2" data-tfhd="id-3">Second</div>',
-                        '<script nonce="aWQtMQ==">(function(w){',
+                        '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
                         '[["id-2",({el,data})=>el.textContent=`count is ${data.count}`]],',
                         '[["id-3",{"count":1}]]',
-                        ');document.currentScript?.remove();})(window);</script>',
+                        ');self?.remove();})(window);</script>',
                     ].join(''),
                 );
             });
@@ -1204,7 +1204,7 @@ describe('Modules - JSX - Renderer', () => {
                         '<header data-tfhf="id-2" data-tfhd="id-3">Header</header>',
                         '<footer data-tfhf="id-4">Footer</footer>',
                         '</article></section>',
-                        '<script nonce="aWQtMQ==">(function(w){',
+                        '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
                         '[',
                         '["id-2",({el,data})=>el.dataset.active=String(data.active)],',
@@ -1212,7 +1212,7 @@ describe('Modules - JSX - Renderer', () => {
                         '],',
                         '[["id-3",{"active":true}]]',
                         ');',
-                        'document.currentScript?.remove();',
+                        'self?.remove();',
                         '})(window);</script>',
                     ].join(''),
                 );
@@ -1245,12 +1245,12 @@ describe('Modules - JSX - Renderer', () => {
                 expect(html).toBe(
                     [
                         '<div data-tfhf="id-2" data-tfhd="id-3">Hello</div>',
-                        '<script nonce="aWQtMQ==">(function(w){',
+                        '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
                         '[["id-2",({el,data})=>el.setAttribute("data-value",data.x)]],',
                         '[["id-3",{"x":5}]]',
                         ');',
-                        'document.currentScript?.remove();',
+                        'self?.remove();',
                         '})(window);</script>',
                     ].join(''),
                 );
@@ -1317,12 +1317,12 @@ describe('Modules - JSX - Renderer', () => {
                         '<li data-tfhf="id-2" data-tfhd="id-3">A</li>',
                         '<li data-tfhf="id-2" data-tfhd="id-4">B</li>',
                         '</ul>',
-                        '<script nonce="aWQtMQ==">(function(w){',
+                        '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
                         '[["id-2",({el,data})=>el.innerText=JSON.stringify(data)]],',
                         '[["id-3",{"a":1,"b":2}],["id-4",{"b":2,"a":1}]]',
                         ');',
-                        'document.currentScript?.remove();',
+                        'self?.remove();',
                         '})(window);</script>',
                     ].join(''),
                 );
@@ -1389,12 +1389,12 @@ describe('Modules - JSX - Renderer', () => {
                         '<li data-tfhf="id-2" data-tfhd="id-4">B</li>',
                         '</ul>',
                         '<style data-tfs-s="tf1ahm5s3" nonce="aWQtMQ==">.tf1ahm5s3{margin:2rem;color:black}</style>',
-                        '<script nonce="aWQtMQ==">(function(w){',
+                        '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
                         '[["id-2",({el,data})=>el.innerText=JSON.stringify(data)]],',
                         '[["id-3",{"a":1,"b":2}],["id-4",{"b":2,"a":1}]]',
                         ');',
-                        'document.currentScript?.remove();',
+                        'self?.remove();',
                         '})(window);</script>',
                     ].join(''),
                 );
@@ -1462,12 +1462,12 @@ describe('Modules - JSX - Renderer', () => {
                         '<li data-tfhf="id-2" data-tfhd="id-3">A</li>',
                         '<li data-tfhf="id-2" data-tfhd="id-4">B</li>',
                         '</ul>',
-                        '<script nonce="aWQtMQ==">(function(w){',
+                        '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
                         '[["id-2",({el,data})=>el.innerText=JSON.stringify(data)]],',
                         '[["id-3",{"a":1,"b":2}],["id-4",{"b":2,"a":1}]]',
                         ');',
-                        'document.currentScript?.remove();',
+                        'self?.remove();',
                         '})(window);</script>',
                     ].join(''),
                 );
@@ -1493,9 +1493,9 @@ describe('Modules - JSX - Renderer', () => {
                 expect(html1).toBe(
                     [
                         '<div data-tfhf="id-2">Reset me</div>',
-                        '<script nonce="aWQtMQ==">(function(w){',
+                        '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark([["id-2",(el)=>el.id="reset"]],[]);',
-                        'document.currentScript?.remove();',
+                        'self?.remove();',
                         '})(window);</script>',
                     ].join(''),
                 );
