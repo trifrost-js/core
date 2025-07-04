@@ -587,33 +587,48 @@ export const ARC_GLOBAL = atomicMinify(`(function(){
         const f=new Map(),d=new Map(),v=new Map();
         Object.defineProperty(window,"${GLOBAL_ARC_NAME}",{
             value:Object.freeze({
-                addF(id,fn){
-                    if(!f.has(id))f.set(id,{fn:fn,refs:0});
-                },
-                addD(id,val){
-                    if(!d.has(id))d.set(id,{val:val,refs:0});
-                },
-                addR(fi,di,vi){
-                    if(v.has(vi)) return;
-                    v.set(vi, {fn_id: fi, data_id: di});
-                    f.get(fi)?.refs++;
-                    d.get(di)?.refs++;
-                },
-                release(vi){
-                    const r = v.get(vi);
+                release(uid){
+                    const r = v.get(uid);
                     if(!r) return;
-                    v.delete(vi);
+                    v.delete(uid);
                     const fe = f.get(r.fn_id);
                     if(fe && --fe.refs <= 0) f.delete(r.fn_id);
                     const de = d.get(r.data_id);
                     if(de && --de.refs <= 0) d.delete(r.data_id);
                 },
-                getF(id){
-                    return f.get(id)?.fn;
+                spark(FNS, DAT){
+                    const ATOMIC = !!window.${GLOBAL_HYDRATED_NAME};
+                    for (const [DID, val] of DAT) {
+                        if(!d.has(DID))d.set(DID,{val,refs:0});
+                    }
+
+                    for (const [FID, fn] of FNS) {
+                        if(!f.has(FID))f.set(FID,{fn,refs:0});
+
+                        const nodes = document.querySelectorAll(\`[data-tfhf="\${FID}"]\`);
+                        for (const n of nodes) {
+                            const DID = n.getAttribute("data-tfhd") || undefined;
+                            const DREG = DID ? d.get(DID) : {};
+                            const FREG = f.get(FID);
+                            const UID = Math.random().toString(36).slice(2);
+                            Object.defineProperty(n, "${VM_ID_NAME}", {value: UID, configurable: false, writable: false});
+                            if (ATOMIC) {
+                            ${ATOMIC_VM_BEFORE}
+                            }
+                            try {
+                                FREG?.fn?.(ATOMIC
+                                    ? {el:n, data: window.${GLOBAL_DATA_REACTOR_NAME}(n,DREG?.val??{}), $: w.${GLOBAL_UTILS_NAME}}
+                                    : {el:n, data: DREG?.val??{}});
+                                v.set(UID, {fn_id: FID, data_id: DID});
+                                if (FREG) FREG.refs++;
+                                if (DID && DREG) DREG.refs++;
+                                if (ATOMIC) {
+                                ${ATOMIC_VM_AFTER}
+                                }
+                            } catch {}
+                        }
+                    }
                 },
-                getD(id){
-                    return d.get(id)?.val;
-                }
             }),
             configurable:!1,
             writable:!1

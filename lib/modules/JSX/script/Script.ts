@@ -89,7 +89,7 @@ export function Script<
 
         return {
             type: SCRIPT_MARKER,
-            props: engine.register(raw.startsWith('function') || raw.startsWith('(') ? raw : `(${raw})`, data),
+            props: engine.register(raw, data),
             key: null,
         };
     }

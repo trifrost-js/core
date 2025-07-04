@@ -9,6 +9,7 @@ import {type TriFrostContextConfig} from '../../lib/types/context';
 import CONSTANTS from '../constants';
 import {Cookies} from '../../lib/modules';
 import {NONCE_WIN_SCRIPT} from '../../lib/modules/JSX/ctx/nonce';
+import {ARC_GLOBAL, ARC_GLOBAL_OBSERVER} from '../../lib/modules/JSX/script/atomic';
 
 class TestContext extends Context {
     constructor(logger: TriFrostRootLogger, cfg: TriFrostContextConfig, req: any) {
@@ -1923,7 +1924,9 @@ describe('Context', () => {
             const configOverride = {env: {}, cookies: {}, cache: null, trustProxy: false};
             const jsx = {type: 'html', props: {children: {type: 'span', props: {children: 'Custom'}}}};
             const result = ctx.render(jsx as any, configOverride as any);
-            expect(result).toBe('<!DOCTYPE html><html><span>Custom</span></html>');
+            expect(result).toBe(
+                `<!DOCTYPE html><html><span>Custom</span><script nonce="${ctx.nonce}">${ARC_GLOBAL}${ARC_GLOBAL_OBSERVER}</script></html>`,
+            );
         });
     });
 

@@ -1,14 +1,18 @@
 import {type Router} from '../../../routing/Router';
 import {MimeTypes} from '../../../types/constants';
 import {isDevMode} from '../../../utils/Generic';
-import {ATOMIC_GLOBAL} from './atomic';
+import {ARC_GLOBAL, ARC_GLOBAL_OBSERVER, ATOMIC_GLOBAL} from './atomic';
 import {createScript} from './use';
 
 export function mount(router: Router, path: string, module: ReturnType<typeof createScript>['script']) {
-    if (!module.isAtomic) return;
-
     /* We cache root content in mem*/
-    const content: string = ATOMIC_GLOBAL;
+    let content: string = ARC_GLOBAL;
+
+    if (module.isAtomic) {
+        content += ATOMIC_GLOBAL;
+    } else {
+        content += ARC_GLOBAL_OBSERVER;
+    }
 
     /* Set mount path on module */
     module.setMountPath(path);

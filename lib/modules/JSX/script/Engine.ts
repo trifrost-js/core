@@ -1,13 +1,6 @@
 import {hexId} from '../../../utils/Generic';
 import {nonce} from '../ctx/nonce';
-import {
-    ATOMIC_GLOBAL,
-    ATOMIC_VM_BEFORE,
-    ATOMIC_VM_AFTER,
-    GLOBAL_HYDRATED_NAME,
-    GLOBAL_DATA_REACTOR_NAME,
-    GLOBAL_UTILS_NAME,
-} from './atomic';
+import {ATOMIC_GLOBAL, ARC_GLOBAL, GLOBAL_ARC_NAME, ARC_GLOBAL_OBSERVER} from './atomic';
 import {atomicMinify} from './util';
 
 export class ScriptEngine {
@@ -59,66 +52,28 @@ export class ScriptEngine {
      * Flushes the script registry into a string
      */
     flush(): string {
-        if (this.map_fn.size === 0 && !this.atomic_enabled) return '';
+        if (this.map_fn.size === 0) return '';
 
         /* Start script */
-        let out = '';
-
-        /* Include atomics IF atomic is enabled AND we're doing a root render AND we dont have a mount path */
-        if (this.atomic_enabled && this.root_renderer && !this.mount_path) {
-            out += ATOMIC_GLOBAL;
-        }
-
-        if (this.map_fn.size) {
-            // --- Payloads (TFD) ---
-            const TFD = [...this.map_data].map(([v, k]) => '"' + k + '":' + v).join(',');
-            out += `const TFD={${TFD}};`;
-
-            // --- Functions (TFF) ---
-            const TFF = [...this.map_fn].map(([v, k]) => '"' + k + '":' + v).join(',');
-            out += `const TFF={${TFF}};`;
-
-            // --- Runner ---
-            out += [
-                /* Global Utils */
-                this.atomic_enabled ? `const TFU=w.${GLOBAL_UTILS_NAME};` : '',
-                /* Loop through each function and instantiate vm */
-                'for(const id in TFF){',
-                'const N=d.querySelectorAll(`[data-tfhf="${id}"]`);',
-                'for(let n of N){',
-                this.atomic_enabled ? ATOMIC_VM_BEFORE : '',
-                /* Run function and pass data */
-                'const dId=n.getAttribute("data-tfhd");',
-                'try{',
-                'TFF[id]({',
-                'el:n,',
-                this.atomic_enabled ? `data:w.${GLOBAL_DATA_REACTOR_NAME}(n,dId?TFD[dId]:{})` : 'data:dId?TFD[dId]:{}',
-                this.atomic_enabled ? ',$:TFU' : '',
-                '})',
-                '}catch{}',
-                this.atomic_enabled ? ATOMIC_VM_AFTER : '',
-                '}',
-                '}',
-            ].join('');
-        }
-
-        if (!out) return '';
+        const FNS = '[' + [...this.map_fn].map(([val, id]) => '["' + id + '",' + val + ']').join(',') + ']';
+        const DAT = '[' + [...this.map_data].map(([val, id]) => '["' + id + '",' + val + ']').join(',') + ']';
+        let out = `w.${GLOBAL_ARC_NAME}.spark(${FNS},${DAT});document.currentScript?.remove();`;
 
         /* Finalize iife */
-        if (this.atomic_enabled && this.mount_path && this.root_renderer) {
+        if (this.mount_path && this.root_renderer) {
             out = [
-                '(function(d,w){',
+                '(function(w){',
                 'const run=()=>{',
                 out,
                 '};',
-                `if(!w.${GLOBAL_HYDRATED_NAME}){`,
-                'const wait=()=>{w.$tfhydra?run():setTimeout(wait,1)};',
+                `if(!w.${GLOBAL_ARC_NAME}){`,
+                `const wait=()=>{w.${GLOBAL_ARC_NAME}?run():setTimeout(wait,1)};`,
                 'wait();',
                 '}else{run()}',
-                '})(document,window);',
+                '})(window);',
             ].join('');
         } else {
-            out = '(function(d,w){' + out + '})(document,window);';
+            out = '(function(w){' + out + '})(window);';
         }
 
         const n_nonce = nonce();
@@ -128,20 +83,41 @@ export class ScriptEngine {
     inject(html: string): string {
         if (typeof html !== 'string') return '';
 
-        const bodyIdx = html.indexOf('</body>');
         const n_nonce = nonce();
+        const isFragment = !html.startsWith('<!DOCTYPE') && !html.startsWith('<html');
 
         /* Mount script */
-        let mount_script = '';
-        if (this.mount_path && (html.startsWith('<!DOCTYPE') || html.startsWith('<html'))) {
-            mount_script = n_nonce
-                ? `<script nonce="${n_nonce}" src="${this.mount_path}" defer></script>`
-                : `<script src="${this.mount_path}" defer></script>`;
+        let scripts = '';
+
+        /* Add atomic/arc client runtime */
+        if (!isFragment) {
+            if (this.mount_path) {
+                scripts = n_nonce
+                    ? '<script nonce="' + n_nonce + '" src="' + this.mount_path + '" defer></script>'
+                    : '<script src="' + this.mount_path + '" defer></script>';
+            } else if (this.atomic_enabled) {
+                scripts = n_nonce
+                    ? '<script nonce="' + n_nonce + '">' + ARC_GLOBAL + ATOMIC_GLOBAL + '</script>'
+                    : '<script>' + ARC_GLOBAL + ATOMIC_GLOBAL + '</script>';
+            } else {
+                scripts = n_nonce
+                    ? '<script nonce="' + n_nonce + '">' + ARC_GLOBAL + ARC_GLOBAL_OBSERVER + '</script>'
+                    : '<script>' + ARC_GLOBAL + ARC_GLOBAL_OBSERVER + '</script>';
+            }
         }
 
-        const injection = mount_script + this.flush();
+        /* Add engine scripts */
+        scripts += this.flush();
 
-        return bodyIdx >= 0 ? html.slice(0, bodyIdx) + injection + html.slice(bodyIdx) : html + injection;
+        if (isFragment) return html + scripts;
+
+        const bodyIdx = html.indexOf('</body>');
+        if (bodyIdx >= 0) return html.slice(0, bodyIdx) + scripts + html.slice(bodyIdx);
+
+        const htmlIdx = html.indexOf('</html>');
+        if (htmlIdx >= 0) return html.slice(0, htmlIdx) + scripts + html.slice(htmlIdx);
+
+        return html + scripts;
     }
 
     reset(): void {
