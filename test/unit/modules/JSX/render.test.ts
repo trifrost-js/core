@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import {describe, it, expect, beforeEach, vi, afterEach} from 'vitest';
-import {render, escape, rootRender} from '../../../../lib/modules/JSX/render';
+import {render, escape, rootRender, toLruCookie, fromLruCookie} from '../../../../lib/modules/JSX/render';
 import {Fragment} from '../../../../lib/modules/JSX/runtime';
 import {createCss} from '../../../../lib/modules/JSX/style/use';
 import {nonce} from '../../../../lib/modules/JSX/ctx/nonce';
@@ -47,6 +47,64 @@ describe('Modules - JSX - Renderer', () => {
             const once = escape('<>&\'"');
             const twice = escape(once);
             expect(once).toBe(twice);
+        });
+    });
+
+    describe('fromLruCookie', () => {
+        it('Returns empty set for null', () => {
+            const out = fromLruCookie(null);
+            expect(out instanceof Set).toBe(true);
+            expect(out.size).toBe(0);
+        });
+
+        it('Splits a cookie string into set', () => {
+            const out = fromLruCookie('a|b|c');
+            expect([...out]).toEqual(['a', 'b', 'c']);
+        });
+
+        it('Ignores empty segments', () => {
+            const out = fromLruCookie('a||c|');
+            expect([...out]).toEqual(['a', 'c']);
+        });
+
+        it('Returns empty set for empty string', () => {
+            const out = fromLruCookie('');
+            expect(out.size).toBe(0);
+        });
+
+        it('Preserves order of insertion', () => {
+            const out = fromLruCookie('x|y|z');
+            expect([...out]).toEqual(['x', 'y', 'z']);
+        });
+    });
+
+    describe('toLruCookie', () => {
+        it('Returns null for empty set', () => {
+            expect(toLruCookie(new Set())).toBe(null);
+        });
+
+        it('Joins entries with pipe', () => {
+            const out = toLruCookie(new Set(['a', 'b', 'c']));
+            expect(out).toBe('a|b|c');
+        });
+
+        it('Limits to last 64 entries', () => {
+            const big = new Set<string>();
+            for (let i = 0; i < 100; i++) big.add(`fn-${i}`);
+
+            const out = toLruCookie(big)!;
+            const parts = out.split('|');
+            expect(parts.length).toBe(64);
+            expect(parts[0]).toBe('fn-36');
+            expect(parts[63]).toBe('fn-99');
+        });
+
+        it('Preserves LRU ordering', () => {
+            const values = Array.from({length: 70}, (_, i) => `id${i}`);
+            const lru = new Set<string>(values);
+            const result = toLruCookie(lru)!;
+            expect(result.startsWith('id6')).toBe(true); // first 6 trimmed
+            expect(result.endsWith('id69')).toBe(true);
         });
     });
 
@@ -535,8 +593,8 @@ describe('Modules - JSX - Renderer', () => {
                 [
                     '<ul>',
                     '<div class="tf1ahm5s3">Styled</div>',
-                    '<li data-tfhf="id-3" data-tfhd="id-4">A</li>',
-                    '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
+                    '<li data-tfhf="1xym5hl" data-tfhd="zh3e7">A</li>',
+                    '<li data-tfhf="1xym5hl" data-tfhd="1kvkwa7">B</li>',
                     '<style data-tfs-s="1wa46xf" nonce="aWQtMQ==">',
                     '*, *::before, *::after{box-sizing:border-box}',
                     '</style>',
@@ -552,8 +610,8 @@ describe('Modules - JSX - Renderer', () => {
                     '</ul>',
                     '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
-                    '[["id-3",({el,data})=>el.innerText=JSON.stringify(data)]],',
-                    '[["id-4",{"a":1,"b":2}],["id-5",{"b":2,"a":1}]]',
+                    '[["1xym5hl",({el,data})=>el.innerText=JSON.stringify(data)]],',
+                    '[["zh3e7",{"a":1,"b":2}],["1kvkwa7",{"b":2,"a":1}]]',
                     ');',
                     'self?.remove();',
                     '})(window);</script>',
@@ -641,8 +699,8 @@ describe('Modules - JSX - Renderer', () => {
                 [
                     '<html><body><ul>',
                     '<div class="tf1ahm5s3">Styled</div>',
-                    '<li data-tfhf="id-3" data-tfhd="id-4">A</li>',
-                    '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
+                    '<li data-tfhf="1xym5hl" data-tfhd="zh3e7">A</li>',
+                    '<li data-tfhf="1xym5hl" data-tfhd="1kvkwa7">B</li>',
                     '<style nonce="aWQtMQ==" data-tfs-p>',
                     '*, *::before, *::after{box-sizing:border-box}html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}footer, header, nav, section, main{display:block}ol, ul{list-style:none}q, blockquote::before{content:none}q, blockquote::after{content:none}q, blockquote{quotes:none}table{border-collapse:collapse;border-spacing:0}',
                     '.tf1ahm5s3{margin:2rem;color:black}',
@@ -655,8 +713,8 @@ describe('Modules - JSX - Renderer', () => {
                     '</script>',
                     '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
-                    '[["id-3",({el,data})=>el.innerText=JSON.stringify(data)]],',
-                    '[["id-4",{"a":1,"b":2}],["id-5",{"b":2,"a":1}]]',
+                    '[["1xym5hl",({el,data})=>el.innerText=JSON.stringify(data)]],',
+                    '[["zh3e7",{"a":1,"b":2}],["1kvkwa7",{"b":2,"a":1}]]',
                     ');',
                     'self?.remove();',
                     '})(window);</script>',
@@ -748,8 +806,8 @@ describe('Modules - JSX - Renderer', () => {
                 [
                     '<html><body><ul>',
                     '<div class="tf1ahm5s3">Styled</div>',
-                    '<li data-tfhf="id-3" data-tfhd="id-4">A</li>',
-                    '<li data-tfhf="id-3" data-tfhd="id-5">B</li>',
+                    '<li data-tfhf="1xym5hl" data-tfhd="zh3e7">A</li>',
+                    '<li data-tfhf="1xym5hl" data-tfhd="1kvkwa7">B</li>',
                     '<link rel="stylesheet" nonce="aWQtMQ==" href="/static.css">',
                     '<style nonce="aWQtMQ==" data-tfs-p>.tf1ahm5s3{margin:2rem;color:black}</style>',
                     `<script nonce="aWQtMQ==">${OBSERVER}</script>`,
@@ -758,8 +816,8 @@ describe('Modules - JSX - Renderer', () => {
                     '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                     'const run=()=>{',
                     'w.$tfarc.spark(',
-                    '[["id-3",({el,data})=>el.innerText=JSON.stringify(data)]],',
-                    '[["id-4",{"a":1,"b":2}],["id-5",{"b":2,"a":1}]]',
+                    '[["1xym5hl",({el,data})=>el.innerText=JSON.stringify(data)]],',
+                    '[["zh3e7",{"a":1,"b":2}],["1kvkwa7",{"b":2,"a":1}]]',
                     ');',
                     'self?.remove();',
                     '};',
@@ -865,11 +923,11 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe(
                     [
-                        '<button data-tfhf="id-2" data-tfhd="id-3">Click me</button>',
+                        '<button data-tfhf="184ti1k" data-tfhd="bv7w9a">Click me</button>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["id-2",({el,data})=>console.log("Hydrated:",el,data)]],',
-                        '[["id-3",{"foo":"bar"}]]',
+                        '[["184ti1k",({el,data})=>console.log("Hydrated:",el,data)]],',
+                        '[["bv7w9a",{"foo":"bar"}]]',
                         ');self?.remove();})(window);</script>',
                     ].join(''),
                 );
@@ -901,11 +959,11 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe(
                     [
-                        '<span data-tfhf="id-2" data-tfhd="id-3">Item</span>',
-                        '<span data-tfhf="id-2" data-tfhd="id-3">Item</span>',
-                        '<span data-tfhf="id-2" data-tfhd="id-3">Item</span>',
+                        '<span data-tfhf="i4kkoa" data-tfhd="ujl1v4">Item</span>',
+                        '<span data-tfhf="i4kkoa" data-tfhd="ujl1v4">Item</span>',
+                        '<span data-tfhf="i4kkoa" data-tfhd="ujl1v4">Item</span>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
-                        'w.$tfarc.spark([["id-2",({el})=>el.dataset.bound="true"]],[["id-3",{"x":1}]]);',
+                        'w.$tfarc.spark([["i4kkoa",({el})=>el.dataset.bound="true"]],[["ujl1v4",{"x":1}]]);',
                         'self?.remove();',
                         '})(window);</script>',
                     ].join(''),
@@ -932,10 +990,10 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe(
                     [
-                        '<div data-tfhf="id-2">No Data</div>',
+                        '<div data-tfhf="syupwh">No Data</div>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["id-2",({el})=>el.id="injected"]],',
+                        '[["syupwh",({el})=>el.id="injected"]],',
                         '[]',
                         ');',
                         'self?.remove();',
@@ -970,11 +1028,11 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe(
                     [
-                        '<div data-tfhf="id-2" data-tfhd="id-3">Nested</div>',
+                        '<div data-tfhf="1fegs1v" data-tfhd="28o3uy">Nested</div>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["id-2",({el,data})=>el.setAttribute("data-enabled",data.enabled)]],',
-                        '[["id-3",{"enabled":true}]]',
+                        '[["1fegs1v",({el,data})=>el.setAttribute("data-enabled",data.enabled)]],',
+                        '[["28o3uy",{"enabled":true}]]',
                         ');',
                         'self?.remove();})(window);</script>',
                     ].join(''),
@@ -1024,15 +1082,15 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe(
                     [
-                        '<div data-tfhf="id-2" data-tfhd="id-3">First</div>',
-                        '<div data-tfhf="id-4" data-tfhd="id-5">Second</div>',
+                        '<div data-tfhf="qabhi4" data-tfhd="14azfrf">First</div>',
+                        '<div data-tfhf="1a9hy7w" data-tfhd="14azfs8">Second</div>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
                         '[',
-                        '["id-2",({el,data})=>el.textContent=`count:${data.count}`],',
-                        '["id-4",({el,data})=>el.textContent=`count is ${data.count}`]',
+                        '["qabhi4",({el,data})=>el.textContent=`count:${data.count}`],',
+                        '["1a9hy7w",({el,data})=>el.textContent=`count is ${data.count}`]',
                         '],',
-                        '[["id-3",{"count":1}],["id-5",{"count":2}]]',
+                        '[["14azfrf",{"count":1}],["14azfs8",{"count":2}]]',
                         ');',
                         'self?.remove();})(window);</script>',
                     ].join(''),
@@ -1082,15 +1140,15 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe(
                     [
-                        '<div data-tfhf="id-2" data-tfhd="id-3">First</div>',
-                        '<div data-tfhf="id-4" data-tfhd="id-3">Second</div>',
+                        '<div data-tfhf="qabhi4" data-tfhd="14azfrf">First</div>',
+                        '<div data-tfhf="1a9hy7w" data-tfhd="14azfrf">Second</div>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
                         '[',
-                        '["id-2",({el,data})=>el.textContent=`count:${data.count}`],',
-                        '["id-4",({el,data})=>el.textContent=`count is ${data.count}`]',
+                        '["qabhi4",({el,data})=>el.textContent=`count:${data.count}`],',
+                        '["1a9hy7w",({el,data})=>el.textContent=`count is ${data.count}`]',
                         '],',
-                        '[["id-3",{"count":1}]]',
+                        '[["14azfrf",{"count":1}]]',
                         ');',
                         'self?.remove();})(window);</script>',
                     ].join(''),
@@ -1140,12 +1198,12 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe(
                     [
-                        '<div data-tfhf="id-2" data-tfhd="id-3">First</div>',
-                        '<div data-tfhf="id-2" data-tfhd="id-3">Second</div>',
+                        '<div data-tfhf="1a9hy7w" data-tfhd="14azfrf">First</div>',
+                        '<div data-tfhf="1a9hy7w" data-tfhd="14azfrf">Second</div>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["id-2",({el,data})=>el.textContent=`count is ${data.count}`]],',
-                        '[["id-3",{"count":1}]]',
+                        '[["1a9hy7w",({el,data})=>el.textContent=`count is ${data.count}`]],',
+                        '[["14azfrf",{"count":1}]]',
                         ');self?.remove();})(window);</script>',
                     ].join(''),
                 );
@@ -1201,16 +1259,16 @@ describe('Modules - JSX - Renderer', () => {
                 expect(html).toBe(
                     [
                         '<section><article>',
-                        '<header data-tfhf="id-2" data-tfhd="id-3">Header</header>',
-                        '<footer data-tfhf="id-4">Footer</footer>',
+                        '<header data-tfhf="p4a6d4" data-tfhd="12racoz">Header</header>',
+                        '<footer data-tfhf="1ua37l8">Footer</footer>',
                         '</article></section>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
                         '[',
-                        '["id-2",({el,data})=>el.dataset.active=String(data.active)],',
-                        '["id-4",(el)=>el.dataset.foot="true"]',
+                        '["p4a6d4",({el,data})=>el.dataset.active=String(data.active)],',
+                        '["1ua37l8",(el)=>el.dataset.foot="true"]',
                         '],',
-                        '[["id-3",{"active":true}]]',
+                        '[["12racoz",{"active":true}]]',
                         ');',
                         'self?.remove();',
                         '})(window);</script>',
@@ -1244,11 +1302,11 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe(
                     [
-                        '<div data-tfhf="id-2" data-tfhd="id-3">Hello</div>',
+                        '<div data-tfhf="126qtv4" data-tfhd="ujl1ro">Hello</div>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["id-2",({el,data})=>el.setAttribute("data-value",data.x)]],',
-                        '[["id-3",{"x":5}]]',
+                        '[["126qtv4",({el,data})=>el.setAttribute("data-value",data.x)]],',
+                        '[["ujl1ro",{"x":5}]]',
                         ');',
                         'self?.remove();',
                         '})(window);</script>',
@@ -1314,13 +1372,13 @@ describe('Modules - JSX - Renderer', () => {
                 expect(html).toBe(
                     [
                         '<ul>',
-                        '<li data-tfhf="id-2" data-tfhd="id-3">A</li>',
-                        '<li data-tfhf="id-2" data-tfhd="id-4">B</li>',
+                        '<li data-tfhf="1xym5hl" data-tfhd="zh3e7">A</li>',
+                        '<li data-tfhf="1xym5hl" data-tfhd="1kvkwa7">B</li>',
                         '</ul>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["id-2",({el,data})=>el.innerText=JSON.stringify(data)]],',
-                        '[["id-3",{"a":1,"b":2}],["id-4",{"b":2,"a":1}]]',
+                        '[["1xym5hl",({el,data})=>el.innerText=JSON.stringify(data)]],',
+                        '[["zh3e7",{"a":1,"b":2}],["1kvkwa7",{"b":2,"a":1}]]',
                         ');',
                         'self?.remove();',
                         '})(window);</script>',
@@ -1385,14 +1443,14 @@ describe('Modules - JSX - Renderer', () => {
                     [
                         '<ul>',
                         '<div class="tf1ahm5s3">Styled</div>',
-                        '<li data-tfhf="id-2" data-tfhd="id-3">A</li>',
-                        '<li data-tfhf="id-2" data-tfhd="id-4">B</li>',
+                        '<li data-tfhf="1xym5hl" data-tfhd="zh3e7">A</li>',
+                        '<li data-tfhf="1xym5hl" data-tfhd="1kvkwa7">B</li>',
                         '</ul>',
                         '<style data-tfs-s="tf1ahm5s3" nonce="aWQtMQ==">.tf1ahm5s3{margin:2rem;color:black}</style>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["id-2",({el,data})=>el.innerText=JSON.stringify(data)]],',
-                        '[["id-3",{"a":1,"b":2}],["id-4",{"b":2,"a":1}]]',
+                        '[["1xym5hl",({el,data})=>el.innerText=JSON.stringify(data)]],',
+                        '[["zh3e7",{"a":1,"b":2}],["1kvkwa7",{"b":2,"a":1}]]',
                         ');',
                         'self?.remove();',
                         '})(window);</script>',
@@ -1459,13 +1517,13 @@ describe('Modules - JSX - Renderer', () => {
                     [
                         '<ul>',
                         '<div class="tf1ahm5s3">Styled</div>',
-                        '<li data-tfhf="id-2" data-tfhd="id-3">A</li>',
-                        '<li data-tfhf="id-2" data-tfhd="id-4">B</li>',
+                        '<li data-tfhf="1xym5hl" data-tfhd="zh3e7">A</li>',
+                        '<li data-tfhf="1xym5hl" data-tfhd="1kvkwa7">B</li>',
                         '</ul>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["id-2",({el,data})=>el.innerText=JSON.stringify(data)]],',
-                        '[["id-3",{"a":1,"b":2}],["id-4",{"b":2,"a":1}]]',
+                        '[["1xym5hl",({el,data})=>el.innerText=JSON.stringify(data)]],',
+                        '[["zh3e7",{"a":1,"b":2}],["1kvkwa7",{"b":2,"a":1}]]',
                         ');',
                         'self?.remove();',
                         '})(window);</script>',
@@ -1492,9 +1550,9 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html1).toBe(
                     [
-                        '<div data-tfhf="id-2">Reset me</div>',
+                        '<div data-tfhf="1i5z1bg">Reset me</div>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
-                        'w.$tfarc.spark([["id-2",(el)=>el.id="reset"]],[]);',
+                        'w.$tfarc.spark([["1i5z1bg",(el)=>el.id="reset"]],[]);',
                         'self?.remove();',
                         '})(window);</script>',
                     ].join(''),
@@ -1506,6 +1564,119 @@ describe('Modules - JSX - Renderer', () => {
                 });
 
                 expect(html2).toBe('<div>Fresh</div>');
+            });
+
+            it('flush() avoids duplicating function IDs seen from cookie', () => {
+                const ctx = new MockContext({
+                    headers: {
+                        cookie: 'tfscriptlru=8gisj4; Secure',
+                    },
+                });
+
+                const scriptCalls: string[] = [];
+                const fn = ({el}: any) => {
+                    scriptCalls.push(el.id);
+                };
+
+                const client = createScript({atomic: true});
+                const html = rootRender(
+                    ctx,
+                    {
+                        type: 'div',
+                        props: {
+                            id: 'foo',
+                            children: {
+                                type: client.Script,
+                                props: {
+                                    data: {foo: 'bar'},
+                                    children: fn,
+                                },
+                            },
+                        },
+                    },
+                    {script: client.script},
+                );
+
+                expect(html).toBe(
+                    [
+                        '<div id="foo" data-tfhf="8gisj4" data-tfhd="bv7w9a"></div>',
+                        '<script nonce="aWQtMQ==">(function(w){',
+                        'const self=document.currentScript;',
+                        'w.$tfarc.spark([["8gisj4"]],[["bv7w9a",{"foo":"bar"}]]);self?.remove();',
+                        '})(window);</script>',
+                    ].join(''),
+                );
+
+                expect(ctx.cookies.outgoing).toEqual([]);
+            });
+
+            it('flush() slices cookie values to keep LRU only', () => {
+                const ctx = new MockContext({
+                    headers: {
+                        cookie: 'tfscriptlru=' + Array.from({length: 100}, (_, i) => `id${i}`).join('|') + '; Secure',
+                    },
+                });
+
+                const html = rootRender(ctx, {
+                    type: 'main',
+                    props: {
+                        children: {
+                            type: Script,
+                            props: {
+                                children: el => (el.dataset.ready = 'true'),
+                            },
+                        },
+                    },
+                });
+
+                expect(html).toBe(
+                    [
+                        '<main data-tfhf="1h50wgl"></main>',
+                        '<script nonce="aWQtMQ==">(function(w){',
+                        'const self=document.currentScript;',
+                        'w.$tfarc.spark(',
+                        '[["1h50wgl",(el)=>el.dataset.ready="true"]],',
+                        '[]',
+                        ');',
+                        'self?.remove();})(window);</script>',
+                    ].join(''),
+                );
+
+                expect(ctx.cookies.outgoing).toEqual([
+                    'tfscriptlru=id37%7Cid38%7Cid39%7Cid40%7Cid41%7Cid42%7Cid43%7Cid44%7Cid45%7Cid46%7Cid47%7Cid48%7Cid49%7Cid50%7Cid51%7Cid52%7Cid53%7Cid54%7Cid55%7Cid56%7Cid57%7Cid58%7Cid59%7Cid60%7Cid61%7Cid62%7Cid63%7Cid64%7Cid65%7Cid66%7Cid67%7Cid68%7Cid69%7Cid70%7Cid71%7Cid72%7Cid73%7Cid74%7Cid75%7Cid76%7Cid77%7Cid78%7Cid79%7Cid80%7Cid81%7Cid82%7Cid83%7Cid84%7Cid85%7Cid86%7Cid87%7Cid88%7Cid89%7Cid90%7Cid91%7Cid92%7Cid93%7Cid94%7Cid95%7Cid96%7Cid97%7Cid98%7Cid99%7C1h50wgl; Secure; HttpOnly',
+                ]);
+            });
+
+            it('flush() resets state between renders', () => {
+                const ctx1 = new MockContext();
+                const html1 = rootRender(ctx1, {
+                    type: 'div',
+                    props: {
+                        children: [
+                            'Reset Test',
+                            {
+                                type: Script,
+                                props: {
+                                    children: el => (el.dataset.run = 'true'),
+                                },
+                            },
+                        ],
+                    },
+                });
+
+                expect(html1).toContain('data-tfhf=');
+                expect(html1).toContain('Reset Test');
+                expect(ctx1.cookies.outgoing.length).toBeGreaterThan(0);
+
+                // fresh context with no cookies and no Script, should be clean render
+                const ctx2 = new MockContext();
+                const html2 = rootRender(ctx2, {
+                    type: 'div',
+                    props: {children: 'After Reset'},
+                });
+
+                expect(html2).toBe('<div>After Reset</div>');
+                expect(ctx2.cookies.outgoing).toEqual([]);
             });
         });
     });

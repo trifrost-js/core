@@ -1,4 +1,4 @@
-import {hexId} from '../../../utils/Generic';
+import {djb2Hash} from '../../../utils/Generic';
 import {nonce} from '../ctx/nonce';
 import {ATOMIC_GLOBAL, ARC_GLOBAL, GLOBAL_ARC_NAME, ARC_GLOBAL_OBSERVER} from './atomic';
 import {atomicMinify} from './util';
@@ -32,7 +32,7 @@ export class ScriptEngine {
 
         let fn_id = this.map_fn.get(minified_fn);
         if (!fn_id) {
-            fn_id = hexId(8);
+            fn_id = djb2Hash(minified_fn);
             this.map_fn.set(minified_fn, fn_id);
         }
 
@@ -40,7 +40,7 @@ export class ScriptEngine {
         if (data) {
             data_id = this.map_data.get(data) || null;
             if (!data_id) {
-                data_id = hexId(8);
+                data_id = djb2Hash(data);
                 this.map_data.set(data, data_id);
             }
         }
@@ -51,13 +51,21 @@ export class ScriptEngine {
     /**
      * Flushes the script registry into a string
      */
-    flush(): string {
+    flush(seen: Set<string> = new Set()): string {
         if (this.map_fn.size === 0) return '';
 
         /* Start script */
-        const FNS = '[' + [...this.map_fn].map(([val, id]) => '["' + id + '",' + val + ']').join(',') + ']';
+        const FNS = [];
+        for (const [val, id] of [...this.map_fn]) {
+            if (!seen.has(id)) {
+                FNS.push('["' + id + '",' + val + ']');
+                seen.add(id);
+            } else {
+                FNS.push('["' + id + '"]');
+            }
+        }
         const DAT = '[' + [...this.map_data].map(([val, id]) => '["' + id + '",' + val + ']').join(',') + ']';
-        let out = `w.${GLOBAL_ARC_NAME}.spark(${FNS},${DAT});`;
+        let out = `w.${GLOBAL_ARC_NAME}.spark(${'[' + FNS.join(',') + ']'},${DAT});`;
 
         /* Finalize iife */
         if (this.mount_path && this.root_renderer) {
@@ -82,7 +90,7 @@ export class ScriptEngine {
         return n_nonce ? '<script nonce="' + n_nonce + '">' + out + '</script>' : '<script>' + out + '</script>';
     }
 
-    inject(html: string): string {
+    inject(html: string, seen: Set<string> = new Set()): string {
         if (typeof html !== 'string') return '';
 
         const n_nonce = nonce();
@@ -106,10 +114,11 @@ export class ScriptEngine {
                     ? '<script nonce="' + n_nonce + '">' + ARC_GLOBAL + ARC_GLOBAL_OBSERVER + '</script>'
                     : '<script>' + ARC_GLOBAL + ARC_GLOBAL_OBSERVER + '</script>';
             }
+            seen.clear();
         }
 
         /* Add engine scripts */
-        scripts += this.flush();
+        scripts += this.flush(seen);
 
         if (isFragment) return html + scripts;
 

@@ -14,7 +14,7 @@ describe('Modules - JSX - script - <Script>', () => {
     let idcount = 0;
     beforeEach(() => {
         idcount = 0;
-        vi.spyOn(Generic, 'hexId').mockImplementation(() => `id-${++idcount}`);
+        vi.spyOn(Generic, 'djb2Hash').mockImplementation(() => `id-${++idcount}`);
         engine = new ScriptEngine();
         setActiveScriptEngine(engine);
         setActiveCtx(new MockContext({nonce: 'my-nonce'}));

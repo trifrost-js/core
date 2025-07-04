@@ -11,6 +11,8 @@ import {SCRIPT_MARKER} from './script/Script';
 import {setActiveScriptEngine, getActiveScriptEngine} from './script/use';
 import {setActiveCtx} from './ctx/use';
 
+const SCRIPT_LRU = 'tfscriptlru';
+
 const VOID_TAGS = {
     /* HTML */
     area: true,
@@ -80,6 +82,33 @@ const RGX_ESCAPE = /(?:&(?![a-z#0-9]+;))|[<>"']/gi;
  */
 export function escape(str: string): string {
     return str.replace(RGX_ESCAPE, (ch: string) => ESCAPE_LOOKUP[ch as keyof typeof ESCAPE_LOOKUP]);
+}
+
+/**
+ * Takes an lru cookie and converts it to a set
+ * @param {string|null} val - Value to convert
+ */
+export function fromLruCookie(val: string | null): Set<string> {
+    if (!val) return new Set();
+
+    const acc = new Set<string>();
+    const parts = val.split('|');
+    for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (part) acc.add(part);
+    }
+    return acc;
+}
+
+/**
+ * Convert a set back to an LRU cookie
+ * @param {Set<string>} val - Set to convert
+ */
+export function toLruCookie(val: Set<string>) {
+    if (!val.size) return null;
+
+    /* We cap at 64 latest (lru) entries */
+    return [...val].slice(-64).join('|');
 }
 
 /**
@@ -196,12 +225,22 @@ export function rootRender<Env extends Record<string, any>, State extends Record
     const script_engine = getActiveScriptEngine() || setActiveScriptEngine(new ScriptEngine());
     setActiveCtx(ctx);
 
+    /* Known scripts on frontend */
+    const script_lru_cookie = ctx.cookies.get(SCRIPT_LRU);
+    const script_lru = fromLruCookie(script_lru_cookie);
+
     /* Auto-call root() if script or css provided in ctx config */
     options?.script?.root?.();
     options?.css?.root?.();
 
     /* Render jsx to html */
-    const html = script_engine.inject(style_engine.inject(render(tree)));
+    const html = script_engine.inject(style_engine.inject(render(tree)), script_lru);
+
+    /* Set script cookie */
+    const script_cookie = toLruCookie(script_lru);
+    if (script_cookie && script_cookie !== script_lru_cookie) {
+        ctx.cookies.set(SCRIPT_LRU, script_cookie, {httponly: true, secure: true});
+    }
 
     /* Cleanup globals */
     setActiveCtx(null);

@@ -588,13 +588,14 @@ export const ARC_GLOBAL = atomicMinify(`(function(w){
                     }
 
                     for (const [FID, fn] of FNS) {
-                        if(!f.has(FID))f.set(FID,{fn,refs:0});
+                        if(fn !== undefined && !f.has(FID)) f.set(FID, {fn, refs: 0});
 
+                        const FREG = f.get(FID);
+                        if (!FREG?.fn) continue;
                         const nodes = document.querySelectorAll(\`[data-tfhf="\${FID}"]\`);
                         for (const n of nodes) {
                             const DID = n.getAttribute("data-tfhd") || undefined;
                             const DREG = DID ? d.get(DID) : {};
-                            const FREG = f.get(FID);
                             const UID = Math.random().toString(36).slice(2);
                             Object.defineProperty(n, "${VM_ID_NAME}", {value: UID, configurable: false, writable: false});
                             if (ATOMIC && !n.${VM_NAME}) {
@@ -606,11 +607,11 @@ export const ARC_GLOBAL = atomicMinify(`(function(w){
                                 });
                             }
                             try {
-                                FREG?.fn?.(ATOMIC
+                                FREG.fn(ATOMIC
                                     ? {el:n, data: w.${GLOBAL_DATA_REACTOR_NAME}(n,DREG?.val??{}), $: w.${GLOBAL_UTILS_NAME}}
                                     : {el:n, data: DREG?.val??{}});
                                 v.set(UID, {fn_id: FID, data_id: DID});
-                                if (FREG) FREG.refs++;
+                                FREG.refs++;
                                 if (DID && DREG) DREG.refs++;
                                 if (ATOMIC && typeof n.${VM_HOOK_MOUNT_NAME} === "function") {
                                     try {n.${VM_HOOK_MOUNT_NAME}()} catch {}

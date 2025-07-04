@@ -13,7 +13,7 @@ describe('Modules - JSX - script - Engine', () => {
         engine = new ScriptEngine();
         idcount = 0;
 
-        vi.spyOn(Generic, 'hexId').mockImplementation(() => `id-${++idcount}`);
+        vi.spyOn(Generic, 'djb2Hash').mockImplementation(() => `id-${++idcount}`);
         vi.spyOn(Nonce, 'nonce').mockReturnValue('abc123');
     });
 
@@ -41,7 +41,7 @@ describe('Modules - JSX - script - Engine', () => {
             const b = engine.register(fn, null);
 
             expect(a.fn_id).toBe(b.fn_id);
-            expect(Generic.hexId).toHaveBeenCalledTimes(1);
+            expect(Generic.djb2Hash).toHaveBeenCalledTimes(1);
         });
 
         it('Deduplicates identical data', () => {
@@ -53,7 +53,7 @@ describe('Modules - JSX - script - Engine', () => {
             const b = engine.register(fn2, data);
 
             expect(a.data_id).toBe(b.data_id);
-            expect(Generic.hexId).toHaveBeenCalledTimes(3);
+            expect(Generic.djb2Hash).toHaveBeenCalledTimes(3);
         });
 
         it('Handles null data by omitting data_id', () => {
@@ -182,6 +182,32 @@ describe('Modules - JSX - script - Engine', () => {
                     '}})(window);</script>',
                 ].join(''),
             );
+        });
+
+        it('Includes full function definition on first flush, then minimal on second', () => {
+            const seen = new Set<string>();
+
+            engine.register('function x(){}', null);
+
+            const first = engine.flush(seen);
+            expect(first).toContain('["id-1",function x(){}]');
+
+            const second = engine.flush(seen);
+            expect(second).toContain('["id-1"]');
+            expect(second).not.toContain('function x(){}');
+        });
+
+        it('Skips seen function ids but still updates seen set', () => {
+            const seen = new Set<string>(['id-1']);
+
+            engine.register('function A(){}', null);
+            engine.register('function B(){}', null);
+
+            const out = engine.flush(seen);
+            expect(out).toContain('["id-1"]');
+            expect(out).toContain('"id-2",function B(){}');
+
+            expect(seen.has('id-2')).toBe(true);
         });
     });
 
@@ -476,6 +502,32 @@ describe('Modules - JSX - script - Engine', () => {
             expect(result).toContain(ARC_GLOBAL_OBSERVER);
             expect(result).not.toContain('nonce=');
             expect(result).not.toContain(ATOMIC_GLOBAL);
+        });
+
+        it('clears seen set for full HTML documents', () => {
+            const seen = new Set<string>(['7348932', '432874923']);
+            engine.register('function(){}', null);
+
+            engine.inject('<!DOCTYPE html><html><body><main>hi</main></body></html>', seen);
+            expect(seen.size).toBe(1);
+        });
+
+        it('retains seen set for HTML fragments', () => {
+            const seen = new Set<string>();
+            engine.register('function(){}', null);
+
+            engine.inject('<main>fragment</main>', seen);
+            expect(seen.size).toBe(1);
+        });
+
+        it('inject skips full function body if fn already in seen', () => {
+            const seen = new Set<string>();
+            engine.register('function onlyOnce(){}', null);
+            seen.add('id-1');
+
+            const html = engine.inject('<main>Test</main>', seen);
+            expect(html).toContain('["id-1"]');
+            expect(html).not.toContain('function onlyOnce');
         });
     });
 
