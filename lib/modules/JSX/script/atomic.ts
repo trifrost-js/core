@@ -567,25 +567,10 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
     def("${GLOBAL_HYDRATED_NAME}", !0);
 })();`);
 
-export const ATOMIC_VM_BEFORE = atomicMinify(
-    `if (!n.${VM_NAME}) {
-        Object.defineProperties(n, {
-            ${VM_RELAY_SUBSCRIBE_NAME}:{value: (msg, fn) => w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, msg, fn), configurable: !1, writable: !1},
-            ${VM_RELAY_UNSUBSCRIBE_NAME}:{value: msg => w.${GLOBAL_RELAY_NAME}.unsubscribe(n.${VM_ID_NAME}, msg), configurable: !1, writable: !1},
-            ${VM_RELAY_PUBLISH_NAME}:{value: (msg, data) => w.${GLOBAL_RELAY_NAME}.publish(msg, data), configurable: !1, writable: !1},
-            ${VM_NAME}:{get: () => !0, configurable:!1}
-        });
-    }`,
-);
-
-export const ATOMIC_VM_AFTER = atomicMinify(`
-    if (typeof n.${VM_HOOK_MOUNT_NAME} === "function") try {n.${VM_HOOK_MOUNT_NAME}()} catch {}
-`);
-
-export const ARC_GLOBAL = atomicMinify(`(function(){
-    if (!window.${GLOBAL_ARC_NAME}) {
+export const ARC_GLOBAL = atomicMinify(`(function(w){
+    if (!w.${GLOBAL_ARC_NAME}) {
         const f=new Map(),d=new Map(),v=new Map();
-        Object.defineProperty(window,"${GLOBAL_ARC_NAME}",{
+        Object.defineProperty(w,"${GLOBAL_ARC_NAME}",{
             value:Object.freeze({
                 release(uid){
                     const r = v.get(uid);
@@ -597,7 +582,7 @@ export const ARC_GLOBAL = atomicMinify(`(function(){
                     if(de && --de.refs <= 0) d.delete(r.data_id);
                 },
                 spark(FNS, DAT){
-                    const ATOMIC = !!window.${GLOBAL_HYDRATED_NAME};
+                    const ATOMIC = !!w.${GLOBAL_HYDRATED_NAME};
                     for (const [DID, val] of DAT) {
                         if(!d.has(DID))d.set(DID,{val,refs:0});
                     }
@@ -612,18 +597,23 @@ export const ARC_GLOBAL = atomicMinify(`(function(){
                             const FREG = f.get(FID);
                             const UID = Math.random().toString(36).slice(2);
                             Object.defineProperty(n, "${VM_ID_NAME}", {value: UID, configurable: false, writable: false});
-                            if (ATOMIC) {
-                            ${ATOMIC_VM_BEFORE}
+                            if (ATOMIC && !n.${VM_NAME}) {
+                                Object.defineProperties(n, {
+                                    ${VM_RELAY_SUBSCRIBE_NAME}:{value: (msg, fn) => w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, msg, fn), configurable: !1, writable: !1},
+                                    ${VM_RELAY_UNSUBSCRIBE_NAME}:{value: msg => w.${GLOBAL_RELAY_NAME}.unsubscribe(n.${VM_ID_NAME}, msg), configurable: !1, writable: !1},
+                                    ${VM_RELAY_PUBLISH_NAME}:{value: (msg, data) => w.${GLOBAL_RELAY_NAME}.publish(msg, data), configurable: !1, writable: !1},
+                                    ${VM_NAME}:{get: () => !0, configurable:!1}
+                                });
                             }
                             try {
                                 FREG?.fn?.(ATOMIC
-                                    ? {el:n, data: window.${GLOBAL_DATA_REACTOR_NAME}(n,DREG?.val??{}), $: w.${GLOBAL_UTILS_NAME}}
+                                    ? {el:n, data: w.${GLOBAL_DATA_REACTOR_NAME}(n,DREG?.val??{}), $: w.${GLOBAL_UTILS_NAME}}
                                     : {el:n, data: DREG?.val??{}});
                                 v.set(UID, {fn_id: FID, data_id: DID});
                                 if (FREG) FREG.refs++;
                                 if (DID && DREG) DREG.refs++;
-                                if (ATOMIC) {
-                                ${ATOMIC_VM_AFTER}
+                                if (ATOMIC && typeof n.${VM_HOOK_MOUNT_NAME} === "function") {
+                                    try {n.${VM_HOOK_MOUNT_NAME}()} catch {}
                                 }
                             } catch {}
                         }
@@ -634,7 +624,7 @@ export const ARC_GLOBAL = atomicMinify(`(function(){
             writable:!1
         });
     }
-})();`);
+})(window);`);
 
 export const ARC_GLOBAL_OBSERVER = atomicMinify(`(function(){
     const c = n => {

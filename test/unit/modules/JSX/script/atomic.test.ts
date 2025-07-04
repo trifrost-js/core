@@ -1,11 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {
-    ATOMIC_GLOBAL,
-    ATOMIC_VM_BEFORE,
-    ATOMIC_VM_AFTER,
-    ARC_GLOBAL,
-    ARC_GLOBAL_OBSERVER,
-} from '../../../../../lib/modules/JSX/script/atomic';
+import {ATOMIC_GLOBAL, ARC_GLOBAL, ARC_GLOBAL_OBSERVER} from '../../../../../lib/modules/JSX/script/atomic';
 
 describe('Modules - JSX - script - atomic', () => {
     describe('ATOMIC_GLOBAL', () => {
@@ -148,37 +142,14 @@ describe('Modules - JSX - script - atomic', () => {
         });
     });
 
-    describe('ATOMIC_VM_BEFORE', () => {
-        it('Should be minified correct', () => {
-            expect(ATOMIC_VM_BEFORE).toBe(
-                [
-                    'if(!n.$tfVM){',
-                    'Object.defineProperties(n,{',
-                    '$subscribe:{value:(msg,fn)=>w.$tfr.subscribe(n.$uid,msg,fn),configurable:!1,writable:!1},',
-                    '$unsubscribe:{value:msg=>w.$tfr.unsubscribe(n.$uid,msg),configurable:!1,writable:!1},',
-                    '$publish:{value:(msg,data)=>w.$tfr.publish(msg,data),configurable:!1,writable:!1},',
-                    '$tfVM:{get:()=>!0,configurable:!1}',
-                    '});',
-                    '}',
-                ].join(''),
-            );
-        });
-    });
-
-    describe('ATOMIC_VM_AFTER', () => {
-        it('Should be minified correct', () => {
-            expect(ATOMIC_VM_AFTER).toBe(['if(typeof n.$mount==="function")try{n.$mount()}catch{}'].join(''));
-        });
-    });
-
     describe('ARC_GLOBAL', () => {
         it('Should be minified correct', () => {
             expect(ARC_GLOBAL).toBe(
                 [
-                    '(function(){',
-                    'if(!window.$tfarc){',
+                    '(function(w){',
+                    'if(!w.$tfarc){',
                     'const f=new Map(),d=new Map(),v=new Map();',
-                    'Object.defineProperty(window,"$tfarc",{value:Object.freeze({',
+                    'Object.defineProperty(w,"$tfarc",{value:Object.freeze({',
                     /* Release */
                     'release(uid){',
                     'const r=v.get(uid);',
@@ -191,7 +162,7 @@ describe('Modules - JSX - script - atomic', () => {
                     '},',
                     /* Spark */
                     'spark(FNS,DAT){',
-                    'const ATOMIC=!!window.$tfhydra;',
+                    'const ATOMIC=!!w.$tfhydra;',
                     'for(const[DID,val]of DAT){',
                     'if(!d.has(DID))d.set(DID,{val,refs:0});',
                     '}',
@@ -204,22 +175,27 @@ describe('Modules - JSX - script - atomic', () => {
                     'const FREG=f.get(FID);',
                     'const UID=Math.random().toString(36).slice(2);',
                     'Object.defineProperty(n,"$uid",{value:UID,configurable:false,writable:false});',
-                    'if(ATOMIC){',
-                    ATOMIC_VM_BEFORE,
+                    'if(ATOMIC&&!n.$tfVM){',
+                    'Object.defineProperties(n,{',
+                    '$subscribe:{value:(msg,fn)=>w.$tfr.subscribe(n.$uid,msg,fn),configurable:!1,writable:!1},',
+                    '$unsubscribe:{value:msg=>w.$tfr.unsubscribe(n.$uid,msg),configurable:!1,writable:!1},',
+                    '$publish:{value:(msg,data)=>w.$tfr.publish(msg,data),configurable:!1,writable:!1},',
+                    '$tfVM:{get:()=>!0,configurable:!1}',
+                    '});',
                     '}',
                     'try{',
                     'FREG?.fn?.(',
                     'ATOMIC',
-                    '?{el:n,data:window.$tfdr(n,DREG?.val??{}),$:w.$tfutils}',
+                    '?{el:n,data:w.$tfdr(n,DREG?.val??{}),$:w.$tfutils}',
                     ':{el:n,data:DREG?.val??{}}',
                     ');',
                     'v.set(UID,{fn_id:FID,data_id:DID});',
                     'if(FREG)FREG.refs++;',
                     'if(DID&&DREG)DREG.refs++;',
-                    'if(ATOMIC){',
-                    ATOMIC_VM_AFTER,
+                    'if(ATOMIC&&typeof n.$mount==="function"){',
+                    'try{n.$mount()}catch{}',
                     '}',
-                    '}catch{}}}},}),configurable:!1,writable:!1});}})();',
+                    '}catch{}}}},}),configurable:!1,writable:!1});}})(window);',
                 ].join(''),
             );
         });
