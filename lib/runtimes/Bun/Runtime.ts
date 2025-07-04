@@ -27,7 +27,7 @@ export class BunRuntime implements TriFrostRuntime {
     }
 
     get version() {
-        return Bun.version || 'N/A';
+        return Bun.version || null;
     }
 
     async boot(opts: TriFrostRuntimeBootOptions): Promise<void> {
@@ -62,7 +62,7 @@ export class BunRuntime implements TriFrostRuntime {
         const cfg = {
             trustProxy: false,
             ...opts.cfg,
-            env: {...(process.env || {}), ...opts.cfg.env},
+            env: {...process.env, ...opts.cfg.env},
         };
 
         /* Construct options for serve */

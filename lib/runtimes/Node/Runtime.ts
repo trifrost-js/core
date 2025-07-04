@@ -25,7 +25,7 @@ export class NodeRuntime implements TriFrostRuntime {
     }
 
     get version() {
-        return process.version || 'N/A';
+        return process.version || null;
     }
 
     async boot(opts: TriFrostRuntimeBootOptions): Promise<void> {
@@ -67,7 +67,7 @@ export class NodeRuntime implements TriFrostRuntime {
             const cfg = {
                 trustProxy: false,
                 ...opts.cfg,
-                env: {...(process.env || {}), ...opts.cfg.env},
+                env: {...process.env, ...opts.cfg.env},
             };
 
             /* Create new server instance */

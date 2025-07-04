@@ -24,7 +24,7 @@ export class WorkerdRuntime implements TriFrostRuntime {
 
     exports = {
         fetch: async (request: Request, env: any, cloudflareCtx: ExecutionContext) => {
-            if (!this.#onIncoming) return;
+            if (!this.#onIncoming) return new Response('Internal Server Error', {status: 500});
 
             /* JIT Runtime config resolution */
             if (!this.#runtimeCfg) {
