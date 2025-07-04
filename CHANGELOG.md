@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.44.3] - 2025-07-04
+### Improved
+- **qol**: ARC script injection now tracks previously delivered script hashes using an LRU-style cookie (capped at 64 entries). When a known hash is detected, the corresponding inline script is skipped to reduce client payload size. This list is automatically reset on full-page navigations.
+- **qol**: ARC self-removal is now deferred via `setTimeout` to avoid breaking hydration in Safari Mobile and other browsers with strict script execution timing.
+
 ## [0.44.2] - 2025-07-04
 ### Fixed
 - Issue where awaited arc instantiation prevents script removal
