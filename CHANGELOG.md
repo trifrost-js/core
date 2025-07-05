@@ -4,6 +4,65 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.45.0] - 2025-07-05
+### Added
+- **feat**: `createScript({ css })` API, you can now pass a `css` instance into `createScript`, enabling automatic type inference for atomic CSS token access.
+- **feat**: Atomic util `$.cssVar(name)` for retrieving computed CSS values from `css.var` tokens.
+- **feat**: Atomic util `$.cssTheme(name)` for retrieving computed CSS values from `css.theme` tokens.
+```typescript
+// css.ts
+import {createCss} from '@trifrost/core';
+
+export const css = createCss({
+  var: {
+    fontSizeM: '1.8rem',
+    spacingS: '0.5rem',
+  },
+  theme: {
+    fg: '#000',
+    bg: '#fff',
+  },
+});
+```
+```typescript
+// script.ts
+import {createScript} from '@trifrost/core';
+import {css} from './css';
+import {type Env} from './types';
+
+const config = {
+  css,
+  atomic: true,
+} as const;
+
+const {Script, script} = createScript<typeof config, Env, /* Other generics */>(config);
+export {Script, script};
+```
+```tsx
+// Some component file
+export function SomeComponent() {
+  return (
+    ...
+    <Script>
+      {(el, $) => {
+        // ✅ Fully typed and autocompletable
+        el.style.fontSize = $.cssVar('fontSizeM');
+        el.style.background = $.cssTheme('bg');
+      }}
+    </Script>;
+    ...
+  );
+}
+```
+
+### Improved
+- **dx**: Atomic `$watch` and `$bind` callbacks now receive `(newVal, oldVal)` arguments instead of just `(newVal)`, enabling more expressive data change tracking and comparisons.
+- **qol**: When using only `string`-based theme variables (without `{ light, dark }`), TriFrost will no longer inject media queries for them, they are treated as regular vars. These are still available via `css.$t`.
+- **qol**: ARC no longer ref-cleans method bindings thanks to the LRU cookie system, it now exclusively manages data prop references.
+
+### Breaking
+- `createScript` now requires passing the config type explicitly as the first generic. This unlocks better type inference (e.g. CSS token safety) and paves the way for future DX improvements.
+
 ## [0.44.3] - 2025-07-04
 ### Improved
 - **qol**: ARC script injection now tracks previously delivered script hashes using an LRU-style cookie (capped at 64 entries). When a known hash is detected, the corresponding inline script is skipped to reduce client payload size. This list is automatically reset on full-page navigations.
