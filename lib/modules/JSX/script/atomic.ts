@@ -615,68 +615,65 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
 })(window,document);`);
 
 export const ARC_GLOBAL = atomicMinify(`(function(w){
-    const def = (n, v, t) => {
+    const oD = (n, v, t) => {
         if (!t[n]) Object.defineProperty(t, n, {value:v, configurable:!1, writable:!1});
     };
 
-    if (!w.${GLOBAL_ARC_NAME}) {
+    oD("${GLOBAL_ARC_NAME}", (() => {
         const f=new Map(),d=new Map(),v=new Map();
-        Object.defineProperty(w,"${GLOBAL_ARC_NAME}",{
-            value:Object.freeze({
-                release(uid){
-                    const r = v.get(uid);
-                    if(!r) return;
-                    v.delete(uid);
-                    const de = d.get(r.data_id);
-                    if(de && --de.refs <= 0) d.delete(r.data_id);
-                },
-                spark(FNS, DAT){
-                    const ATOMIC = !!w.${GLOBAL_HYDRATED_NAME};
-                    for (const [DID, val] of DAT) {
-                        if(!d.has(DID))d.set(DID,{val,refs:0});
-                    }
 
-                    for (const [FID, fn] of FNS) {
-                        if(fn !== undefined && !f.has(FID)) f.set(FID, {fn});
+        return Object.freeze({
+            release(uid){
+                const r = v.get(uid);
+                if(!r) return;
+                v.delete(uid);
+                const de = d.get(r.data_id);
+                if(de && --de.refs <= 0) d.delete(r.data_id);
+            },
+            spark(FNS, DAT){
+                const ATOMIC = !!w.${GLOBAL_HYDRATED_NAME};
+                for (const [DID, val] of DAT) {
+                    if(!d.has(DID))d.set(DID,{val,refs:0});
+                }
 
-                        const FREG = f.get(FID);
-                        if (!FREG?.fn) continue;
-                        const nodes = document.querySelectorAll(\`[data-tfhf="\${FID}"]\`);
-                        for (const n of nodes) {
-                            const DID = n.getAttribute("data-tfhd") || undefined;
-                            const DREG = DID ? d.get(DID) : {};
-                            const UID = Math.random().toString(36).slice(2);
-                            Object.defineProperty(n, "${VM_ID_NAME}", {value: UID, configurable: false, writable: false});
-                            if (ATOMIC && !n.${VM_NAME}) {
-                                def("${VM_RELAY_SUBSCRIBE_NAME}", (msg, fn) => w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, msg, fn), n);
-                                def("${VM_RELAY_SUBSCRIBE_ONCE_NAME}", (msg, fn) => {
-                                    w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, msg, v => {
-                                        fn(v);
-                                        n.${VM_RELAY_UNSUBSCRIBE_NAME}(msg);
-                                    });
-                                }, n);
-                                def("${VM_RELAY_UNSUBSCRIBE_NAME}", msg => w.${GLOBAL_RELAY_NAME}.unsubscribe(n.${VM_ID_NAME}, msg), n);
-                                def("${VM_RELAY_PUBLISH_NAME}", (msg, data) => w.${GLOBAL_RELAY_NAME}.publish(msg, data), n);
-                                def("${VM_NAME}", true, n);
-                            }
-                            try {
-                                FREG.fn(ATOMIC
-                                    ? {el:n, data: w.${GLOBAL_DATA_REACTOR_NAME}(n,DREG?.val??{}), $: w.${GLOBAL_UTILS_NAME}}
-                                    : {el:n, data: DREG?.val??{}});
-                                v.set(UID, {fn_id: FID, data_id: DID});
-                                if (DID && DREG) DREG.refs++;
-                                if (ATOMIC && typeof n.${VM_HOOK_MOUNT_NAME} === "function") {
-                                    try {n.${VM_HOOK_MOUNT_NAME}()} catch {}
-                                }
-                            } catch {}
+                for (const [FID, fn] of FNS) {
+                    if(fn !== undefined && !f.has(FID)) f.set(FID, {fn});
+
+                    const FREG = f.get(FID);
+                    if (!FREG?.fn) continue;
+                    const nodes = document.querySelectorAll(\`[data-tfhf="\${FID}"]\`);
+                    for (const n of nodes) {
+                        const DID = n.getAttribute("data-tfhd") || undefined;
+                        const DREG = DID ? d.get(DID) : {};
+                        const UID = Math.random().toString(36).slice(2);
+                        oD("${VM_ID_NAME}", UID, n);
+                        if (ATOMIC && !n.${VM_NAME}) {
+                            oD("${VM_RELAY_SUBSCRIBE_NAME}", (msg, fn) => w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, msg, fn), n);
+                            oD("${VM_RELAY_SUBSCRIBE_ONCE_NAME}", (msg, fn) => {
+                                w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, msg, v => {
+                                    fn(v);
+                                    n.${VM_RELAY_UNSUBSCRIBE_NAME}(msg);
+                                });
+                            }, n);
+                            oD("${VM_RELAY_UNSUBSCRIBE_NAME}", msg => w.${GLOBAL_RELAY_NAME}.unsubscribe(n.${VM_ID_NAME}, msg), n);
+                            oD("${VM_RELAY_PUBLISH_NAME}", (msg, data) => w.${GLOBAL_RELAY_NAME}.publish(msg, data), n);
+                            oD("${VM_NAME}", true, n);
                         }
+                        try {
+                            FREG.fn(ATOMIC
+                                ? {el:n, data: w.${GLOBAL_DATA_REACTOR_NAME}(n,DREG?.val??{}), $: w.${GLOBAL_UTILS_NAME}}
+                                : {el:n, data: DREG?.val??{}});
+                            v.set(UID, {fn_id: FID, data_id: DID});
+                            if (DID && DREG) DREG.refs++;
+                            if (ATOMIC && typeof n.${VM_HOOK_MOUNT_NAME} === "function") {
+                                try {n.${VM_HOOK_MOUNT_NAME}()} catch {}
+                            }
+                        } catch {}
                     }
-                },
-            }),
-            configurable:!1,
-            writable:!1
+                }
+            },
         });
-    }
+    })(), w);
 })(window);`);
 
 export const ARC_GLOBAL_OBSERVER = atomicMinify(`(function(){
