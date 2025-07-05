@@ -82,10 +82,14 @@ export type TriFrostAtomicVM<
 export type TriFrostAtomicProxy<T> = T & {
     /* Bind */
     $bind<K extends DotPaths<T>>(key: K, selector: string): void;
-    $bind<K extends DotPaths<T>>(key: K, selector: string, handler: (val: any) => Promisify<void>): void;
-    $bind<K extends DotPaths<T>>(key: K, selector: string, options: {handler: (val: any) => Promisify<void>; immediate?: boolean}): void;
+    $bind<K extends DotPaths<T>>(key: K, selector: string, handler: (newVal: any, oldVal: any) => Promisify<void>): void;
+    $bind<K extends DotPaths<T>>(
+        key: K,
+        selector: string,
+        options: {handler: (newVal: any, oldVal: any) => Promisify<void>; immediate?: boolean},
+    ): void;
     /* Watch */
-    $watch: <K extends DotPaths<T>>(key: K, fn: (val: any) => Promisify<void>, options?: {immediate?: boolean}) => void;
+    $watch: <K extends DotPaths<T>>(key: K, fn: (newVal: any, oldVal: any) => Promisify<void>, options?: {immediate?: boolean}) => void;
     /* Set */
     $set: (key: DotPaths<T> | T, val?: any) => void;
 };
@@ -325,7 +329,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
                     try {
                         const fn = handlers[i];
                         if (!window.${GLOBAL_UTIL_EQUAL}(fn._last, val)) {
-                            fn(val);
+                            fn(val, fn._last);
                             fn._last = window.${GLOBAL_UTIL_CLONE}(val);
                         }
                     } catch {}
