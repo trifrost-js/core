@@ -143,8 +143,8 @@ export type TriFrostAtomicUtils<
     storeSet<K extends keyof Store>(key: K, value: Store[K]): void;
     storeSet(key: string, value: unknown): void;
     /* CSS variable access */
-    cssVar: (name: TFCSSVar | `--${string}`) => string | null;
-    cssTheme: (name: TFCSSTheme | `--${string}`) => string | null;
+    cssVar: (name: TFCSSVar | `--${string}`) => string;
+    cssTheme: (name: TFCSSTheme | `--${string}`) => string;
 };
 
 export const ATOMIC_GLOBAL = atomicMinify(`(function(){
