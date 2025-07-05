@@ -51,7 +51,7 @@ export class ScriptEngine {
     /**
      * Flushes the script registry into a string
      */
-    flush(seen: Set<string> = new Set()): string {
+    flush(seen: Set<string> = new Set(), isFragment: boolean = false): string {
         if (this.map_fn.size === 0) return '';
 
         /* Start script */
@@ -68,7 +68,7 @@ export class ScriptEngine {
         let out = `w.${GLOBAL_ARC_NAME}.spark(${'[' + FNS.join(',') + ']'},${DAT});`;
 
         /* Finalize iife */
-        if (this.mount_path && this.root_renderer) {
+        if (!isFragment && this.mount_path && this.root_renderer) {
             out = [
                 '(function(w){',
                 'const self=document.currentScript;',
@@ -118,7 +118,7 @@ export class ScriptEngine {
         }
 
         /* Add engine scripts */
-        scripts += this.flush(seen);
+        scripts += this.flush(seen, isFragment);
 
         if (isFragment) return html + scripts;
 

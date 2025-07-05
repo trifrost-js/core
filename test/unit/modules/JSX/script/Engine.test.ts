@@ -370,19 +370,12 @@ describe('Modules - JSX - script - Engine', () => {
                 [
                     '<main>Hello</main>',
                     '<script nonce="abc123">(function(w){const self=document.currentScript;',
-                    'const run=()=>{',
                     'w.$tfarc.spark(',
                     '[["id-1",function({el,data}){el.id="a"}]],',
                     '[["id-2",{"value":42}]]',
                     ');',
                     'setTimeout(()=>self?.remove?.(),0);',
-                    '};',
-                    'if(!w.$tfarc){',
-                    'const wait=()=>{w.$tfarc?run():setTimeout(wait,1)};',
-                    'wait();',
-                    '}else{',
-                    'run()',
-                    '}})(window);</script>',
+                    '})(window);</script>',
                 ].join(''),
             );
         });
