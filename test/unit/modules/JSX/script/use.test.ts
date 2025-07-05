@@ -1,4 +1,4 @@
-import {describe, it, expect, beforeEach, vi} from 'vitest';
+import {describe, it, expect, beforeEach, vi, expectTypeOf} from 'vitest';
 import {getActiveScriptEngine, setActiveScriptEngine, createScript} from '../../../../../lib/modules/JSX/script/use';
 import {ScriptEngine} from '../../../../../lib/modules/JSX/script/Engine';
 import * as ScriptProxy from '../../../../../lib/modules/JSX/script/Script';
@@ -74,7 +74,8 @@ describe('Modules - JSX - Script - use', () => {
             const stateSpy = vi.spyOn(StateProxy, 'state');
             const nonceSpy = vi.spyOn(NonceProxy, 'nonce');
 
-            const {script} = createScript<{API_KEY: string}>();
+            const config = {} as const;
+            const {script} = createScript<typeof config, {API_KEY: string}>(config);
             script.env('API_KEY');
             script.state('x');
             script.nonce();
@@ -124,6 +125,32 @@ describe('Modules - JSX - Script - use', () => {
             const {script} = createScript({atomic: true});
             script.root();
             expect(getActiveScriptEngine()).toBeInstanceOf(ScriptEngine);
+        });
+
+        it('Infers typed CSS tokens from config', () => {
+            const css = {
+                var: {
+                    fontSizeL: '2rem',
+                    padding: '1rem',
+                },
+                theme: {
+                    dark: '#000',
+                    light: '#fff',
+                },
+            };
+
+            const config = {
+                css,
+                atomic: true,
+            } as const;
+
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const {Script} = createScript<typeof config>(config);
+
+            // simulate a TS props call to check inference
+            type Props = Parameters<typeof Script>[0];
+
+            expectTypeOf<Props>().toMatchTypeOf<ScriptProxy.ScriptProps<any, any, any, 'fontSizeL' | 'padding', 'dark' | 'light'>>();
         });
     });
 });
