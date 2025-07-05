@@ -43,23 +43,23 @@ describe('style.mount', () => {
                 /* These should not be flushed */
                 definitions: () => ({
                     /* Flex */
-                    f: {display: 'flex'},
-                    fi: {display: 'inline-flex'},
-                    fh: {flexDirection: 'row'},
-                    fv: {flexDirection: 'column'},
-                    fa_l: {alignItems: 'flex-start'},
-                    fa_c: {alignItems: 'center'},
-                    fa_r: {alignItems: 'flex-end'},
-                    fj_l: {justifyContent: 'flex-start'},
-                    fj_c: {justifyContent: 'center'},
-                    fj_r: {justifyContent: 'flex-end'},
-                    fj_sa: {justifyContent: 'space-around'},
-                    fj_sb: {justifyContent: 'space-between'},
-                    fw: {flexWrap: 'wrap'},
-                    fg: {flexGrow: 1},
-                    fg0: {flexGrow: 0},
-                    fs: {flexShrink: 1},
-                    fs0: {flexShrink: 0},
+                    f: () => ({display: 'flex'}),
+                    fi: () => ({display: 'inline-flex'}),
+                    fh: () => ({flexDirection: 'row'}),
+                    fv: () => ({flexDirection: 'column'}),
+                    fa_l: () => ({alignItems: 'flex-start'}),
+                    fa_c: () => ({alignItems: 'center'}),
+                    fa_r: () => ({alignItems: 'flex-end'}),
+                    fj_l: () => ({justifyContent: 'flex-start'}),
+                    fj_c: () => ({justifyContent: 'center'}),
+                    fj_r: () => ({justifyContent: 'flex-end'}),
+                    fj_sa: () => ({justifyContent: 'space-around'}),
+                    fj_sb: () => ({justifyContent: 'space-between'}),
+                    fw: () => ({flexWrap: 'wrap'}),
+                    fg: () => ({flexGrow: 1}),
+                    fg0: () => ({flexGrow: 0}),
+                    fs: () => ({flexShrink: 1}),
+                    fs0: () => ({flexShrink: 0}),
                 }),
             }),
         );
@@ -73,7 +73,6 @@ describe('style.mount', () => {
         expect(ctx.text).toHaveBeenCalledWith(
             [
                 '*, *::before, *::after{box-sizing:border-box}',
-
                 'html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}',
                 'footer, header, nav, section, main{display:block}',
                 'ol, ul{list-style:none}',
@@ -82,8 +81,14 @@ describe('style.mount', () => {
                 'q, blockquote{quotes:none}',
                 'table{border-collapse:collapse;border-spacing:0}',
                 ':root{--v-fontSizeS:1.8rem;--v-fontSizeM:2rem;--v-fontSizeL:2.2rem}',
-                '@media (prefers-color-scheme: light){:root{--t-bg:#fff;--t-fg:#000}}',
-                '@media (prefers-color-scheme: dark){:root{--t-bg:#000;--t-fg:#fff}}',
+                '@media (prefers-color-scheme: light){',
+                ':root[data-theme="dark"]{--t-bg:#000;--t-fg:#fff}',
+                ':root{--t-bg:#fff;--t-fg:#000}',
+                '}',
+                '@media (prefers-color-scheme: dark){',
+                ':root{--t-bg:#000;--t-fg:#fff}',
+                ':root[data-theme="light"]{--t-bg:#fff;--t-fg:#000}',
+                '}',
             ].join(''),
             {status: 200, cacheControl: {immutable: true, maxage: 86400, type: 'public'}},
         );
@@ -108,7 +113,7 @@ describe('style.mount', () => {
                 /* These should not be flushed */
                 definitions: () => ({
                     /* Flex */
-                    f: {display: 'flex'},
+                    f: () => ({display: 'flex'}),
                 }),
             }),
         );
@@ -123,7 +128,6 @@ describe('style.mount', () => {
         expect(ctx.text).toHaveBeenCalledWith(
             [
                 '*, *::before, *::after{box-sizing:border-box}',
-
                 'html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}',
                 'footer, header, nav, section, main{display:block}',
                 'ol, ul{list-style:none}',
@@ -132,8 +136,14 @@ describe('style.mount', () => {
                 'q, blockquote{quotes:none}',
                 'table{border-collapse:collapse;border-spacing:0}',
                 ':root{--v-fontSizeS:1.8rem;--v-fontSizeM:2rem;--v-fontSizeL:2.2rem}',
-                '@media (prefers-color-scheme: light){:root{--t-bg:#fff;--t-fg:#000}}',
-                '@media (prefers-color-scheme: dark){:root{--t-bg:#000;--t-fg:#fff}}',
+                '@media (prefers-color-scheme: light){',
+                ':root[data-theme="dark"]{--t-bg:#000;--t-fg:#fff}',
+                ':root{--t-bg:#fff;--t-fg:#000}',
+                '}',
+                '@media (prefers-color-scheme: dark){',
+                ':root{--t-bg:#000;--t-fg:#fff}',
+                ':root[data-theme="light"]{--t-bg:#fff;--t-fg:#000}',
+                '}',
             ].join(''),
             {status: 200, cacheControl: {immutable: true, maxage: 86400, type: 'public'}},
         );
@@ -158,7 +168,7 @@ describe('style.mount', () => {
                 /* These should not be flushed */
                 definitions: () => ({
                     /* Flex */
-                    f: {display: 'flex'},
+                    f: () => ({display: 'flex'}),
                 }),
             }),
         );
@@ -173,8 +183,14 @@ describe('style.mount', () => {
         expect(ctx.text).toHaveBeenCalledWith(
             [
                 ':root{--v-fontSizeS:1.8rem;--v-fontSizeM:2rem;--v-fontSizeL:2.2rem}',
-                '@media (prefers-color-scheme: light){:root{--t-bg:#fff;--t-fg:#000}}',
-                '@media (prefers-color-scheme: dark){:root{--t-bg:#000;--t-fg:#fff}}',
+                '@media (prefers-color-scheme: light){',
+                ':root[data-theme="dark"]{--t-bg:#000;--t-fg:#fff}',
+                ':root{--t-bg:#fff;--t-fg:#000}',
+                '}',
+                '@media (prefers-color-scheme: dark){',
+                ':root{--t-bg:#000;--t-fg:#fff}',
+                ':root[data-theme="light"]{--t-bg:#fff;--t-fg:#000}',
+                '}',
             ].join(''),
             {status: 200, cacheControl: {immutable: true, maxage: 86400, type: 'public'}},
         );
@@ -199,7 +215,7 @@ describe('style.mount', () => {
                 /* These should not be flushed */
                 definitions: () => ({
                     /* Flex */
-                    f: {display: 'flex'},
+                    f: () => ({display: 'flex'}),
                 }),
             }),
         );
@@ -214,8 +230,14 @@ describe('style.mount', () => {
         expect(ctxDev.text).toHaveBeenCalledWith(
             [
                 ':root{--v-fontSizeS:1.8rem;--v-fontSizeM:2rem;--v-fontSizeL:2.2rem}',
-                '@media (prefers-color-scheme: light){:root{--t-bg:#fff;--t-fg:#000}}',
-                '@media (prefers-color-scheme: dark){:root{--t-bg:#000;--t-fg:#fff}}',
+                '@media (prefers-color-scheme: light){',
+                ':root[data-theme="dark"]{--t-bg:#000;--t-fg:#fff}',
+                ':root{--t-bg:#fff;--t-fg:#000}',
+                '}',
+                '@media (prefers-color-scheme: dark){',
+                ':root{--t-bg:#000;--t-fg:#fff}',
+                ':root[data-theme="light"]{--t-bg:#fff;--t-fg:#000}',
+                '}',
             ].join(''),
             {status: 200},
         );
@@ -237,7 +259,7 @@ describe('style.mount', () => {
             /* These should not be flushed */
             definitions: () => ({
                 /* Flex */
-                f: {display: 'flex'},
+                f: () => ({display: 'flex'}),
             }),
         });
         const mountSpy = vi.spyOn(css, 'setMountPath');
@@ -253,8 +275,14 @@ describe('style.mount', () => {
         expect(ctxDev.text).toHaveBeenCalledWith(
             [
                 ':root{--v-fontSizeS:1.8rem;--v-fontSizeM:2rem;--v-fontSizeL:2.2rem}',
-                '@media (prefers-color-scheme: light){:root{--t-bg:#fff;--t-fg:#000}}',
-                '@media (prefers-color-scheme: dark){:root{--t-bg:#000;--t-fg:#fff}}',
+                '@media (prefers-color-scheme: light){',
+                ':root[data-theme="dark"]{--t-bg:#000;--t-fg:#fff}',
+                ':root{--t-bg:#fff;--t-fg:#000}',
+                '}',
+                '@media (prefers-color-scheme: dark){',
+                ':root{--t-bg:#000;--t-fg:#fff}',
+                ':root[data-theme="light"]{--t-bg:#fff;--t-fg:#000}',
+                '}',
             ].join(''),
             {status: 200},
         );

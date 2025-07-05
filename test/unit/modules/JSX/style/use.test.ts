@@ -497,9 +497,9 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div>Media Root</div>`);
                     expect(html).toBe(
                         [
+                            '<style data-tfs-s="mql0jb">:root[data-enabled]{opacity:1}</style>',
                             '<style data-tfs-s="1424xjx">@media (prefers-color-scheme: dark){:root[data-enabled]{opacity:.5}}</style>',
                             '<style data-tfs-s="f3d8yt">@media (prefers-color-scheme: dark){:root{--color:white}}</style>',
-                            '<style data-tfs-s="mql0jb">:root[data-enabled]{opacity:1}</style>',
                             '<style data-tfs-s="eq01hh">:root{--color:black}</style>',
                             '<div>Media Root</div>',
                         ].join(''),
@@ -526,10 +526,10 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div>Nested Root</div>`);
                     expect(html).toBe(
                         [
-                            '<style data-tfs-s="1qsvgh2">@media (prefers-color-scheme: dark){body{background-color:black}}</style>',
-                            '<style data-tfs-s="16ks6wb">@media (prefers-color-scheme: dark){:root{--font-size:16px}}</style>',
                             '<style data-tfs-s="1971uff">@media (min-width: 601px) and (max-width: 1199px){html{font-size:16px}}</style>',
                             '<style data-tfs-s="1vkceam">html{font-family:sans-serif}</style>',
+                            '<style data-tfs-s="1qsvgh2">@media (prefers-color-scheme: dark){body{background-color:black}}</style>',
+                            '<style data-tfs-s="16ks6wb">@media (prefers-color-scheme: dark){:root{--font-size:16px}}</style>',
                             '<style data-tfs-s="16ks8h5">:root{--font-size:14px}</style>',
                             '<div>Nested Root</div>',
                         ].join(''),
@@ -825,37 +825,15 @@ describe('Modules - JSX - style - use', () => {
             const html = engine.inject(`${MARKER}<div>Theme</div>`);
             expect(html).toBe(
                 [
-                    '<style data-tfs-s="m2a9zl">@media (prefers-color-scheme: light){:root{--t-bg:#fff;--t-text:#111}}</style>',
-                    '<style data-tfs-s="xwilsj">@media (prefers-color-scheme: dark){:root{--t-bg:#000;--t-text:#eee}}</style>',
+                    '<style data-tfs-s="xwilsj">',
+                    '@media (prefers-color-scheme: light){:root[data-theme="dark"]{--t-bg:#000;--t-text:#eee}}',
+                    '@media (prefers-color-scheme: dark){:root{--t-bg:#000;--t-text:#eee}}',
+                    '</style>',
+                    '<style data-tfs-s="m2a9zl">',
+                    '@media (prefers-color-scheme: light){:root{--t-bg:#fff;--t-text:#111}}',
+                    '@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-bg:#fff;--t-text:#111}}',
+                    '</style>',
                     '<div>Theme</div>',
-                ].join(''),
-            );
-        });
-
-        it('Injects theme vars using data-theme attribute when themeAttribute is true', () => {
-            const css = createCss({
-                var: {},
-                theme: {
-                    color: {light: '#ccc', dark: '#333'},
-                },
-                reset: false,
-                themeAttribute: true,
-            });
-
-            css.root();
-
-            const html = engine.inject(`${MARKER}<div>Attr Theme</div>`);
-            expect(html).toBe(
-                [
-                    '<style data-tfs-s="1y0u62z">',
-                    '@media (prefers-color-scheme: light){:root[data-theme="dark"]{--t-color:#333}}',
-                    '@media (prefers-color-scheme: dark){:root{--t-color:#333}}',
-                    '</style>',
-                    '<style data-tfs-s="1y0t2xn">',
-                    '@media (prefers-color-scheme: light){:root{--t-color:#ccc}}',
-                    '@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-color:#ccc}}',
-                    '</style>',
-                    '<div>Attr Theme</div>',
                 ].join(''),
             );
         });
@@ -868,7 +846,6 @@ describe('Modules - JSX - style - use', () => {
                     '--someLib-fg': {light: '#ccc', dark: '#333'},
                 },
                 reset: false,
-                themeAttribute: true,
             });
 
             css.root();
@@ -885,32 +862,6 @@ describe('Modules - JSX - style - use', () => {
                     '@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-color:#ccc;--someLib-fg:#ccc}}',
                     '</style>',
                     '<div>Attr Theme</div>',
-                ].join(''),
-            );
-        });
-
-        it('Supports custom theme attribute names', () => {
-            const css = createCss({
-                var: {},
-                theme: {border: {light: 'gray', dark: 'white'}},
-                reset: false,
-                themeAttribute: 'data-mode',
-            });
-
-            css.root();
-
-            const html = engine.inject(`${MARKER}<div>Mode Theme</div>`);
-            expect(html).toBe(
-                [
-                    '<style data-tfs-s="nfja4t">',
-                    '@media (prefers-color-scheme: light){:root[data-mode="dark"]{--t-border:white}}',
-                    '@media (prefers-color-scheme: dark){:root{--t-border:white}}',
-                    '</style>',
-                    '<style data-tfs-s="19whppj">',
-                    '@media (prefers-color-scheme: light){:root{--t-border:gray}}',
-                    '@media (prefers-color-scheme: dark){:root[data-mode="light"]{--t-border:gray}}',
-                    '</style>',
-                    '<div>Mode Theme</div>',
                 ].join(''),
             );
         });
@@ -1046,7 +997,6 @@ describe('Modules - JSX - style - use', () => {
                 var: {spacing: '1rem'},
                 theme: {bg: {light: '#fff', dark: '#000'}},
                 reset: true,
-                themeAttribute: true,
             });
 
             // Call root multiple times
@@ -1092,11 +1042,11 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`${MARKER}<div>Multiple</div>`)).toBe(
                 [
-                    '<style data-tfs-s="i1ex52">@media (prefers-color-scheme: light){:root{--t-bg:#fff}}</style>',
-                    '<style data-tfs-s="i1gonk">@media (prefers-color-scheme: dark){:root{--t-bg:#000}}</style>',
+                    '<style data-tfs-s="i1gonk">@media (prefers-color-scheme: light){:root[data-theme="dark"]{--t-bg:#000}}@media (prefers-color-scheme: dark){:root{--t-bg:#000}}</style>',
+                    '<style data-tfs-s="i1ex52">@media (prefers-color-scheme: light){:root{--t-bg:#fff}}@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-bg:#fff}}</style>',
                     '<style data-tfs-s="sklc0">:root{--v-radius:4px}</style>',
-                    '<style data-tfs-s="8tcmvo">@media (prefers-color-scheme: light){:root{--t-fg:#000}}</style>',
-                    '<style data-tfs-s="8taoua">@media (prefers-color-scheme: dark){:root{--t-fg:#fff}}</style>',
+                    '<style data-tfs-s="8taoua">@media (prefers-color-scheme: light){:root[data-theme="dark"]{--t-fg:#fff}}@media (prefers-color-scheme: dark){:root{--t-fg:#fff}}</style>',
+                    '<style data-tfs-s="8tcmvo">@media (prefers-color-scheme: light){:root{--t-fg:#000}}@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-fg:#000}}</style>',
                     '<style data-tfs-s="1ivf8jx">:root{--v-spacing:2rem}</style>',
                     '<div>Multiple</div>',
                 ].join(''),
@@ -1167,7 +1117,6 @@ describe('Modules - JSX - style - use', () => {
                 var: {radius: '8px'},
                 theme: {bg: {light: '#fff', dark: '#000'}},
                 reset: false,
-                themeAttribute: true,
             });
 
             css.root({
@@ -1208,7 +1157,6 @@ describe('Modules - JSX - style - use', () => {
                     fg: {light: '#111', dark: '#eee'},
                 },
                 reset: false,
-                themeAttribute: true,
             });
 
             const cls = css({
@@ -1262,7 +1210,6 @@ describe('Modules - JSX - style - use', () => {
                     fg: {light: '#111', dark: '#eee'},
                 },
                 reset: false,
-                themeAttribute: true,
             });
 
             const cls = css({
@@ -1282,23 +1229,14 @@ describe('Modules - JSX - style - use', () => {
                     '.tfxlk7jb{background-color:var(--t-bg);color:var(--t-fg);padding:var(--v-spacing_m);border-radius:var(--v-radius_s)}',
                     '</style>',
                     '<style data-tfs-s="2br1fz">',
-                    '@media (prefers-color-scheme: light){',
-                    ':root[data-theme="dark"]{--t-bg:#000;--t-fg:#eee}',
-                    '}',
-                    '@media (prefers-color-scheme: dark){',
-                    ':root{--t-bg:#000;--t-fg:#eee}',
-                    '}',
+                    '@media (prefers-color-scheme: light){:root[data-theme="dark"]{--t-bg:#000;--t-fg:#eee}}',
+                    '@media (prefers-color-scheme: dark){:root{--t-bg:#000;--t-fg:#eee}}',
                     '</style>',
                     '<style data-tfs-s="15gmsel">',
-                    '@media (prefers-color-scheme: light){',
-                    ':root{--t-bg:#fff;--t-fg:#111}}',
-                    '@media (prefers-color-scheme: dark){',
-                    ':root[data-theme="light"]{--t-bg:#fff;--t-fg:#111}',
-                    '}',
+                    '@media (prefers-color-scheme: light){:root{--t-bg:#fff;--t-fg:#111}}',
+                    '@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-bg:#fff;--t-fg:#111}}',
                     '</style>',
-                    '<style data-tfs-s="10mg49a">',
-                    ':root{--v-spacing_m:1rem;--v-radius_s:4px}',
-                    '</style>',
+                    '<style data-tfs-s="10mg49a">:root{--v-spacing_m:1rem;--v-radius_s:4px}</style>',
                     '<div class="tfxlk7jb">Vars in Use</div>',
                 ].join(''),
             );
@@ -1313,7 +1251,7 @@ describe('Modules - JSX - style - use', () => {
             });
             css.root();
             expect(engine.inject(`${MARKER}<div>Theme</div>`)).toBe(
-                '<style data-tfs-s="15gmq0c">:root{--t-bg:#fff;--t-fg:#000}</style><div>Theme</div>',
+                ['<style data-tfs-s="15gmq0c">:root{--t-bg:#fff;--t-fg:#000}</style>', '<div>Theme</div>'].join(''),
             );
         });
 
@@ -1328,20 +1266,16 @@ describe('Modules - JSX - style - use', () => {
             css.root();
             expect(engine.inject(`${MARKER}<div>Theme</div>`)).toBe(
                 [
-                    '<style data-tfs-s="9dv7er">',
-                    '@media (prefers-color-scheme: light){',
-                    ':root{--t-alt:#f9f9f9}',
-                    '}',
-                    '</style>',
                     '<style data-tfs-s="10fxs27">',
-                    '@media (prefers-color-scheme: dark){',
-                    ':root{--t-alt:#333}',
-                    '}',
+                    '@media (prefers-color-scheme: light){:root[data-theme="dark"]{--t-alt:#333}}',
+                    '@media (prefers-color-scheme: dark){:root{--t-alt:#333}}',
+                    '</style><style data-tfs-s="9dv7er">',
+                    '@media (prefers-color-scheme: light){:root{--t-alt:#f9f9f9}}',
+                    '@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-alt:#f9f9f9}}',
                     '</style>',
                     '<style data-tfs-s="15gmq0c">',
                     ':root{--t-bg:#fff;--t-fg:#000}',
-                    '</style>',
-                    '<div>Theme</div>',
+                    '</style><div>Theme</div>',
                 ].join(''),
             );
         });
@@ -1363,10 +1297,12 @@ describe('Modules - JSX - style - use', () => {
                     '<style data-tfs-p>',
                     ':root{--t-bg:#fff;--t-fg:#000}',
                     '@media (prefers-color-scheme: light){',
+                    ':root[data-theme="dark"]{--t-alt:#333}',
                     ':root{--t-alt:#f9f9f9}',
                     '}',
                     '@media (prefers-color-scheme: dark){',
                     ':root{--t-alt:#333}',
+                    ':root[data-theme="light"]{--t-alt:#f9f9f9}',
                     '}',
                     '</style>',
                     `<script>${OBSERVER}</script>`,
@@ -2737,8 +2673,7 @@ describe('Modules - JSX - style - use', () => {
                         '.tf1dg793l div{animation:tfbo5hof 3s ease-in-out}',
                         '.tf1dg793l{padding:var(--v-space_l);justify-content:space-around}',
                         '}',
-                        '</style>',
-                        '<div class="tf1dg793l">Mix</div>',
+                        '</style><div class="tf1dg793l">Mix</div>',
                     ].join(''),
                 );
             }

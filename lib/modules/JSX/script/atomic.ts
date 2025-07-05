@@ -564,8 +564,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
             };
         })());
         oD("cssTheme", (() => {
-            let c;
-            let t;
+            let c, t;
             return v => {
                 if (typeof v !== "string") return null;
                 const n = document.documentElement;

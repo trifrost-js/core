@@ -669,6 +669,7 @@ export function createCss<
     const root_vars: Record<string, string> = {};
     const theme_light: Record<string, string> = {};
     const theme_dark: Record<string, string> = {};
+    let has_theme = false;
 
     /* Attach var tokens */
     mod.var = {} as any;
@@ -695,6 +696,7 @@ export function createCss<
                 theme_light[t_key] = entry.light;
                 theme_dark[t_key] = entry.dark;
                 mod.theme[key] = ('var(' + t_key + ')') as ThemeVal<typeof key>;
+                has_theme = true;
             } else {
                 throw new Error(`Theme token '${key}' is invalid, must either be a string or define both 'light' and 'dark' values`);
             }
@@ -718,14 +720,16 @@ export function createCss<
     const ROOT_INJECTION = {
         ...(config.reset === true && CSS_RESET),
         ...root_vars,
-        [mod.media.light]: {
-            ...theme_light,
-            [':root[data-theme="dark"]']: theme_dark,
-        },
-        [mod.media.dark]: {
-            ...theme_dark,
-            [':root[data-theme="light"]']: theme_dark,
-        },
+        ...(has_theme && {
+            [mod.media.light]: {
+                ...theme_light,
+                [':root[data-theme="dark"]']: theme_dark,
+            },
+            [mod.media.dark]: {
+                ...theme_dark,
+                [':root[data-theme="light"]']: theme_light,
+            },
+        }),
     };
 
     /* Attach root generator */
