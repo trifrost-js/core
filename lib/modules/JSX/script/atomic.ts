@@ -615,6 +615,10 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
 })(window,document);`);
 
 export const ARC_GLOBAL = atomicMinify(`(function(w){
+    const def = (n, v, t) => {
+        if (!t[n]) Object.defineProperty(t, n, {value:v, configurable:!1, writable:!1});
+    };
+
     if (!w.${GLOBAL_ARC_NAME}) {
         const f=new Map(),d=new Map(),v=new Map();
         Object.defineProperty(w,"${GLOBAL_ARC_NAME}",{
@@ -644,18 +648,16 @@ export const ARC_GLOBAL = atomicMinify(`(function(w){
                             const UID = Math.random().toString(36).slice(2);
                             Object.defineProperty(n, "${VM_ID_NAME}", {value: UID, configurable: false, writable: false});
                             if (ATOMIC && !n.${VM_NAME}) {
-                                Object.defineProperties(n, {
-                                    ${VM_RELAY_SUBSCRIBE_NAME}:{value: (msg, fn) => w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, msg, fn), configurable: !1, writable: !1},
-                                    ${VM_RELAY_SUBSCRIBE_ONCE_NAME}:{value: (msg, fn) => {
-                                        w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, msg, v => {
-                                            fn(v);
-                                            n.${VM_RELAY_UNSUBSCRIBE_NAME}(msg);
-                                        });
-                                    }, configurable: !1, writable: !1},
-                                    ${VM_RELAY_UNSUBSCRIBE_NAME}:{value: msg => w.${GLOBAL_RELAY_NAME}.unsubscribe(n.${VM_ID_NAME}, msg), configurable: !1, writable: !1},
-                                    ${VM_RELAY_PUBLISH_NAME}:{value: (msg, data) => w.${GLOBAL_RELAY_NAME}.publish(msg, data), configurable: !1, writable: !1},
-                                    ${VM_NAME}:{get: () => !0, configurable:!1}
-                                });
+                                def("${VM_RELAY_SUBSCRIBE_NAME}", (msg, fn) => w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, msg, fn), n);
+                                def("${VM_RELAY_SUBSCRIBE_ONCE_NAME}", (msg, fn) => {
+                                    w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, msg, v => {
+                                        fn(v);
+                                        n.${VM_RELAY_UNSUBSCRIBE_NAME}(msg);
+                                    });
+                                }, n);
+                                def("${VM_RELAY_UNSUBSCRIBE_NAME}", msg => w.${GLOBAL_RELAY_NAME}.unsubscribe(n.${VM_ID_NAME}, msg), n);
+                                def("${VM_RELAY_PUBLISH_NAME}", (msg, data) => w.${GLOBAL_RELAY_NAME}.publish(msg, data), n);
+                                def("${VM_NAME}", true, n);
                             }
                             try {
                                 FREG.fn(ATOMIC
