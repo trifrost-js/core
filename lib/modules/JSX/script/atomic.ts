@@ -16,6 +16,7 @@ const GLOBAL_CLOCK_TICK = '$tfcr';
 const VM_NAME = '$tfVM';
 export const VM_ID_NAME = '$uid';
 const VM_RELAY_SUBSCRIBE_NAME = '$subscribe';
+const VM_RELAY_SUBSCRIBE_ONCE_NAME = '$subscribeOnce';
 const VM_RELAY_UNSUBSCRIBE_NAME = '$unsubscribe';
 const VM_RELAY_PUBLISH_NAME = '$publish';
 const VM_HOOK_UNMOUNT_NAME = '$unmount';
@@ -60,6 +61,16 @@ export type TriFrostAtomicVM<
     [VM_ID_NAME]: string;
     /* VM Relay */
     [VM_RELAY_SUBSCRIBE_NAME]<T extends RelayKeys>(
+        topic: T,
+        fn: T extends keyof Relay
+            ? (data: Relay[T]) => void
+            : T extends StoreTopics<infer K>
+              ? K extends keyof Store
+                  ? (data: Store[K]) => void
+                  : (data: unknown) => void
+              : (data: unknown) => void,
+    ): void;
+    [VM_RELAY_SUBSCRIBE_ONCE_NAME]<T extends RelayKeys>(
         topic: T,
         fn: T extends keyof Relay
             ? (data: Relay[T]) => void
@@ -630,6 +641,12 @@ export const ARC_GLOBAL = atomicMinify(`(function(w){
                             if (ATOMIC && !n.${VM_NAME}) {
                                 Object.defineProperties(n, {
                                     ${VM_RELAY_SUBSCRIBE_NAME}:{value: (msg, fn) => w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, msg, fn), configurable: !1, writable: !1},
+                                    ${VM_RELAY_SUBSCRIBE_ONCE_NAME}:{value: (msg, fn) => {
+                                        w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, msg, v => {
+                                            fn(v);
+                                            n.${VM_RELAY_UNSUBSCRIBE_NAME}(msg);
+                                        });
+                                    }, configurable: !1, writable: !1},
                                     ${VM_RELAY_UNSUBSCRIBE_NAME}:{value: msg => w.${GLOBAL_RELAY_NAME}.unsubscribe(n.${VM_ID_NAME}, msg), configurable: !1, writable: !1},
                                     ${VM_RELAY_PUBLISH_NAME}:{value: (msg, data) => w.${GLOBAL_RELAY_NAME}.publish(msg, data), configurable: !1, writable: !1},
                                     ${VM_NAME}:{get: () => !0, configurable:!1}
