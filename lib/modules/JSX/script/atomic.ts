@@ -558,22 +558,20 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
         oD("cssVar", (() => {
             let c;
             return v => {
-                if (typeof v !== "string") return null;
                 if (!c) c = getComputedStyle(document.documentElement);
-                return c.getPropertyValue(v.startsWith("--") ? v : "--v-" + v).trim() || null;
+                return c.getPropertyValue(v.startsWith("--") ? v : "--v-" + v).trim() || "";
             };
         })());
         oD("cssTheme", (() => {
             let c, t;
             return v => {
-                if (typeof v !== "string") return null;
                 const n = document.documentElement;
                 const tc = n.getAttribute("data-theme");
                 if (!c || tc !== t) {
                     c = getComputedStyle(n);
                     t = tc;
                 }
-                return c.getPropertyValue(v.startsWith("--") ? v : "--t-" + v).trim() || null;
+                return c.getPropertyValue(v.startsWith("--") ? v : "--t-" + v).trim() || "";
             };
         })());
 

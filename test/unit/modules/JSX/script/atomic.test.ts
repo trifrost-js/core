@@ -132,8 +132,8 @@ describe('Modules - JSX - script - atomic', () => {
                     'oD("queryAll",(n,q)=>{if(!n?.querySelectorAll||typeof q!=="string")return [];const scopable=n.nodeType===Node.ELEMENT_NODE&&!q.trimStart().startsWith(":scope");try{return [...n.querySelectorAll(scopable?":scope "+q:q)];}catch{return [];}});',
                     'oD("storeGet",window.$tfs.get);',
                     'oD("storeSet",window.$tfs.set);',
-                    'oD("cssVar",(()=>{let c;return v=>{if(typeof v!=="string")return null;if(!c)c=getComputedStyle(document.documentElement);return c.getPropertyValue(v.startsWith("--")?v:"--v-"+v).trim()||null;};})());',
-                    'oD("cssTheme",(()=>{let c,t;return v=>{if(typeof v!=="string")return null;const n=document.documentElement;const tc=n.getAttribute("data-theme");if(!c||tc!==t){c=getComputedStyle(n);t=tc;}return c.getPropertyValue(v.startsWith("--")?v:"--t-"+v).trim()||null;};})());',
+                    'oD("cssVar",(()=>{let c;return v=>{if(!c)c=getComputedStyle(document.documentElement);return c.getPropertyValue(v.startsWith("--")?v:"--v-"+v).trim()||"";};})());',
+                    'oD("cssTheme",(()=>{let c,t;return v=>{const n=document.documentElement;const tc=n.getAttribute("data-theme");if(!c||tc!==t){c=getComputedStyle(n);t=tc;}return c.getPropertyValue(v.startsWith("--")?v:"--t-"+v).trim()||"";};})());',
                     'return Object.freeze(obj);})());',
                     /* Name shim */
                     'def("__name",(fn,n)=>{try{Object.defineProperty(fn,"name",{value:n,configurable:true});}catch{}return fn;});',
