@@ -110,6 +110,8 @@ export type TriFrostAtomicUtils<
     TFCSSVar extends string = string,
     TFCSSTheme extends string = string,
 > = {
+    /* Blurs the currently focussed dom element */
+    blurActive: () => void;
     /* Clears the children from a dom node */
     clear: (el: Element) => void;
     debounce: <T extends (...args: any[]) => any>(fn: T, delay: number) => T;
@@ -158,8 +160,8 @@ export type TriFrostAtomicUtils<
     cssTheme: (name: TFCSSTheme | `--${string}`) => string;
 };
 
-export const ATOMIC_GLOBAL = atomicMinify(`(function(){
-    const def = (n, v, t = window) => {
+export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
+    const def = (n, v, t = win) => {
         if (!t[n]) Object.defineProperty(t, n, {value:v, configurable:!1, writable:!1});
     };
 
@@ -200,7 +202,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
         try {
             return new CustomEvent(t, o);
         } catch (_) {
-            const e = document.createEvent("CustomEvent");
+            const e = doc.createEvent("CustomEvent");
             e.initCustomEvent(t, o?.bubbles, o?.cancelable, o?.detail);
             return e;
         }
@@ -244,9 +246,9 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
                 if (typeof nR.${VM_HOOK_UNMOUNT_NAME}==="function") {
                     try{nR.$unmount()}catch{}
                 }
-                window.${GLOBAL_RELAY_NAME}?.unsubscribe(nR.${VM_ID_NAME});
-                window.${GLOBAL_CLOCK}?.delete(nR.${VM_ID_NAME});
-                window.${GLOBAL_ARC_NAME}?.release(nR.${VM_ID_NAME});
+                win.${GLOBAL_RELAY_NAME}?.unsubscribe(nR.${VM_ID_NAME});
+                win.${GLOBAL_CLOCK}?.delete(nR.${VM_ID_NAME});
+                win.${GLOBAL_ARC_NAME}?.release(nR.${VM_ID_NAME});
             }
             if (nR.children?.length) {
                 for (let i = 0; i < nR.children.length; i++) {
@@ -261,7 +263,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
                 }
             }
         });
-        o.observe(document.body, {childList:!0, subtree:!0});
+        o.observe(doc.body, {childList:!0, subtree:!0});
         return o;
     })());
 
@@ -275,7 +277,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
             set: (key, val) => {
                 if (typeof key !== "string" || !key) return;
                 s[key] = val;
-                window.${GLOBAL_RELAY_NAME}.publish("$store:" + key, val);
+                win.${GLOBAL_RELAY_NAME}.publish("$store:" + key, val);
             },
         });
     })());
@@ -295,7 +297,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
                     tv.clear();
                     for (let i = 0; i < uids.length; i++) {
                         try {
-                            const fn = window.${GLOBAL_CLOCK}.get(uids[i]);
+                            const fn = win.${GLOBAL_CLOCK}.get(uids[i]);
                             if (fn) fn();
                         } catch {}
                     }
@@ -327,7 +329,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
                 c = i === 0 ? parts[0] : c + "." + parts[i];
                 pending.add(c);
             }
-            window.${GLOBAL_CLOCK_TICK}(root.${VM_ID_NAME});
+            win.${GLOBAL_CLOCK_TICK}(root.${VM_ID_NAME});
         };
 
         const tick = () => {
@@ -339,9 +341,9 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
                 for (let i = 0; i < handlers.length; i++) {
                     try {
                         const fn = handlers[i];
-                        if (!window.${GLOBAL_UTIL_EQUAL}(fn._last, val)) {
+                        if (!win.${GLOBAL_UTIL_EQUAL}(fn._last, val)) {
                             fn(val, fn._last);
-                            fn._last = window.${GLOBAL_UTIL_CLONE}(val);
+                            fn._last = win.${GLOBAL_UTIL_CLONE}(val);
                         }
                     } catch {}
                 }
@@ -399,7 +401,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
             } else e.value = val ?? "";
         };
 
-        window.${GLOBAL_CLOCK}.set(root.${VM_ID_NAME}, tick);
+        win.${GLOBAL_CLOCK}.set(root.${VM_ID_NAME}, tick);
 
         return new Proxy(store, {
             get(_, key) {
@@ -433,11 +435,11 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
                         (subs[path] ??= []).push(v => setIV(els, v));
 
                         if (typeof watcher === "function") {
-                            watcher._last = window.${GLOBAL_UTIL_CLONE}(get(path));
+                            watcher._last = win.${GLOBAL_UTIL_CLONE}(get(path));
                             subs[path].push(watcher);
                         } else if (typeof watcher?.handler === "function") {
                             const {immediate,handler} = watcher;
-                            handler._last = window.${GLOBAL_UTIL_CLONE}(get(path));
+                            handler._last = win.${GLOBAL_UTIL_CLONE}(get(path));
                             subs[path].push(handler);
                             if (immediate === true) handler(handler._last);
                         }
@@ -445,7 +447,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
                     case "$watch": return (path, fn, opts = {}) => {
                         if (typeof path !== "string" || typeof fn !== "function") return;
                         (subs[path] ??= []).push(fn);
-                        fn._last = window.${GLOBAL_UTIL_CLONE}(get(path));
+                        fn._last = win.${GLOBAL_UTIL_CLONE}(get(path));
                         if (opts?.immediate === true) fn(fn._last);
                     };
                     case "$set": return patch;
@@ -453,7 +455,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
                 }
             },
             set(_, key, val) {
-                if (window.${GLOBAL_UTIL_EQUAL}(store[key], val)) return true;
+                if (win.${GLOBAL_UTIL_EQUAL}(store[key], val)) return true;
                 store[key] = val;
                 notify(String(key));
                 return true;
@@ -465,6 +467,9 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
     def("${GLOBAL_UTILS_NAME}", (() => {
         const obj = Object.create(null);
         const oD = (n, v) => def(n, v, obj);
+        oD("blurActive", () => {
+            if (doc.activeElement instanceof HTMLElement) doc.activeElement.blur();
+        });
         oD("clear", n => {
             while (n.firstChild) n.removeChild(n.firstChild);
         });
@@ -475,7 +480,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
                 t = setTimeout(() => fn(...args), ms);
             };
         });
-        oD("eq", window.${GLOBAL_UTIL_EQUAL});
+        oD("eq", win.${GLOBAL_UTIL_EQUAL});
         oD("uid", () => crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
         oD("sleep", ms => new Promise(r => setTimeout(r, ms)));
         oD("fetch", async (url, o = {}) => {
@@ -509,7 +514,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
                     if (rt.includes("application/json")) c = await r.json();
                     else if (rt.includes("text/html")) {
                         const v = await r.text();
-                        c = document.createRange().createContextualFragment(v);
+                        c = doc.createRange().createContextualFragment(v);
                     }
                     else if (rt.includes("text/")) c = await r.text();
                     else if (rt.includes("application/octet-stream")) c = await r.blob();
@@ -538,7 +543,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
             }
         });
         oD("fire", (n, t, o) => n.dispatchEvent(
-            window.${GLOBAL_UTIL_CREATE_EVENT}(t, {
+            win.${GLOBAL_UTIL_CREATE_EVENT}(t, {
                 detail: o?.data,
                 bubbles:(o?.mode ?? "up") === "up",
                 cancelable:!0
@@ -575,19 +580,19 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
                 return [];
             }
         });
-        oD("storeGet", window.${GLOBAL_STORE_NAME}.get);
-        oD("storeSet", window.${GLOBAL_STORE_NAME}.set);
+        oD("storeGet", win.${GLOBAL_STORE_NAME}.get);
+        oD("storeSet", win.${GLOBAL_STORE_NAME}.set);
         oD("cssVar", (() => {
             let c;
             return v => {
-                if (!c) c = getComputedStyle(document.documentElement);
+                if (!c) c = getComputedStyle(doc.documentElement);
                 return c.getPropertyValue(v.startsWith("--") ? v : "--v-" + v).trim() || "";
             };
         })());
         oD("cssTheme", (() => {
             let c, t;
             return v => {
-                const n = document.documentElement;
+                const n = doc.documentElement;
                 const tc = n.getAttribute("data-theme");
                 if (!c || tc !== t) {
                     c = getComputedStyle(n);
@@ -607,7 +612,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(){
     });
 
     def("${GLOBAL_HYDRATED_NAME}", !0);
-})();`);
+})(window,document);`);
 
 export const ARC_GLOBAL = atomicMinify(`(function(w){
     if (!w.${GLOBAL_ARC_NAME}) {
