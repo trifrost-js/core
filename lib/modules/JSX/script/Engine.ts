@@ -50,6 +50,9 @@ export class ScriptEngine {
 
     /**
      * Flushes the script registry into a string
+     *
+     * @param {Set<string>} seen - Set of hashes known to be on the client already
+     * @param {boolean} isFragment - (default=false) Whether or not we're flushing for a fragment
      */
     flush(seen: Set<string> = new Set(), isFragment: boolean = false): string {
         if (this.map_fn.size === 0) return '';

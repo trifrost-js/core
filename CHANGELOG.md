@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.45.2] - 2025-07-05
+### Improved
+- **qol**: Script engine injection will no longer inject arc wait wrapper if it knows its in a fragment. Reducing fragment script injections even more
+
 ## [0.45.1] - 2025-07-05
 ### Fixed
 - Typing for `$.cssVar` and `$.cssTheme` as returning string instead of string|null.
