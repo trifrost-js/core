@@ -90,7 +90,11 @@ export type TriFrostAtomicProxy<T> = T & {
     $set: (key: DotPaths<T> | T, val?: any) => void;
 };
 
-export type TriFrostAtomicUtils<Store extends Record<string, unknown> = {}> = {
+export type TriFrostAtomicUtils<
+    Store extends Record<string, unknown> = {},
+    TFCSSVar extends string = string,
+    TFCSSTheme extends string = string,
+> = {
     /* Clears the children from a dom node */
     clear: (el: Element) => void;
     debounce: <T extends (...args: any[]) => any>(fn: T, delay: number) => T;
@@ -134,6 +138,9 @@ export type TriFrostAtomicUtils<Store extends Record<string, unknown> = {}> = {
     /* Store Set */
     storeSet<K extends keyof Store>(key: K, value: Store[K]): void;
     storeSet(key: string, value: unknown): void;
+    /* CSS variable access */
+    cssVar: (name: TFCSSVar | `--${string}`) => string | null;
+    cssTheme: (name: TFCSSTheme | `--${string}`) => string | null;
 };
 
 export const ATOMIC_GLOBAL = atomicMinify(`(function(){

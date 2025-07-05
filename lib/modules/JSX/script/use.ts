@@ -19,15 +19,14 @@ export function getActiveScriptEngine() {
  * MARK: Script Factory
  */
 
-type ScriptConfig = {
-    atomic?: boolean;
-};
-
 export function createScript<
     Env extends Record<string, any> = Record<string, any>,
     TFRelay extends Record<string, unknown> = Record<string, unknown>,
     TFStore extends Record<string, unknown> = Record<string, unknown>,
->(config: ScriptConfig = {}) {
+    const Config extends {css?: {var: Record<string, string>; theme: Record<string, string>}; atomic?: boolean} = {},
+    TFCSSVarKeys extends string = Config['css'] extends {var: infer V} ? keyof V & string : string,
+    TFCSSThemeKeys extends string = Config['css'] extends {theme: infer T} ? keyof T & string : string,
+>(config: Config = {} as Config) {
     let mountPath: string | null = null;
     const isAtomic = 'atomic' in config && config.atomic === true;
 
@@ -38,10 +37,10 @@ export function createScript<
     const state = <T = unknown, K extends string = string>(key: K) => ogState<T>(key);
 
     /* Script proxy */
-    const Script = <TFData = undefined>(props: ScriptProps<TFData, TFRelay, TFStore>) => {
+    const Script = <TFData = undefined>(props: ScriptProps<TFData, TFRelay, TFStore, TFCSSVarKeys, TFCSSThemeKeys>) => {
         if (!active_engine) setActiveScriptEngine(new ScriptEngine());
         if (isAtomic) active_engine!.setAtomic(config.atomic!);
-        return ogScript<TFData, TFRelay, TFStore>(props);
+        return ogScript<TFData, TFRelay, TFStore, TFCSSVarKeys, TFCSSThemeKeys>(props);
     };
 
     /* Tell the ecosystem this is the root render */

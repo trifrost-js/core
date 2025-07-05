@@ -12,11 +12,13 @@ export type ScriptProps<
     TFData = undefined,
     TFRelay extends Record<string, unknown> = Record<string, unknown>,
     TFStore extends Record<string, unknown> = Record<string, unknown>,
+    TFCSSVar extends string = string,
+    TFCSSTheme extends string = string,
 > = JSXProps & {
     children?: (opts: {
         el: HTMLElement & TriFrostAtomicVM<TFRelay, TFStore>;
         data: TriFrostAtomicProxy<TFData>;
-        $: TriFrostAtomicUtils<TFStore>;
+        $: TriFrostAtomicUtils<TFStore, TFCSSVar, TFCSSTheme>;
     }) => void;
     nonce?: string;
     src?: string;
@@ -32,7 +34,9 @@ export function Script<
     TFData = undefined,
     TFRelay extends Record<string, unknown> = Record<string, unknown>,
     TFStore extends Record<string, unknown> = Record<string, unknown>,
->(options: (JSXProps & ScriptProps<TFData, TFRelay, TFStore>) | null): JSX.Element {
+    TFCSSVar extends string = string,
+    TFCSSTheme extends string = string,
+>(options: (JSXProps & ScriptProps<TFData, TFRelay, TFStore, TFCSSVar, TFCSSTheme>) | null): JSX.Element {
     if (!options || Object.prototype.toString.call(options) !== '[object Object]') return null as unknown as JSX.Element;
 
     /* Source */
