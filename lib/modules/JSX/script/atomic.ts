@@ -114,6 +114,14 @@ export type TriFrostAtomicUtils<
     blurActive: () => void;
     /* Clears the children from a dom node */
     clear: (el: Element) => void;
+    create: (
+        tag: string,
+        opts?: {
+            attrs?: Record<string, string>;
+            style?: Partial<CSSStyleDeclaration>;
+            children?: (Node | string)[];
+        },
+    ) => HTMLElement | SVGElement;
     debounce: <T extends (...args: any[]) => any>(fn: T, delay: number) => T;
     eq: (a: unknown, b: unknown) => boolean;
     uid: () => string;
@@ -473,6 +481,18 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
         oD("clear", n => {
             while (n.firstChild) n.removeChild(n.firstChild);
         });
+        oD("create", (() => {
+            const s = new Set(["svg", "path", "circle", "rect", "g", "defs", "text", "use", "line", "polyline", "polygon", "ellipse", "symbol", "clipPath", "linearGradient", "radialGradient", "filter", "mask", "pattern"]);
+            return (t, o = {}) => {
+                const e = s.has(t)
+                    ? document.createElementNS("http://www.w3.org/2000/svg", t)
+                    : document.createElement(t);
+                if (o.attrs) for (const k in o.attrs) e.setAttribute(k, o.attrs[k]);
+                if (o.style) for (const k in o.style) e.style[k] = o.style[k];
+                if (o.children) for (const c of o.children) e.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+                return e;
+            };
+        })());
         oD("debounce", (fn, ms) => {
             let t;
             return (...args) => {

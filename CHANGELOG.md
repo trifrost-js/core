@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- **feat**: Atomic util `$.create` creates a new dom node and internally switches to `createElementNS` for known svg tags
+```typescript
+$.create('div', {
+  attrs: { id: 'box', 'data-state': 'active' },
+  style: { backgroundColor: 'red', transform: 'scale(1.2)' },
+});
+```
+```typescript
+$.create('svg', {
+  attrs: { viewBox: '0 0 100 100' },
+  style: { width: '100px', height: '100px' },
+});
+```
+
 ## [0.45.3] - 2025-07-05
 ### Added
 - **feat**: Atomic util `$.blurActive()` removes focus from the currently active element
