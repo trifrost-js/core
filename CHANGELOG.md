@@ -4,8 +4,42 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.46.0] - 2025-07-07
+A powerful step forward in TriFrost’s atomic reactivity and component orchestration:
+- Global `Module` components enable singleton-like behavior for app-wide coordination.
+- New atomic utilities (`$.create`, `$.timedAttr`, `$.timedClass`) streamline DOM manipulation and animation.
+- DX for `$.query`/`$.queryAll` is now smarter and fully typed based on CSS selectors.
+
+This release sets the stage for a richer ecosystem of modular, event-driven architecture, and there’s more to come.
+
 ### Added
+- **feat**: `createScript(...)` now also exports a `<Module>` primitive in addition to `<Script>`. Modules are **singletons**, only one instance per unique module is allowed per page render. Unlike `<Script>`, `<Module>` is not tied to a DOM node and is ideal for global logic or event handling. Relay helpers like `$subscribe` and `$publish` are available on the `mod` object, as well as access to the atomic `$` utils and `data` reactive proxy. There's more coming for Modules so stay tuned.
+```typescript
+// script.ts
+import {createScript} from '@trifrost/core';
+
+const config = {
+  atomic: true;
+} as const;
+
+const {Script, Module, script} = createScript<typeof config>(config);
+export {Script, Module, script};
+```
+```tsx
+import {Module} from '~/script';
+
+// Example audio module. 
+export type AudioEvents = {
+  'audio:play': string;
+};
+
+<Module name="audio">{({mod, $}) => {
+  mod.$subscribe('audio:play', val => {
+    const sound = new Audio(val);
+    sound.play();
+  });
+}}</Module>
+```
 - **feat**: Atomic util `$.create` creates a new dom node and internally switches to `createElementNS` for known svg tags. The **return element is typed according to the tag**.
 ```typescript
 $.create('div', {
@@ -43,6 +77,17 @@ $.query(el, 'div + span');                    // HTMLSpanElement | null
 $.queryAll(document, 'section ~ svg');        // SVGSVGElement[]
 $.queryAll(el, 'ul > li');                    // HTMLLIElement[]
 ```
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250705.0
+- **deps**: Upgrade @types/node to 22.16.0
+- **deps**: Upgrade bun-types to 1.2.18
+- **deps**: Upgrade eslint to 9.30.1
+- **deps**: Upgrade typescript-eslint to 8.35.1
+
+---
+
+As TriFrost continues to evolve into a **composable reactive runtime** we feel we're coming very close to a 1.0 now.
+
+More to come, but for now, as always, stay frosty ❄️.
 
 ## [0.45.3] - 2025-07-05
 ### Added
