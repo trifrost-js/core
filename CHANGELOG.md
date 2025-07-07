@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.46.3] - 2025-07-07
+### Improved
+- **qol**: `$.query` and `$.queryAll` can now be passed a generic, eg: `$.query<HTMLElement>('#hello');` to aid in places where its really not possible to determine.
+- **qol**: `$.query` and `$.queryAll` will now properly fallback to `HTMLElement` instead of `never` when no generic is passed and inference is not possible.
+
 ## [0.46.2] - 2025-07-07
 ### Fixed
 - timedAttr & timedClass glitch with el
