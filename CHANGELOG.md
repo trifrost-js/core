@@ -40,6 +40,19 @@ $.timedClass(el, 'squish', {duration: 220});
   }}
 </Script>;
 ```
+- **dx**: `$.query` and `$.queryAll` now try to infer the returning type off of the provided query. If not possible to determine we fall back to `Element`
+```typescript
+$.query(el, 'div');                           // HTMLDivElement | null
+$.query(el, 'svg > path');                    // SVGPathElement | null
+$.query(document, 'section > svg > circle');  // SVGCircleElement | null
+$.query(document, '.some-class');             // Element | null (fallback)
+$.query(document, '[data-x]');                // Element | null
+$.queryAll(el, 'div > p');                    // HTMLParagraphElement[]
+$.query(el, 'div + span');                    // HTMLSpanElement | null
+$.queryAll(document, 'section ~ svg');        // SVGSVGElement[]
+$.queryAll(el, 'ul > li');                    // HTMLLIElement[]
+```
+
 ## [0.45.3] - 2025-07-05
 ### Added
 - **feat**: Atomic util `$.blurActive()` removes focus from the currently active element
