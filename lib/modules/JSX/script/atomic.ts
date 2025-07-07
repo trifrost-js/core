@@ -635,14 +635,14 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
         oD("timedAttr", (n, k, o) => {
             n.setAttribute(k, o.value ?? "");
             return setTimeout(() => {
-                if (o.cleanup !== false) el.removeAttribute(k);
+                if (o.cleanup !== false) n.removeAttribute(k);
                 o.after?.();
             }, o.duration);
         });
         oD("timedClass", (n, k, o) => {
             n.classList.add(k);
             return setTimeout(() => {
-                if (o.cleanup !== false) el.classList.remove(k);
+                if (o.cleanup !== false) n.classList.remove(k);
                 o.after?.();
             }, o.duration);
         });
