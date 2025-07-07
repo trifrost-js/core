@@ -40,6 +40,9 @@ type HTMLTagNameMap = keyof HTMLElementTagNameMap;
 type KnownTagNameMap = {[K in HTMLTagNameMap]: HTMLElementTagNameMap[K]} & {[K in SVGTagNameMap]: SVGElementTagNameMap[K]};
 type KnownTag = keyof KnownTagNameMap;
 
+/**
+ * Infers the correct HTML element from a query selector
+ */
 type Trim<S extends string> = S extends ` ${infer R}` ? Trim<R> : S;
 type LastWord<S extends string> = S extends `${string} ${infer Tail}`
     ? LastWord<Tail>
@@ -51,9 +54,9 @@ type LastWord<S extends string> = S extends `${string} ${infer Tail}`
           ? LastWord<Tail>
           : S;
 
-type ExtractTag<S extends string> = LastWord<Trim<S>> extends `${infer Tag extends KnownTag}${string}` ? Tag : never;
+type ExtractTag<S extends string> = LastWord<Trim<S>> extends `${infer Tag extends KnownTag}${string}` ? Tag : HTMLElement;
 
-type InferElementFromSelector<S extends string> = ExtractTag<S> extends infer T extends KnownTag ? KnownTagNameMap[T] : Element;
+type InferElementFromSelector<S extends string> = ExtractTag<S> extends infer T extends KnownTag ? KnownTagNameMap[T] : HTMLElement;
 
 /**
  * Infers the correct event type for a given target and event name.
@@ -182,8 +185,16 @@ export type TriFrostAtomicUtils<
         handler: (evt: InferDOMEvent<Target, K, Payload>) => void,
     ) => void;
     /* DOM selectors */
-    query: <S extends string>(root: Node, selector: S) => InferElementFromSelector<S> | null;
-    queryAll: <S extends string>(root: Node, selector: S) => InferElementFromSelector<S>[];
+    query: {
+        <K extends keyof HTMLElementTagNameMap>(root: Node, selector: K): HTMLElementTagNameMap[K] | null;
+        <T extends Element = HTMLElement>(root: Node, selector: string): T | null;
+        <S extends string>(root: Node, selector: S): InferElementFromSelector<S> | null;
+    };
+    queryAll: {
+        <K extends keyof HTMLElementTagNameMap>(root: Node, selector: K): HTMLElementTagNameMap[K][];
+        <T extends Element = HTMLElement>(root: Node, selector: string): T[];
+        <S extends string>(root: Node, selector: S): InferElementFromSelector<S>[];
+    };
     /* Timed fn */
     timedAttr: (el: Element, attr: string, opts: {value?: string; duration: number; cleanup?: boolean; after?: () => void}) => number;
     timedClass: (el: Element, className: string, opts: {duration: number; cleanup?: boolean; after?: () => void}) => number;
