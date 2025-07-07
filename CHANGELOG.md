@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.46.1] - 2025-07-07
+### Fixed
+- Arc registration glitch with unnecessary () typo
+
 ## [0.46.0] - 2025-07-07
 A powerful step forward in TriFrost’s atomic reactivity and component orchestration:
 - Global `Module` components enable singleton-like behavior for app-wide coordination.
@@ -28,7 +32,7 @@ export {Script, Module, script};
 ```tsx
 import {Module} from '~/script';
 
-// Example audio module. 
+// Example audio module.
 export type AudioEvents = {
   'audio:play': string;
 };
@@ -51,7 +55,7 @@ $.create('div', {
 $.create('svg', {
   attrs: { viewBox: '0 0 100 100' },
   style: { width: '100px', height: '100px' },
-}); /* Returns SVGSVGElement */ 
+}); /* Returns SVGSVGElement */
 ```
 - **feat**: Atomic util `$.timedAttr` allows you to set a temporary attribute which gets removed after X ms, with optional 'after' behavior and 'value'
 - **feat**: Atomic util `$.timedClass` allows you to set a temporary class which gets removed after X ms, with optional 'after' behavior
