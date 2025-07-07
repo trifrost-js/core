@@ -714,12 +714,10 @@ export const ARC_GLOBAL = atomicMinify(`(function(w){
                         oD("${VM_ID_NAME}", UID, n);
                         if (ATOMIC && !n.${VM_NAME}) {
                             oD("${VM_RELAY_SUBSCRIBE_NAME}", (t, c) => w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, t, c), n);
-                            oD("${VM_RELAY_SUBSCRIBE_ONCE_NAME}", (t, c) => {
-                                w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, t, v => {
-                                    c(v);
-                                    n.${VM_RELAY_UNSUBSCRIBE_NAME}(t);
-                                });
-                            }, n);
+                            oD("${VM_RELAY_SUBSCRIBE_ONCE_NAME}", (t, c) => w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, t, v => {
+                                c(v);
+                                n.${VM_RELAY_UNSUBSCRIBE_NAME}(t);
+                            }), n);
                             oD("${VM_RELAY_UNSUBSCRIBE_NAME}", t => w.${GLOBAL_RELAY_NAME}.unsubscribe(n.${VM_ID_NAME}, t), n);
                             oD("${VM_RELAY_PUBLISH_NAME}", (t, v) => w.${GLOBAL_RELAY_NAME}.publish(t, v), n);
                             oD("${VM_NAME}", true, n);
@@ -749,12 +747,10 @@ export const ARC_GLOBAL = atomicMinify(`(function(w){
 
                     const n = {};
                     oD("${VM_RELAY_SUBSCRIBE_NAME}", (t, c) => w.${GLOBAL_RELAY_NAME}.subscribe(UID, t, c), n);
-                    oD("${VM_RELAY_SUBSCRIBE_ONCE_NAME}", (t, c) => {
-                        w.${GLOBAL_RELAY_NAME}.subscribe(UID, t, v => {
-                            c(v);
-                            w.${GLOBAL_RELAY_NAME}.unsubscribe(UID, t);
-                        });
-                    }, n);
+                    oD("${VM_RELAY_SUBSCRIBE_ONCE_NAME}", (t, c) => w.${GLOBAL_RELAY_NAME}.subscribe(UID, t, v => {
+                        c(v);
+                        w.${GLOBAL_RELAY_NAME}.unsubscribe(UID, t);
+                    }), n);
                     oD("${VM_RELAY_UNSUBSCRIBE_NAME}", t => w.${GLOBAL_RELAY_NAME}.unsubscribe(UID, t), n);
                     oD("${VM_RELAY_PUBLISH_NAME}", (t, v) => w.${GLOBAL_RELAY_NAME}.publish(t, v), n);
 
@@ -762,7 +758,7 @@ export const ARC_GLOBAL = atomicMinify(`(function(w){
                         fn(ATOMIC
                             ? {mod:n, data: w.${GLOBAL_DATA_REACTOR_NAME}({}, data || {}), $: w.${GLOBAL_UTILS_NAME}}
                             : {mod:n, data});
-                    } catch () {}
+                    } catch {}
                 }
             },
         });
