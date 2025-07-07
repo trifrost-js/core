@@ -30,6 +30,16 @@ $.timedAttr(el, 'data-destroying', {
 $.timedClass(el, 'squish', {duration: 220});
 ```
 
+### Improved
+- **dx**: You can now pass the type of element as a generic to Script to type the `el` property of the atomic script options bag.
+```tsx
+<Script<HTMLCanvasElement> data={{ columns: 1 }}>
+  {({ el, data }) => {
+    el.getContext('2d');          // ✅ el: HTMLCanvasElement (with atomic vm props added to it)
+    data.columns.toFixed(2);      // ✅ data: { columns: number }
+  }}
+</Script>;
+```
 ## [0.45.3] - 2025-07-05
 ### Added
 - **feat**: Atomic util `$.blurActive()` removes focus from the currently active element
