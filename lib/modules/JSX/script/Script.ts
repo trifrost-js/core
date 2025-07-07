@@ -9,7 +9,6 @@ import {atomicMinify} from './util';
 export const SCRIPT_MARKER = '__TRIFROST_HYDRATED_SCRIPT__';
 
 export type ScriptProps<
-    TEl extends Element = HTMLElement,
     TFData = undefined,
     TFRelay extends Record<string, unknown> = Record<string, unknown>,
     TFStore extends Record<string, unknown> = Record<string, unknown>,
@@ -17,7 +16,7 @@ export type ScriptProps<
     TFCSSTheme extends string = string,
 > = JSXProps & {
     children?: (opts: {
-        el: TEl & TriFrostAtomicVM<TFRelay, TFStore>;
+        el: HTMLElement & TriFrostAtomicVM<TFRelay, TFStore>;
         data: TriFrostAtomicProxy<TFData>;
         $: TriFrostAtomicUtils<TFStore, TFCSSVar, TFCSSTheme>;
     }) => void;
@@ -32,13 +31,12 @@ export type ScriptProps<
 const RGX_DATA_SCRIPT = /<\/script>/gi;
 
 export function Script<
-    TEl extends Element = HTMLElement,
     TFData = undefined,
     TFRelay extends Record<string, unknown> = Record<string, unknown>,
     TFStore extends Record<string, unknown> = Record<string, unknown>,
     TFCSSVar extends string = string,
     TFCSSTheme extends string = string,
->(options: (JSXProps & ScriptProps<TEl, TFData, TFRelay, TFStore, TFCSSVar, TFCSSTheme>) | null): JSX.Element {
+>(options: (JSXProps & ScriptProps<TFData, TFRelay, TFStore, TFCSSVar, TFCSSTheme>) | null): JSX.Element {
     if (!options || Object.prototype.toString.call(options) !== '[object Object]') return null as unknown as JSX.Element;
 
     /* Source */

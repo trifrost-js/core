@@ -31,15 +31,6 @@ $.timedClass(el, 'squish', {duration: 220});
 ```
 
 ### Improved
-- **dx**: You can now pass the type of element as a generic to Script to type the `el` property of the atomic script options bag.
-```tsx
-<Script<HTMLCanvasElement> data={{ columns: 1 }}>
-  {({ el, data }) => {
-    el.getContext('2d');          // ✅ el: HTMLCanvasElement (with atomic vm props added to it)
-    data.columns.toFixed(2);      // ✅ data: { columns: number }
-  }}
-</Script>;
-```
 - **dx**: `$.query` and `$.queryAll` now try to infer the returning type off of the provided query. If not possible to determine we fall back to `Element`
 ```typescript
 $.query(el, 'div');                           // HTMLDivElement | null

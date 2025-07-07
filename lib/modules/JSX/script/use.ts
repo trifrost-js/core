@@ -37,12 +37,10 @@ export function createScript<
     const state = <T = unknown, K extends string = string>(key: K) => ogState<T>(key);
 
     /* Script proxy */
-    const Script = <TEl extends Element = HTMLElement, TFData = unknown>(
-        props: ScriptProps<TEl, TFData, TFRelay, TFStore, TFCSSVarKeys, TFCSSThemeKeys>,
-    ): JSX.Element => {
+    const Script = <TFData = unknown>(props: ScriptProps<TFData, TFRelay, TFStore, TFCSSVarKeys, TFCSSThemeKeys>): JSX.Element => {
         if (!active_engine) setActiveScriptEngine(new ScriptEngine());
         if (isAtomic) active_engine!.setAtomic(config.atomic!);
-        return ogScript<TEl, TFData, TFRelay, TFStore, TFCSSVarKeys, TFCSSThemeKeys>(props);
+        return ogScript<TFData, TFRelay, TFStore, TFCSSVarKeys, TFCSSThemeKeys>(props);
     };
 
     /* Tell the ecosystem this is the root render */
