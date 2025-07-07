@@ -1,7 +1,10 @@
+/// <reference lib="dom" />
+
 import {describe, it, expect, beforeEach, vi, expectTypeOf} from 'vitest';
 import {getActiveScriptEngine, setActiveScriptEngine, createScript} from '../../../../../lib/modules/JSX/script/use';
 import {ScriptEngine} from '../../../../../lib/modules/JSX/script/Engine';
 import * as ScriptProxy from '../../../../../lib/modules/JSX/script/Script';
+import * as ModuleProxy from '../../../../../lib/modules/JSX/script/Module';
 import * as EnvProxy from '../../../../../lib/modules/JSX/ctx/env';
 import * as StateProxy from '../../../../../lib/modules/JSX/ctx/state';
 import * as NonceProxy from '../../../../../lib/modules/JSX/ctx/nonce';
@@ -11,7 +14,7 @@ describe('Modules - JSX - Script - use', () => {
 
     beforeEach(() => {
         instance = new ScriptEngine();
-        setActiveScriptEngine(null); // always reset
+        setActiveScriptEngine(null);
     });
 
     it('Returns null by default', () => {
@@ -19,138 +22,142 @@ describe('Modules - JSX - Script - use', () => {
     });
 
     it('Sets and gets the active engine', () => {
-        const result = setActiveScriptEngine(instance);
-        expect(result).toBe(instance);
+        expect(setActiveScriptEngine(instance)).toBe(instance);
         expect(getActiveScriptEngine()).toBe(instance);
     });
 
     it('Allows setting to null', () => {
         setActiveScriptEngine(instance);
         expect(getActiveScriptEngine()).toBe(instance);
-
         setActiveScriptEngine(null);
         expect(getActiveScriptEngine()).toBe(null);
     });
 
-    it('Returns the same instance when set twice', () => {
-        const engineA = new ScriptEngine();
-        const engineB = new ScriptEngine();
-
-        setActiveScriptEngine(engineA);
-        expect(getActiveScriptEngine()).toBe(engineA);
-
-        setActiveScriptEngine(engineB);
-        expect(getActiveScriptEngine()).toBe(engineB);
+    it('Overwrites previously set engine', () => {
+        const a = new ScriptEngine();
+        const b = new ScriptEngine();
+        setActiveScriptEngine(a);
+        expect(getActiveScriptEngine()).toBe(a);
+        setActiveScriptEngine(b);
+        expect(getActiveScriptEngine()).toBe(b);
     });
 
-    describe('createScript', () => {
-        let engine: ScriptEngine;
-
+    describe('createScript()', () => {
         beforeEach(() => {
-            engine = new ScriptEngine();
-            setActiveScriptEngine(engine);
+            setActiveScriptEngine(instance);
         });
 
-        it('initializes Script with atomic mode from config', () => {
-            const spy = vi.spyOn(engine, 'setAtomic');
+        it('Sets atomic mode when passed in config', () => {
+            const spy = vi.spyOn(instance, 'setAtomic');
             const factory = createScript({atomic: true});
             factory.Script({children: () => {}});
             expect(spy).toHaveBeenCalledWith(true);
         });
 
-        it('calls setRoot with atomic when script.root() is used', () => {
-            const spyAtomic = vi.spyOn(engine, 'setAtomic');
-            const spyRoot = vi.spyOn(engine, 'setRoot');
-
+        it('Calls script.root() with setAtomic and setRoot', () => {
+            const spyAtomic = vi.spyOn(instance, 'setAtomic');
+            const spyRoot = vi.spyOn(instance, 'setRoot');
             const {script} = createScript({atomic: true});
             script.root();
-
             expect(spyAtomic).toHaveBeenCalledWith(true);
             expect(spyRoot).toHaveBeenCalledWith(true);
         });
 
-        it('env and state proxies delegate to original ctx functions', () => {
+        it('Delegates env/state/nonce access', () => {
             const envSpy = vi.spyOn(EnvProxy, 'env');
             const stateSpy = vi.spyOn(StateProxy, 'state');
             const nonceSpy = vi.spyOn(NonceProxy, 'nonce');
 
-            const config = {} as const;
-            const {script} = createScript<typeof config, {API_KEY: string}>(config);
-            script.env('API_KEY');
-            script.state('x');
+            const {script} = createScript();
+            script.env('FOO');
+            script.state('bar');
             script.nonce();
 
-            expect(envSpy).toHaveBeenCalledWith('API_KEY');
-            expect(stateSpy).toHaveBeenCalledWith('x');
+            expect(envSpy).toHaveBeenCalledWith('FOO');
+            expect(stateSpy).toHaveBeenCalledWith('bar');
             expect(nonceSpy).toHaveBeenCalled();
         });
 
-        it('Script function proxies to original ogScript()', () => {
-            const fn = vi.fn();
-            vi.spyOn(ScriptProxy, 'Script').mockImplementation(fn as any);
-
-            const factory = createScript();
-            const props = {children: () => {}};
-            factory.Script(props);
-
-            expect(fn).toHaveBeenCalledWith(props);
+        it('Proxies Script to original implementation', () => {
+            const spy = vi.spyOn(ScriptProxy, 'Script').mockImplementation(() => 'MockScript' as any);
+            const {Script} = createScript();
+            const out = Script({children: () => {}});
+            expect(spy).toHaveBeenCalled();
+            expect(out).toBe('MockScript');
         });
 
-        it('Forwards mount path to engine during root()', () => {
-            const spy = vi.spyOn(engine, 'setMountPath');
+        it('Proxies Module to original implementation', () => {
+            const spy = vi.spyOn(ModuleProxy, 'Module').mockImplementation(() => 'MockModule' as any);
+            const {Module} = createScript();
+            const out = Module({name: 'abc', children: () => {}});
+            expect(spy).toHaveBeenCalled();
+            expect(out).toBe('MockModule');
+        });
+
+        it('Forwards mount path to ScriptEngine in root()', () => {
+            const spy = vi.spyOn(instance, 'setMountPath');
             const {script} = createScript();
             script.setMountPath('/runtime.js');
             script.root();
             expect(spy).toHaveBeenCalledWith('/runtime.js');
         });
 
-        it('Does not forward mount path to engine during root() if null', () => {
-            const spy = vi.spyOn(engine, 'setMountPath');
+        it('Skips setMountPath if null passed', () => {
+            const spy = vi.spyOn(instance, 'setMountPath');
             const {script} = createScript();
             script.setMountPath(null);
             script.root();
             expect(spy).not.toHaveBeenCalled();
         });
 
-        it('Auto-instantiates ScriptEngine if none is set (Script)', () => {
+        it('Auto-instantiates ScriptEngine on Script call if none is set', () => {
             setActiveScriptEngine(null);
-            const {Script} = createScript({atomic: true});
-            const result = Script({children: () => {}});
+            const {Script} = createScript();
+            const out = Script({children: () => {}});
             expect(getActiveScriptEngine()).toBeInstanceOf(ScriptEngine);
-            expect(result).not.toBeNull();
+            expect(out).not.toBeNull();
         });
 
-        it('Auto-instantiates ScriptEngine if none is set (root)', () => {
+        it('Auto-instantiates ScriptEngine on root() if none is set', () => {
             setActiveScriptEngine(null);
-            const {script} = createScript({atomic: true});
+            const {script} = createScript();
             script.root();
             expect(getActiveScriptEngine()).toBeInstanceOf(ScriptEngine);
         });
 
-        it('Infers typed CSS tokens from config', () => {
-            const css = {
-                var: {
-                    fontSizeL: '2rem',
-                    padding: '1rem',
-                },
-                theme: {
-                    dark: '#000',
-                    light: '#fff',
-                },
-            };
+        it('Auto-instantiates ScriptEngine on Module call if none is set', () => {
+            setActiveScriptEngine(null);
+            const {Module} = createScript();
+            const out = Module({name: 'abc', children: () => {}});
+            expect(getActiveScriptEngine()).toBeInstanceOf(ScriptEngine);
+            expect(out).not.toBeNull();
+        });
 
+        it('Infers CSS var and theme types from config correctly', () => {
             const config = {
-                css,
+                css: {
+                    var: {
+                        fontSize: '16px',
+                        gap: '8px',
+                    },
+                    theme: {
+                        light: '#fff',
+                        dark: '#000',
+                    },
+                },
                 atomic: true,
             } as const;
 
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const {Script} = createScript<typeof config>(config);
+            const {Script, Module} = createScript<typeof config>(config);
 
-            // simulate a TS props call to check inference
-            type Props = Parameters<typeof Script>[0];
+            type ScriptProps = Parameters<typeof Script>[0];
+            type ModuleProps = Parameters<typeof Module>[0];
 
-            expectTypeOf<Props>().toMatchTypeOf<ScriptProxy.ScriptProps<any, any, any, 'fontSizeL' | 'padding', 'dark' | 'light'>>();
+            // expectTypeOf() ensures correct key inference for both
+            expectTypeOf<ScriptProps>().toMatchTypeOf<ScriptProxy.ScriptProps<any, any, any, 'fontSize' | 'gap', 'light' | 'dark'>>();
+
+            expectTypeOf<ModuleProps>().toMatchTypeOf<ModuleProxy.ModuleProps<any, any, any, 'fontSize' | 'gap', 'light' | 'dark'>>();
         });
     });
 });

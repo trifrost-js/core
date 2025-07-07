@@ -3,6 +3,7 @@ import {env as ogEnv} from '../ctx/env';
 import {state as ogState} from '../ctx/state';
 import {nonce} from '../ctx/nonce';
 import {Script as ogScript, type ScriptProps} from './Script';
+import {Module as ogModule, type ModuleProps} from './Module';
 
 let active_engine: ScriptEngine | null = null;
 
@@ -43,6 +44,13 @@ export function createScript<
         return ogScript<TFData, TFRelay, TFStore, TFCSSVarKeys, TFCSSThemeKeys>(props);
     };
 
+    /* Module proxy */
+    const Module = <TFData = unknown>(props: ModuleProps<TFData, TFRelay, TFStore, TFCSSVarKeys, TFCSSThemeKeys>): JSX.Element => {
+        if (!active_engine) setActiveScriptEngine(new ScriptEngine());
+        if (isAtomic) active_engine!.setAtomic(config.atomic!);
+        return ogModule<TFData, TFRelay, TFStore, TFCSSVarKeys, TFCSSThemeKeys>(props);
+    };
+
     /* Tell the ecosystem this is the root render */
     const root = () => {
         if (!active_engine) setActiveScriptEngine(new ScriptEngine());
@@ -59,6 +67,7 @@ export function createScript<
 
     return {
         Script,
+        Module,
         script: {
             env,
             state,

@@ -10,8 +10,10 @@ import {ScriptEngine} from './script/Engine';
 import {SCRIPT_MARKER} from './script/Script';
 import {setActiveScriptEngine, getActiveScriptEngine} from './script/use';
 import {setActiveCtx} from './ctx/use';
+import {MODULE_MARKER} from './script/Module';
 
 const SCRIPT_LRU = 'tfscriptlru';
+const MODULES_LRU = 'tfmoduleslru';
 
 const VOID_TAGS = {
     /* HTML */
@@ -171,31 +173,35 @@ export function render(node: JSX.Element | string | number | boolean | null, par
         default: {
             switch (typeof node?.type) {
                 case 'string': {
-                    const tag = (node as JSX.Element).type;
-                    if (tag === SCRIPT_MARKER) {
-                        if (node.props!.fn_id) {
-                            parentProps['data-tfhf'] = node.props!.fn_id;
-                            if (node.props!.data_id) parentProps['data-tfhd'] = node.props!.data_id;
+                    const tag = node.type;
+                    switch (tag) {
+                        case MODULE_MARKER:
+                            return '';
+                        case SCRIPT_MARKER:
+                            if (node.props!.fn_id) {
+                                parentProps['data-tfhf'] = node.props!.fn_id;
+                                if (node.props!.data_id) parentProps['data-tfhd'] = node.props!.data_id;
+                            }
+                            return ''; /* Dont render the marker */
+                        default: {
+                            /* Render children */
+                            const innerHTML =
+                                typeof node.props!.dangerouslySetInnerHTML?.__html === 'string'
+                                    ? node.props!.dangerouslySetInnerHTML!.__html
+                                    : renderChildren(node.props!.children, node.props!);
+
+                            const out = VOID_TAGS[tag as keyof typeof VOID_TAGS]
+                                ? '<' + tag + renderProps(node.props) + ' />'
+                                : '<' + tag + renderProps(node.props) + '>' + innerHTML + '</' + tag + '>';
+
+                            return out;
                         }
-                        return ''; /* Dont render the marker */
                     }
-
-                    /* Render children */
-                    const innerHTML =
-                        typeof node.props!.dangerouslySetInnerHTML?.__html === 'string'
-                            ? node.props!.dangerouslySetInnerHTML!.__html
-                            : renderChildren(node.props!.children, node.props!);
-
-                    const out = VOID_TAGS[tag as keyof typeof VOID_TAGS]
-                        ? '<' + tag + renderProps(node.props) + ' />'
-                        : '<' + tag + renderProps(node.props) + '>' + innerHTML + '</' + tag + '>';
-
-                    return out;
                 }
                 case 'function':
-                    return (node as JSX.Element).type === Fragment
-                        ? renderChildren(node.props!.children as JSX.Element | string | number | boolean | null, parentProps)
-                        : render((node.type as any)(node.props), parentProps);
+                    return node.type === Fragment
+                        ? renderChildren(node.props!.children, parentProps)
+                        : render(node.type(node.props), parentProps);
                 default: {
                     if (!node) {
                         return '';
@@ -229,18 +235,24 @@ export function rootRender<Env extends Record<string, any>, State extends Record
     const script_lru_cookie = ctx.cookies.get(SCRIPT_LRU);
     const script_lru = fromLruCookie(script_lru_cookie);
 
+    /* Known modules on frontend */
+    const module_lru_cookie = ctx.cookies.get(MODULES_LRU);
+    const module_lru = fromLruCookie(module_lru_cookie);
+
     /* Auto-call root() if script or css provided in ctx config */
     options?.script?.root?.();
     options?.css?.root?.();
 
     /* Render jsx to html */
-    const html = script_engine.inject(style_engine.inject(render(tree)), script_lru);
+    const html = script_engine.inject(style_engine.inject(render(tree)), {scripts: script_lru, modules: module_lru});
 
     /* Set script cookie */
     const script_cookie = toLruCookie(script_lru);
-    if (script_cookie && script_cookie !== script_lru_cookie) {
-        ctx.cookies.set(SCRIPT_LRU, script_cookie, {httponly: true, secure: true});
-    }
+    if (script_cookie && script_cookie !== script_lru_cookie) ctx.cookies.set(SCRIPT_LRU, script_cookie, {httponly: true, secure: true});
+
+    /* Set modules cookie */
+    const module_cookie = toLruCookie(module_lru);
+    if (module_cookie && module_cookie !== module_lru_cookie) ctx.cookies.set(MODULES_LRU, module_cookie, {httponly: true, secure: true});
 
     /* Cleanup globals */
     setActiveCtx(null);

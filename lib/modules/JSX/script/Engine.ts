@@ -3,12 +3,20 @@ import {nonce} from '../ctx/nonce';
 import {ATOMIC_GLOBAL, ARC_GLOBAL, GLOBAL_ARC_NAME, ARC_GLOBAL_OBSERVER} from './atomic';
 import {atomicMinify} from './util';
 
+type ScriptEngineSeen = {
+    scripts: Set<string>;
+    modules: Set<string>;
+};
+
 export class ScriptEngine {
     /* Map storing the function bodies by id */
     protected map_fn = new Map<string, string>();
 
     /* Map storing the data payloads with their id */
     protected map_data = new Map<string, string>();
+
+    /* Map storing modules */
+    protected map_modules = new Map<string, {fn: string; data: string | null}>();
 
     /* Whether or not TriFrost atomic is enabled */
     protected atomic_enabled: boolean = false;
@@ -27,8 +35,15 @@ export class ScriptEngine {
         this.root_renderer = is_root === true;
     }
 
+    /**
+     * Registers a script
+     *
+     * @param {string} fn - Function body for the script
+     * @param {string|null} data - Stringified data body or null
+     */
     register(fn: string, data: string | null) {
         const minified_fn = atomicMinify(fn);
+        if (!minified_fn) return {};
 
         let fn_id = this.map_fn.get(minified_fn);
         if (!fn_id) {
@@ -49,26 +64,63 @@ export class ScriptEngine {
     }
 
     /**
+     * Registers a module
+     *
+     * @param {string} fn - Function body for the module
+     * @param {string|null} data - Stringified data body or null
+     * @param {string} name - Name for the module
+     */
+    registerModule(fn: string, data: string | null, name: string) {
+        const hash = djb2Hash(name);
+        if (this.map_modules.has(hash)) return {name: hash};
+
+        const minified_fn = atomicMinify(fn);
+        if (!minified_fn) return {};
+        this.map_modules.set(hash, {fn: minified_fn, data});
+
+        return {name: hash};
+    }
+
+    /**
      * Flushes the script registry into a string
      *
-     * @param {Set<string>} seen - Set of hashes known to be on the client already
+     * @param {ScriptEngineSeen} seen - Set of script and module hashes known to be on the client already
      * @param {boolean} isFragment - (default=false) Whether or not we're flushing for a fragment
      */
-    flush(seen: Set<string> = new Set(), isFragment: boolean = false): string {
-        if (this.map_fn.size === 0) return '';
+    flush(seen: ScriptEngineSeen = {scripts: new Set(), modules: new Set()}, isFragment: boolean = false): string {
+        let out = '';
+
+        /* Start modules */
+        if (this.map_modules.size) {
+            const MNS = [];
+            for (const [name, val] of [...this.map_modules]) {
+                if (!seen.modules.has(name)) {
+                    let mod = '["' + name + '",' + val.fn;
+                    if (val.data) mod += ',' + val.data;
+                    mod += ']';
+                    MNS.push(mod);
+                    seen.modules.add(name);
+                }
+            }
+            if (MNS.length) out += `w.${GLOBAL_ARC_NAME}.sparkModule(${'[' + MNS.join(',') + ']'});`;
+        }
 
         /* Start script */
-        const FNS = [];
-        for (const [val, id] of [...this.map_fn]) {
-            if (!seen.has(id)) {
-                FNS.push('["' + id + '",' + val + ']');
-                seen.add(id);
-            } else {
-                FNS.push('["' + id + '"]');
+        if (this.map_fn.size) {
+            const FNS = [];
+            for (const [val, id] of [...this.map_fn]) {
+                if (!seen.scripts.has(id)) {
+                    FNS.push('["' + id + '",' + val + ']');
+                    seen.scripts.add(id);
+                } else {
+                    FNS.push('["' + id + '"]');
+                }
             }
+            const DAT = '[' + [...this.map_data].map(([val, id]) => '["' + id + '",' + val + ']').join(',') + ']';
+            if (FNS.length || DAT.length) out += `w.${GLOBAL_ARC_NAME}.spark(${'[' + FNS.join(',') + ']'},${DAT});`;
         }
-        const DAT = '[' + [...this.map_data].map(([val, id]) => '["' + id + '",' + val + ']').join(',') + ']';
-        let out = `w.${GLOBAL_ARC_NAME}.spark(${'[' + FNS.join(',') + ']'},${DAT});`;
+
+        if (!out.length) return '';
 
         /* Finalize iife */
         if (!isFragment && this.mount_path && this.root_renderer) {
@@ -93,7 +145,7 @@ export class ScriptEngine {
         return n_nonce ? '<script nonce="' + n_nonce + '">' + out + '</script>' : '<script>' + out + '</script>';
     }
 
-    inject(html: string, seen: Set<string> = new Set()): string {
+    inject(html: string, seen: ScriptEngineSeen = {scripts: new Set(), modules: new Set()}): string {
         if (typeof html !== 'string') return '';
 
         const n_nonce = nonce();
@@ -117,7 +169,8 @@ export class ScriptEngine {
                     ? '<script nonce="' + n_nonce + '">' + ARC_GLOBAL + ARC_GLOBAL_OBSERVER + '</script>'
                     : '<script>' + ARC_GLOBAL + ARC_GLOBAL_OBSERVER + '</script>';
             }
-            seen.clear();
+            seen.scripts.clear();
+            seen.modules.clear();
         }
 
         /* Add engine scripts */
@@ -137,6 +190,7 @@ export class ScriptEngine {
     reset(): void {
         this.map_data = new Map();
         this.map_fn = new Map();
+        this.map_modules = new Map();
     }
 
     /**

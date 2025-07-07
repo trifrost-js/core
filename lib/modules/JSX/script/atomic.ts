@@ -682,9 +682,10 @@ export const ARC_GLOBAL = atomicMinify(`(function(w){
     const oD = (n, v, t) => {
         if (!t[n]) Object.defineProperty(t, n, {value:v, configurable:!1, writable:!1});
     };
+    const gI = () => Math.random().toString(36).slice(2);
 
     oD("${GLOBAL_ARC_NAME}", (() => {
-        const f=new Map(),d=new Map(),v=new Map();
+        const f=new Map(),d=new Map(),v=new Map(),m=new Map();
 
         return Object.freeze({
             release(uid){
@@ -709,18 +710,18 @@ export const ARC_GLOBAL = atomicMinify(`(function(w){
                     for (const n of nodes) {
                         const DID = n.getAttribute("data-tfhd") || undefined;
                         const DREG = DID ? d.get(DID) : {};
-                        const UID = Math.random().toString(36).slice(2);
+                        const UID = gI();
                         oD("${VM_ID_NAME}", UID, n);
                         if (ATOMIC && !n.${VM_NAME}) {
-                            oD("${VM_RELAY_SUBSCRIBE_NAME}", (msg, fn) => w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, msg, fn), n);
-                            oD("${VM_RELAY_SUBSCRIBE_ONCE_NAME}", (msg, fn) => {
-                                w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, msg, v => {
-                                    fn(v);
-                                    n.${VM_RELAY_UNSUBSCRIBE_NAME}(msg);
+                            oD("${VM_RELAY_SUBSCRIBE_NAME}", (t, c) => w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, t, c), n);
+                            oD("${VM_RELAY_SUBSCRIBE_ONCE_NAME}", (t, c) => {
+                                w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, t, v => {
+                                    c(v);
+                                    n.${VM_RELAY_UNSUBSCRIBE_NAME}(t);
                                 });
                             }, n);
-                            oD("${VM_RELAY_UNSUBSCRIBE_NAME}", msg => w.${GLOBAL_RELAY_NAME}.unsubscribe(n.${VM_ID_NAME}, msg), n);
-                            oD("${VM_RELAY_PUBLISH_NAME}", (msg, data) => w.${GLOBAL_RELAY_NAME}.publish(msg, data), n);
+                            oD("${VM_RELAY_UNSUBSCRIBE_NAME}", t => w.${GLOBAL_RELAY_NAME}.unsubscribe(n.${VM_ID_NAME}, t), n);
+                            oD("${VM_RELAY_PUBLISH_NAME}", (t, v) => w.${GLOBAL_RELAY_NAME}.publish(t, v), n);
                             oD("${VM_NAME}", true, n);
                         }
                         try {
@@ -734,6 +735,34 @@ export const ARC_GLOBAL = atomicMinify(`(function(w){
                             }
                         } catch {}
                     }
+                }
+            },
+            sparkModule(MODS) {
+                const ATOMIC = !!w.${GLOBAL_HYDRATED_NAME};
+
+                for (let i = 0; i < MODS.length; i++) {
+                    const [FID, fn, data] = MODS[i];
+                    if (m.has(FID)) continue;
+
+                    const UID = gI();
+                    m.set(FID, UID);
+
+                    const n = {};
+                    oD("${VM_RELAY_SUBSCRIBE_NAME}", (t, c) => w.${GLOBAL_RELAY_NAME}.subscribe(UID, t, c), n);
+                    oD("${VM_RELAY_SUBSCRIBE_ONCE_NAME}", (t, c) => {
+                        w.${GLOBAL_RELAY_NAME}.subscribe(UID, t, v => {
+                            c(v);
+                            w.${GLOBAL_RELAY_NAME}.unsubscribe(UID, t);
+                        });
+                    }, n);
+                    oD("${VM_RELAY_UNSUBSCRIBE_NAME}", t => w.${GLOBAL_RELAY_NAME}.unsubscribe(UID, t), n);
+                    oD("${VM_RELAY_PUBLISH_NAME}", (t, v) => w.${GLOBAL_RELAY_NAME}.publish(t, v), n);
+
+                    try {
+                        fn(ATOMIC
+                            ? {mod:n, data: w.${GLOBAL_DATA_REACTOR_NAME}({}, data || {}), $: w.${GLOBAL_UTILS_NAME}}
+                            : {mod:n, data});
+                    } catch () {}
                 }
             },
         });
