@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.46.2] - 2025-07-07
+### Fixed
+- timedAttr & timedClass glitch with el
+
 ## [0.46.1] - 2025-07-07
 ### Fixed
 - Arc registration glitch with unnecessary () typo

@@ -1,6 +1,6 @@
 {
     "name": "@trifrost/core",
-    "version": "0.46.1",
+    "version": "0.46.2",
     "description": "Blazingly fast, runtime-agnostic server framework for modern edge and node environments",
     "main": "index.js",
     "scripts": {
