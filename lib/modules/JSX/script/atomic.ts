@@ -34,6 +34,11 @@ type DotPaths<T, D extends number = 10> = [D] extends [never]
         }[keyof T & string]
       : '';
 
+type SVGTagNameMap = keyof SVGElementTagNameMap;
+type HTMLTagNameMap = keyof HTMLElementTagNameMap;
+
+type KnownTagNameMap = {[K in HTMLTagNameMap]: HTMLElementTagNameMap[K]} & {[K in SVGTagNameMap]: SVGElementTagNameMap[K]};
+
 /**
  * Infers the correct event type for a given target and event name.
  *
@@ -114,14 +119,14 @@ export type TriFrostAtomicUtils<
     blurActive: () => void;
     /* Clears the children from a dom node */
     clear: (el: Element) => void;
-    create: (
-        tag: string,
+    create: <K extends keyof KnownTagNameMap>(
+        tag: K,
         opts?: {
             attrs?: Record<string, string>;
             style?: Partial<CSSStyleDeclaration>;
             children?: (Node | string)[];
         },
-    ) => HTMLElement | SVGElement;
+    ) => KnownTagNameMap[K];
     debounce: <T extends (...args: any[]) => any>(fn: T, delay: number) => T;
     eq: (a: unknown, b: unknown) => boolean;
     uid: () => string;
@@ -157,6 +162,9 @@ export type TriFrostAtomicUtils<
     /* DOM selectors */
     query: <T extends Element = HTMLElement>(root: Node, selector: string) => T | null;
     queryAll: <T extends Element = HTMLElement>(root: Node, selector: string) => T[];
+    /* Timed fn */
+    timedAttr: (el: Element, attr: string, opts: {value?: string; duration: number; cleanup?: boolean; after?: () => void}) => number;
+    timedClass: (el: Element, className: string, opts: {duration: number; cleanup?: boolean; after?: () => void}) => number;
     /* Store Get */
     storeGet<K extends keyof Store>(key: K): Store[K];
     storeGet(key: string): unknown;
@@ -602,6 +610,20 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
         });
         oD("storeGet", win.${GLOBAL_STORE_NAME}.get);
         oD("storeSet", win.${GLOBAL_STORE_NAME}.set);
+        oD("timedAttr", (n, k, o) => {
+            n.setAttribute(k, o.value ?? "");
+            return setTimeout(() => {
+                if (o.cleanup !== false) el.removeAttribute(k);
+                o.after?.();
+            }, o.duration);
+        });
+        oD("timedClass", (n, k, o) => {
+            n.classList.add(k);
+            return setTimeout(() => {
+                if (o.cleanup !== false) el.classList.remove(k);
+                o.after?.();
+            }, o.duration);
+        });
         oD("cssVar", (() => {
             let c;
             return v => {

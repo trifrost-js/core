@@ -6,18 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 ### Added
-- **feat**: Atomic util `$.create` creates a new dom node and internally switches to `createElementNS` for known svg tags
+- **feat**: Atomic util `$.create` creates a new dom node and internally switches to `createElementNS` for known svg tags. The **return element is typed according to the tag**.
 ```typescript
 $.create('div', {
   attrs: { id: 'box', 'data-state': 'active' },
   style: { backgroundColor: 'red', transform: 'scale(1.2)' },
-});
+}); /* Returns HTMLDivElement */
 ```
 ```typescript
 $.create('svg', {
   attrs: { viewBox: '0 0 100 100' },
   style: { width: '100px', height: '100px' },
+}); /* Returns SVGSVGElement */ 
+```
+- **feat**: Atomic util `$.timedAttr` allows you to set a temporary attribute which gets removed after X ms, with optional 'after' behavior and 'value'
+- **feat**: Atomic util `$.timedClass` allows you to set a temporary class which gets removed after X ms, with optional 'after' behavior
+```typescript
+$.timedAttr(el, 'data-destroying', {
+  duration: 200,
+  after: () => el.remove(),
 });
+
+$.timedClass(el, 'squish', {duration: 220});
 ```
 
 ## [0.45.3] - 2025-07-05
