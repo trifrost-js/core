@@ -55,7 +55,7 @@ describe('Modules - JSX - script - atomic', () => {
                     'def("$tfr",(()=>{',
                     'const s=Object.create(null);',
                     'return Object.freeze({',
-                    'publish:(m,data)=>{if(!isStr(m)||!s[m])return;for(let i=0;i<s[m].length;i++)try{s[m][i].fn(data)}catch{}},',
+                    'publish:(m,data)=>{if(!isStr(m)||!s[m])return;const sc=[...s[m]];for(let i=0;i<sc.length;i++)try{sc[i].fn(data)}catch{}},',
                     'subscribe:(vmid,m,fn)=>{if(!isStr(vmid)||!isStr(m)||!isFn(fn))return;const subs=(s[m]??=[]);const idx=subs.findIndex(e=>e.id===vmid);if(idx>=0)subs[idx].fn=fn;else subs.push({id:vmid,fn});},',
                     'unsubscribe:(vmid,m)=>{if(!isStr(vmid))return;if(isStr(m)){if(!(m in s))return;s[m]=s[m].filter(e=>e.id!==vmid);}else{for(const k of Object.keys(s)){s[k]=s[k].filter(e=>e.id!==vmid);}',
                     '}}})})());',

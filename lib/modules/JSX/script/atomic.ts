@@ -280,7 +280,8 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d){
         return Object.freeze({
             publish: (m, data) => {
                 if (!isStr(m) || !s[m]) return;
-                for (let i = 0; i < s[m].length; i++) try { s[m][i].fn(data) } catch {}
+                const sc = [...s[m]];
+                for (let i = 0; i < sc.length; i++) try { sc[i].fn(data) } catch {}
             },
             subscribe: (vmid, m, fn) => {
                 if (
