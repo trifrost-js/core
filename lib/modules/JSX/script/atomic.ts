@@ -765,7 +765,7 @@ export const ARC_GLOBAL = memoize((debug: boolean) => {
     };
     const gI = () => Math.random().toString(36).slice(2);
 
-    oD("${GLOBAL_ARC_LOG}", {debug:${debug ? 'console.debug' : '() => {}'}});
+    oD("${GLOBAL_ARC_LOG}", {debug:${debug ? 'console.debug' : '() => {}'}}, w);
 
     oD("${GLOBAL_ARC_NAME}", (() => {
         const f=new Map(),d=new Map(),v=new Map(),m=new Map();
