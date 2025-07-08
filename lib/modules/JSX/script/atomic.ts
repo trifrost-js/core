@@ -8,9 +8,6 @@ export const GLOBAL_ARC_NAME = '$tfarc';
 const GLOBAL_OBSERVER_NAME = '$tfo';
 const GLOBAL_RELAY_NAME = '$tfr';
 const GLOBAL_STORE_NAME = '$tfs';
-const GLOBAL_UTIL_EQUAL = '$tfequal';
-const GLOBAL_UTIL_CLONE = '$tfclone';
-const GLOBAL_UTIL_CREATE_EVENT = '$tfevent';
 const GLOBAL_CLOCK = '$tfc';
 const GLOBAL_CLOCK_TICK = '$tfcr';
 const VM_NAME = '$tfVM';
@@ -172,8 +169,18 @@ export type TriFrostAtomicUtils<
         headers: Headers;
         raw: Response;
     }>;
-    /* Event Listening */
+    /* Event Dispatch */
     fire: <T = unknown>(el: Element, type: string, options?: {data?: T; mode?: 'up' | 'down'}) => void;
+    /* Generic is* */
+    isArr: <T = unknown>(val: unknown) => val is T[];
+    isBool: (val: unknown) => val is boolean;
+    isDate: (val: unknown) => val is Date;
+    isFn: (val: unknown) => val is (...args: unknown[]) => unknown;
+    isInt: (val: unknown) => val is number;
+    isNum: (val: unknown) => val is number;
+    isObj: <T extends Record<string, any>>(val: T | unknown) => val is T;
+    isStr: (val: unknown) => val is string;
+    /* Event Listening */
     on: <Payload = unknown, Target extends EventTarget = EventTarget, K extends string = string>(
         el: Target,
         type: K,
@@ -202,8 +209,10 @@ export type TriFrostAtomicUtils<
     storeGet<K extends keyof Store>(key: K): Store[K];
     storeGet(key: string): unknown;
     /* Store Set */
-    storeSet<K extends keyof Store>(key: K, value: Store[K]): void;
-    storeSet(key: string, value: unknown): void;
+    storeSet<K extends keyof Store>(key: K, value: Store[K], opts?: {persist?: boolean}): void;
+    storeSet(key: string, value: unknown, opts?: {persist?: boolean}): void;
+    /* Store Delete */
+    storeDel: (key: keyof Store | string) => void;
     /* CSS variable access */
     cssVar: (name: TFCSSVar | `--${string}`) => string;
     cssTheme: (name: TFCSSTheme | `--${string}`) => string;
@@ -214,6 +223,14 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
         if (!t[n]) Object.defineProperty(t, n, {value:v, configurable:!1, writable:!1});
     };
 
+    const isArr = v => Array.isArray(v);
+    const isBool = v => v === true || v === false;
+    const isDate = v => v instanceof Date && !isNaN(v);
+    const isFn = v => typeof v === "function";
+    const isInt = v => Number.isInteger(v);
+    const isNum = v => Number.isFinite(v);
+    const isObj = v => Object.prototype.toString.call(v) === "[object Object]";
+    const isStr = v => typeof v === "string";
     const eq = (a,b) => {
         if (a === b) return!0;
         switch (typeof a) {
@@ -221,7 +238,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
                 return Number.isNaN(a) && Number.isNaN(b);
             case "object":{
                 if (!a || !b) return!1;
-                if (Array.isArray(a)) return Array.isArray(b) && a.length === b.length && a.every((v,i)=>eq(v,b[i]));
+                if (isArr(a)) return isArr(b) && a.length === b.length && a.every((v,i)=>eq(v,b[i]));
                 const pa = Object.prototype.toString.call(a);
                 const pb = Object.prototype.toString.call(b);
                 if (pa !== pb) return!1;
@@ -243,11 +260,10 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
                 return !1;
         }
     };
-    def("${GLOBAL_UTIL_EQUAL}", eq);
 
-    def("${GLOBAL_UTIL_CLONE}", v => (v === undefined || v === null || typeof v !== "object") ? v : structuredClone(v));
+    const clone = v => !isObj(v) && !isArr(v) ? v : structuredClone(v);
 
-    def("${GLOBAL_UTIL_CREATE_EVENT}", (t, o) => {
+    const cEvent = (t, o) => {
         try {
             return new CustomEvent(t, o);
         } catch (_) {
@@ -255,34 +271,34 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
             e.initCustomEvent(t, o?.bubbles, o?.cancelable, o?.detail);
             return e;
         }
-    });
+    };
 
     def("${GLOBAL_RELAY_NAME}", (() => {
         const s = Object.create(null);
         return Object.freeze({
-            publish: (msg, data) => {
-                if (typeof msg !== "string" || !s[msg]) return;
-                for (let i = 0; i < s[msg].length; i++) try { s[msg][i].fn(data) } catch {}
+            publish: (m, data) => {
+                if (!isStr(m) || !s[m]) return;
+                for (let i = 0; i < s[m].length; i++) try { s[m][i].fn(data) } catch {}
             },
-            subscribe: (vmid, msg, fn) => {
+            subscribe: (vmid, m, fn) => {
                 if (
-                    typeof vmid !== "string" ||
-                    typeof msg !== "string" ||
-                    typeof fn !== "function"
+                    !isStr(vmid) ||
+                    !isStr(m) ||
+                    !isFn(fn)
                 ) return;
-                const subs = (s[msg] ??= []);
-                const idx = subs.findIndex(el => el.id === vmid);
+                const subs = (s[m] ??= []);
+                const idx = subs.findIndex(e => e.id === vmid);
                 if (idx >= 0) subs[idx].fn = fn;
                 else subs.push({id: vmid, fn});
             },
-            unsubscribe: (vmid, msg) => {
-                if (typeof vmid !== "string") return;
-                if (typeof msg === "string") {
-                    if (!(msg in s)) return;
-                    s[msg] = s[msg].filter(el => el.id !== vmid);
+            unsubscribe: (vmid, m) => {
+                if (!isStr(vmid)) return;
+                if (isStr(m)) {
+                    if (!(m in s)) return;
+                    s[m] = s[m].filter(e => e.id !== vmid);
                 } else {
-                    for (const key of Object.keys(s)) {
-                        s[key] = s[key].filter(el => el.id !== vmid);
+                    for (const k of Object.keys(s)) {
+                        s[k] = s[k].filter(e => e.id !== vmid);
                     }
                 }
             }
@@ -292,7 +308,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
     def("${GLOBAL_OBSERVER_NAME}", (() => {
         const clean = nR => {
             if (nR.${VM_NAME}) {
-                if (typeof nR.${VM_HOOK_UNMOUNT_NAME}==="function") {
+                if (isFn(nR.${VM_HOOK_UNMOUNT_NAME})) {
                     try{nR.$unmount()}catch{}
                 }
                 win.${GLOBAL_RELAY_NAME}?.unsubscribe(nR.${VM_ID_NAME});
@@ -318,15 +334,41 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
 
     def("${GLOBAL_STORE_NAME}", (() => {
         const s = Object.create(null);
+        const kP = "$tfs:";
+        const notify = (k, v) => win.${GLOBAL_RELAY_NAME}.publish("$store:" + k, v);
+        try {
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k?.startsWith(kP)) {
+                    const kN = k.slice(kP.length);
+                    const r = localStorage.getItem(k);
+                    if (r !== null) s[kN] = JSON.parse(r).v;
+                }
+            }
+        } catch {}
+
         return Object.freeze({
-            get: key => {
-                if (typeof key !== "string" || !key) return undefined;
-                return s[key]
+            get: k => {
+                if (!isStr(k) || !k) return undefined;
+                return s[k]
             },
-            set: (key, val) => {
-                if (typeof key !== "string" || !key) return;
-                s[key] = val;
-                win.${GLOBAL_RELAY_NAME}.publish("$store:" + key, val);
+            set: (k, v, o = {}) => {
+                if (!isStr(k) || !k) return;
+                s[k] = v;
+                if (o?.persist === true) {
+                    try {
+                        localStorage.setItem(kP + k, JSON.stringify({v}));
+                    } catch {}
+                }
+                notify(k,v);
+            },
+            del: k => {
+                if (!isStr(k) || !k) return;
+                delete s[k];
+                try {
+                    localStorage.removeItem(kP + k);
+                } catch {}
+                notify(k,undefined);
             },
         });
     })());
@@ -361,21 +403,21 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
         const subs = Object.create(null);
         const pending = new Set();
 
-        const get = path => path.split(".").reduce((o, k) => o?.[k], store);
-        const set = (path, val) => {
-            const k = path.split(".");
+        const get = p => p.split(".").reduce((o, k) => o?.[k], store);
+        const set = (p, v) => {
+            const k = p.split(".");
             let c = store;
             for (let i = 0; i < k.length - 1; i++) c = c[k[i]] ??= {};
             const last = k.at(-1);
-            if (c[last] === val) return;
-            c[last] = val;
+            if (c[last] === v) return;
+            c[last] = v;
         };
 
-        const notify = path => {
+        const notify = p => {
             let c = "";
-            const parts = path.split(".");
-            for (let i = 0; i < parts.length; i++) {
-                c = i === 0 ? parts[0] : c + "." + parts[i];
+            const n_p = p.split(".");
+            for (let i = 0; i < n_p.length; i++) {
+                c = i === 0 ? n_p[0] : c + "." + n_p[i];
                 pending.add(c);
             }
             win.${GLOBAL_CLOCK_TICK}(root.${VM_ID_NAME});
@@ -383,71 +425,86 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
 
         const tick = () => {
             if (!pending.size) return;
-            for (const key of pending) {
-                const handlers = subs[key];
-                if (!handlers) continue;
-                const val = get(key);
-                for (let i = 0; i < handlers.length; i++) {
-                    try {
-                        const fn = handlers[i];
-                        if (!win.${GLOBAL_UTIL_EQUAL}(fn._last, val)) {
-                            fn(val, fn._last);
-                            fn._last = win.${GLOBAL_UTIL_CLONE}(val);
-                        }
-                    } catch {}
+            for (const k of pending) {
+                const h = subs[k];
+                if (h) {
+                    const v = get(k);
+                    for (let i = 0; i < h.length; i++) {
+                        try {
+                            const fn = h[i];
+                            if (!fn._isSync && !eq(fn._last, v)) {
+                                fn(v, fn._last);
+                                fn._last = clone(v);
+                            }
+                        } catch {}
+                    }
                 }
             }
             pending.clear();
         };
 
         const patch = (obj, val) => {
-            const marks = new Set();
-            if (typeof obj === "string") {
-                set(obj, val);
-                marks.add(obj);
-            } else {
-                const walk = (path, cursor) => {
-                    for (const k in cursor) {
-                        const full = path ? path + "." + k : k;
-                        const v = cursor[k];
-                        if (Object.prototype.toString.call(v) === "[object Object]") walk(full, v);
-                        else {
-                            set(full, v);
-                            marks.add(full);
-                        }
+            const mark = new Map();
+            const walk = (p, c) => {
+                for (const k in c) {
+                    const pF = p ? p + "." + k : k;
+                    const v = c[k];
+                    if (isObj(v)) walk(pF, v);
+                    else {
+                        set(pF, v);
+                        mark.set(pF, {h:subs[pF] || [], v});
                     }
-                };
+                }
+            };
+
+            if (isStr(obj)) {
+                if (isObj(val)) {
+                    walk(obj, val);
+                } else {
+                    set(obj, val);
+                    mark.set(obj, {h:subs[obj] || [], v: val});
+                }
+            } else {
                 walk("", obj);
             }
-            for (const path of marks) notify(path);
+
+            for (const e of mark.entries()) {
+                const nE = e[1];
+                notify(e[0]);
+                for (let i = 0; i < nE.h.length; i++) {
+                  try {
+                    if (nE.h[i]._isSync) nE.h[i](nE.v);
+                  } catch {}
+                }
+            }
         };
 
-        const getIV = (els, path) => {
-            if (!els.length) return undefined;
-            const el = els[0];
-            if (el.type === "checkbox") {
-                if (els.length > 1) return [...els].filter(e => e.checked).map(e => e.value);
-                return !!el.checked;
+        const getIV = (nI, p) => {
+            if (!nI.length) return undefined;
+            const n = nI[0];
+            if (n.type === "checkbox") {
+                if (nI.length > 1) return nI.filter(e => e.checked).map(e => e.value);
+                return !!n.checked;
             }
-            if (el.type === "radio") {
-                const c = [...els].find(e => e.checked);
-                return c ? c.value : get(path);
+            if (n.type === "radio") {
+                const c = nI.find(e => e.checked);
+                return c ? c.value : get(p);
             }
-            if (el.tagName === "SELECT" && el.multiple) return [...el.selectedOptions].map(o => o.value);
-            return el.value;
+            if (n.tagName === "SELECT" && n.multiple) return [...n.selectedOptions].map(o => o.value);
+            return n.value;
         };
 
-        const setIV = (els, val) => {
-            if (!els.length) return;
-            const e = els[0];
-            if (els.length > 1 && e.type === "checkbox") {
-                for (const el of els) el.checked = Array.isArray(val) && val.includes(el.value);
-            }
-            else if (e.type === "checkbox") e.checked = !!val;
-            else if (e.type === "radio") e.checked = e.value === val;
-            else if (e.tagName === "SELECT" && e.multiple && Array.isArray(val)) {
-                for (const o of e.options) o.selected = val.includes(o.value);
-            } else e.value = val ?? "";
+        const setIV = (nI, v) => {
+            if (!nI.length) return;
+            const n = nI[0];
+            if (n.type === "checkbox") {
+                if (nI.length > 1) for (const e of nI) e.checked = isArr(v) && v.includes(e.value);
+                else n.checked = !!v;
+            } else if (n.type === "radio") {
+                for (const e of nI) e.checked = e.value === v;
+            } else if (n.tagName === "SELECT" && n.multiple && isArr(v)) {
+                for (const o of n.options) o.selected = v.includes(o.value);
+            } else n.value = v ?? "";
         };
 
         win.${GLOBAL_CLOCK}.set(root.${VM_ID_NAME}, tick);
@@ -455,58 +512,59 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
         return new Proxy(store, {
             get(_, key) {
                 switch (key) {
-                    case "$bind": return (path, selector, watcher) => {
-                        const els = [...root.querySelectorAll(selector)];
-                        if (!els.length) return;
+                    case "$bind": return (p, s, o) => {
+                        const nI = win.${GLOBAL_UTILS_NAME}.queryAll(root, s);
+                        if (!nI.length) return;
 
-                        const c = get(path);
+                        const c = get(p);
                         if (c === undefined) {
-                            set(path, getIV(els, path));
-                            notify(path);
+                            set(p, getIV(nI, p));
+                            notify(p);
                         } else {
-                            setIV(els, c);
+                            setIV(nI, c);
                         }
 
                         const fn = () => {
-                            set(path, getIV(els, path));
-                            notify(path);
+                            set(p, getIV(win.${GLOBAL_UTILS_NAME}.queryAll(root, s), p));
+                            notify(p);
                         };
 
-                        for (const el of els) {
-                            el.addEventListener("input", fn);
+                        const sync = v => setIV(win.${GLOBAL_UTILS_NAME}.queryAll(root, s), v);
+                        sync._isSync = true;
+                        (subs[p] ??= []).push(sync);
+
+                        for (const n of nI) {
+                            n.addEventListener("input", fn);
                             if (
-                                el.type === "checkbox" ||
-                                el.type === "radio" ||
-                                el.tagName === "SELECT"
-                            ) el.addEventListener("change", fn);
+                                n.type === "checkbox" ||
+                                n.type === "radio" ||
+                                n.tagName === "SELECT"
+                            ) n.addEventListener("change", fn);
                         }
 
-                        (subs[path] ??= []).push(v => setIV(els, v));
-
-                        if (typeof watcher === "function") {
-                            watcher._last = win.${GLOBAL_UTIL_CLONE}(get(path));
-                            subs[path].push(watcher);
-                        } else if (typeof watcher?.handler === "function") {
-                            const {immediate,handler} = watcher;
-                            handler._last = win.${GLOBAL_UTIL_CLONE}(get(path));
-                            subs[path].push(handler);
-                            if (immediate === true) handler(handler._last);
+                        if (isFn(o)) {
+                            o._last = clone(get(p));
+                            subs[p].push(o);
+                        } else if (isFn(o?.handler)) {
+                            o.handler._last = clone(get(p));
+                            subs[p].push(o.handler);
+                            if (o.immediate === true) o.handler(o.handler._last);
                         }
                     };
-                    case "$watch": return (path, fn, opts = {}) => {
-                        if (typeof path !== "string" || typeof fn !== "function") return;
-                        (subs[path] ??= []).push(fn);
-                        fn._last = win.${GLOBAL_UTIL_CLONE}(get(path));
-                        if (opts?.immediate === true) fn(fn._last);
+                    case "$watch": return (p, f, opts = {}) => {
+                        if (!isStr(p) || !isFn(f)) return;
+                        (subs[p] ??= []).push(f);
+                        f._last = clone(get(p));
+                        if (opts?.immediate === true) f(f._last);
                     };
                     case "$set": return patch;
                     default: return store[key];
                 }
             },
-            set(_, key, val) {
-                if (win.${GLOBAL_UTIL_EQUAL}(store[key], val)) return true;
-                store[key] = val;
-                notify(String(key));
+            set(_, k, v) {
+                if (eq(store[k], v)) return true;
+                store[k] = v;
+                notify(String(k));
                 return true;
             }
         });
@@ -530,7 +588,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
                     : document.createElement(t);
                 if (o.attrs) for (const k in o.attrs) e.setAttribute(k, o.attrs[k]);
                 if (o.style) for (const k in o.style) e.style[k] = o.style[k];
-                if (o.children) for (const c of o.children) e.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+                if (o.children) for (const c of o.children) e.appendChild(isStr(c) ? document.createTextNode(c) : c);
                 return e;
             };
         })());
@@ -541,7 +599,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
                 t = setTimeout(() => fn(...args), ms);
             };
         });
-        oD("eq", win.${GLOBAL_UTIL_EQUAL});
+        oD("eq", eq);
         oD("uid", () => crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
         oD("sleep", ms => new Promise(r => setTimeout(r, ms)));
         oD("fetch", async (url, o = {}) => {
@@ -553,7 +611,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
             if (isJSON && !("Content-Type" in nHeaders))
                 nHeaders["Content-Type"] = "application/json";
 
-            const ctrl = typeof timeout === "number" ? new AbortController() : null;
+            const ctrl = isInt(timeout) ? new AbortController() : null;
             const tId = ctrl
                 ? setTimeout(() => ctrl.abort(), timeout)
                 : null;
@@ -603,26 +661,32 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
                 throw err;
             }
         });
-        oD("fire", (n, t, o) => n.dispatchEvent(
-            win.${GLOBAL_UTIL_CREATE_EVENT}(t, {
-                detail: o?.data,
-                bubbles:(o?.mode ?? "up") === "up",
-                cancelable:!0
-            })
-        ));
-        oD("on", (n, t, fn) => {
-            n.addEventListener(t, fn);
-            return () => n?.removeEventListener(t, fn);
+        oD("fire", (n, t, o) => n.dispatchEvent(cEvent(t, {
+            detail: o?.data,
+            bubbles:(o?.mode ?? "up") === "up",
+            cancelable:!0
+        })));
+        oD("isArr", isArr);
+        oD("isBool", isBool);
+        oD("isDate", isDate);
+        oD("isFn", isFn);
+        oD("isInt", isInt);
+        oD("isNum", isNum);
+        oD("isObj", isObj);
+        oD("isStr", isStr);
+        oD("on", (n, t, f) => {
+            n.addEventListener(t, f);
+            return () => n?.removeEventListener(t, f);
         });
-        oD("once", (n, t, fn) => {
+        oD("once", (n, t, f) => {
             const w = e => {
-                try { fn(e); }
+                try { f(e); }
                 finally { n?.removeEventListener(t, w); }
             };
             n.addEventListener(t, w);
         });
         oD("query", (n, q) => {
-            if (!n?.querySelector || typeof q !== "string") return null;
+            if (!n?.querySelector || !isStr(q)) return null;
             const scopable = n.nodeType === Node.ELEMENT_NODE && !q.trimStart().startsWith(":scope");
 
             try {
@@ -632,7 +696,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
             }
         });
         oD("queryAll", (n, q) => {
-            if (!n?.querySelectorAll || typeof q !== "string") return [];
+            if (!n?.querySelectorAll || !isStr(q)) return [];
             const scopable = n.nodeType === Node.ELEMENT_NODE && !q.trimStart().startsWith(":scope");
 
             try {
@@ -643,6 +707,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
         });
         oD("storeGet", win.${GLOBAL_STORE_NAME}.get);
         oD("storeSet", win.${GLOBAL_STORE_NAME}.set);
+        oD("storeDel", win.${GLOBAL_STORE_NAME}.del);
         oD("timedAttr", (n, k, o) => {
             n.setAttribute(k, o.value ?? "");
             return setTimeout(() => {
