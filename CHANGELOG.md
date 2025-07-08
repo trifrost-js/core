@@ -4,6 +4,57 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.47.0] - 2025-07-08
+Leaning further into Atomic’s design ethos: zero-cost primitives, sharp utilities, and predictably reactive behavior. This release builds on what was already working, just sharper, cleaner, and more ergonomic.
+
+### Added
+- **feat**: New Atomic util `$.isArr` to verify a provided value is an array (**type guarded**)
+- **feat**: New Atomic util `$.isBool` to verify a provided value is a boolean (**type guarded**)
+- **feat**: New Atomic util `$.isDate` to verify a provided value is a **valid** Date instance (**type guarded**)
+- **feat**: New Atomic util `$.isFn` to verify a provided value is a function (**type guarded**)
+- **feat**: New Atomic util `$.isInt` to verify a provided value is an integer (**type guarded**)
+- **feat**: New Atomic util `$.isNum` to verify a provided value is a finite number (**type guarded**)
+- **feat**: New Atomic util `$.isObj` to verify a provided value is a plain object (**type guarded**)
+- **feat**: New Atomic util `$.isStr` to verify a provided value is a string (**type guarded**)
+```typescript
+if ($.isArr(data.items)) {
+  console.log('Array length:', data.items.length);
+}
+
+if ($.isStr(user.name)) {
+  el.textContent = user.name.toUpperCase();
+}
+```
+- **feat**: Atomic Global store (accessible through `$.storeGet` and `$.storeSet`) now retrieves data from localStorage on initialization using `"$tfs:..."` as the key prefix
+- **feat**: Atomic Global store `$.storeSet` can now be passed `{persist: true}` to persist to localStorage
+- **feat**: Atomic Global store now exposes a `$.storeDel` method to remove a key from memory **and** localStorage. On delete **we will also publish a relay event** in the same way that `$.storeSet` does
+```typescript
+$.storeSet('theme', 'dark', { persist: true }); // persisted to localStorage
+const theme = $.storeGet('theme'); // returns "dark"
+
+$.storeDel('theme'); // removes from memory and localStorage
+```
+
+### Improved
+- **qol**: It is now also possible to pass a string and object to `data.$set` for leaf-specific updates.
+```tsx
+<Script>{({data}) => {
+data.$bind('form.name', 'input[name="name"]');
+data.$bind('form.lastName', 'input[name="lastName"]');
+data.$set('form', {name: 'Peter', lastName: 'V'});
+...
+}}</Script>
+```
+
+### Fixed
+- Fixed an issue with reactive data proxy not updating radio input types correctly
+
+---
+
+Atomic keeps getting tighter. No magic, no overhead — just state, DOM, and data doing what they're told.
+
+More to come, but for now, as always, stay frosty ❄️.
+
 ## [0.46.3] - 2025-07-07
 ### Improved
 - **qol**: `$.query` and `$.queryAll` can now be passed a generic, eg: `$.query<HTMLElement>('#hello');` to aid in places where its really not possible to determine.
