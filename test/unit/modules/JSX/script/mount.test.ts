@@ -34,7 +34,7 @@ describe('Modules - JSX - script - mount', () => {
         handler(ctx as any);
 
         expect(ctx.setType).toHaveBeenCalledWith(MimeTypes.JS);
-        expect(ctx.text).toHaveBeenCalledWith(ARC_GLOBAL + ATOMIC_GLOBAL, {
+        expect(ctx.text).toHaveBeenCalledWith(ARC_GLOBAL(false) + ATOMIC_GLOBAL, {
             status: 200,
             cacheControl: {type: 'public', maxage: 86400, immutable: true},
         });
@@ -50,7 +50,7 @@ describe('Modules - JSX - script - mount', () => {
         handler(ctx as any);
 
         expect(ctx.setType).toHaveBeenCalledWith(MimeTypes.JS);
-        expect(ctx.text).toHaveBeenCalledWith(ARC_GLOBAL + ATOMIC_GLOBAL, {status: 200});
+        expect(ctx.text).toHaveBeenCalledWith(ARC_GLOBAL(true) + ATOMIC_GLOBAL, {status: 200});
     });
 
     it('Registers route and serves ARC + observer when atomic is disabled', () => {
@@ -63,7 +63,7 @@ describe('Modules - JSX - script - mount', () => {
         handler(ctx as any);
 
         expect(ctx.setType).toHaveBeenCalledWith(MimeTypes.JS);
-        expect(ctx.text).toHaveBeenCalledWith(ARC_GLOBAL + ARC_GLOBAL_OBSERVER, {
+        expect(ctx.text).toHaveBeenCalledWith(ARC_GLOBAL(false) + ARC_GLOBAL_OBSERVER, {
             status: 200,
             cacheControl: {type: 'public', maxage: 86400, immutable: true},
         });
