@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.47.2] - 2025-07-08
+### Improved
+- **qol**: Minor byte gains in Atomic
+
 ## [0.47.1] - 2025-07-08
 ### Improved
 - **qol**: In [dev mode](https://www.trifrost.dev/docs/utils-devmode) Atomic will now log debug messages on failure of script or module instantiation as well as mounting.
