@@ -220,8 +220,8 @@ export type TriFrostAtomicUtils<
     cssTheme: (name: TFCSSTheme | `--${string}`) => string;
 };
 
-export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
-    const def = (n, v, t = win) => {
+export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d){
+    const def = (n, v, t = w) => {
         if (!t[n]) Object.defineProperty(t, n, {value:v, configurable:!1, writable:!1});
     };
 
@@ -269,7 +269,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
         try {
             return new CustomEvent(t, o);
         } catch (_) {
-            const e = doc.createEvent("CustomEvent");
+            const e = d.createEvent("CustomEvent");
             e.initCustomEvent(t, o?.bubbles, o?.cancelable, o?.detail);
             return e;
         }
@@ -313,9 +313,9 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
                 if (isFn(nR.${VM_HOOK_UNMOUNT_NAME})) {
                     try{nR.$unmount()}catch{}
                 }
-                win.${GLOBAL_RELAY_NAME}?.unsubscribe(nR.${VM_ID_NAME});
-                win.${GLOBAL_CLOCK}?.delete(nR.${VM_ID_NAME});
-                win.${GLOBAL_ARC_NAME}?.release(nR.${VM_ID_NAME});
+                w.${GLOBAL_RELAY_NAME}?.unsubscribe(nR.${VM_ID_NAME});
+                w.${GLOBAL_CLOCK}?.delete(nR.${VM_ID_NAME});
+                w.${GLOBAL_ARC_NAME}?.release(nR.${VM_ID_NAME});
             }
             if (nR.children?.length) {
                 for (let i = 0; i < nR.children.length; i++) {
@@ -330,14 +330,14 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
                 }
             }
         });
-        o.observe(doc.body, {childList:!0, subtree:!0});
+        o.observe(d.body, {childList:!0, subtree:!0});
         return o;
     })());
 
     def("${GLOBAL_STORE_NAME}", (() => {
         const s = Object.create(null);
         const kP = "$tfs:";
-        const notify = (k, v) => win.${GLOBAL_RELAY_NAME}.publish("$store:" + k, v);
+        const notify = (k, v) => w.${GLOBAL_RELAY_NAME}.publish("$store:" + k, v);
         try {
             for (let i = 0; i < localStorage.length; i++) {
                 const k = localStorage.key(i);
@@ -390,7 +390,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
                     tv.clear();
                     for (let i = 0; i < uids.length; i++) {
                         try {
-                            const fn = win.${GLOBAL_CLOCK}.get(uids[i]);
+                            const fn = w.${GLOBAL_CLOCK}.get(uids[i]);
                             if (isFn(fn)) fn();
                         } catch {}
                     }
@@ -422,7 +422,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
                 c = i === 0 ? n_p[0] : c + "." + n_p[i];
                 pending.add(c);
             }
-            win.${GLOBAL_CLOCK_TICK}(root.${VM_ID_NAME});
+            w.${GLOBAL_CLOCK_TICK}(root.${VM_ID_NAME});
         };
 
         const tick = () => {
@@ -509,13 +509,13 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
             } else n.value = v ?? "";
         };
 
-        win.${GLOBAL_CLOCK}.set(root.${VM_ID_NAME}, tick);
+        w.${GLOBAL_CLOCK}.set(root.${VM_ID_NAME}, tick);
 
         return new Proxy(store, {
             get(_, key) {
                 switch (key) {
                     case "$bind": return (p, s, o) => {
-                        const nI = win.${GLOBAL_UTILS_NAME}.queryAll(root, s);
+                        const nI = w.${GLOBAL_UTILS_NAME}.queryAll(root, s);
                         if (!nI.length) return;
 
                         const c = get(p);
@@ -527,11 +527,11 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
                         }
 
                         const fn = () => {
-                            set(p, getIV(win.${GLOBAL_UTILS_NAME}.queryAll(root, s), p));
+                            set(p, getIV(w.${GLOBAL_UTILS_NAME}.queryAll(root, s), p));
                             notify(p);
                         };
 
-                        const sync = v => setIV(win.${GLOBAL_UTILS_NAME}.queryAll(root, s), v);
+                        const sync = v => setIV(w.${GLOBAL_UTILS_NAME}.queryAll(root, s), v);
                         sync._isSync = true;
                         (subs[p] ??= []).push(sync);
 
@@ -577,7 +577,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
         const obj = Object.create(null);
         const oD = (n, v) => def(n, v, obj);
         oD("blurActive", () => {
-            if (doc.activeElement instanceof HTMLElement) doc.activeElement.blur();
+            if (d.activeElement instanceof HTMLElement) d.activeElement.blur();
         });
         oD("clear", n => {
             while (n.firstChild) n.removeChild(n.firstChild);
@@ -586,11 +586,11 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
             const s = new Set(["svg", "path", "circle", "rect", "g", "defs", "text", "use", "line", "polyline", "polygon", "ellipse", "symbol", "clipPath", "linearGradient", "radialGradient", "filter", "mask", "pattern"]);
             return (t, o = {}) => {
                 const e = s.has(t)
-                    ? document.createElementNS("http://www.w3.org/2000/svg", t)
-                    : document.createElement(t);
-                if (o.attrs) for (const k in o.attrs) e.setAttribute(k, o.attrs[k]);
-                if (o.style) for (const k in o.style) e.style[k] = o.style[k];
-                if (o.children) for (const c of o.children) e.appendChild(isStr(c) ? document.createTextNode(c) : c);
+                    ? d.createElementNS("http://www.w3.org/2000/svg", t)
+                    : d.createElement(t);
+                if (isObj(o.attrs)) for (const k in o.attrs) e.setAttribute(k, o.attrs[k]);
+                if (isObj(o.style)) for (const k in o.style) e.style[k] = o.style[k];
+                if (isArr(o.children)) for (const c of o.children) e.appendChild(isStr(c) ? d.createTextNode(c) : c);
                 return e;
             };
         })());
@@ -635,7 +635,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
                     if (rt.includes("application/json")) c = await r.json();
                     else if (rt.includes("text/html")) {
                         const v = await r.text();
-                        c = doc.createRange().createContextualFragment(v);
+                        c = d.createRange().createContextualFragment(v);
                     }
                     else if (rt.includes("text/")) c = await r.text();
                     else if (rt.includes("application/octet-stream")) c = await r.blob();
@@ -709,9 +709,9 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
                 return [];
             }
         });
-        oD("storeGet", win.${GLOBAL_STORE_NAME}.get);
-        oD("storeSet", win.${GLOBAL_STORE_NAME}.set);
-        oD("storeDel", win.${GLOBAL_STORE_NAME}.del);
+        oD("storeGet", w.${GLOBAL_STORE_NAME}.get);
+        oD("storeSet", w.${GLOBAL_STORE_NAME}.set);
+        oD("storeDel", w.${GLOBAL_STORE_NAME}.del);
         oD("timedAttr", (n, k, o) => {
             n.setAttribute(k, o.value ?? "");
             return setTimeout(() => {
@@ -729,14 +729,14 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
         oD("cssVar", (() => {
             let c;
             return v => {
-                if (!c) c = getComputedStyle(doc.documentElement);
+                if (!c) c = getComputedStyle(d.documentElement);
                 return c.getPropertyValue(v.startsWith("--") ? v : "--v-" + v).trim() || "";
             };
         })());
         oD("cssTheme", (() => {
             let c, t;
             return v => {
-                const n = doc.documentElement;
+                const n = d.documentElement;
                 const tc = n.getAttribute("data-theme");
                 if (!c || tc !== t) {
                     c = getComputedStyle(n);

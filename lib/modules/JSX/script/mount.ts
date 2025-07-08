@@ -14,17 +14,8 @@ export function mount(router: Router, path: string, module: ReturnType<typeof cr
 
         const debug = isDevMode(ctx.env);
 
-        /* Determine content */
-        let content: string = ARC_GLOBAL(debug);
-
-        if (module.isAtomic) {
-            content += ATOMIC_GLOBAL;
-        } else {
-            content += ARC_GLOBAL_OBSERVER;
-        }
-
         return ctx.text(
-            content,
+            ARC_GLOBAL(debug) + (module.isAtomic ? ATOMIC_GLOBAL : ARC_GLOBAL_OBSERVER),
             /* If not in dev mode add cache control */
             !debug ? {status: 200, cacheControl: {type: 'public', maxage: 86400, immutable: true}} : {status: 200},
         );
