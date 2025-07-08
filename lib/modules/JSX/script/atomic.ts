@@ -1,3 +1,4 @@
+import {memoize} from '@valkyriestudios/utils/caching';
 import {type Promisify} from '../../../types/generic';
 import {atomicMinify} from './util';
 
@@ -5,6 +6,7 @@ export const GLOBAL_HYDRATED_NAME = '$tfhydra';
 export const GLOBAL_UTILS_NAME = '$tfutils';
 export const GLOBAL_DATA_REACTOR_NAME = '$tfdr';
 export const GLOBAL_ARC_NAME = '$tfarc';
+export const GLOBAL_ARC_LOG = '$tflog';
 const GLOBAL_OBSERVER_NAME = '$tfo';
 const GLOBAL_RELAY_NAME = '$tfr';
 const GLOBAL_STORE_NAME = '$tfs';
@@ -389,7 +391,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
                     for (let i = 0; i < uids.length; i++) {
                         try {
                             const fn = win.${GLOBAL_CLOCK}.get(uids[i]);
-                            if (fn) fn();
+                            if (isFn(fn)) fn();
                         } catch {}
                     }
                 });
@@ -638,7 +640,9 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
                     else if (rt.includes("text/")) c = await r.text();
                     else if (rt.includes("application/octet-stream")) c = await r.blob();
                     else c = await r.text();
-                } catch {}
+                } catch (err) {
+                    w.${GLOBAL_ARC_LOG}.debug("[Atomic] Fetch failure", err);
+                }
 
                 return {
                     content: c ?? null,
@@ -754,11 +758,14 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(win,doc){
     def("${GLOBAL_HYDRATED_NAME}", !0);
 })(window,document);`);
 
-export const ARC_GLOBAL = atomicMinify(`(function(w){
+export const ARC_GLOBAL = memoize((debug: boolean) => {
+    return atomicMinify(`(function(w){
     const oD = (n, v, t) => {
         if (!t[n]) Object.defineProperty(t, n, {value:v, configurable:!1, writable:!1});
     };
     const gI = () => Math.random().toString(36).slice(2);
+
+    oD("${GLOBAL_ARC_LOG}", {debug:${debug ? 'console.debug' : '() => {}'}});
 
     oD("${GLOBAL_ARC_NAME}", (() => {
         const f=new Map(),d=new Map(),v=new Map(),m=new Map();
@@ -805,9 +812,12 @@ export const ARC_GLOBAL = atomicMinify(`(function(w){
                             v.set(UID, {fn_id: FID, data_id: DID});
                             if (DID && DREG) DREG.refs++;
                             if (ATOMIC && typeof n.${VM_HOOK_MOUNT_NAME} === "function") {
-                                try {n.${VM_HOOK_MOUNT_NAME}()} catch {}
+                                try {n.${VM_HOOK_MOUNT_NAME}()}
+                                catch (err) {w.${GLOBAL_ARC_LOG}.debug("[Atomic] Failed to mount", err);}
                             }
-                        } catch {}
+                        } catch (err) {
+                            w.${GLOBAL_ARC_LOG}.debug("[Atomic] Script Instantiation Error", err);
+                        }
                     }
                 }
             },
@@ -834,12 +844,15 @@ export const ARC_GLOBAL = atomicMinify(`(function(w){
                         fn(ATOMIC
                             ? {mod:n, data: w.${GLOBAL_DATA_REACTOR_NAME}({}, data || {}), $: w.${GLOBAL_UTILS_NAME}}
                             : {mod:n, data});
-                    } catch {}
+                    } catch (err) {
+                        w.${GLOBAL_ARC_LOG}.debug("[Atomic] Module Instantiation Error", err);
+                    }
                 }
             },
         });
     })(), w);
 })(window);`);
+});
 
 export const ARC_GLOBAL_OBSERVER = atomicMinify(`(function(){
     const c = n => {

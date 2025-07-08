@@ -1,5 +1,6 @@
-import {djb2Hash} from '../../../utils/Generic';
+import {djb2Hash, isDevMode} from '../../../utils/Generic';
 import {nonce} from '../ctx/nonce';
+import {getActiveCtx} from '../ctx/use';
 import {ATOMIC_GLOBAL, ARC_GLOBAL, GLOBAL_ARC_NAME, ARC_GLOBAL_OBSERVER} from './atomic';
 import {atomicMinify} from './util';
 
@@ -149,6 +150,7 @@ export class ScriptEngine {
         if (typeof html !== 'string') return '';
 
         const n_nonce = nonce();
+        const debug = isDevMode(getActiveCtx()?.env ?? {});
         const isFragment = !html.startsWith('<!DOCTYPE') && !html.startsWith('<html');
 
         /* Mount script */
@@ -162,12 +164,12 @@ export class ScriptEngine {
                     : '<script src="' + this.mount_path + '" defer></script>';
             } else if (this.atomic_enabled) {
                 scripts = n_nonce
-                    ? '<script nonce="' + n_nonce + '">' + ARC_GLOBAL + ATOMIC_GLOBAL + '</script>'
-                    : '<script>' + ARC_GLOBAL + ATOMIC_GLOBAL + '</script>';
+                    ? '<script nonce="' + n_nonce + '">' + ARC_GLOBAL(debug) + ATOMIC_GLOBAL + '</script>'
+                    : '<script>' + ARC_GLOBAL(debug) + ATOMIC_GLOBAL + '</script>';
             } else {
                 scripts = n_nonce
-                    ? '<script nonce="' + n_nonce + '">' + ARC_GLOBAL + ARC_GLOBAL_OBSERVER + '</script>'
-                    : '<script>' + ARC_GLOBAL + ARC_GLOBAL_OBSERVER + '</script>';
+                    ? '<script nonce="' + n_nonce + '">' + ARC_GLOBAL(debug) + ARC_GLOBAL_OBSERVER + '</script>'
+                    : '<script>' + ARC_GLOBAL(debug) + ARC_GLOBAL_OBSERVER + '</script>';
             }
             seen.scripts.clear();
             seen.modules.clear();

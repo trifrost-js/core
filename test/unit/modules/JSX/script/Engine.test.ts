@@ -4,6 +4,7 @@ import * as Generic from '../../../../../lib/utils/Generic';
 import * as Nonce from '../../../../../lib/modules/JSX/ctx/nonce';
 import CONSTANTS from '../../../../constants';
 import {ARC_GLOBAL, ARC_GLOBAL_OBSERVER, ATOMIC_GLOBAL} from '../../../../../lib/modules/JSX/script/atomic';
+import {setActiveCtx} from '../../../../../lib/modules/JSX/ctx/use';
 
 describe('Modules - JSX - script - Engine', () => {
     let engine: ScriptEngine;
@@ -450,7 +451,7 @@ describe('Modules - JSX - script - Engine', () => {
                 [
                     '<html><main>Stuff</main>',
                     '<script nonce="abc123">',
-                    ARC_GLOBAL,
+                    ARC_GLOBAL(false),
                     ARC_GLOBAL_OBSERVER,
                     '</script>',
                     '<script nonce="abc123">',
@@ -462,13 +463,33 @@ describe('Modules - JSX - script - Engine', () => {
             );
         });
 
+        it('Appends script to end of HTML if </body> is missing and enable debug if in dev mode', () => {
+            setActiveCtx({env: {TRIFROST_DEV: 'true'}} as any);
+            engine.register('function(){}', null);
+            expect(engine.inject('<html><main>Stuff</main></html>')).toBe(
+                [
+                    '<html><main>Stuff</main>',
+                    '<script nonce="abc123">',
+                    ARC_GLOBAL(true),
+                    ARC_GLOBAL_OBSERVER,
+                    '</script>',
+                    '<script nonce="abc123">',
+                    '(function(w){const self=document.currentScript;',
+                    'w.$tfarc.spark([["id-1",function(){}]],[]);setTimeout(()=>self?.remove?.(),0);})(window);',
+                    '</script>',
+                    '</html>',
+                ].join(''),
+            );
+            setActiveCtx(null);
+        });
+
         it('Appends script to end of HTML if </html> and </body> are missing', () => {
             engine.register('function(){}', null);
             expect(engine.inject('<html><main>Stuff</main>')).toBe(
                 [
                     '<html><main>Stuff</main>',
                     '<script nonce="abc123">',
-                    ARC_GLOBAL,
+                    ARC_GLOBAL(false),
                     ARC_GLOBAL_OBSERVER,
                     '</script>',
                     '<script nonce="abc123">',
@@ -487,7 +508,7 @@ describe('Modules - JSX - script - Engine', () => {
                     '<body>',
                     '<main>Content</main>',
                     '<script nonce="abc123">',
-                    ARC_GLOBAL,
+                    ARC_GLOBAL(false),
                     ARC_GLOBAL_OBSERVER,
                     '</script>',
                     '<script nonce="abc123">',
@@ -648,7 +669,7 @@ describe('Modules - JSX - script - Engine', () => {
                 [
                     '<html><body><main>Hello</main>',
                     '<script>',
-                    ARC_GLOBAL,
+                    ARC_GLOBAL(false),
                     ATOMIC_GLOBAL,
                     '</script>',
                     '<script>',
@@ -679,7 +700,7 @@ describe('Modules - JSX - script - Engine', () => {
 
             const out = engine.inject(input);
             expect(out).toMatch(/^<section>/);
-            expect(out).not.toContain(ARC_GLOBAL);
+            expect(out).not.toContain(ARC_GLOBAL(false));
             expect(out).not.toContain(ATOMIC_GLOBAL);
             expect(out).not.toContain('<script src=');
         });
@@ -691,7 +712,7 @@ describe('Modules - JSX - script - Engine', () => {
             const html = '<html><body><main>Hi</main></body></html>';
             const output = engine.inject(html);
 
-            expect(output).toContain(ARC_GLOBAL);
+            expect(output).toContain(ARC_GLOBAL(false));
             expect(output).toContain(ARC_GLOBAL_OBSERVER);
             expect(output).not.toContain(ATOMIC_GLOBAL);
         });
@@ -704,7 +725,7 @@ describe('Modules - JSX - script - Engine', () => {
             const html = '<html><body><main>Hi</main></body></html>';
             const output = engine.inject(html);
 
-            expect(output).toContain(ARC_GLOBAL);
+            expect(output).toContain(ARC_GLOBAL(false));
             expect(output).toContain(ATOMIC_GLOBAL);
             expect(output).not.toContain(ARC_GLOBAL_OBSERVER);
         });
@@ -718,7 +739,7 @@ describe('Modules - JSX - script - Engine', () => {
             const result = engine.inject(html);
 
             expect(result).toContain('<script>');
-            expect(result).toContain(ARC_GLOBAL);
+            expect(result).toContain(ARC_GLOBAL(false));
             expect(result).toContain(ARC_GLOBAL_OBSERVER);
             expect(result).not.toContain('nonce=');
             expect(result).not.toContain(ATOMIC_GLOBAL);
@@ -817,7 +838,23 @@ describe('Modules - JSX - script - Engine', () => {
             const html = '<html><body><div>App</div></body></html>';
             const result = engine.inject(html);
 
-            expect(result).toContain(ARC_GLOBAL);
+            expect(result).toContain(ARC_GLOBAL(false));
+            expect(result).toContain(ATOMIC_GLOBAL);
+            expect(result).toContain('w.$tfarc.sparkModule');
+        });
+
+        it('Injects ARC and ATOMIC globals when atomic enabled and mountPath not set and enable debug if ctx has it', () => {
+            setActiveCtx({env: {TRIFROST_DEV: 'true'}} as any);
+            engine.setAtomic(true);
+            engine.setRoot(true);
+            engine.setMountPath(null as any);
+            engine.registerModule('({mod})=>mod.$publish("go")', null, 'boot');
+
+            const html = '<html><body><div>App</div></body></html>';
+            const result = engine.inject(html);
+            setActiveCtx(null);
+
+            expect(result).toContain(ARC_GLOBAL(true));
             expect(result).toContain(ATOMIC_GLOBAL);
             expect(result).toContain('w.$tfarc.sparkModule');
         });

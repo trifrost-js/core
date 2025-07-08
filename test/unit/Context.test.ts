@@ -1925,7 +1925,7 @@ describe('Context', () => {
             const jsx = {type: 'html', props: {children: {type: 'span', props: {children: 'Custom'}}}};
             const result = ctx.render(jsx as any, configOverride as any);
             expect(result).toBe(
-                `<!DOCTYPE html><html><span>Custom</span><script nonce="${ctx.nonce}">${ARC_GLOBAL}${ARC_GLOBAL_OBSERVER}</script></html>`,
+                `<!DOCTYPE html><html><span>Custom</span><script nonce="${ctx.nonce}">${ARC_GLOBAL(false)}${ARC_GLOBAL_OBSERVER}</script></html>`,
             );
         });
     });

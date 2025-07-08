@@ -108,7 +108,7 @@ describe('Modules - JSX - script - atomic', () => {
                     'def("$tfcr",(()=>{',
                     'let tp=false;',
                     'const tv=new Set();',
-                    'return uid=>{tv.add(uid);if(!tp){tp=true;requestAnimationFrame(()=>{const uids=[...tv.values()];tp=false;tv.clear();for(let i=0;i<uids.length;i++){try{const fn=win.$tfc.get(uids[i]);if(fn)fn();}catch{}}});}};',
+                    'return uid=>{tv.add(uid);if(!tp){tp=true;requestAnimationFrame(()=>{const uids=[...tv.values()];tp=false;tv.clear();for(let i=0;i<uids.length;i++){try{const fn=win.$tfc.get(uids[i]);if(isFn(fn))fn();}catch{}}});}};',
                     '})());',
                     /* Global data reactor */
                     'def("$tfdr",(root,raw)=>{',
@@ -141,7 +141,7 @@ describe('Modules - JSX - script - atomic', () => {
                     'oD("eq",eq);',
                     'oD("uid",()=>crypto?.randomUUID?.()??Math.random().toString(36).slice(2));',
                     'oD("sleep",ms=>new Promise(r=>setTimeout(r,ms)));',
-                    'oD("fetch",async(url,o={})=>{const{method="GET",headers={},body,timeout,credentials="include"}=o;const isJSON=body&&typeof body==="object"&&!(body instanceof FormData);const nHeaders={...headers};const payload=isJSON?JSON.stringify(body):body;if(isJSON&&!("Content-Type"in nHeaders))nHeaders["Content-Type"]="application/json";const ctrl=isInt(timeout)?new AbortController():null;const tId=ctrl?setTimeout(()=>ctrl.abort(),timeout):null;try{const r=await fetch(url,{method,headers:nHeaders,body:method!=="GET"&&body!==undefined?payload:undefined,signal:ctrl?.signal,credentials});if(tId)clearTimeout(tId);const rt=r.headers.get("Content-Type")?.toLowerCase()||"";let c;try{if(rt.includes("application/json"))c=await r.json();else if(rt.includes("text/html")){const v=await r.text();c=doc.createRange().createContextualFragment(v);}else if(rt.includes("text/"))c=await r.text();else if(rt.includes("application/octet-stream"))c=await r.blob();else c=await r.text();}catch{}return {content:c??null,ok:r.status>=200&&r.status<300,status:r.status,headers:r.headers,raw:r};}catch(err){if(tId)clearTimeout(tId);if(err?.name==="AbortError"){return {content:null,ok:false,status:408,headers:new Headers(),raw:null};}throw err;}});',
+                    'oD("fetch",async(url,o={})=>{const{method="GET",headers={},body,timeout,credentials="include"}=o;const isJSON=body&&typeof body==="object"&&!(body instanceof FormData);const nHeaders={...headers};const payload=isJSON?JSON.stringify(body):body;if(isJSON&&!("Content-Type"in nHeaders))nHeaders["Content-Type"]="application/json";const ctrl=isInt(timeout)?new AbortController():null;const tId=ctrl?setTimeout(()=>ctrl.abort(),timeout):null;try{const r=await fetch(url,{method,headers:nHeaders,body:method!=="GET"&&body!==undefined?payload:undefined,signal:ctrl?.signal,credentials});if(tId)clearTimeout(tId);const rt=r.headers.get("Content-Type")?.toLowerCase()||"";let c;try{if(rt.includes("application/json"))c=await r.json();else if(rt.includes("text/html")){const v=await r.text();c=doc.createRange().createContextualFragment(v);}else if(rt.includes("text/"))c=await r.text();else if(rt.includes("application/octet-stream"))c=await r.blob();else c=await r.text();}catch(err){w.$tflog.debug("[Atomic] Fetch failure",err);}return {content:c??null,ok:r.status>=200&&r.status<300,status:r.status,headers:r.headers,raw:r};}catch(err){if(tId)clearTimeout(tId);if(err?.name==="AbortError"){return {content:null,ok:false,status:408,headers:new Headers(),raw:null};}throw err;}});',
                     'oD("fire",(n,t,o)=>n.dispatchEvent(cEvent(t,{detail:o?.data,bubbles:(o?.mode??"up")==="up",cancelable:!0})));',
                     'oD("isArr",isArr);',
                     'oD("isBool",isBool);',
@@ -173,12 +173,13 @@ describe('Modules - JSX - script - atomic', () => {
     });
 
     describe('ARC_GLOBAL', () => {
-        it('Should be minified correct', () => {
-            expect(ARC_GLOBAL).toBe(
+        it('Should be minified correct in non-debug mode', () => {
+            expect(ARC_GLOBAL(false)).toBe(
                 [
                     '(function(w){',
                     'const oD=(n,v,t)=>{if(!t[n])Object.defineProperty(t,n,{value:v,configurable:!1,writable:!1});};',
                     'const gI=()=>Math.random().toString(36).slice(2);',
+                    'oD("$tflog",{debug:()=>{}});',
                     'oD("$tfarc",(()=>{',
                     'const f=new Map(),d=new Map(),v=new Map(),m=new Map();',
                     'return Object.freeze({',
@@ -222,9 +223,9 @@ describe('Modules - JSX - script - atomic', () => {
                     'v.set(UID,{fn_id:FID,data_id:DID});',
                     'if(DID&&DREG)DREG.refs++;',
                     'if(ATOMIC&&typeof n.$mount==="function"){',
-                    'try{n.$mount()}catch{}',
+                    'try{n.$mount()}catch(err){w.$tflog.debug("[Atomic] Failed to mount",err);}',
                     '}',
-                    '}catch{}}}},',
+                    '}catch(err){w.$tflog.debug("[Atomic] Script Instantiation Error",err);}}}},',
                     /* Spark Module */
                     'sparkModule(MODS){',
                     'const ATOMIC=!!w.$tfhydra;',
@@ -238,7 +239,79 @@ describe('Modules - JSX - script - atomic', () => {
                     'oD("$subscribeOnce",(t,c)=>w.$tfr.subscribe(UID,t,v=>{c(v);w.$tfr.unsubscribe(UID,t);}),n);',
                     'oD("$unsubscribe",t=>w.$tfr.unsubscribe(UID,t),n);',
                     'oD("$publish",(t,v)=>w.$tfr.publish(t,v),n);',
-                    'try{fn(ATOMIC?{mod:n,data:w.$tfdr({},data||{}),$:w.$tfutils}:{mod:n,data});}catch{}}},',
+                    'try{fn(ATOMIC?{mod:n,data:w.$tfdr({},data||{}),$:w.$tfutils}:{mod:n,data});}catch(err){w.$tflog.debug("[Atomic] Module Instantiation Error",err);}}},',
+                    '});})(),w);})(window);',
+                ].join(''),
+            );
+        });
+
+        it('Should be minified correct in debug mode', () => {
+            expect(ARC_GLOBAL(true)).toBe(
+                [
+                    '(function(w){',
+                    'const oD=(n,v,t)=>{if(!t[n])Object.defineProperty(t,n,{value:v,configurable:!1,writable:!1});};',
+                    'const gI=()=>Math.random().toString(36).slice(2);',
+                    'oD("$tflog",{debug:console.debug});',
+                    'oD("$tfarc",(()=>{',
+                    'const f=new Map(),d=new Map(),v=new Map(),m=new Map();',
+                    'return Object.freeze({',
+                    /* Release */
+                    'release(uid){',
+                    'const r=v.get(uid);',
+                    'if(!r)return;',
+                    'v.delete(uid);',
+                    'const de=d.get(r.data_id);',
+                    'if(de&&--de.refs<=0)d.delete(r.data_id);',
+                    '},',
+                    /* Spark */
+                    'spark(FNS,DAT){',
+                    'const ATOMIC=!!w.$tfhydra;',
+                    'for(const[DID,val]of DAT){',
+                    'if(!d.has(DID))d.set(DID,{val,refs:0});',
+                    '}',
+                    'for(const[FID,fn]of FNS){',
+                    'if(fn!==undefined&&!f.has(FID))f.set(FID,{fn});',
+                    'const FREG=f.get(FID);',
+                    'if(!FREG?.fn)continue;',
+                    'const nodes=document.querySelectorAll(`[data-tfhf="${FID}"]`);',
+                    'for(const n of nodes){',
+                    'const DID=n.getAttribute("data-tfhd")||undefined;',
+                    'const DREG=DID?d.get(DID):{};',
+                    'const UID=gI();',
+                    'oD("$uid",UID,n);',
+                    'if(ATOMIC&&!n.$tfVM){',
+                    'oD("$subscribe",(t,c)=>w.$tfr.subscribe(n.$uid,t,c),n);',
+                    'oD("$subscribeOnce",(t,c)=>w.$tfr.subscribe(n.$uid,t,v=>{c(v);n.$unsubscribe(t);}),n);',
+                    'oD("$unsubscribe",t=>w.$tfr.unsubscribe(n.$uid,t),n);',
+                    'oD("$publish",(t,v)=>w.$tfr.publish(t,v),n);',
+                    'oD("$tfVM",true,n);',
+                    '}',
+                    'try{',
+                    'FREG.fn(',
+                    'ATOMIC',
+                    '?{el:n,data:w.$tfdr(n,DREG?.val??{}),$:w.$tfutils}',
+                    ':{el:n,data:DREG?.val??{}}',
+                    ');',
+                    'v.set(UID,{fn_id:FID,data_id:DID});',
+                    'if(DID&&DREG)DREG.refs++;',
+                    'if(ATOMIC&&typeof n.$mount==="function"){',
+                    'try{n.$mount()}catch(err){w.$tflog.debug("[Atomic] Failed to mount",err);}',
+                    '}',
+                    '}catch(err){w.$tflog.debug("[Atomic] Script Instantiation Error",err);}}}},',
+                    /* Spark Module */
+                    'sparkModule(MODS){',
+                    'const ATOMIC=!!w.$tfhydra;',
+                    'for(let i=0;i<MODS.length;i++){',
+                    'const[FID,fn,data]=MODS[i];',
+                    'if(m.has(FID))continue;',
+                    'const UID=gI();',
+                    'm.set(FID,UID);',
+                    'const n={};',
+                    'oD("$subscribe",(t,c)=>w.$tfr.subscribe(UID,t,c),n);',
+                    'oD("$subscribeOnce",(t,c)=>w.$tfr.subscribe(UID,t,v=>{c(v);w.$tfr.unsubscribe(UID,t);}),n);',
+                    'oD("$unsubscribe",t=>w.$tfr.unsubscribe(UID,t),n);',
+                    'oD("$publish",(t,v)=>w.$tfr.publish(t,v),n);',
+                    'try{fn(ATOMIC?{mod:n,data:w.$tfdr({},data||{}),$:w.$tfutils}:{mod:n,data});}catch(err){w.$tflog.debug("[Atomic] Module Instantiation Error",err);}}},',
                     '});})(),w);})(window);',
                 ].join(''),
             );
