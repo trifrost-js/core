@@ -760,7 +760,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d){
 })(window,document);`);
 
 export const ARC_GLOBAL = memoize((debug: boolean) => {
-    return atomicMinify(`(function(w){
+    return atomicMinify(`(function(w,d){
     const oD = (n, v, t) => {
         if (!t[n]) Object.defineProperty(t, n, {value:v, configurable:!1, writable:!1});
     };
@@ -779,7 +779,7 @@ export const ARC_GLOBAL = memoize((debug: boolean) => {
                 const de = d.get(r.data_id);
                 if(de && --de.refs <= 0) d.delete(r.data_id);
             },
-            spark(FNS, DAT){
+            spark(FNS, DAT, scope = d){
                 const ATOMIC = !!w.${GLOBAL_HYDRATED_NAME};
                 for (const [DID, val] of DAT) {
                     if(!d.has(DID))d.set(DID,{val,refs:0});
@@ -790,13 +790,14 @@ export const ARC_GLOBAL = memoize((debug: boolean) => {
 
                     const FREG = f.get(FID);
                     if (!FREG?.fn) continue;
-                    const nodes = document.querySelectorAll(\`[data-tfhf="\${FID}"]\`);
+                    const nodes = (scope || d).querySelectorAll?.(\`[data-tfhf="\${FID}"]\`) || [];
                     for (const n of nodes) {
+                        if (n.${VM_ID_NAME}) continue;
                         const DID = n.getAttribute("data-tfhd") || undefined;
                         const DREG = DID ? d.get(DID) : {};
                         const UID = gI();
                         oD("${VM_ID_NAME}", UID, n);
-                        if (ATOMIC && !n.${VM_NAME}) {
+                        if (ATOMIC) {
                             oD("${VM_RELAY_SUBSCRIBE_NAME}", (t, c) => w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, t, c), n);
                             oD("${VM_RELAY_SUBSCRIBE_ONCE_NAME}", (t, c) => w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, t, v => {
                                 c(v);
@@ -816,6 +817,9 @@ export const ARC_GLOBAL = memoize((debug: boolean) => {
                                 try {n.${VM_HOOK_MOUNT_NAME}()}
                                 catch (err) {w.${GLOBAL_ARC_LOG}.debug("[Atomic] Failed to mount", err);}
                             }
+
+                            n.removeAttribute("data-tfhf");
+                            n.removeAttribute("data-tfhd");
                         } catch (err) {
                             w.${GLOBAL_ARC_LOG}.debug("[Atomic] Script Instantiation Error", err);
                         }
@@ -852,7 +856,7 @@ export const ARC_GLOBAL = memoize((debug: boolean) => {
             },
         });
     })(), w);
-})(window);`);
+})(window,document);`);
 });
 
 export const ARC_GLOBAL_OBSERVER = atomicMinify(`(function(){

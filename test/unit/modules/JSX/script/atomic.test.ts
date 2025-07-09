@@ -176,7 +176,7 @@ describe('Modules - JSX - script - atomic', () => {
         it('Should be minified correct in non-debug mode', () => {
             expect(ARC_GLOBAL(false)).toBe(
                 [
-                    '(function(w){',
+                    '(function(w,d){',
                     'const oD=(n,v,t)=>{if(!t[n])Object.defineProperty(t,n,{value:v,configurable:!1,writable:!1});};',
                     'const gI=()=>Math.random().toString(36).slice(2);',
                     'oD("$tflog",{debug:()=>{}},w);',
@@ -192,7 +192,7 @@ describe('Modules - JSX - script - atomic', () => {
                     'if(de&&--de.refs<=0)d.delete(r.data_id);',
                     '},',
                     /* Spark */
-                    'spark(FNS,DAT){',
+                    'spark(FNS,DAT,scope=d){',
                     'const ATOMIC=!!w.$tfhydra;',
                     'for(const[DID,val]of DAT){',
                     'if(!d.has(DID))d.set(DID,{val,refs:0});',
@@ -201,13 +201,14 @@ describe('Modules - JSX - script - atomic', () => {
                     'if(fn!==undefined&&!f.has(FID))f.set(FID,{fn});',
                     'const FREG=f.get(FID);',
                     'if(!FREG?.fn)continue;',
-                    'const nodes=document.querySelectorAll(`[data-tfhf="${FID}"]`);',
+                    'const nodes=(scope||d).querySelectorAll?.(`[data-tfhf="${FID}"]`)||[];',
                     'for(const n of nodes){',
+                    'if(n.$uid)continue;',
                     'const DID=n.getAttribute("data-tfhd")||undefined;',
                     'const DREG=DID?d.get(DID):{};',
                     'const UID=gI();',
                     'oD("$uid",UID,n);',
-                    'if(ATOMIC&&!n.$tfVM){',
+                    'if(ATOMIC){',
                     'oD("$subscribe",(t,c)=>w.$tfr.subscribe(n.$uid,t,c),n);',
                     'oD("$subscribeOnce",(t,c)=>w.$tfr.subscribe(n.$uid,t,v=>{c(v);n.$unsubscribe(t);}),n);',
                     'oD("$unsubscribe",t=>w.$tfr.unsubscribe(n.$uid,t),n);',
@@ -225,6 +226,8 @@ describe('Modules - JSX - script - atomic', () => {
                     'if(ATOMIC&&typeof n.$mount==="function"){',
                     'try{n.$mount()}catch(err){w.$tflog.debug("[Atomic] Failed to mount",err);}',
                     '}',
+                    'n.removeAttribute("data-tfhf");',
+                    'n.removeAttribute("data-tfhd");',
                     '}catch(err){w.$tflog.debug("[Atomic] Script Instantiation Error",err);}}}},',
                     /* Spark Module */
                     'sparkModule(MODS){',
@@ -240,7 +243,7 @@ describe('Modules - JSX - script - atomic', () => {
                     'oD("$unsubscribe",t=>w.$tfr.unsubscribe(UID,t),n);',
                     'oD("$publish",(t,v)=>w.$tfr.publish(t,v),n);',
                     'try{fn(ATOMIC?{mod:n,data:w.$tfdr({},data||{}),$:w.$tfutils}:{mod:n,data});}catch(err){w.$tflog.debug("[Atomic] Module Instantiation Error",err);}}},',
-                    '});})(),w);})(window);',
+                    '});})(),w);})(window,document);',
                 ].join(''),
             );
         });
@@ -248,7 +251,7 @@ describe('Modules - JSX - script - atomic', () => {
         it('Should be minified correct in debug mode', () => {
             expect(ARC_GLOBAL(true)).toBe(
                 [
-                    '(function(w){',
+                    '(function(w,d){',
                     'const oD=(n,v,t)=>{if(!t[n])Object.defineProperty(t,n,{value:v,configurable:!1,writable:!1});};',
                     'const gI=()=>Math.random().toString(36).slice(2);',
                     'oD("$tflog",{debug:console.debug},w);',
@@ -264,7 +267,7 @@ describe('Modules - JSX - script - atomic', () => {
                     'if(de&&--de.refs<=0)d.delete(r.data_id);',
                     '},',
                     /* Spark */
-                    'spark(FNS,DAT){',
+                    'spark(FNS,DAT,scope=d){',
                     'const ATOMIC=!!w.$tfhydra;',
                     'for(const[DID,val]of DAT){',
                     'if(!d.has(DID))d.set(DID,{val,refs:0});',
@@ -273,13 +276,14 @@ describe('Modules - JSX - script - atomic', () => {
                     'if(fn!==undefined&&!f.has(FID))f.set(FID,{fn});',
                     'const FREG=f.get(FID);',
                     'if(!FREG?.fn)continue;',
-                    'const nodes=document.querySelectorAll(`[data-tfhf="${FID}"]`);',
+                    'const nodes=(scope||d).querySelectorAll?.(`[data-tfhf="${FID}"]`)||[];',
                     'for(const n of nodes){',
+                    'if(n.$uid)continue;',
                     'const DID=n.getAttribute("data-tfhd")||undefined;',
                     'const DREG=DID?d.get(DID):{};',
                     'const UID=gI();',
                     'oD("$uid",UID,n);',
-                    'if(ATOMIC&&!n.$tfVM){',
+                    'if(ATOMIC){',
                     'oD("$subscribe",(t,c)=>w.$tfr.subscribe(n.$uid,t,c),n);',
                     'oD("$subscribeOnce",(t,c)=>w.$tfr.subscribe(n.$uid,t,v=>{c(v);n.$unsubscribe(t);}),n);',
                     'oD("$unsubscribe",t=>w.$tfr.unsubscribe(n.$uid,t),n);',
@@ -297,6 +301,8 @@ describe('Modules - JSX - script - atomic', () => {
                     'if(ATOMIC&&typeof n.$mount==="function"){',
                     'try{n.$mount()}catch(err){w.$tflog.debug("[Atomic] Failed to mount",err);}',
                     '}',
+                    'n.removeAttribute("data-tfhf");',
+                    'n.removeAttribute("data-tfhd");',
                     '}catch(err){w.$tflog.debug("[Atomic] Script Instantiation Error",err);}}}},',
                     /* Spark Module */
                     'sparkModule(MODS){',
@@ -312,7 +318,7 @@ describe('Modules - JSX - script - atomic', () => {
                     'oD("$unsubscribe",t=>w.$tfr.unsubscribe(UID,t),n);',
                     'oD("$publish",(t,v)=>w.$tfr.publish(t,v),n);',
                     'try{fn(ATOMIC?{mod:n,data:w.$tfdr({},data||{}),$:w.$tfutils}:{mod:n,data});}catch(err){w.$tflog.debug("[Atomic] Module Instantiation Error",err);}}},',
-                    '});})(),w);})(window);',
+                    '});})(),w);})(window,document);',
                 ].join(''),
             );
         });

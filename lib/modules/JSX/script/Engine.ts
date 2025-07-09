@@ -118,7 +118,7 @@ export class ScriptEngine {
                 }
             }
             const DAT = '[' + [...this.map_data].map(([val, id]) => '["' + id + '",' + val + ']').join(',') + ']';
-            if (FNS.length || DAT.length) out += `w.${GLOBAL_ARC_NAME}.spark(${'[' + FNS.join(',') + ']'},${DAT});`;
+            if (FNS.length || DAT.length) out += `w.${GLOBAL_ARC_NAME}.spark(${'[' + FNS.join(',') + ']'},${DAT},self?.parentNode);`;
         }
 
         if (!out.length) return '';
