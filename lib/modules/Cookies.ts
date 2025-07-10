@@ -52,7 +52,7 @@ export class Cookies {
 
     constructor(ctx: TriFrostContext, config: Partial<TriFrostCookieOptions> = {}) {
         this.#ctx = ctx;
-        this.#config = Object.prototype.toString.call(config) === '[object Object]' ? config : {};
+        this.#config = config || {};
 
         /* Process cookie header into map */
         const cookies = typeof ctx.headers.cookie === 'string' ? ctx.headers.cookie.split(';') : [];
@@ -89,7 +89,7 @@ export class Cookies {
      * @returns Cookie value or null if not found
      */
     get(name: string): string | null {
-        return typeof name === 'string' && name in this.#combined ? this.#combined[name] : null;
+        return this.#combined[name] ?? null;
     }
 
     /**
@@ -108,12 +108,13 @@ export class Cookies {
     set(name: string, value: string | number, options: Partial<TriFrostCookieOptions> = {}): void {
         const normalized = Number.isFinite(value) ? String(value) : value;
         const config = {
+            domain: this.#ctx.domain,
             ...this.#config,
-            ...(Object.prototype.toString.call(options) === '[object Object]' && options),
+            ...options,
         };
 
         /* Validate */
-        if (typeof name !== 'string' || typeof normalized !== 'string' || !RGX_NAME.test(name) || !RGX_VALUE.test(normalized))
+        if (typeof normalized !== 'string' || !RGX_NAME.test(name) || !RGX_VALUE.test(normalized))
             return this.#ctx.logger.error('TriFrostCookies@set: Invalid name or value', {name, value, options});
 
         /* Start cookie construction */

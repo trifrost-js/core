@@ -5,11 +5,15 @@ import CONSTANTS from '../../constants';
 import {MockContext} from '../../MockContext';
 
 describe('Modules - Cookies', () => {
-    const createCtx = (cookie?: string) => new MockContext({headers: cookie === undefined ? {} : {cookie}});
+    const createCtx = (opts?: {cookie?: string; domain?: string}) =>
+        new MockContext({
+            headers: opts?.cookie === undefined ? {} : {cookie: opts.cookie},
+            ...(opts?.domain !== undefined && {domain: opts.domain}),
+        });
 
     describe('constructor', () => {
         it('Parses multiple cookies from header', () => {
-            const cookies = new Cookies(createCtx('a=1; b=2; c=3'), {});
+            const cookies = new Cookies(createCtx({cookie: 'a=1; b=2; c=3'}), {});
             expect(cookies.all()).toEqual({
                 a: '1',
                 b: '2',
@@ -18,12 +22,12 @@ describe('Modules - Cookies', () => {
         });
 
         it('Decodes URI-encoded cookie values', () => {
-            const cookies = new Cookies(createCtx('token=a%20b%20c'));
+            const cookies = new Cookies(createCtx({cookie: 'token=a%20b%20c'}));
             expect(cookies.get('token')).toBe('a b c');
         });
 
         it('Trims whitespace around keys and values', () => {
-            const cookies = new Cookies(createCtx('  session = trimmed  ;  foo= bar '), {});
+            const cookies = new Cookies(createCtx({cookie: '  session = trimmed  ;  foo= bar '}), {});
             expect(cookies.all()).toEqual({
                 session: 'trimmed',
                 foo: 'bar',
@@ -39,7 +43,7 @@ describe('Modules - Cookies', () => {
         });
 
         it('Ignores malformed cookies (missing value)', () => {
-            const cookies = new Cookies(createCtx('valid=ok; badcookie; another=ok; badcookie2='), {});
+            const cookies = new Cookies(createCtx({cookie: 'valid=ok; badcookie; another=ok; badcookie2='}), {});
             expect(cookies.all()).toEqual({
                 valid: 'ok',
                 another: 'ok',
@@ -47,7 +51,7 @@ describe('Modules - Cookies', () => {
         });
 
         it('Handles completely empty cookie header', () => {
-            const cookies = new Cookies(createCtx(''), {});
+            const cookies = new Cookies(createCtx({cookie: ''}), {});
             expect(cookies.all()).toEqual({});
         });
 
@@ -59,12 +63,16 @@ describe('Modules - Cookies', () => {
         it('Accepts and stores global config', () => {
             const config = {
                 path: '/secure',
-                domain: 'trifrost.land',
                 secure: true,
                 httponly: true,
                 samesite: 'Strict' as const,
             };
-            const cookies = new Cookies(createCtx(), config);
+            const cookies = new Cookies(
+                createCtx({
+                    domain: 'trifrost.land',
+                }),
+                config,
+            );
             cookies.set('token', 'abc');
             expect(cookies.outgoing[0].includes('Path=/secure')).toBe(true);
             expect(cookies.outgoing[0].includes('Domain=trifrost.land')).toBe(true);
@@ -85,18 +93,13 @@ describe('Modules - Cookies', () => {
 
     describe('get', () => {
         it('Retrieves existing cookie', () => {
-            const cookies = new Cookies(createCtx('foo=bar'), {});
+            const cookies = new Cookies(createCtx({cookie: 'foo=bar'}), {});
             expect(cookies.get('foo')).toBe('bar');
         });
 
         it('Returns null for non-existent cookie', () => {
-            const cookies = new Cookies(createCtx('foo=bar'), {});
+            const cookies = new Cookies(createCtx({cookie: 'foo=bar'}), {});
             expect(cookies.get('nope')).toBe(null);
-        });
-
-        it('Returns null when passed a non/empty-string', () => {
-            const cookies = new Cookies(createCtx('foo=bar'), {});
-            for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) expect(cookies.get(el as unknown as string)).toBe(null);
         });
 
         it('Handles empty cookie header', () => {
@@ -105,28 +108,28 @@ describe('Modules - Cookies', () => {
         });
 
         it('Handles malformed cookie string (missing "=")', () => {
-            const cookies = new Cookies(createCtx('foo'), {});
+            const cookies = new Cookies(createCtx({cookie: 'foo'}), {});
             expect(cookies.get('foo')).toBe(null);
         });
 
         it('Trims whitespace around cookie names', () => {
-            const cookies = new Cookies(createCtx(' foo =bar '), {});
+            const cookies = new Cookies(createCtx({cookie: ' foo =bar '}), {});
             expect(cookies.get('foo')).toBe('bar');
         });
 
         it('Decodes URI-encoded values correctly', () => {
-            const cookies = new Cookies(createCtx('foo=space%20bar'), {});
+            const cookies = new Cookies(createCtx({cookie: 'foo=space%20bar'}), {});
             expect(cookies.get('foo')).toBe('space bar');
         });
 
         it('Returns latest value if overwritten via set()', () => {
-            const cookies = new Cookies(createCtx('foo=bar'), {});
+            const cookies = new Cookies(createCtx({cookie: 'foo=bar'}), {});
             cookies.set('foo', 'baz');
             expect(cookies.get('foo')).toBe('baz');
         });
 
         it('Handles cookies with equal signs in the value', () => {
-            const cookies = new Cookies(createCtx('x=1=2=3'), {});
+            const cookies = new Cookies(createCtx({cookie: 'x=1=2=3'}), {});
             expect(cookies.get('x')).toBe('1=2=3');
         });
     });
@@ -142,13 +145,6 @@ describe('Modules - Cookies', () => {
             const cookies = new Cookies(createCtx(), {});
             cookies.set('sess', 'space bar', {secure: false, samesite: 'None'});
             expect(cookies.outgoing).toEqual(['sess=space%20bar; SameSite=None; Secure']);
-        });
-
-        it('Rejects cookie with non/empty string name', () => {
-            const ctx = createCtx();
-            const cookies = new Cookies(ctx, {});
-            for (const el of CONSTANTS.NOT_STRING_WITH_EMPTY) cookies.set(el as unknown as string, 'hello');
-            expect(cookies.outgoing).toEqual([]);
         });
 
         it('Rejects cookie with invalid value', () => {
@@ -211,8 +207,7 @@ describe('Modules - Cookies', () => {
         it('Ignores invalid options passed', () => {
             for (const el of CONSTANTS.NOT_OBJECT) {
                 if (el === undefined) continue;
-                const cookies = new Cookies(createCtx(), {
-                    domain: 'example.com',
+                const cookies = new Cookies(createCtx({domain: 'example.com'}), {
                     path: '/secure',
                 });
                 cookies.set('token', 'val', el as TriFrostCookieOptions);
@@ -249,9 +244,8 @@ describe('Modules - Cookies', () => {
         });
 
         it('Falls back to global config when no options passed in set()', () => {
-            const cookies = new Cookies(createCtx(), {
+            const cookies = new Cookies(createCtx({domain: 'trifrost.land'}), {
                 path: '/default',
-                domain: 'trifrost.land',
                 secure: true,
                 httponly: true,
                 samesite: 'Strict',
@@ -265,9 +259,8 @@ describe('Modules - Cookies', () => {
         });
 
         it('Overrides global config with provided options in set()', () => {
-            const cookies = new Cookies(createCtx(), {
+            const cookies = new Cookies(createCtx({domain: 'trifrost.land'}), {
                 path: '/default',
-                domain: 'trifrost.land',
                 secure: true,
                 samesite: 'Lax',
             });
@@ -309,7 +302,7 @@ describe('Modules - Cookies', () => {
 
     describe('del', () => {
         it('Deletes a cookie', () => {
-            const cookies = new Cookies(createCtx('remove=me; donotremove=me'), {});
+            const cookies = new Cookies(createCtx({cookie: 'remove=me; donotremove=me'}), {});
             const now = new Date();
             cookies.del('remove', {path: '/'});
             expect(cookies.outgoing).toEqual([`remove=; Expires=${addUTC(now, 0, 'seconds').toUTCString()}; Max-Age=0; Path=/; Secure`]);
@@ -346,14 +339,14 @@ describe('Modules - Cookies', () => {
         });
 
         it('Removes from combined map after deletion', () => {
-            const cookies = new Cookies(createCtx('killme=now'), {});
+            const cookies = new Cookies(createCtx({cookie: 'killme=now'}), {});
             expect(cookies.get('killme')).toBe('now');
             cookies.del('killme');
             expect(cookies.get('killme')).toBe(null);
         });
 
         it('Supports path and domain in deletion options', () => {
-            const cookies = new Cookies(createCtx('target=zap'), {});
+            const cookies = new Cookies(createCtx({cookie: 'target=zap'}), {});
             const now = new Date();
             cookies.del('target', {path: '/admin', domain: 'foo.com'});
             expect(cookies.outgoing).toEqual([
@@ -362,7 +355,7 @@ describe('Modules - Cookies', () => {
         });
 
         it('Gracefully re-deletes a cookie that was already deleted', () => {
-            const cookies = new Cookies(createCtx('dup=1'), {});
+            const cookies = new Cookies(createCtx({cookie: 'dup=1'}), {});
             const now = new Date();
             cookies.del('dup');
             cookies.del('dup');
@@ -372,7 +365,13 @@ describe('Modules - Cookies', () => {
         });
 
         it('Uses global config if delete options are not passed', () => {
-            const cookies = new Cookies(createCtx('x=123'), {path: '/global', domain: 'global.com'});
+            const cookies = new Cookies(
+                createCtx({
+                    cookie: 'x=123',
+                    domain: 'global.com',
+                }),
+                {path: '/global'},
+            );
             const now = new Date();
             cookies.del('x');
             expect(cookies.outgoing).toEqual([
@@ -382,7 +381,7 @@ describe('Modules - Cookies', () => {
 
         describe('prefix', () => {
             it('Deletes all cookies matching a prefix pattern', () => {
-                const cookies = new Cookies(createCtx('user.1=val1; user.2=val2; auth=token'), {});
+                const cookies = new Cookies(createCtx({cookie: 'user.1=val1; user.2=val2; auth=token'}), {});
                 const now = new Date();
                 cookies.del({prefix: 'user.'});
                 expect(cookies.get('user.1')).toBe(null);
@@ -395,7 +394,7 @@ describe('Modules - Cookies', () => {
             });
 
             it('Ignores cookies that do not match prefix', () => {
-                const cookies = new Cookies(createCtx('foo=1; bar=2'), {});
+                const cookies = new Cookies(createCtx({cookie: 'foo=1; bar=2'}), {});
                 cookies.del({prefix: 'baz'});
                 expect(cookies.get('foo')).toBe('1');
                 expect(cookies.get('bar')).toBe('2');
@@ -403,7 +402,7 @@ describe('Modules - Cookies', () => {
             });
 
             it('Supports deletion with path/domain options', () => {
-                const cookies = new Cookies(createCtx('x.1=foo; x.2=bar'), {});
+                const cookies = new Cookies(createCtx({cookie: 'x.1=foo; x.2=bar'}), {});
                 const now = new Date();
                 cookies.del({prefix: 'x.'}, {path: '/somewhere', domain: 'trifrost.land'});
                 expect(cookies.outgoing).toEqual([
@@ -413,7 +412,7 @@ describe('Modules - Cookies', () => {
             });
 
             it('Handles prefix that matches nothing without error', () => {
-                const cookies = new Cookies(createCtx('a=1; b=2'), {});
+                const cookies = new Cookies(createCtx({cookie: 'a=1; b=2'}), {});
                 cookies.del({prefix: 'user.'});
                 expect(cookies.get('a')).toBe('1');
                 expect(cookies.get('b')).toBe('2');
@@ -421,7 +420,7 @@ describe('Modules - Cookies', () => {
             });
 
             it('Deletes both incoming and newly set cookies matching prefix', () => {
-                const cookies = new Cookies(createCtx('x.1=foo; y.1=bar'), {});
+                const cookies = new Cookies(createCtx({cookie: 'x.1=foo; y.1=bar'}), {});
                 const now = new Date();
                 cookies.set('x.2', 'new');
                 cookies.set('z.1', 'keep');
@@ -439,7 +438,7 @@ describe('Modules - Cookies', () => {
 
     describe('delAll', () => {
         it('Should remove all incoming cookies', () => {
-            const cookies = new Cookies(createCtx('a=1; b=2; c=3'), {});
+            const cookies = new Cookies(createCtx({cookie: 'a=1; b=2; c=3'}), {});
             const now = new Date();
             cookies.delAll({path: '/'});
             expect(cookies.outgoing).toEqual([
@@ -456,7 +455,7 @@ describe('Modules - Cookies', () => {
         });
 
         it('Also deletes cookies that were set after construction', () => {
-            const cookies = new Cookies(createCtx('foo=bar'), {});
+            const cookies = new Cookies(createCtx({cookie: 'foo=bar'}), {});
             cookies.set('baz', '123');
             cookies.delAll();
             expect(cookies.outgoing).toEqual([`foo=; Expires=${addUTC(new Date(), 0, 'seconds').toUTCString()}; Max-Age=0; Secure`]);
@@ -469,7 +468,7 @@ describe('Modules - Cookies', () => {
         });
 
         it('Applies global config if no delAll options provided', () => {
-            const cookies = new Cookies(createCtx('one=1; two=2'), {path: '/default', domain: 'trifrost.land'});
+            const cookies = new Cookies(createCtx({cookie: 'one=1; two=2', domain: 'trifrost.land'}), {path: '/default'});
             cookies.delAll();
             expect(cookies.outgoing).toEqual([
                 `one=; Expires=${addUTC(new Date(), 0, 'seconds').toUTCString()}; Max-Age=0; Path=/default; Domain=trifrost.land; Secure`,
@@ -478,7 +477,7 @@ describe('Modules - Cookies', () => {
         });
 
         it('Overrides global config with passed options', () => {
-            const cookies = new Cookies(createCtx('x=1; y=2'), {path: '/global', domain: 'default.com'});
+            const cookies = new Cookies(createCtx({cookie: 'x=1; y=2', domain: 'default.com'}), {path: '/global'});
             cookies.delAll({path: '/override', domain: 'override.com'});
             expect(cookies.outgoing).toEqual([
                 `x=; Expires=${addUTC(new Date(), 0, 'seconds').toUTCString()}; Max-Age=0; Path=/override; Domain=override.com; Secure`,
@@ -489,7 +488,7 @@ describe('Modules - Cookies', () => {
 
     describe('all', () => {
         it('Reflects incoming and outgoing cookies', () => {
-            const cookies = new Cookies(createCtx('x=old'), {});
+            const cookies = new Cookies(createCtx({cookie: 'x=old'}), {});
             cookies.set('y', 'new');
             expect(cookies.all()).toEqual({x: 'old', y: 'new'});
         });
@@ -500,14 +499,14 @@ describe('Modules - Cookies', () => {
         });
 
         it('Reflects state changes after set and delete', () => {
-            const cookies = new Cookies(createCtx('a=1; b=2'), {});
+            const cookies = new Cookies(createCtx({cookie: 'a=1; b=2'}), {});
             cookies.set('c', '3');
             cookies.del('a');
             expect(cookies.all()).toEqual({b: '2', c: '3'});
         });
 
         it('Returns a shallow clone, not internal reference', () => {
-            const cookies = new Cookies(createCtx('safe=yes'), {});
+            const cookies = new Cookies(createCtx({cookie: 'safe=yes'}), {});
             const all = cookies.all();
             /* @ts-expect-error Should be good */
             all.safe = 'nope';
@@ -515,18 +514,18 @@ describe('Modules - Cookies', () => {
         });
 
         it('Reflects decoded incoming values', () => {
-            const cookies = new Cookies(createCtx('fancy=spaced%20out'), {});
+            const cookies = new Cookies(createCtx({cookie: 'fancy=spaced%20out'}), {});
             expect(cookies.all()).toEqual({fancy: 'spaced out'});
         });
 
         it('Overwrites reflected value when same cookie is reset', () => {
-            const cookies = new Cookies(createCtx('dup=old'), {});
+            const cookies = new Cookies(createCtx({cookie: 'dup=old'}), {});
             cookies.set('dup', 'new');
             expect(cookies.all()).toEqual({dup: 'new'});
         });
 
         it('Reflects prefix deletions accurately', () => {
-            const cookies = new Cookies(createCtx('a.1=val; a.2=val; b=keep'), {});
+            const cookies = new Cookies(createCtx({cookie: 'a.1=val; a.2=val; b=keep'}), {});
             cookies.del({prefix: 'a.'});
             expect(cookies.all()).toEqual({b: 'keep'});
         });
