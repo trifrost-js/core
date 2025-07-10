@@ -101,12 +101,11 @@ jobs:
         run: |
           rm -rf ./dist
           mkdir ./dist
-          npx tsc -p ./tsconfig.build.json
-          npx tsc -p ./tsconfig.types.json
-          npx tsc -p ./tsconfig.types_all.json
+          npm run build:esm
+          npm run build:cjs
+          npm run build:types
+          npm run build:jsx
           cp package.json README.md LICENSE.md .npmignore ./dist
-          cp ./lib/modules/JSX/jsx.d.ts ./dist/modules/JSX/jsx.d.ts
-          cp ./lib/jsx-runtime.d.ts ./dist/jsx-runtime.d.ts
       - name: Publish to npm
         run: |
           cd ./dist

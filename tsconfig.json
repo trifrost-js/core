@@ -1,22 +1,17 @@
 {
     "compilerOptions": {
         "lib": ["es2023"],
-        "module": "node16",
-        "target": "es2022",
+        "module": "NodeNext",
+        "target": "ES2022",
         "strict": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "moduleResolution": "node16",
+        "moduleResolution": "NodeNext",
         "outDir": "./dist",
         "jsx": "react-jsx",
         "jsxImportSource": "./lib/modules/JSX",
-        "useDefineForClassFields": true,
-        "experimentalDecorators": false,
-        "emitDecoratorMetadata": false
+        "useDefineForClassFields": true
     },
-    "include": [
-        "lib/**/*.ts",
-        "lib/*.ts"
-    ]
+    "include": ["lib/**/*.ts", "lib/*.ts"]
 }

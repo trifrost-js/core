@@ -2,10 +2,12 @@
     "name": "@trifrost/core",
     "version": "0.47.5",
     "description": "Blazingly fast, runtime-agnostic server framework for modern edge and node environments",
-    "main": "index.js",
     "scripts": {
-        "build": "npm run lint && npm run test && tsc -p ./tsconfig.build.json && tsc -p ./tsconfig.types.json && tsc -p ./tsconfig.types_all.json && npm run build:jsx",
-        "build:jsx": "cp ./lib/modules/JSX/jsx.d.ts ./dist/modules/JSX/jsx.d.ts && cp ./lib/jsx-runtime.d.ts ./dist/jsx-runtime.d.ts",
+        "build": "npm run lint && npm run test && npm run build:esm && npm run build:cjs && npm run build:types && npm run build:jsx",
+        "build:esm": "tsc -p tsconfig.build.esm.json",
+        "build:cjs": "tsc -p tsconfig.build.cjs.json",
+        "build:types": "tsc -p tsconfig.types.json",
+        "build:jsx": "cp ./lib/modules/JSX/jsx.d.ts ./dist/types/modules/JSX/jsx.d.ts && cp ./lib/jsx-runtime.d.ts ./dist/types/jsx-runtime.d.ts",
         "test": "vitest run --config vitest.config.ts",
         "test:coverage": "vitest run --coverage --config vitest.coverage.config.ts",
         "lint": "npm run lint:src && npm run lint:test",
@@ -38,68 +40,60 @@
         "url": "https://github.com/trifrost-js/core/issues"
     },
     "homepage": "https://trifrost.dev",
-    "types": "index.d.ts",
     "sideEffects": false,
+    "main": "./cjs/index.js",
+    "module": "./esm/index.js",
+    "types": "./types/index.d.ts",
     "exports": {
         ".": {
-            "types": "./index.d.ts",
-            "import": "./index.js",
-            "require": "./index.js",
-            "default": "./index.js"
+            "types": "./types/index.d.ts",
+            "import": "./esm/index.js",
+            "require": "./cjs/index.js"
         },
         "./jsx-runtime": {
-            "types": "./jsx-runtime.d.ts",
-            "import": "./jsx-runtime.js",
-            "require": "./jsx-runtime.js",
-            "default": "./jsx-runtime.js"
+            "types": "./types/jsx-runtime.d.ts",
+            "import": "./esm/jsx-runtime.js",
+            "require": "./cjs/jsx-runtime.js"
         },
         "./jsx-dev-runtime": {
-            "types": "./jsx-runtime.d.ts",
-            "import": "./jsx-runtime.js",
-            "require": "./jsx-runtime.js",
-            "default": "./jsx-runtime.js"
+            "types": "./types/jsx-runtime.d.ts",
+            "import": "./esm/jsx-runtime.js",
+            "require": "./cjs/jsx-runtime.js"
         },
         "./middleware": {
-            "types": "./middleware/index.d.ts",
-            "import": "./middleware/index.js",
-            "require": "./middleware/index.js",
-            "default": "./middleware/index.js"
+            "types": "./types/middleware/index.d.ts",
+            "import": "./esm/middleware/index.js",
+            "require": "./cjs/middleware/index.js"
         },
         "./modules": {
-            "types": "./modules/index.d.ts",
-            "import": "./modules/index.js",
-            "require": "./modules/index.js",
-            "default": "./modules/index.js"
+            "types": "./types/modules/index.d.ts",
+            "import": "./esm/modules/index.js",
+            "require": "./cjs/modules/index.js"
         },
         "./modules/Cache": {
-            "types": "./modules/Cache/index.d.ts",
-            "import": "./modules/Cache/index.js",
-            "require": "./modules/Cache/index.js",
-            "default": "./modules/Cache/index.js"
+            "types": "./types/modules/Cache/index.d.ts",
+            "import": "./esm/modules/Cache/index.js",
+            "require": "./cjs/modules/Cache/index.js"
         },
         "./modules/JSX": {
-            "types": "./modules/JSX/index.d.ts",
-            "import": "./modules/JSX/index.js",
-            "require": "./modules/JSX/index.js",
-            "default": "./modules/JSX/index.js"
+            "types": "./types/modules/JSX/index.d.ts",
+            "import": "./esm/modules/JSX/index.js",
+            "require": "./cjs/modules/JSX/index.js"
         },
         "./modules/JSX/style": {
-            "types": "./modules/JSX/style/index.d.ts",
-            "import": "./modules/JSX/style/index.js",
-            "require": "./modules/JSX/style/index.js",
-            "default": "./modules/JSX/style/index.js"
+            "types": "./types/modules/JSX/style/index.d.ts",
+            "import": "./esm/modules/JSX/style/index.js",
+            "require": "./cjs/modules/JSX/style/index.js"
         },
         "./modules/Logger": {
-            "types": "./modules/Logger/index.d.ts",
-            "import": "./modules/Logger/index.js",
-            "require": "./modules/Logger/index.js",
-            "default": "./modules/Logger/index.js"
+            "types": "./types/modules/Logger/index.d.ts",
+            "import": "./esm/modules/Logger/index.js",
+            "require": "./cjs/modules/Logger/index.js"
         },
         "./modules/RateLimit": {
-            "types": "./modules/RateLimit/index.d.ts",
-            "import": "./modules/RateLimit/index.js",
-            "require": "./modules/RateLimit/index.js",
-            "default": "./modules/RateLimit/index.js"
+            "types": "./types/modules/RateLimit/index.d.ts",
+            "import": "./esm/modules/RateLimit/index.js",
+            "require": "./cjs/modules/RateLimit/index.js"
         }
     },
     "dependencies": {
