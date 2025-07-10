@@ -38,11 +38,6 @@ class TestContext extends Context {
             }
         }
     }
-
-    public call_getIPFromHeaders() {
-        /* @ts-expect-error Should be good */
-        return this.getIPFromHeaders();
-    }
 }
 
 describe('Context', () => {
@@ -502,7 +497,8 @@ describe('Context', () => {
         it('Caches computed IP after first access with trustProxy=false', () => {
             /* @ts-expect-error Should be good */
             TestContext.prototype.getIP = vi.fn().mockReturnValue('127.12.12.12');
-            const spy = vi.spyOn(ctx, 'call_getIPFromHeaders');
+            /* @ts-expect-error Should be good */
+            const spy = vi.spyOn(ctx, 'getIPFromHeaders');
             const val1 = ctx.ip;
             const val2 = ctx.ip;
             expect(val1).toBe('127.12.12.12');
@@ -910,7 +906,6 @@ describe('Context', () => {
         const originalFetch = globalThis.fetch;
 
         beforeEach(() => {
-            /* @ts-expect-error Should be good */
             globalThis.fetch = vi.fn();
             ctx.logger.setAttributes = vi.fn();
             ctx.logger.span = vi.fn((_, fn) => fn());
@@ -1390,9 +1385,9 @@ describe('Context', () => {
         it('Prefixes host for non-slash-prefixed relative paths', () => {
             const rel = new TestContext(
                 mockLogger as any,
-                /* @ts-expect-error Should be good */
                 {
                     ...baseConfig,
+                    /* @ts-expect-error Should be good */
                     host: 'example.org',
                 },
                 {
@@ -1413,9 +1408,9 @@ describe('Context', () => {
         it('Upgrades http:// host to https:// if needed', () => {
             const rel = new TestContext(
                 mockLogger as any,
-                /* @ts-expect-error Should be good */
                 {
                     ...baseConfig,
+                    /* @ts-expect-error Should be good */
                     host: 'http://plain.org',
                 },
                 {
@@ -2054,40 +2049,41 @@ describe('Context', () => {
                 },
             );
 
-            expect(ctxNoProxy.call_getIPFromHeaders()).toBe(null);
+            /* @ts-expect-error Should be good */
+            expect(ctxNoProxy.getIPFromHeaders()).toBe(null);
         });
 
         it('Returns valid IP from x-forwarded-for', () => {
             ctx = new TestContext(mockLogger as any, baseConfig as any, {
                 ...baseRequest,
-                trustProxy: true,
                 headers: {'x-forwarded-for': '8.8.8.8, 4.4.4.4'},
             });
-            expect(ctx.call_getIPFromHeaders()).toBe('8.8.8.8');
+            /* @ts-expect-error Should be good */
+            expect(ctx.getIPFromHeaders()).toBe('8.8.8.8');
         });
 
         it('Returns IP from next available candidate', () => {
             ctx = new TestContext(mockLogger as any, baseConfig as any, {
                 ...baseRequest,
-                trustProxy: true,
                 headers: {
                     forwarded: 'for=9.9.9.9',
                     'x-real-ip': '5.5.5.5',
                 },
             });
-            expect(ctx.call_getIPFromHeaders()).toBe('5.5.5.5');
+            /* @ts-expect-error Should be good */
+            expect(ctx.getIPFromHeaders()).toBe('5.5.5.5');
         });
 
         it('Returns null if no valid header is found', () => {
             ctx = new TestContext(mockLogger as any, baseConfig as any, {
                 ...baseRequest,
-                trustProxy: true,
                 headers: {
                     'x-forwarded-for': 'invalid-ip',
                     'x-real-ip': '',
                 },
             });
-            expect(ctx.call_getIPFromHeaders()).toBe(null);
+            /* @ts-expect-error Should be good */
+            expect(ctx.getIPFromHeaders()).toBe(null);
         });
 
         it('Promotes matched header to front of list', () => {
@@ -2098,14 +2094,108 @@ describe('Context', () => {
             const originalOrder = [...(IP_HEADER_CANDIDATES as string[])];
             ctx = new TestContext(mockLogger as any, baseConfig as any, {
                 ...baseRequest,
-                trustProxy: true,
                 headers,
             });
 
-            ctx.call_getIPFromHeaders();
+            /* @ts-expect-error Should be good */
+            ctx.getIPFromHeaders();
             expect(IP_HEADER_CANDIDATES[0]).toBe('cf-connecting-ip');
             IP_HEADER_CANDIDATES.length = 0;
             IP_HEADER_CANDIDATES.push(...originalOrder);
+        });
+    });
+
+    describe('getHostFromHeaders', () => {
+        it('Returns null if trustProxy is not true', () => {
+            const ctx = new TestContext(mockLogger as any, {...baseConfig, trustProxy: false} as any, {
+                ...baseRequest,
+                headers: {'x-forwarded-host': 'foo.com'},
+            });
+            /* @ts-expect-error Should be good */
+            expect(ctx.getHostFromHeaders()).toBeNull();
+        });
+
+        it('Returns x-forwarded-host if present and valid', () => {
+            const ctx = new TestContext(mockLogger as any, {...baseConfig, trustProxy: true} as any, {
+                ...baseRequest,
+                headers: {'x-forwarded-host': ' example.com '},
+            });
+            /* @ts-expect-error Should be good */
+            expect(ctx.getHostFromHeaders()).toBe('example.com');
+        });
+
+        it('Returns host from Forwarded header if x-forwarded-host is missing', () => {
+            const ctx = new TestContext(mockLogger as any, {...baseConfig, trustProxy: true} as any, {
+                ...baseRequest,
+                headers: {forwarded: 'for=123.123.123.123;host=api.example.com;proto=https'},
+            });
+            /* @ts-expect-error Should be good */
+            expect(ctx.getHostFromHeaders()).toBe('api.example.com');
+        });
+
+        it('Parses forwarded case-insensitively', () => {
+            const ctx = new TestContext(mockLogger as any, {...baseConfig, trustProxy: true} as any, {
+                ...baseRequest,
+                headers: {forwarded: 'Host=api.example.com'},
+            });
+            /* @ts-expect-error Should be good */
+            expect(ctx.getHostFromHeaders()).toBe('api.example.com');
+        });
+
+        it('Returns host header if no forwarded variants exist', () => {
+            const ctx = new TestContext(mockLogger as any, {...baseConfig, trustProxy: true} as any, {
+                ...baseRequest,
+                headers: {host: '  my.site.org '},
+            });
+            /* @ts-expect-error Should be good */
+            expect(ctx.getHostFromHeaders()).toBe('my.site.org');
+        });
+
+        it('Returns null when all candidate headers are missing or empty', () => {
+            const ctx = new TestContext(mockLogger as any, {...baseConfig, trustProxy: true} as any, {
+                ...baseRequest,
+                headers: {},
+            });
+            /* @ts-expect-error Should be good */
+            expect(ctx.getHostFromHeaders()).toBeNull();
+        });
+
+        it('Skips empty x-forwarded-host and falls back properly', () => {
+            const ctx = new TestContext(mockLogger as any, {...baseConfig, trustProxy: true} as any, {
+                ...baseRequest,
+                headers: {'x-forwarded-host': '   ', host: 'my.com'},
+            });
+            /* @ts-expect-error Should be good */
+            expect(ctx.getHostFromHeaders()).toBe('my.com');
+        });
+
+        it('Skips invalid forwarded and falls back to host', () => {
+            const ctx = new TestContext(mockLogger as any, {...baseConfig, trustProxy: true} as any, {
+                ...baseRequest,
+                headers: {forwarded: 'garbage-string', host: 'example.org'},
+            });
+            /* @ts-expect-error Should be good */
+            expect(ctx.getHostFromHeaders()).toBe('example.org');
+        });
+
+        it('Handles malformed forwarded header gracefully', () => {
+            const ctx = new TestContext(mockLogger as any, {...baseConfig, trustProxy: true} as any, {
+                ...baseRequest,
+                headers: {forwarded: ';;;;;', host: 'fallback.org'},
+            });
+            /* @ts-expect-error Should be good */
+            expect(ctx.getHostFromHeaders()).toBe('fallback.org');
+        });
+
+        it('Rejects non-string values in headers', () => {
+            for (const badVal of CONSTANTS.NOT_STRING_WITH_EMPTY) {
+                const ctx = new TestContext(mockLogger as any, {...baseConfig, trustProxy: true} as any, {
+                    ...baseRequest,
+                    headers: {'x-forwarded-host': badVal as any, host: 'fallback.com'},
+                });
+                /* @ts-expect-error Should be good */
+                expect(ctx.getHostFromHeaders()).toBe('fallback.com');
+            }
         });
     });
 });

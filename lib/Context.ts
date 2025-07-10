@@ -858,13 +858,13 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
     }
 
     /**
-     * MARK: Private
+     * MARK: Protected
      */
 
     /**
      * If trustProxy is true tries to compute the IP from well-known headers
      */
-    private getIPFromHeaders(): string | null {
+    protected getIPFromHeaders(): string | null {
         if (this.ctx_config.trustProxy !== true) return null;
 
         const headers = this.headers;
@@ -891,13 +891,22 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
     }
 
     /**
-     * MARK: Abstract
+     * If trustProxy is true tries to compute the Host from well-known headers
      */
+    protected getHostFromHeaders(): string | null {
+        if (this.ctx_config.trustProxy !== true) return null;
+        const headers = this.headers;
 
-    /**
-     * Retrieve a streamable
-     */
-    abstract getStream(path: string): Promise<{stream: unknown; size: number | null} | null>;
+        if (isNeString(headers['x-forwarded-host'])) return headers['x-forwarded-host'].trim();
+
+        const forwarded = this.headers['forwarded'];
+        if (isNeString(forwarded)) {
+            const m = forwarded.match(/host=([^;]+)/i);
+            if (m) return m[1].trim();
+        }
+
+        return isNeString(headers.host) ? headers.host.trim() : null;
+    }
 
     /**
      * Stream a response from a streamlike value
@@ -914,6 +923,15 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
         /* Clear timeout */
         this.clearTimeout();
     }
+
+    /**
+     * MARK: Abstract
+     */
+
+    /**
+     * Retrieve a streamable
+     */
+    abstract getStream(path: string): Promise<{stream: unknown; size: number | null} | null>;
 
     /**
      * Runs our after hooks
