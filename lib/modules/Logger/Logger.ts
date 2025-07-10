@@ -13,28 +13,10 @@ import {hexId} from '../../utils/Generic';
 export function isValidTraceId(str: string): boolean {
     if (str.length !== 32) return false;
 
-    for (let i = 0; i < 32; i++) {
-        switch (str.charCodeAt(i)) {
-            case 48: /* 0 */
-            case 49: /* 1 */
-            case 50: /* 2 */
-            case 51: /* 3 */
-            case 52: /* 4 */
-            case 53: /* 5 */
-            case 54: /* 6 */
-            case 55: /* 7 */
-            case 56: /* 8 */
-            case 57: /* 9 */
-            case 97: /* a */
-            case 98: /* b */
-            case 99: /* c */
-            case 100: /* d */
-            case 101: /* e */
-            case 102 /* f */:
-                continue;
-            default:
-                return false;
-        }
+    let c: number;
+    for (let i = 31; i >= 0; i--) {
+        c = str.charCodeAt(i);
+        if ((c < 48 || c > 57) && (c < 97 || c > 102)) return false;
     }
     return true;
 }

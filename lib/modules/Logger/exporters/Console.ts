@@ -8,16 +8,23 @@ import {createScrambler, OMIT_PRESETS, type ScramblerValue} from '../../../utils
 /* Default format function */
 const DEFAULT_FORMAT = (log: TriFrostLoggerLogPayload) => '[' + log.time.toISOString() + '] [' + log.level + '] ' + log.message;
 
-const INCLUSION_FIELDS = ['ctx', 'trace_id', 'span_id', 'time', 'level', 'global'] as const;
+const INCLUSION_FIELDS = {
+    ctx: 1,
+    trace_id: 1,
+    span_id: 1,
+    time: 1,
+    level: 1,
+    global: 1,
+} as const;
 
 type ConsoleExporterFormatter = (log: TriFrostLoggerLogPayload) => string;
-type ConsoleExporterIncludeField = (typeof INCLUSION_FIELDS)[number];
+type ConsoleExporterIncludeField = keyof typeof INCLUSION_FIELDS;
 
 function normalizeInclusion(inclusion: ConsoleExporterIncludeField[]) {
     const acc: Set<ConsoleExporterIncludeField> = new Set();
     for (let i = 0; i < inclusion.length; i++) {
         const val = inclusion[i];
-        if (INCLUSION_FIELDS.includes(val)) acc.add(val);
+        if (INCLUSION_FIELDS[val]) acc.add(val);
     }
     return [...acc.values()];
 }

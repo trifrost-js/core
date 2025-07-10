@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 ### Improved
+- **perf**: ~10% faster `isValidTraceId` via optimized ASCII range checks in Logger module
 - **misc**: adjust build system to dual-build ESM + CJS output
 
 ## [0.47.5] - 2025-07-09
