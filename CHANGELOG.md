@@ -4,16 +4,29 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-TriFrost gets a major observability upgrade with faster scramblers, better infrastructure secret detection, and improved dual-build output. This release focuses on performance and security while continuing to refine the core developer experience.
+## [0.48.0] - 2025-07-10
+This release upgrades TriFrost's observability layer with faster scramblers, enhanced infrastructure secret detection, and smarter host resolution while continuing to refine the core developer experience.
 
 ### Added
-- **feat**: added `OMIT_PRESETS.infra` to automatically redact infrastructure secrets like GitHub tokens, Stripe keys, AWS/GCP credentials, and JWT-style tokens. The **infra** preset is also included in the **defaults** used by the log scrambler. Scrambling (introduced in [0.28.0](https://www.trifrost.dev/news/releases/0.28.0)) helps redact sensitive fields from logs — see [redaction & scrambling docs](https://www.trifrost.dev/docs/logging-observability#redaction-scrambling-support) for details.
+- **feat**: Added `OMIT_PRESETS.infra` to automatically redact infrastructure secrets like GitHub tokens, Stripe keys, AWS/GCP credentials, and JWT-style tokens. The **infra** preset is also included in the **defaults** used by the log scrambler. Scrambling (introduced in [0.28.0](https://www.trifrost.dev/news/releases/0.28.0)) helps redact sensitive fields from logs — see [redaction & scrambling docs](https://www.trifrost.dev/docs/logging-observability#redaction-scrambling-support) for details.
+- **feat**: Added `ctx.domain` getter, which extracts the domain from the resolved host (e.g. `sub.example.com` -> `example.com`).
+- **feat**: Host configuration now uses `TRIFROST_HOST`, falling back to `SERVICE_HOST` and `HOST` environment variables. Treating them as canonical in non-trusted environments.
 
 ### Improved
 - **perf**: ~10% faster `isValidTraceId` via optimized ASCII range checks in Logger module
 - **perf**: Improved `createScrambler()`, with smarter pattern matching and lazy cloning, performance across all presets improved by **20–50%**, **even with expanded infra redaction**.
-- **misc**: adjust build system to dual-build ESM + CJS output
+- **qol**: Observability traces now include `http.host` for better visibility and trace correlation.
+- **security**: Host detection from headers (`x-forwarded-host`, `forwarded`) now only occurs when `trustProxy: true` is explicitly enabled (default in trusted environments like Cloudflare Workers). Otherwise, it falls back to environment-based resolution or `0.0.0.0`.
+- **misc**: Adjusted build system to dual-build ESM + CJS output.
+
+### Breaking
+- Removed `host` as an option on `App`. Host is now determined entirely from environment variables or request headers (see **Added** and **Improved**).
+
+---
+
+Faster scramblers, smarter defaults, and no secrets left behind.
+
+Stay fast. Stay minimal. Stay frosty ❄️.
 
 ## [0.47.5] - 2025-07-09
 ### Improved
