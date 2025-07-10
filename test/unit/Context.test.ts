@@ -10,6 +10,7 @@ import CONSTANTS from '../constants';
 import {Cookies} from '../../lib/modules';
 import {NONCE_WIN_SCRIPT} from '../../lib/modules/JSX/ctx/nonce';
 import {ARC_GLOBAL, ARC_GLOBAL_OBSERVER} from '../../lib/modules/JSX/script/atomic';
+import * as Generic from '../../lib/utils/Generic';
 
 class TestContext extends Context {
     constructor(logger: TriFrostRootLogger, cfg: TriFrostContextConfig, req: any) {
@@ -503,7 +504,7 @@ describe('Context', () => {
             const val2 = ctx.ip;
             expect(val1).toBe('127.12.12.12');
             expect(val1).toBe(val2);
-            expect(spy).not.toHaveBeenCalled();
+            expect(spy).toHaveBeenCalledTimes(1);
 
             /* @ts-expect-error Should be good */
             expect(TestContext.prototype.getIP).toHaveBeenCalledTimes(1);
@@ -724,23 +725,146 @@ describe('Context', () => {
     });
 
     describe('host', () => {
-        it('Prefers request.headers.host', () => {
-            expect(ctx.host).toBe('localhost');
+        it('Uses getHostFromHeaders() result if available', () => {
+            const ctx = new TestContext(mockLogger as any, baseConfig as any, {
+                ...baseRequest,
+                headers: {'x-forwarded-host': 'proxy.example.com'},
+            });
+
+            /* @ts-expect-error should be good */
+            const spy = vi.spyOn(ctx, 'getHostFromHeaders');
+            const spyDetermine = vi.spyOn(Generic, 'determineHost');
+
+            expect(ctx.host).toBe('proxy.example.com');
+
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(spyDetermine).not.toHaveBeenCalled();
         });
 
-        it('Falls back to config host if missing in headers', () => {
-            const cfgWithFallbackHost = {...baseConfig, host: 'fallback.example'};
-            const reqWithoutHost = {...baseRequest, headers: {}};
-            const ctx2 = new TestContext(mockLogger as any, cfgWithFallbackHost as any, reqWithoutHost);
-            expect(ctx2.host).toBe('fallback.example');
+        it('Uses getHostFromHeaders() result only once if available', () => {
+            const ctx = new TestContext(mockLogger as any, baseConfig as any, {
+                ...baseRequest,
+                headers: {'x-forwarded-host': 'proxy.example.com'},
+            });
+
+            /* @ts-expect-error should be good */
+            const spy = vi.spyOn(ctx, 'getHostFromHeaders');
+            const spyDetermine = vi.spyOn(Generic, 'determineHost');
+
+            expect(ctx.host).toBe('proxy.example.com');
+            expect(ctx.host).toBe('proxy.example.com');
+            expect(ctx.host).toBe('proxy.example.com');
+
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(spyDetermine).not.toHaveBeenCalled();
         });
 
-        it('Returns null if both header and config host are missing', () => {
-            const ctx3 = new TestContext(mockLogger as any, {...baseConfig, host: undefined} as any, {
+        it('Falls back to determineHost() if headers returns null with trustProxy true', () => {
+            const ctx = new TestContext(mockLogger as any, baseConfig as any, {
                 ...baseRequest,
                 headers: {},
             });
-            expect(ctx3.host).toBe(null);
+
+            /* @ts-expect-error should be good */
+            const spy = vi.spyOn(ctx, 'getHostFromHeaders');
+            const spyDetermine = vi.spyOn(Generic, 'determineHost');
+
+            expect(ctx.host).toBe('0.0.0.0');
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(spyDetermine).toHaveBeenCalledTimes(1);
+        });
+
+        it('Falls back to determineHost() if headers returns null with trustProxy true and caches result', () => {
+            const ctx = new TestContext(mockLogger as any, baseConfig as any, {
+                ...baseRequest,
+                headers: {},
+            });
+
+            /* @ts-expect-error should be good */
+            const spy = vi.spyOn(ctx, 'getHostFromHeaders');
+            const spyDetermine = vi.spyOn(Generic, 'determineHost');
+
+            expect(ctx.host).toBe('0.0.0.0');
+            expect(ctx.host).toBe('0.0.0.0');
+            expect(ctx.host).toBe('0.0.0.0');
+            expect(ctx.host).toBe('0.0.0.0');
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(spyDetermine).toHaveBeenCalledTimes(1);
+        });
+
+        it('Falls back to determineHost() if trustProxy is false', () => {
+            const ctx = new TestContext(mockLogger as any, {...baseConfig, trustProxy: false} as any, {
+                ...baseRequest,
+                headers: {},
+            });
+
+            /* @ts-expect-error should be good */
+            const spy = vi.spyOn(ctx, 'getHostFromHeaders');
+            const spyDetermine = vi.spyOn(Generic, 'determineHost');
+
+            expect(ctx.host).toBe('0.0.0.0');
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(spyDetermine).toHaveBeenCalledTimes(1);
+        });
+
+        it('Caches result after first access', () => {
+            const ctx = new TestContext(mockLogger as any, {...baseConfig, trustProxy: false} as any, {
+                ...baseRequest,
+                headers: {},
+            });
+
+            /* @ts-expect-error should be good */
+            const spy = vi.spyOn(ctx, 'getHostFromHeaders');
+            const spyDetermine = vi.spyOn(Generic, 'determineHost');
+
+            const host1 = ctx.host;
+            const host2 = ctx.host;
+
+            expect(host1).toBe('0.0.0.0');
+            expect(host1).toBe(host2);
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(spyDetermine).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('domain', () => {
+        it('Extracts effective domain from resolved host', () => {
+            const ctx = new TestContext(mockLogger as any, baseConfig as any, {
+                ...baseRequest,
+                headers: {host: 'subdomain.example.co.uk'},
+            });
+
+            expect(ctx.domain).toBe('example.co.uk');
+        });
+
+        it('Returns null for invalid or known non-domain hosts', () => {
+            const ctx = new TestContext(mockLogger as any, baseConfig as any, {
+                ...baseRequest,
+                headers: {host: 'localhost'},
+            });
+
+            expect(ctx.domain).toBeNull();
+        });
+
+        it('Returns null for IP-based hosts', () => {
+            const ctx = new TestContext(mockLogger as any, baseConfig as any, {
+                ...baseRequest,
+                headers: {host: '192.168.1.1'},
+            });
+
+            expect(ctx.domain).toBeNull();
+        });
+
+        it('Caches domain after first computation', () => {
+            const ctx = new TestContext(mockLogger as any, baseConfig as any, {
+                ...baseRequest,
+                headers: {host: 'api.dev.example.com'},
+            });
+
+            const d1 = ctx.domain;
+            const d2 = ctx.domain;
+            expect(d1).toBe('example.com');
+            expect(d1).toBe(d2);
         });
     });
 
@@ -1387,12 +1511,11 @@ describe('Context', () => {
                 mockLogger as any,
                 {
                     ...baseConfig,
-                    /* @ts-expect-error Should be good */
-                    host: 'example.org',
-                },
+                    trustProxy: true,
+                } as any,
                 {
                     ...baseRequest,
-                    headers: {},
+                    headers: {host: 'example.org'},
                 },
             );
 
@@ -1410,12 +1533,13 @@ describe('Context', () => {
                 mockLogger as any,
                 {
                     ...baseConfig,
-                    /* @ts-expect-error Should be good */
-                    host: 'http://plain.org',
-                },
+                    trustProxy: true,
+                } as any,
                 {
                     ...baseRequest,
-                    headers: {},
+                    headers: {
+                        'x-forwarded-host': 'http://plain.org',
+                    },
                 },
             );
 
@@ -1433,7 +1557,7 @@ describe('Context', () => {
                 mockLogger as any,
                 {
                     ...baseConfig,
-                    host: 'https://example.com',
+                    env: {TRIFROST_HOST: 'https://example.com'},
                 } as any,
                 {
                     ...baseRequest,
@@ -1452,11 +1576,11 @@ describe('Context', () => {
                 mockLogger as any,
                 {
                     ...baseConfig,
-                    host: 'http://example.com',
+                    trustProxy: true,
                 } as any,
                 {
                     ...baseRequest,
-                    headers: {},
+                    headers: {host: 'http://example.com'},
                     query: '',
                 },
             );

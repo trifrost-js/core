@@ -4,7 +4,7 @@ import {isInt, isIntBetween} from '@valkyriestudios/utils/number';
 import {ConsoleExporter, type TriFrostRootLogger} from '../../modules/Logger';
 import {BunContext} from './Context';
 import {type TriFrostRuntime, type TriFrostRuntimeOnIncoming, type TriFrostRuntimeBootOptions} from '../types';
-import {determinePort, isDevMode} from '../../utils/Generic';
+import {determineHost, determinePort, isDevMode} from '../../utils/Generic';
 
 export class BunRuntime implements TriFrostRuntime {
     /* Bun Http server instance */
@@ -68,7 +68,7 @@ export class BunRuntime implements TriFrostRuntime {
         /* Construct options for serve */
         const serveOpts = {
             port: determinePort(cfg.env, cfg.port || null),
-            hostname: cfg.host || '0.0.0.0',
+            hostname: determineHost(cfg.env),
             fetch: async (req: Request) => {
                 const ctx = new BunContext(cfg, opts.logger, apis, req);
 

@@ -27,8 +27,8 @@ import {
     type TriFrostContextKind,
     type TriFrostContextRenderOptions,
 } from './types/context';
-import {encodeFilename} from './utils/Http';
-import {hexId, injectBefore, prependDocType} from './utils/Generic';
+import {encodeFilename, extractDomainFromHost} from './utils/Http';
+import {determineHost, hexId, injectBefore, prependDocType} from './utils/Generic';
 import {type TriFrostBodyParserOptions, type ParsedBody} from './utils/BodyParser/types';
 
 type RequestConfig = {
@@ -73,6 +73,12 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
 
     /* TriFrost Name */
     #name: string = 'unknown';
+
+    /* TriFrost Host */
+    #host: string | null = null;
+
+    /* TriFrost Domain */
+    #domain: string | null | undefined = undefined;
 
     /* TriFrost Nonce */
     #nonce: string | null = null;
@@ -237,8 +243,19 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
     /**
      * Returns the host of the context.
      */
-    get host(): string | null {
-        return this.req_config.headers.host || this.ctx_config.host || null;
+    get host(): string {
+        if (this.#host) return this.#host;
+        this.#host = this.getHostFromHeaders() ?? determineHost(this.ctx_config.env);
+        return this.#host;
+    }
+
+    /**
+     * Returns the domain of the context (extracted from host)
+     */
+    get domain(): string | null {
+        if (this.#domain !== undefined) return this.#domain;
+        this.#domain = extractDomainFromHost(this.host);
+        return this.#domain;
     }
 
     /**
@@ -832,7 +849,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
             /* If the url is not fully qualified prepend the protocol and host */
             if (!is_absolute && !is_relative && !is_proto_relative) {
                 const host = this.host;
-                if (!host) throw new Error('Context@redirect: Unable to determine host');
+                if (host === '0.0.0.0') throw new Error('Context@redirect: Unable to determine host');
                 const normalized = host.startsWith('http://')
                     ? 'https://' + host.slice(7)
                     : host.startsWith('http')

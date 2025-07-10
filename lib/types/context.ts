@@ -31,7 +31,6 @@ export type TriFrostContextIdOptions = {
 export type TriFrostContextConfig<Env extends Record<string, any> = Record<string, any>> = Readonly<{
     cookies: Partial<TriFrostCookieOptions>;
     cache: TriFrostCache<Env>;
-    host: string | null;
     port?: number;
     timeout: number | null;
     env: Env;
@@ -81,7 +80,8 @@ export type TriFrostContext<Env extends Record<string, any> = {}, State extends 
     get name(): string;
     get nonce(): string;
     get kind(): TriFrostContextKind;
-    get host(): string | null;
+    get host(): string;
+    get domain(): string | null;
     get ip(): string | null;
     get requestId(): string;
     get query(): Readonly<URLSearchParams>;

@@ -22,6 +22,7 @@ export class MockContext<State extends Record<string | number, unknown> = Record
     #method: HttpMethod;
     #status: HttpStatusCode = 200;
     #body: string | null = null;
+    #domain: string | null = null;
     #state: State;
     #env: Record<string, any>;
     #path: string;
@@ -52,6 +53,7 @@ export class MockContext<State extends Record<string | number, unknown> = Record
             name?: string;
             nonce?: string | null;
             logger?: Logger;
+            domain?: string | null;
         } = {},
     ) {
         this.#method = (opts.method ?? 'get') as HttpMethod;
@@ -71,6 +73,7 @@ export class MockContext<State extends Record<string | number, unknown> = Record
         this.#requestId = '123456789';
         this.#cache?.stop?.();
         this.#after = [];
+        this.#domain = opts.domain ?? null;
     }
 
     get env() {
@@ -95,7 +98,10 @@ export class MockContext<State extends Record<string | number, unknown> = Record
         return this.#kind;
     }
     get host() {
-        return null;
+        return this.#env.TRIFROST_HOST ?? '0.0.0.0';
+    }
+    get domain() {
+        return this.#domain;
     }
     get ip() {
         return this.#ip;
