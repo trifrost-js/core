@@ -21,7 +21,6 @@ import {type TriFrostContext, type TriFrostContextIdOptions} from './types/conte
 import {type TriFrostBodyParserOptions} from './utils/BodyParser/types';
 import {type LazyInitFn} from './utils/Lazy';
 import {RouteTree} from './routing/Tree';
-import {extractDomainFromHost} from './utils/Http';
 import {type createScript} from './modules';
 import {mount as mountCss} from './modules/JSX/style/mount';
 import {mount as mountScript} from './modules/JSX/script/mount';
@@ -38,7 +37,6 @@ type AppOptions<Env extends Record<string, any>> = {
          *  secure: true,
          *  httpOnly: true,
          *  sameSite: 'Strict',
-         *  domain: (configured app host IF set)
          * })
          */
         config: Partial<TriFrostCookieOptions>;
@@ -69,11 +67,6 @@ type AppOptions<Env extends Record<string, any>> = {
      * Global environment for the app
      */
     env?: Partial<Env>;
-    /**
-     * Host the application is running on, this is used inside of for example redirects.
-     * @note If not provided we will fall back to determining host off of request headers
-     */
-    host?: string;
     /**
      * Custom Runtime
      * @note If not provided we will automatically determine the environment
@@ -131,9 +124,6 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
     /* Client-script instance */
     #script: ReturnType<typeof createScript>['script'] | null = null;
 
-    /* Provided host */
-    #host: string | null = null;
-
     /* Trust Proxy */
     #trustProxy: boolean | null = null;
 
@@ -168,11 +158,6 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
         /* Set runtime if provided */
         if (options.runtime) this.#runtime = options.runtime;
 
-        /* Configure host */
-        if ('host' in options && typeof options.host === 'string' && options.host.length) {
-            this.#host = options.host;
-        }
-
         /* Configure trust proxy */
         if ('trustProxy' in options) this.#trustProxy = !!options.trustProxy;
 
@@ -180,12 +165,10 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
         this.#env = (isObject(options.env) ? options.env : {}) as Env;
 
         /* Extract domain and configure cookie options */
-        const domain: string | null = extractDomainFromHost(this.#host);
         this.#cookies = {
-            config: {
-                ...(domain !== null && {domain}),
-                ...(isObject(options.cookies) ? options.cookies : {path: '/', secure: true, httpOnly: true, sameSite: 'Strict'}),
-            },
+            config: (isObject(options.cookies)
+                ? {...options.cookies}
+                : {path: '/', secure: true, httpOnly: true, sameSite: 'Strict'}) as Partial<TriFrostCookieOptions>,
         };
 
         /* Cache */
@@ -221,13 +204,6 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
      */
     get isRunning(): boolean {
         return this.#running;
-    }
-
-    /**
-     * Returns the configured host or null
-     */
-    get host(): string | null {
-        return this.#host;
     }
 
     /**
@@ -295,7 +271,6 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
                 cfg: {
                     cookies: this.#cookies.config,
                     cache: this.#cache as TriFrostCache,
-                    host: this.#host,
                     requestId: this.#requestId,
                     env: this.#env as unknown as Env,
                     timeout: this.timeout,
@@ -325,6 +300,7 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
 
                         /* Add attributes to tracer */
                         ctx.logger.setAttributes({
+                            'http.host': ctx.host,
                             'http.method': method,
                             'http.target': path,
                             'http.route': match.route.path,
