@@ -5,8 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+TriFrost gets a major observability upgrade with faster scramblers, better infrastructure secret detection, and improved dual-build output. This release focuses on performance and security while continuing to refine the core developer experience.
+
+### Added
+- **feat**: added `OMIT_PRESETS.infra` to automatically redact infrastructure secrets like GitHub tokens, Stripe keys, AWS/GCP credentials, and JWT-style tokens. The **infra** preset is also included in the **defaults** used by the log scrambler. Scrambling (introduced in [0.28.0](https://www.trifrost.dev/news/releases/0.28.0)) helps redact sensitive fields from logs — see [redaction & scrambling docs](https://www.trifrost.dev/docs/logging-observability#redaction-scrambling-support) for details.
+
 ### Improved
 - **perf**: ~10% faster `isValidTraceId` via optimized ASCII range checks in Logger module
+- **perf**: Improved `createScrambler()`, with smarter pattern matching and lazy cloning, performance across all presets improved by **20–50%**, **even with expanded infra redaction**.
 - **misc**: adjust build system to dual-build ESM + CJS output
 
 ## [0.47.5] - 2025-07-09

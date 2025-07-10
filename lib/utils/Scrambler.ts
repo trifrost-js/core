@@ -36,8 +36,6 @@ const SENSITIVE = [
     {global: 'sid'},
     {global: 'token'},
     {global: 'user_token'},
-    /* Bearer token/jwt */
-    {valuePattern: /Bearer\s+[A-Za-z0-9\-._~+/]+=*/},
 ];
 
 const PII = [
@@ -45,19 +43,35 @@ const PII = [
     {global: 'last_name'},
     {global: 'full_name'},
     /* Email */
-    {valuePattern: /[\w.-]+@[\w.-]+\.\w{2,}/},
+    {valuePattern: /\b[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,255}\.[A-Za-z]{2,10}\b/},
     /* Phone */
-    {valuePattern: /\+?\d{1,2}[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/},
+    {valuePattern: /\+?\d{1,3}[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/},
     /* SSN */
     {valuePattern: /\b\d{3}-\d{2}-\d{4}\b/},
     /* Credit card */
-    {valuePattern: /\b(?:\d[ -]*?){13,16}\b/},
+    {valuePattern: /\b(?:\d[ -]?){13,16}\b/},
+];
+
+const INFRA = [
+    /* GitHub personal access token */
+    {valuePattern: /gh[pousr]_[A-Za-z0-9]{20,64}/},
+    /* Stripe secret key */
+    {valuePattern: /sk_live_[A-Za-z0-9]{24,64}/},
+    /* AWS access keys (starts with AKIA or ASIA, 20+ chars) */
+    {valuePattern: /AKIA[0-9A-Z]{10,64}/},
+    {valuePattern: /ASIA[0-9A-Z]{10,64}/},
+    /* Google API key (starts with AIza, 39 chars) */
+    {valuePattern: /AIZA[0-9A-Za-z-_]{32,64}/},
+    /* Generic long tokens (e.g. JWTs, API keys) */
+    {valuePattern: /\b[a-f0-9]{32,64}\b/},
+    {valuePattern: /Bearer\s+[A-Za-z0-9-_]+\b/},
 ];
 
 export const OMIT_PRESETS = {
-    default: deepFreeze([...SENSITIVE, ...PII]),
+    default: deepFreeze([...SENSITIVE, ...PII, ...INFRA]),
     sensitive: deepFreeze([...SENSITIVE]),
     pii: deepFreeze([...PII]),
+    infra: deepFreeze([...INFRA]),
 };
 
 /**
@@ -94,10 +108,11 @@ function createScrambler<T extends Record<string, any> = Record<string, any>>(op
     function walk(input: any, path = ''): any {
         if (Array.isArray(input)) {
             let mutated = false;
-            const result = new Array(input.length);
-            for (let i = 0; i < input.length; i++) {
+            const len = input.length;
+            const result = new Array(len);
+            for (let i = 0; i < len; i++) {
                 const val = input[i];
-                if (typeof val === 'string' && values) {
+                if (typeof val === 'string' && values?.test(val)) {
                     const updated = val.replaceAll(values, repl);
                     if (updated !== val) {
                         result[i] = updated;
@@ -114,24 +129,27 @@ function createScrambler<T extends Record<string, any> = Record<string, any>>(op
             let result: Record<string, any> | null = null;
             for (const key in input) {
                 const val = input[key];
-                const normalized_path = path ? path + '.' + key : key;
-                const type = typeof val;
-
-                switch (type) {
+                const n_path = path ? path + '.' + key : key;
+                switch (typeof val) {
                     case 'string':
                     case 'number': {
-                        if ((paths !== null && paths.has(normalized_path) === true) || (props !== null && props.has(key) === true)) {
+                        if ((paths !== null && paths.has(n_path) === true) || (props !== null && props.has(key) === true)) {
                             if (!result) result = {...input};
                             result![key] = repl;
                         } else if (values) {
-                            if (!result) result = {...input};
-                            const normalized = String(val).replaceAll(values, repl);
-                            if (normalized !== String(val)) result![key] = normalized;
+                            const n_val = String(val);
+                            if (values?.test(n_val)) {
+                                const r_val = n_val.replaceAll(values, repl);
+                                if (n_val !== r_val) {
+                                    if (!result) result = {...input};
+                                    result![key] = r_val;
+                                }
+                            }
                         }
                         break;
                     }
                     case 'object': {
-                        const updated = walk(val, normalized_path);
+                        const updated = walk(val, n_path);
                         if (updated !== val) {
                             if (!result) result = {...input};
                             result![key] = updated;
