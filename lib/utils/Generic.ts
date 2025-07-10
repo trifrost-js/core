@@ -184,6 +184,17 @@ export function determinePort(env?: Record<string, unknown>, port?: number | nul
 }
 
 /**
+ * Determine host to bind or advertise
+ *
+ * @param {Record<string, unknown>} env - Environment to check on
+ */
+export function determineHost(env: Record<string, unknown>): string {
+    const val = env?.TRIFROST_HOST ?? env?.SERVICE_HOST ?? env?.HOST;
+    if (isNeString(val) && val.length <= 255) return val.trim();
+    return '0.0.0.0';
+}
+
+/**
  * Determine debug mode
  *
  * @param {Record<string, unknown>} env - Environment to check on

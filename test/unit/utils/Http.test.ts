@@ -330,7 +330,7 @@ describe('Utils - Http', () => {
             expect(extractDomainFromHost('..example..com')).toBeNull();
             expect(extractDomainFromHost('http:///example.com')).toBeNull();
             expect(extractDomainFromHost('http://')).toBeNull();
-            expect(extractDomainFromHost('ftp://example.com')).toBeNull();
+            expect(extractDomainFromHost('ftp://example.com')).toBe('example.com');
         });
 
         it('Handles public suffix and exotic TLDs', () => {

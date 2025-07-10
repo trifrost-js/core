@@ -263,134 +263,92 @@ export function extractPartsFromUrl(url: string): {path: string; query: string} 
     }
 }
 
-const MULTI_SEGMENT_TLDS = new Set([
+const MULTI_SEGMENT_TLDS: Record<string, number> = {
     /* United Kingdom */
-    'co.uk',
-    'ac.uk',
-    'gov.uk',
-    'org.uk',
-    'net.uk',
-    'ltd.uk',
-    'plc.uk',
-    'me.uk',
-    'nhs.uk',
-    'sch.uk',
+    'co.uk': 1, 'ac.uk': 1, 'gov.uk': 1, 'org.uk': 1, 'net.uk': 1, 'ltd.uk': 1, 'plc.uk': 1, 'me.uk': 1, 'nhs.uk': 1, 'sch.uk': 1, /* eslint-disable-line prettier/prettier */
     /* Australia */
-    'com.au',
-    'net.au',
-    'org.au',
-    'edu.au',
-    'gov.au',
-    'id.au',
-    'asn.au',
+    'com.au': 1, 'net.au': 1, 'org.au': 1, 'edu.au': 1, 'gov.au': 1, 'id.au': 1, 'asn.au': 1, /* eslint-disable-line prettier/prettier */
     /* Brazil */
-    'com.br',
-    'net.br',
-    'org.br',
-    'gov.br',
-    'mil.br',
-    'edu.br',
+    'com.br': 1, 'net.br': 1, 'org.br': 1, 'gov.br': 1, 'mil.br': 1, 'edu.br': 1, /* eslint-disable-line prettier/prettier */
     /* China */
-    'com.cn',
-    'net.cn',
-    'gov.cn',
-    'org.cn',
-    'edu.cn',
+    'com.cn': 1, 'net.cn': 1, 'gov.cn': 1, 'org.cn': 1, 'edu.cn': 1, /* eslint-disable-line prettier/prettier */
     /* Hong Kong */
-    'com.hk',
-    'edu.hk',
-    'gov.hk',
-    'idv.hk',
-    'net.hk',
-    'org.hk',
+    'com.hk': 1, 'edu.hk': 1, 'gov.hk': 1, 'idv.hk': 1, 'net.hk': 1, 'org.hk': 1, /* eslint-disable-line prettier/prettier */
     /* Japan */
-    'co.jp',
-    'ne.jp',
-    'or.jp',
-    'go.jp',
-    'ac.jp',
-    'ad.jp',
-    'ed.jp',
+    'co.jp': 1, 'ne.jp': 1, 'or.jp': 1, 'go.jp': 1, 'ac.jp': 1, 'ad.jp': 1, 'ed.jp': 1, /* eslint-disable-line prettier/prettier */
     /* South Korea */
-    'co.kr',
-    'ne.kr',
-    'or.kr',
-    're.kr',
-    'go.kr',
-    'mil.kr',
-    'ac.kr',
+    'co.kr': 1, 'ne.kr': 1, 'or.kr': 1, 're.kr': 1, 'go.kr': 1, 'mil.kr': 1, 'ac.kr': 1, /* eslint-disable-line prettier/prettier */
     /* Taiwan */
-    'com.tw',
-    'net.tw',
-    'org.tw',
-    'edu.tw',
-    'gov.tw',
-    'mil.tw',
+    'com.tw': 1, 'net.tw': 1, 'org.tw': 1, 'edu.tw': 1, 'gov.tw': 1, 'mil.tw': 1, /* eslint-disable-line prettier/prettier */
     /* India */
-    'co.in',
-    'net.in',
-    'org.in',
-    'firm.in',
-    'gen.in',
-    'ind.in',
+    'co.in': 1, 'net.in': 1, 'org.in': 1, 'firm.in': 1, 'gen.in': 1, 'ind.in': 1, /* eslint-disable-line prettier/prettier */
     /* New Zealand */
-    'co.nz',
-    'net.nz',
-    'org.nz',
-    'govt.nz',
-    'ac.nz',
-    'geek.nz',
-    'maori.nz',
-    'iwi.nz',
+    'co.nz': 1, 'net.nz': 1, 'org.nz': 1, 'govt.nz': 1, 'ac.nz': 1, 'geek.nz': 1, 'maori.nz': 1, 'iwi.nz': 1, /* eslint-disable-line prettier/prettier */
     /* Singapore */
-    'com.sg',
-    'net.sg',
-    'org.sg',
-    'edu.sg',
-    'gov.sg',
-    'per.sg',
+    'com.sg': 1, 'net.sg': 1, 'org.sg': 1, 'edu.sg': 1, 'gov.sg': 1, 'per.sg': 1, /* eslint-disable-line prettier/prettier */
     /* South Africa */
-    'co.za',
-    'net.za',
-    'org.za',
-    'gov.za',
+    'co.za': 1, 'net.za': 1, 'org.za': 1, 'gov.za': 1, /* eslint-disable-line prettier/prettier */
     /* Canada */
-    'gc.ca',
+    'gc.ca': 1,
     /* US Federal */
-    'ci.us',
-    'lib.tx.us',
-    'k12.tx.us',
-    'cc.ca.us',
-    'state.ca.us',
-    'pvt.k12.ma.us',
-    'cog.va.us',
-]);
+    'ci.us': 1, 'lib.tx.us': 1, 'k12.tx.us': 1, 'cc.ca.us': 1, 'state.ca.us': 1, 'pvt.k12.ma.us': 1, 'cog.va.us': 1, /* eslint-disable-line prettier/prettier */
+} as const;
 
-const RGX_DOMAIN = /^(?:https?:\/\/)?(?:www\d?\.)?((?:[\w-]+\.)+[\w-]+)(?::\d+)?(?:\/|$)/i;
-const RGX_DOMAIN_IP = /^[\d.:]+$/;
+const KNOWN_NODOMAIN: Record<string, number> = {
+    localhost: 1,
+    '0.0.0.0': 1,
+    '::1': 1,
+    '127.0.0.1': 1,
+    'host.docker.internal': 1,
+    'localhost.localdomain': 1,
+    /* RFC 6761 reserved */
+    test: 1,
+    example: 1,
+    invalid: 1,
+    local: 1,
+} as const;
 
 /**
- * Attempts to extract the effective domain from a given host.
- *
- * Strips common subdomains like www or numerical prefixes (e.g., www2.),
- * and skips IPs or localhost.
- *
- * Examples:
- * - "www.example.com" → "example.com"
- * - "api.dev.example.co.uk" → "example.co.uk"
- * - "localhost" → null
- * - "192.168.0.1" → null
+ * Extracts the effective domain from a given host
  */
 export function extractDomainFromHost(raw: string | null): string | null {
-    if (typeof raw !== 'string' || !raw.length || raw === 'localhost' || RGX_DOMAIN_IP.test(raw) || raw[0] === '[') return null;
+    if (typeof raw !== 'string' || !raw || KNOWN_NODOMAIN[raw] || raw[0] === '[') return null;
 
-    /* Verify domain */
-    const match = (raw[raw.length - 1] === '.' ? raw.slice(0, -1) : raw).match(RGX_DOMAIN);
-    if (!match || typeof match[1] !== 'string') return null;
+    let host = raw;
 
-    const parts = match[1].toLowerCase().split('.');
+    /* Start from proto */
+    const proto = raw.indexOf('://');
+    if (proto >= 0) host = raw.slice(proto + 3);
+
+    /* Trim everything after first `/`, if any */
+    const slash = host.indexOf('/');
+    if (slash >= 0) host = host.slice(0, slash);
+
+    /* End at port */
+    const end = host.indexOf(':');
+    if (end >= 0) host = host.slice(0, end);
+
+    /* Remove trailing dot */
+    const last = host.charCodeAt(host.length - 1);
+    if (last === 46) host = host.slice(0, -1);
+
+    /* Verify ip */
+    let isIP = true;
+    for (let i = 0; i < raw.length; i++) {
+        const c = raw.charCodeAt(i);
+        if ((c < 48 || c > 57) && c !== 46) {
+            isIP = false;
+            break;
+        }
+    }
+    if (isIP) return null;
+
+    host = host.toLowerCase();
+
+    const parts = host.split('.');
     const len = parts.length;
-    const last_two = parts[len - 2] + '.' + parts[len - 1];
+    if (len < 2 || !parts[len - 2] || !parts[len - 1]) return null;
 
-    return MULTI_SEGMENT_TLDS.has(last_two) && len > 2 ? parts[len - 3] + '.' + last_two : last_two;
+    const lastTwo = parts[len - 2] + '.' + parts[len - 1];
+    return len > 2 && MULTI_SEGMENT_TLDS[lastTwo] ? parts[len - 3] + '.' + lastTwo : lastTwo;
 }

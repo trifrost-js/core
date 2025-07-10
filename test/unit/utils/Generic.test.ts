@@ -9,6 +9,7 @@ import {
     determinePort,
     injectBefore,
     prependDocType,
+    determineHost,
 } from '../../../lib/utils/Generic';
 import CONSTANTS from '../../constants';
 
@@ -380,6 +381,41 @@ describe('Utils - Generic', () => {
                 expect(determinePort({PORT: '80.9'})).toBe(80);
                 expect(determinePort({PORT: '9999'})).toBe(9999);
             });
+        });
+    });
+
+    describe('determineHost', () => {
+        it('Returns TRIFROST_HOST if valid', () => {
+            expect(determineHost({TRIFROST_HOST: '127.0.0.1'})).toBe('127.0.0.1');
+        });
+
+        it('Falls back to SERVICE_HOST if TRIFROST_HOST is missing', () => {
+            expect(determineHost({SERVICE_HOST: '192.168.1.100'})).toBe('192.168.1.100');
+        });
+
+        it('Falls back to HOST if others missing', () => {
+            expect(determineHost({HOST: 'localhost'})).toBe('localhost');
+        });
+
+        it('Trims whitespace and accepts valid length', () => {
+            expect(determineHost({TRIFROST_HOST: '  example.com  '})).toBe('example.com');
+        });
+
+        it('Returns default when no valid host present', () => {
+            expect(determineHost({})).toBe('0.0.0.0');
+            expect(determineHost({HOST: '  '})).toBe('0.0.0.0');
+            expect(determineHost({HOST: 'x'.repeat(256)})).toBe('0.0.0.0');
+            expect(determineHost({TRIFROST_HOST: null})).toBe('0.0.0.0');
+        });
+
+        it('Handles invalid input types safely', () => {
+            for (const val of CONSTANTS.NOT_STRING_WITH_EMPTY) {
+                expect(determineHost({HOST: val})).toBe('0.0.0.0');
+            }
+
+            for (const val of CONSTANTS.NOT_OBJECT) {
+                expect(determineHost(val as any)).toBe('0.0.0.0');
+            }
         });
     });
 
