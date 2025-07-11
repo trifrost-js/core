@@ -127,6 +127,9 @@ export class MockContext<State extends Record<string | number, unknown> = Record
     get headers() {
         return this.#headers;
     }
+    get resHeaders() {
+        return Object.freeze({});
+    }
     get logger() {
         return this.#logger;
     }

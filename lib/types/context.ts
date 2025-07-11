@@ -91,6 +91,7 @@ export type TriFrostContext<Env extends Record<string, any> = {}, State extends 
     get isAborted(): boolean;
     get isLocked(): boolean;
     get headers(): Readonly<Record<string, string>>;
+    get resHeaders(): Readonly<Record<string, string>>;
     get logger(): TriFrostLogger;
     get cookies(): Cookies;
     get cache(): TriFrostCache;

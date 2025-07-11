@@ -254,6 +254,44 @@ describe('Context', () => {
         });
     });
 
+    describe('delHeaders', () => {
+        it('Deletes multiple headers at once', () => {
+            ctx.setHeader('X-Foo', 'bar');
+            ctx.setHeader('X-Bar', 'baz');
+            ctx.setHeader('X-Baz', 'qux');
+
+            ctx.delHeaders(['X-Foo', 'X-Baz']);
+
+            expect(ctx.resHeaders).toEqual({'x-bar': 'baz'});
+        });
+
+        it('Silently ignores non-existent keys', () => {
+            ctx.setHeader('Content-Type', 'application/json');
+            ctx.delHeaders(['X-Not-Set', 'Also-Missing']);
+
+            expect(ctx.resHeaders).toEqual({'content-type': 'application/json'});
+        });
+
+        it('Handles an empty array safely', () => {
+            ctx.setHeader('X-Thing', 'yes');
+            ctx.delHeaders([]);
+
+            expect(ctx.resHeaders).toEqual({'x-thing': 'yes'});
+        });
+
+        it('Is a noop when called before any headers are set', () => {
+            ctx.delHeaders(['X-Foo', 'X-Bar']);
+            expect(ctx.resHeaders).toEqual({});
+        });
+
+        it('Is case-sensitive (matches delHeader behavior)', () => {
+            ctx.setHeader('X-Test', 'abc');
+            ctx.delHeaders(['x-test']);
+
+            expect(ctx.resHeaders).toEqual({});
+        });
+    });
+
     describe('Status handling', () => {
         it('Sets HTTP status code from code', () => {
             ctx.setStatus(404);
@@ -540,6 +578,47 @@ describe('Context', () => {
 
             const result = ctx2.ip;
             expect(result).toBe(null);
+        });
+    });
+
+    describe('resHeaders', () => {
+        it('Returns an immutable copy of internal response headers', () => {
+            ctx.setHeader('x-test', '123');
+            const headers = ctx.resHeaders;
+
+            expect(headers).toEqual({'x-test': '123'});
+            expect(headers).not.toBe((ctx as any).res_headers);
+        });
+
+        it('Does not allow mutation of internal state', () => {
+            ctx.setHeader('x-test', '123');
+            const headers = ctx.resHeaders;
+
+            /* @ts-expect-error this is what we're testing */
+            headers['x-test'] = '456';
+            /* @ts-expect-error this is what we're testing */
+            headers['new-header'] = 'oops';
+
+            expect(ctx.resHeaders).toEqual({'x-test': '123'});
+        });
+
+        it('Reflects new headers set after access', () => {
+            const first = ctx.resHeaders;
+            expect(first).toEqual({});
+
+            ctx.setHeader('Content-Type', 'text/html');
+            const second = ctx.resHeaders;
+            expect(second).toEqual({'content-type': 'text/html'});
+        });
+
+        it('Ignores deleted headers from previous snapshot', () => {
+            ctx.setHeader('X-Test', '123');
+            const snap1 = ctx.resHeaders;
+            ctx.delHeader('X-Test');
+            const snap2 = ctx.resHeaders;
+
+            expect(snap1).toEqual({'x-test': '123'});
+            expect(snap2).toEqual({});
         });
     });
 

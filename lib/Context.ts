@@ -320,6 +320,13 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
     }
 
     /**
+     * Current set response headers
+     */
+    get resHeaders(): Readonly<Record<string, string>> {
+        return {...this.res_headers};
+    }
+
+    /**
      * Request Body
      */
     get body(): Readonly<NonNullable<ParsedBody>> {
@@ -456,6 +463,18 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
      */
     delHeader(key: string): void {
         delete this.res_headers[String(key).toLowerCase()];
+    }
+
+    /**
+     * Remove multiple headers from the response
+     *
+     * Example:
+     *  ctx.delHeader('Content-Type');
+     */
+    delHeaders(keys: string[]): void {
+        for (let i = 0; i < keys.length; i++) {
+            delete this.res_headers[String(keys[i]).toLowerCase()];
+        }
     }
 
     /**
