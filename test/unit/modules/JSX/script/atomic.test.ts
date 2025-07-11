@@ -151,6 +151,7 @@ describe('Modules - JSX - script - atomic', () => {
                     'oD("isNum",isNum);',
                     'oD("isObj",isObj);',
                     'oD("isStr",isStr);',
+                    'oD("isTouch",(()=>"ontouchstart"in window||navigator.maxTouchPoints>0||navigator.msMaxTouchPoints>0)());',
                     'oD("on",(n,t,f)=>{n.addEventListener(t,f);return ()=>n?.removeEventListener(t,f);});',
                     'oD("once",(n,t,f)=>{const w=e=>{try{f(e);}finally{n?.removeEventListener(t,w);}};n.addEventListener(t,w);});',
                     'oD("query",(n,q)=>{if(!n?.querySelector||!isStr(q))return null;const scopable=n.nodeType===Node.ELEMENT_NODE&&!q.trimStart().startsWith(":scope");try{return n.querySelector(scopable?":scope "+q:q);}catch{return null;}});',

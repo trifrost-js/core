@@ -182,6 +182,8 @@ export type TriFrostAtomicUtils<
     isNum: (val: unknown) => val is number;
     isObj: <T extends Record<string, any>>(val: T | unknown) => val is T;
     isStr: (val: unknown) => val is string;
+    /** Whether the device supports touch input */
+    isTouch: boolean;
     /* Event Listening */
     on: <Payload = unknown, Target extends EventTarget = EventTarget, K extends string = string>(
         el: Target,
@@ -679,6 +681,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d){
         oD("isNum", isNum);
         oD("isObj", isObj);
         oD("isStr", isStr);
+        oD("isTouch", (() => "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0)());
         oD("on", (n, t, f) => {
             n.addEventListener(t, f);
             return () => n?.removeEventListener(t, f);
