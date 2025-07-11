@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 ### Improved
+- **qol**: `ctx.render` now merges the passed options on top of the defaults
 - **qol**: Inbound and outbound headers will now be treated as case insensitive and be lowercased (as per [RFC 7230](https://datatracker.ietf.org/doc/html/rfc7230#section-3.2) and [RFC 9110](https://datatracker.ietf.org/doc/html/rfc9110))
 
 ## [0.48.0] - 2025-07-10

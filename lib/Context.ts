@@ -641,7 +641,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
      * Render a JSX body to a string
      */
     render(body: JSX.Element, opts?: TriFrostContextRenderOptions): string {
-        return prependDocType(rootRender<Env, State>(this, body, (opts || this.ctx_config) as TriFrostContextConfig<Env>));
+        return prependDocType(rootRender<Env, State>(this, body, isObject(opts) ? {...this.ctx_config, ...opts} : this.ctx_config));
     }
 
     /**

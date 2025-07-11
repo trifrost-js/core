@@ -2047,6 +2047,37 @@ describe('Context', () => {
                 `<!DOCTYPE html><html><span>Custom</span><script nonce="${ctx.nonce}">${ARC_GLOBAL(false)}${ARC_GLOBAL_OBSERVER}</script></html>`,
             );
         });
+
+        it('Merges user-passed options on top of default ctx_config', async () => {
+            const jsx = {type: 'span', props: {children: 'Merged'}};
+
+            const baseConfig = {
+                env: {FOO: 'default'},
+                cookies: {secure: true},
+                cache: null,
+                trustProxy: false,
+                foo: 'bar',
+            };
+
+            const ctxWithConfig = Object.create(ctx);
+            ctxWithConfig.ctx_config = baseConfig;
+
+            const override = {
+                env: {FOO: 'override'},
+                custom: 'value',
+            };
+
+            const merged = {...baseConfig, ...override};
+
+            const rootRender = vi.spyOn(await import('../../lib/modules/JSX/render'), 'rootRender').mockReturnValue('<span>Merged</span>');
+
+            const result = ctxWithConfig.render(jsx as any, override as any);
+
+            expect(result).toBe('<span>Merged</span>');
+            expect(rootRender).toHaveBeenCalledWith(ctxWithConfig, jsx, merged);
+
+            rootRender.mockRestore();
+        });
     });
 
     describe('setStatus()', () => {
