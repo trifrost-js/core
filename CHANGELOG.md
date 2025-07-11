@@ -4,6 +4,87 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.51.0] - 2025-07-11
+TriFrost 0.51.0 brings improvements to atomic utilities, developer experience, and type inference. This release focuses on reducing friction in script composition and enhancing the typing system for relay events and store access.
+
+### Added
+- **feat**:  Added `$.isTouch` atomic util. This is a computed boolean which is `true` if touch capabilities are available on the client device or `false` if they aren't
+- **sys**: Introduced a new pattern using `AtomicRelay` and `AtomicStore` for registering relay and store types globally. Users no longer need to manually union or import types into each script. For example (straight from Atomic arcade):
+```typescript
+type GameStore = {
+  gameConfig: {
+    music: 'on' | 'off';
+    difficulty: 'beginner' | 'intermediate' | 'expert';
+  };
+};
+
+type GameEvents = {
+  'game:evt:boot': void;
+  'game:evt:countdown': void;
+};
+
+declare global {
+  interface AtomicRelay extends GameEvents {}
+  interface AtomicStore extends GameStore {}
+}
+
+export function Game (...) {
+  ...
+}
+```
+
+### Notes on AtomicRelay and AtomicStore
+TriFrost now supports global typing for atomic relay events and reactive store data. You no longer need to import or union types in each `Script` or `Module`. Just declare once, and TriFrost infers them across your entire atomic runtime.
+
+For this purpose two new globally available interfaces have been defined:
+- `AtomicRelay`: Interface for registering relay events (used in `$subscribe`, `$publish`).
+- `AtomicStore`: Interface for registering global store schema types (used in `$.storeGet`, `$.storeSet`).
+
+To extend them, users can simply declare globals in their module/script (Example from [Atomic Arcade](https://github.com/trifrost-js/example-atomic-arcade)):
+```typescript
+type GameStore = {
+  gameConfig: {
+    music: 'on' | 'off';
+    difficulty: 'beginner' | 'intermediate' | 'expert';
+  };
+};
+
+type GameEvents = {
+  'game:evt:boot': void;
+  'game:evt:countdown': void;
+};
+
+declare global {
+  interface AtomicRelay extends GameEvents {}
+  interface AtomicStore extends GameStore {}
+}
+```
+
+💡 Use anywhere
+Inside any `Script` or `Module`, your atomic types are fully typed (without having to manually union):
+```tsx
+<Script data={{ evtStart: 'game:evt:boot' as keyof AtomicRelay }}>
+  {({ el, data, $ }) => {
+    el.$subscribe(data.evtStart, () => {
+      const music = $.storeGet('gameConfig').music;
+      el.$publish(music === 'on' ? 'audio:play' : 'audio:pause');
+    });
+
+    el.$publish('game:evt:countdown');
+  }}
+</Script>
+```
+
+You get full `keyof AtomicRelay` and `keyof AtomicStore` autocompletion, and both `$publish/$subscribe` and `$.storeGet/$.storeSet` are strongly typed, **all without any imports**.
+> 🧩 **Why?**
+> This further removes boilerplate and enables **globally shared relay/store contracts** across all scripts, while keeping DX tight and type-safe.
+
+---
+
+This release reinforces TriFrost’s philosophy: type-safety without ceremony. You can now define shared data and event structures once and enjoy a consistent, auto-inferred dev experience across your atomic components.
+
+Stay sharp — more refinements are on the way. And as always, stay frosty ❄️.
+
 ## [0.50.0] - 2025-07-11
 ### Improved
 - **qol**: Wildcard (`*`) route segments now populate a `'*'` key in `ctx.state`, capturing the matched tail path.
