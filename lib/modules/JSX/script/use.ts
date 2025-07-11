@@ -1,3 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/// <reference path="../atomic.d.ts" />
+
 import {ScriptEngine} from './Engine';
 import {env as ogEnv} from '../ctx/env';
 import {state as ogState} from '../ctx/state';
@@ -23,8 +26,8 @@ export function getActiveScriptEngine() {
 export function createScript<
     const Config extends {css?: {var: Record<string, string>; theme: Record<string, string>}; atomic?: boolean},
     Env extends Record<string, any> = Record<string, any>,
-    TFRelay extends Record<string, unknown> = Record<string, unknown>,
-    TFStore extends Record<string, unknown> = Record<string, unknown>,
+    TFRelay extends Record<string, unknown> = AtomicRelay,
+    TFStore extends Record<string, unknown> = AtomicStore,
     TFCSSVarKeys extends string = Config['css'] extends {var: infer V} ? keyof V & string : string,
     TFCSSThemeKeys extends string = Config['css'] extends {theme: infer T} ? keyof T & string : string,
 >(config: Config = {} as Config) {

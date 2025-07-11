@@ -7,7 +7,7 @@
         "build:esm": "tsc -p tsconfig.build.esm.json",
         "build:cjs": "tsc -p tsconfig.build.cjs.json",
         "build:types": "tsc -p tsconfig.types.json",
-        "build:jsx": "cp ./lib/modules/JSX/jsx.d.ts ./dist/types/modules/JSX/jsx.d.ts && cp ./lib/jsx-runtime.d.ts ./dist/types/jsx-runtime.d.ts",
+        "build:jsx": "cp ./lib/modules/JSX/jsx.d.ts ./dist/types/modules/JSX/jsx.d.ts && cp ./lib/modules/JSX/atomic.d.ts ./dist/types/modules/JSX/atomic.d.ts && cp ./lib/jsx-runtime.d.ts ./dist/types/jsx-runtime.d.ts",
         "test": "vitest run --config vitest.config.ts",
         "test:coverage": "vitest run --coverage --config vitest.coverage.config.ts",
         "lint": "npm run lint:src && npm run lint:test",
