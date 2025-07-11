@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.49.0] - 2025-07-11
+This update introduces a round of context ergonomics and spec-aligned header behavior improvements, ensuring TriFrost is even more predictable and introspectable at runtime.
+
 ### Added
 - **feat**: Added `ctx.resHeaders` readonly getter, which allows you to introspect the current set of outbound headers
 - **feat**: Added `ctx.delHeaders` allowing you to remove multiple outbound headers at once by passing an array of strings
@@ -21,6 +23,12 @@ ctx.resHeaders; /* {'x-bar': 'baz'} */
 ### Improved
 - **qol**: `ctx.render` now merges the passed options on top of the defaults
 - **qol**: Inbound and outbound headers will now be treated as case insensitive and be lowercased (as per [RFC 7230](https://datatracker.ietf.org/doc/html/rfc7230#section-3.2) and [RFC 9110](https://datatracker.ietf.org/doc/html/rfc9110))
+
+---
+
+These changes help bring TriFrost's context handling in line with HTTP spec expectations while improving DX for response construction and rendering.
+
+As always, stay frosty ❄️.
 
 ## [0.48.0] - 2025-07-10
 This release upgrades TriFrost's observability layer with faster scramblers, enhanced infrastructure secret detection, and smarter host resolution while continuing to refine the core developer experience.

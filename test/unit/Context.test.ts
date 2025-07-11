@@ -1109,6 +1109,7 @@ describe('Context', () => {
         const originalFetch = globalThis.fetch;
 
         beforeEach(() => {
+            /* @ts-expect-error should be good */
             globalThis.fetch = vi.fn();
             ctx.logger.setAttributes = vi.fn();
             ctx.logger.span = vi.fn((_, fn) => fn());
