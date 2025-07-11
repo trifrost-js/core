@@ -201,6 +201,8 @@ class TrieRouteTree<Env extends Record<string, any> = {}> {
 
         /* Wildcard match (wildcard eats the rest) */
         if (node.wildcard_child) {
+            const remaining = segments.slice(segment_idx).join('/');
+            params_acc['*'] = remaining;
             return node.wildcard_child.methods[method] || null;
         }
 

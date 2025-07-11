@@ -143,7 +143,7 @@ describe('routing - Tree', () => {
 
             const match = tree.match(HttpMethods.GET, '/wild/anything/here');
             expect(match).not.toBe(null);
-            expect(match?.params).toEqual({});
+            expect(match?.params).toEqual({'*': 'anything/here'});
             expect(match?.route.fn).toBe(handler);
         });
 
@@ -202,7 +202,7 @@ describe('routing - Tree', () => {
             });
 
             const match = tree.match(HttpMethods.GET, '/files/photos/2024/pic.jpg');
-            expect(match?.params).toEqual({folder: 'photos', year: '2024'});
+            expect(match?.params).toEqual({'*': 'pic.jpg', folder: 'photos', year: '2024'});
             expect(match?.route.fn).toBe(handler);
         });
 
@@ -223,6 +223,7 @@ describe('routing - Tree', () => {
 
             const match = tree.match(HttpMethods.GET, '/wild/a/b/c/d');
             expect(match?.route.fn).toBe(handler);
+            expect(match?.params).toEqual({'*': 'a/b/c/d'});
         });
 
         it('Does not match wildcard chain on other methods', () => {

@@ -24,7 +24,9 @@ export type PathParam<Path extends string> = string extends Path
       ? {[K in Param | keyof PathParam<`/${Rest}`>]: string}
       : Path extends `${infer _Start}:${infer Param}`
         ? {[K in Param]: string}
-        : {};
+        : Path extends `${infer _Prefix}/*`
+          ? {'*': string}
+          : {};
 
 export type TriFrostMiddleware<
     Env extends Record<string, any> = {},
