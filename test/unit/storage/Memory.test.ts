@@ -752,10 +752,10 @@ describe('Storage - Memory', () => {
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(429);
                 expect(ctx.headers).toEqual({
-                    'Retry-After': 1,
-                    'X-RateLimit-Limit': 1,
-                    'X-RateLimit-Remaining': '0',
-                    'X-RateLimit-Reset': now + 1,
+                    'retry-after': 1,
+                    'x-ratelimit-limit': 1,
+                    'x-ratelimit-remaining': '0',
+                    'x-ratelimit-reset': now + 1,
                 });
                 await rl.stop(); /* gc cleanup */
             });
@@ -768,7 +768,7 @@ describe('Storage - Memory', () => {
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(429);
                 expect(ctx.headers).toEqual({
-                    'Retry-After': '60',
+                    'retry-after': '60',
                 });
                 await rl.stop(); /* gc cleanup */
             });
@@ -788,9 +788,9 @@ describe('Storage - Memory', () => {
                 expect(val.reset).toBeGreaterThanOrEqual(now + rl.window);
 
                 expect(ctx.headers).toEqual({
-                    'X-RateLimit-Limit': 10,
-                    'X-RateLimit-Remaining': 8,
-                    'X-RateLimit-Reset': now + rl.window,
+                    'x-ratelimit-limit': 10,
+                    'x-ratelimit-remaining': 8,
+                    'x-ratelimit-reset': now + rl.window,
                 });
                 await rl.stop(); /* gc cleanup */
             });

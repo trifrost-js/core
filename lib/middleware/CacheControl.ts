@@ -99,7 +99,7 @@ function parse(opts: TriFrostCacheControlOptions): string | null {
  */
 export function ParseAndApplyCacheControl(ctx: TriFrostContext, opts: TriFrostCacheControlOptions) {
     const val = parse(opts);
-    if (val) ctx.setHeader('Cache-Control', val);
+    if (val) ctx.setHeader('cache-control', val);
 }
 
 /**
@@ -113,7 +113,7 @@ export function CacheControl<Env extends Record<string, any> = {}, State extends
     const val = parse(opts);
 
     const mware = function TriFrostCacheControlMiddleware(ctx: TriFrostContext<Env, State>): void {
-        if (val) ctx.setHeader('Cache-Control', val);
+        if (val) ctx.setHeader('cache-control', val);
     };
 
     /* Add symbols for introspection/use further down the line */

@@ -53,6 +53,7 @@ export class NodeContext extends Context {
         /* Hydrate headers */
         const headers: Record<string, string> = {};
         for (const key in req.headers) {
+            /* Node automatically lower cases headers */
             if (req.headers[key]) headers[key] = req.headers[key] as string;
         }
 
@@ -198,7 +199,7 @@ export class NodeContext extends Context {
 
         switch (this.method) {
             case HttpMethods.HEAD:
-                this.res_headers['Content-Length'] = typeof this.res_body === 'string' ? '' + encoder.encode(this.res_body).length : '0';
+                this.res_headers['content-length'] = typeof this.res_body === 'string' ? '' + encoder.encode(this.res_body).length : '0';
                 this.#node_res.writeHead(this.res_code, this.res_headers).end();
                 break;
             default:
@@ -243,6 +244,6 @@ export class NodeContext extends Context {
         if (!this.$cookies) return;
         const outgoing = this.$cookies.outgoing;
         if (!outgoing.length) return;
-        this.#node_res.setHeader('Set-Cookie', outgoing);
+        this.#node_res.setHeader('set-cookie', outgoing);
     }
 }

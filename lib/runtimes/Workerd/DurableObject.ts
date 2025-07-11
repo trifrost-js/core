@@ -78,16 +78,16 @@ export class TriFrostDurableObject {
             case 'GET': {
                 try {
                     const stored = await this.#state.storage.get<{v: unknown; exp: number}>(N_KEY);
-                    if (!stored) return new Response('null', {status: 200, headers: {'Content-Type': 'application/json'}});
+                    if (!stored) return new Response('null', {status: 200, headers: {'content-type': 'application/json'}});
 
                     /* Lazy delete on read */
                     const now = Date.now();
                     if (!isNum(stored.exp) || isNumGte(now, stored.exp)) {
                         await this.#state.storage.delete(N_KEY);
-                        return new Response('null', {status: 200, headers: {'Content-Type': 'application/json'}});
+                        return new Response('null', {status: 200, headers: {'content-type': 'application/json'}});
                     }
 
-                    return new Response(JSON.stringify(stored.v), {status: 200, headers: {'Content-Type': 'application/json'}});
+                    return new Response(JSON.stringify(stored.v), {status: 200, headers: {'content-type': 'application/json'}});
                 } catch {
                     return new Response('Internal Error', {status: 500});
                 }
@@ -97,7 +97,7 @@ export class TriFrostDurableObject {
                     /* Prevent consumers from writing to the ttl namespace */
                     if (N_KEY.startsWith(BUCKET_PREFIX)) return new Response('Invalid key: reserved prefix', {status: 400});
 
-                    if ((request.headers.get('Content-Type') || '').indexOf('application/json') < 0)
+                    if ((request.headers.get('content-type') || '').indexOf('application/json') < 0)
                         return new Response('Unsupported content type', {status: 415});
 
                     const {v, ttl} = (await request.json()) as {v: unknown; ttl: number};

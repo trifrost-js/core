@@ -27,9 +27,9 @@ describe('Middleware - Cors', () => {
         const ctx = new MockContext();
         Cors()(ctx);
         expect(ctx.headers).toEqual({
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, HEAD, POST',
-            Vary: 'Origin',
+            'access-control-allow-origin': '*',
+            'access-control-allow-methods': 'GET, HEAD, POST',
+            vary: 'Origin',
         });
     });
 
@@ -38,9 +38,9 @@ describe('Middleware - Cors', () => {
         /* @ts-expect-error Should be good */
         Cors('bla')(ctx);
         expect(ctx.headers).toEqual({
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, HEAD, POST',
-            Vary: 'Origin',
+            'access-control-allow-origin': '*',
+            'access-control-allow-methods': 'GET, HEAD, POST',
+            vary: 'Origin',
         });
     });
 
@@ -48,8 +48,8 @@ describe('Middleware - Cors', () => {
         const ctx = new MockContext();
         Cors({origin: '*'}, {use_defaults: false})(ctx);
         expect(ctx.headers).toEqual({
-            'Access-Control-Allow-Origin': '*',
-            Vary: 'Origin',
+            'access-control-allow-origin': '*',
+            vary: 'Origin',
         });
     });
 
@@ -57,16 +57,16 @@ describe('Middleware - Cors', () => {
         const ctx = new MockContext();
         /* @ts-expect-error Should be good */
         Cors('bla', {use_defaults: false})(ctx);
-        expect(ctx.headers).toEqual({Vary: 'Origin'});
+        expect(ctx.headers).toEqual({vary: 'Origin'});
     });
 
     it('Sets custom static origin', () => {
         const ctx = new MockContext();
         Cors({origin: 'https://trifrost.land'})(ctx);
         expect(ctx.headers).toEqual({
-            'Access-Control-Allow-Methods': 'GET, HEAD, POST',
-            Vary: 'Origin',
-            'Access-Control-Allow-Origin': 'https://trifrost.land',
+            'access-control-allow-methods': 'GET, HEAD, POST',
+            vary: 'Origin',
+            'access-control-allow-origin': 'https://trifrost.land',
         });
     });
 
@@ -80,9 +80,9 @@ describe('Middleware - Cors', () => {
         })(ctx);
         expect(ctx.headers).toEqual({
             Origin: 'https://foo.com',
-            'Access-Control-Allow-Methods': 'GET, HEAD, POST',
-            Vary: 'Origin',
-            'Access-Control-Allow-Origin': 'https://bar.com',
+            'access-control-allow-methods': 'GET, HEAD, POST',
+            vary: 'Origin',
+            'access-control-allow-origin': 'https://bar.com',
         });
     });
 
@@ -90,8 +90,8 @@ describe('Middleware - Cors', () => {
         const ctx = new MockContext({headers: {Origin: 'https://deny.com'}});
         Cors({origin: () => null})(ctx);
         expect(ctx.headers).toEqual({
-            'Access-Control-Allow-Methods': 'GET, HEAD, POST',
-            Vary: 'Origin',
+            'access-control-allow-methods': 'GET, HEAD, POST',
+            vary: 'Origin',
             Origin: 'https://deny.com',
         });
     });
@@ -104,9 +104,9 @@ describe('Middleware - Cors', () => {
         const ctx = new MockContext();
         Cors({methods: '*'})(ctx);
         expect(ctx.headers).toEqual({
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': '*',
-            Vary: 'Origin',
+            'access-control-allow-origin': '*',
+            'access-control-allow-methods': '*',
+            vary: 'Origin',
         });
     });
 
@@ -114,10 +114,10 @@ describe('Middleware - Cors', () => {
         const ctx = new MockContext();
         Cors({headers: ['X-Custom', 'Authorization']})(ctx);
         expect(ctx.headers).toEqual({
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, HEAD, POST',
-            Vary: 'Origin',
-            'Access-Control-Allow-Headers': 'X-Custom, Authorization',
+            'access-control-allow-origin': '*',
+            'access-control-allow-methods': 'GET, HEAD, POST',
+            vary: 'Origin',
+            'access-control-allow-headers': 'X-Custom, Authorization',
         });
     });
 
@@ -125,10 +125,10 @@ describe('Middleware - Cors', () => {
         const ctx = new MockContext();
         Cors({expose: ['X-Expose-This', 'X-Also-This']})(ctx);
         expect(ctx.headers).toEqual({
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, HEAD, POST',
-            Vary: 'Origin',
-            'Access-Control-Expose-Headers': 'X-Expose-This, X-Also-This',
+            'access-control-allow-origin': '*',
+            'access-control-allow-methods': 'GET, HEAD, POST',
+            vary: 'Origin',
+            'access-control-expose-headers': 'X-Expose-This, X-Also-This',
         });
     });
 
@@ -136,10 +136,10 @@ describe('Middleware - Cors', () => {
         const ctx = new MockContext();
         Cors({credentials: true})(ctx);
         expect(ctx.headers).toEqual({
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, HEAD, POST',
-            Vary: 'Origin',
-            'Access-Control-Allow-Credentials': 'true',
+            'access-control-allow-origin': '*',
+            'access-control-allow-methods': 'GET, HEAD, POST',
+            vary: 'Origin',
+            'access-control-allow-credentials': 'true',
         });
     });
 
@@ -147,10 +147,10 @@ describe('Middleware - Cors', () => {
         const ctx = new MockContext();
         Cors({maxage: 86400})(ctx);
         expect(ctx.headers).toEqual({
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, HEAD, POST',
-            Vary: 'Origin',
-            'Access-Control-Max-Age': '86400',
+            'access-control-allow-origin': '*',
+            'access-control-allow-methods': 'GET, HEAD, POST',
+            vary: 'Origin',
+            'access-control-max-age': '86400',
         });
     });
 
@@ -171,13 +171,13 @@ describe('Middleware - Cors', () => {
             maxage: 3600,
         })(ctx);
         expect(ctx.headers).toEqual({
-            Vary: 'Origin',
-            'Access-Control-Allow-Origin': 'https://trifrost.land',
-            'Access-Control-Allow-Methods': 'GET, POST, DELETE',
-            'Access-Control-Allow-Headers': 'Authorization, X-Request-ID',
-            'Access-Control-Expose-Headers': 'X-Response-Time',
-            'Access-Control-Allow-Credentials': 'true',
-            'Access-Control-Max-Age': '3600',
+            vary: 'Origin',
+            'access-control-allow-origin': 'https://trifrost.land',
+            'access-control-allow-methods': 'GET, POST, DELETE',
+            'access-control-allow-headers': 'Authorization, X-Request-ID',
+            'access-control-expose-headers': 'X-Response-Time',
+            'access-control-allow-credentials': 'true',
+            'access-control-max-age': '3600',
             Origin: 'https://client.com',
         });
     });
@@ -190,11 +190,11 @@ describe('Middleware - Cors', () => {
             expose: ['X-Auth'],
         })(ctx);
         expect(ctx.headers).toEqual({
-            Vary: 'Origin',
-            'Access-Control-Allow-Origin': 'https://trifrost.land',
-            'Access-Control-Allow-Methods': 'GET, HEAD, POST',
-            'Access-Control-Allow-Credentials': 'true',
-            'Access-Control-Expose-Headers': 'X-Auth',
+            vary: 'Origin',
+            'access-control-allow-origin': 'https://trifrost.land',
+            'access-control-allow-methods': 'GET, HEAD, POST',
+            'access-control-allow-credentials': 'true',
+            'access-control-expose-headers': 'X-Auth',
         });
     });
 
@@ -205,9 +205,9 @@ describe('Middleware - Cors', () => {
         })(ctx);
         expect(ctx.headers).toEqual({
             Origin: 'https://site1.com',
-            Vary: 'Origin',
-            'Access-Control-Allow-Methods': 'GET, HEAD, POST',
-            'Access-Control-Allow-Origin': 'https://site1.com',
+            vary: 'Origin',
+            'access-control-allow-methods': 'GET, HEAD, POST',
+            'access-control-allow-origin': 'https://site1.com',
         });
     });
 
@@ -218,8 +218,8 @@ describe('Middleware - Cors', () => {
         })(ctx);
         expect(ctx.headers).toEqual({
             Origin: 'https://unknown.com',
-            Vary: 'Origin',
-            'Access-Control-Allow-Methods': 'GET, HEAD, POST',
+            vary: 'Origin',
+            'access-control-allow-methods': 'GET, HEAD, POST',
         });
     });
 
@@ -239,11 +239,11 @@ describe('Middleware - Cors', () => {
             maxage: 999,
         })(ctx);
         expect(ctx.headers).toEqual({
-            Vary: 'Origin',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': '*',
-            'Access-Control-Allow-Headers': 'X-Test, X-Another',
-            'Access-Control-Max-Age': '999',
+            vary: 'Origin',
+            'access-control-allow-origin': '*',
+            'access-control-allow-methods': '*',
+            'access-control-allow-headers': 'X-Test, X-Another',
+            'access-control-max-age': '999',
         });
     });
 
@@ -259,10 +259,10 @@ describe('Middleware - Cors', () => {
         })(ctx);
         expect(ctx.headers).toEqual({
             Origin: 'https://trusted.com',
-            Vary: 'Origin',
-            'Access-Control-Allow-Methods': 'GET, PUT',
-            'Access-Control-Allow-Credentials': 'true',
-            'Access-Control-Allow-Origin': 'https://allowed.com',
+            vary: 'Origin',
+            'access-control-allow-methods': 'GET, PUT',
+            'access-control-allow-credentials': 'true',
+            'access-control-allow-origin': 'https://allowed.com',
         });
     });
 
@@ -277,10 +277,10 @@ describe('Middleware - Cors', () => {
             methods: ['GET', 'PUT'],
         })(ctx);
         expect(ctx.headers).toEqual({
-            Vary: 'Origin',
-            'Access-Control-Allow-Methods': 'GET, PUT',
-            'Access-Control-Allow-Credentials': 'true',
-            'Access-Control-Allow-Origin': 'https://thisone.com',
+            vary: 'Origin',
+            'access-control-allow-methods': 'GET, PUT',
+            'access-control-allow-credentials': 'true',
+            'access-control-allow-origin': 'https://thisone.com',
         });
     });
 
@@ -314,8 +314,8 @@ describe('Middleware - Cors', () => {
             const ctx = new MockContext();
             Cors({methods: el as any})(ctx);
             expect(ctx.headers).toEqual({
-                Vary: 'Origin',
-                'Access-Control-Allow-Origin': '*',
+                vary: 'Origin',
+                'access-control-allow-origin': '*',
             });
         }
     });
@@ -323,18 +323,18 @@ describe('Middleware - Cors', () => {
     it('Omits allow-headers if empty or invalid header list', () => {
         const ctx = new MockContext();
         Cors({headers: []})(ctx);
-        expect('Access-Control-Allow-Headers' in ctx.headers).toBe(false);
+        expect('access-control-allow-headers' in ctx.headers).toBe(false);
     });
 
     it('Omits expose-headers if not valid', () => {
         const ctx = new MockContext();
         Cors({expose: []})(ctx);
-        expect('Access-Control-Expose-Headers' in ctx.headers).toBe(false);
+        expect('access-control-expose-headers' in ctx.headers).toBe(false);
     });
 
     it('Omits max-age if not a valid integer', () => {
         const ctx = new MockContext();
         Cors({maxage: -5})(ctx);
-        expect('Access-Control-Max-Age' in ctx.headers).toBe(false);
+        expect('access-control-max-age' in ctx.headers).toBe(false);
     });
 });

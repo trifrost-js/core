@@ -230,20 +230,20 @@ describe('Context', () => {
         it('Sets a header', () => {
             ctx.setHeader('X-Test', '123');
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers).toEqual({'X-Test': '123'});
+            expect(ctx.res_headers).toEqual({'x-test': '123'});
         });
 
         it('Sets multiple headers', () => {
             ctx.setHeaders({'X-A': 'a', 'X-B': 'b'});
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers).toEqual({'X-A': 'a', 'X-B': 'b'});
+            expect(ctx.res_headers).toEqual({'x-a': 'a', 'x-b': 'b'});
         });
 
         it('Overwrites header when set multiple times', () => {
             ctx.setHeader('X-Foo', '1');
             ctx.setHeader('X-Foo', '2');
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['X-Foo']).toBe('2');
+            expect(ctx.res_headers['x-foo']).toBe('2');
         });
 
         it('Deletes a header', () => {
@@ -1166,7 +1166,7 @@ describe('Context', () => {
             /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(JSON.stringify({foo: 'bar'}));
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Type']).toBe('application/json');
+            expect(ctx.res_headers['content-type']).toBe('application/json');
             expect(ctx.isDone).toBe(true);
         });
 
@@ -1178,29 +1178,29 @@ describe('Context', () => {
         });
 
         it('Respects pre-existing Content-Type', () => {
-            ctx.setHeader('Content-Type', 'application/vnd.custom+json');
+            ctx.setHeader('content-type', 'application/vnd.custom+json');
             ctx.json({hello: 'world'});
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Type']).toBe('application/vnd.custom+json');
+            expect(ctx.res_headers['content-type']).toBe('application/vnd.custom+json');
         });
 
         it('Applies cacheControl headers', () => {
             ctx.json({msg: 'hello'}, {cacheControl: {type: 'public', maxage: 3600}});
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Cache-Control']).toBe('public, max-age=3600');
+            expect(ctx.res_headers['cache-control']).toBe('public, max-age=3600');
         });
 
         it('Overwrites previously set Cache-Control', () => {
-            ctx.setHeader('Cache-Control', 'manual');
+            ctx.setHeader('cache-control', 'manual');
             ctx.json({override: true}, {cacheControl: {type: 'no-store'}});
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Cache-Control']).toBe('no-store');
+            expect(ctx.res_headers['cache-control']).toBe('no-store');
         });
 
         it('Does not set Cache-Control when not passed', () => {
             ctx.json({silent: true});
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Cache-Control']).toBeUndefined();
+            expect(ctx.res_headers['cache-control']).toBeUndefined();
         });
 
         it('Preserves previously set status', () => {
@@ -1234,15 +1234,15 @@ describe('Context', () => {
             /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe('hello world');
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Type']).toBe('text/plain');
+            expect(ctx.res_headers['content-type']).toBe('text/plain');
             expect(ctx.isDone).toBe(true);
         });
 
         it('Respects existing Content-Type', () => {
-            ctx.setHeader('Content-Type', 'text/markdown');
+            ctx.setHeader('content-type', 'text/markdown');
             ctx.text('## Hello');
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Type']).toBe('text/markdown');
+            expect(ctx.res_headers['content-type']).toBe('text/markdown');
         });
 
         it('Applies cacheControl headers', () => {
@@ -1254,20 +1254,20 @@ describe('Context', () => {
                 },
             });
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Cache-Control']).toBe('private, max-age=86400, immutable');
+            expect(ctx.res_headers['cache-control']).toBe('private, max-age=86400, immutable');
         });
 
         it('Overwrites existing Cache-Control', () => {
-            ctx.setHeader('Cache-Control', 'set-by-hand');
+            ctx.setHeader('cache-control', 'set-by-hand');
             ctx.text('overwrite me', {cacheControl: {type: 'no-cache'}});
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Cache-Control']).toBe('no-cache');
+            expect(ctx.res_headers['cache-control']).toBe('no-cache');
         });
 
         it('Skips if cacheControl is not passed', () => {
             ctx.text('no headers here');
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Cache-Control']).toBeUndefined();
+            expect(ctx.res_headers['cache-control']).toBeUndefined();
         });
 
         it('Preserves previously set status', () => {
@@ -1297,7 +1297,7 @@ describe('Context', () => {
             /* @ts-expect-error Should be good */
             expect(ctx.res_body?.startsWith('<!DOCTYPE html><html>')).toBe(true);
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Type']).toBe('text/html');
+            expect(ctx.res_headers['content-type']).toBe('text/html');
             expect(ctx.isDone).toBe(true);
         });
 
@@ -1309,10 +1309,10 @@ describe('Context', () => {
         });
 
         it('Respects Content-Type if already set', () => {
-            ctx.setHeader('Content-Type', 'application/xhtml+xml');
+            ctx.setHeader('content-type', 'application/xhtml+xml');
             ctx.html('<html><body>Hi</body></html>');
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Type']).toBe('application/xhtml+xml');
+            expect(ctx.res_headers['content-type']).toBe('application/xhtml+xml');
         });
 
         it('Sets Cache-Control from options', () => {
@@ -1324,24 +1324,24 @@ describe('Context', () => {
                 },
             });
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Cache-Control']).toBe('public, max-age=600, proxy-revalidate');
+            expect(ctx.res_headers['cache-control']).toBe('public, max-age=600, proxy-revalidate');
         });
 
         it('Overwrites manually-set Cache-Control', () => {
-            ctx.setHeader('Cache-Control', 'fixed');
+            ctx.setHeader('cache-control', 'fixed');
             ctx.html('<span>Should change</span>', {
                 cacheControl: {
                     type: 'no-store',
                 },
             });
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Cache-Control']).toBe('no-store');
+            expect(ctx.res_headers['cache-control']).toBe('no-store');
         });
 
         it('Skips if cacheControl is not passed', () => {
             ctx.html('<em>Simple</em>');
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Cache-Control']).toBeUndefined();
+            expect(ctx.res_headers['cache-control']).toBeUndefined();
         });
 
         it('Adds doctype if HTML starts with <html', () => {
@@ -1360,7 +1360,7 @@ describe('Context', () => {
             const html = '<!DOCTYPE html><html><head></head><body><h1>Hello</h1></body></html>';
             const spySetCookie = vi.spyOn(ctx.cookies, 'set');
 
-            ctx.setHeader('Content-Security-Policy', "script-src 'self' 'nonce-abc123'");
+            ctx.setHeader('content-security-policy', "script-src 'self' 'nonce-abc123'");
             ctx.html(html);
 
             const expectedNonce = ctx.nonce;
@@ -1390,7 +1390,7 @@ describe('Context', () => {
         it('Rewrites nonce attributes and CSP on fragment HTML', () => {
             const fragment = '<div><style nonce="xyz">.test{}</style></div>';
             ctx.cookies.set('tfnonce', 'noncified');
-            ctx.setHeader('Content-Security-Policy', "style-src 'self' 'nonce-xyz'");
+            ctx.setHeader('content-security-policy', "style-src 'self' 'nonce-xyz'");
 
             ctx.html(fragment);
 
@@ -1398,20 +1398,20 @@ describe('Context', () => {
             /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(['<div>', '<style nonce="noncified">.test{}</style></div>'].join(''));
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Security-Policy']).toBe("style-src 'self' 'nonce-noncified'");
+            expect(ctx.res_headers['content-security-policy']).toBe("style-src 'self' 'nonce-noncified'");
         });
 
         it('Does not rewrite nonce attributes if no tfnonce is set for fragment HTML', () => {
             const fragment = '<div><style nonce="xyz">.test{}</style></div>';
             ctx.setState({nonce: 'xyz'});
-            ctx.setHeader('Content-Security-Policy', "style-src 'self' 'nonce-xyz'");
+            ctx.setHeader('content-security-policy', "style-src 'self' 'nonce-xyz'");
 
             ctx.html(fragment);
 
             /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(['<div>', '<style nonce="xyz">.test{}</style></div>'].join(''));
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Security-Policy']).toBe("style-src 'self' 'nonce-xyz'");
+            expect(ctx.res_headers['content-security-policy']).toBe("style-src 'self' 'nonce-xyz'");
         });
 
         it('Skips nonce injection if CSP is missing', () => {
@@ -1435,7 +1435,7 @@ describe('Context', () => {
         it('Redirects to absolute URL with default status', () => {
             ctx.redirect('https://example.com');
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers.Location).toBe('https://example.com');
+            expect(ctx.res_headers.location).toBe('https://example.com');
             expect(ctx.statusCode).toBe(303);
             /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(null);
@@ -1449,7 +1449,7 @@ describe('Context', () => {
             });
             withQuery.redirect('/next');
             /* @ts-expect-error Should be good */
-            expect(withQuery.res_headers.Location).toContain('?a=1');
+            expect(withQuery.res_headers.location).toContain('?a=1');
             expect(withQuery.statusCode).toBe(303);
             /* @ts-expect-error Should be good */
             expect(withQuery.res_body).toBe(null);
@@ -1463,7 +1463,7 @@ describe('Context', () => {
             });
             clean.redirect('/path', {status: 301, keep_query: false});
             /* @ts-expect-error Should be good */
-            expect(clean.res_headers.Location).not.toContain('q=123');
+            expect(clean.res_headers.location).not.toContain('q=123');
             expect(clean.statusCode).toBe(301);
             /* @ts-expect-error Should be good */
             expect(clean.res_body).toBe(null);
@@ -1474,7 +1474,7 @@ describe('Context', () => {
             const rel = new TestContext(mockLogger as any, baseConfig as any, baseRequest);
             rel.redirect('/dashboard');
             /* @ts-expect-error Should be good */
-            expect(rel.res_headers.Location).toBe('/dashboard');
+            expect(rel.res_headers.location).toBe('/dashboard');
             expect(rel.statusCode).toBe(303);
             /* @ts-expect-error Should be good */
             expect(rel.res_body).toBe(null);
@@ -1489,7 +1489,7 @@ describe('Context', () => {
 
             withQuery.redirect('/next?page=1');
             /* @ts-expect-error Should be good */
-            expect(withQuery.res_headers.Location).toBe('/next?page=1&b=2');
+            expect(withQuery.res_headers.location).toBe('/next?page=1&b=2');
             expect(withQuery.statusCode).toBe(303);
             /* @ts-expect-error Should be good */
             expect(withQuery.res_body).toBe(null);
@@ -1499,7 +1499,7 @@ describe('Context', () => {
         it('Respects protocol-relative URLs and skips prefixing', () => {
             ctx.redirect('//cdn.example.com/image.jpg');
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers.Location).toBe('//cdn.example.com/image.jpg');
+            expect(ctx.res_headers.location).toBe('//cdn.example.com/image.jpg');
             expect(ctx.statusCode).toBe(303);
             /* @ts-expect-error Should be good */
             expect(ctx.res_body).toBe(null);
@@ -1521,7 +1521,7 @@ describe('Context', () => {
 
             rel.redirect('dashboard');
             /* @ts-expect-error Should be good */
-            expect(rel.res_headers.Location).toBe('https://example.org/dashboard');
+            expect(rel.res_headers.location).toBe('https://example.org/dashboard');
             expect(rel.statusCode).toBe(303);
             /* @ts-expect-error Should be good */
             expect(rel.res_body).toBe(null);
@@ -1545,7 +1545,7 @@ describe('Context', () => {
 
             rel.redirect('secure', {status: 307});
             /* @ts-expect-error Should be good */
-            expect(rel.res_headers.Location).toBe('https://plain.org/secure');
+            expect(rel.res_headers.location).toBe('https://plain.org/secure');
             expect(rel.statusCode).toBe(307);
             /* @ts-expect-error Should be good */
             expect(rel.res_body).toBe(null);
@@ -1568,7 +1568,7 @@ describe('Context', () => {
 
             ctxWithHttpsHost.redirect('dashboard');
             /* @ts-expect-error Should be good */
-            expect(ctxWithHttpsHost.res_headers.Location).toBe('https://example.com/dashboard');
+            expect(ctxWithHttpsHost.res_headers.location).toBe('https://example.com/dashboard');
         });
 
         it('Redirects using host that starts with http:// (normalizes to https)', () => {
@@ -1587,7 +1587,7 @@ describe('Context', () => {
 
             ctxWithHttpHost.redirect('foo');
             /* @ts-expect-error Should be good */
-            expect(ctxWithHttpHost.res_headers.Location).toBe('https://example.com/foo');
+            expect(ctxWithHttpHost.res_headers.location).toBe('https://example.com/foo');
         });
 
         it('Throws if payload is invalid', () => {
@@ -1770,66 +1770,66 @@ describe('Context', () => {
             });
 
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Cache-Control']).toBe('private, max-age=123');
+            expect(ctx.res_headers['cache-control']).toBe('private, max-age=123');
         });
 
         it('Infers Content-Type from extension if not already set', async () => {
             getStreamMock.mockResolvedValue({stream: 'x', size: 100});
             await ctx.file('/cool.json');
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Type']).toBe('application/json');
+            expect(ctx.res_headers['content-type']).toBe('application/json');
         });
 
         it('Skips mime detection if Content-Type already exists', async () => {
             getStreamMock.mockResolvedValue({stream: 'x', size: 100});
-            ctx.setHeader('Content-Type', 'custom/type');
+            ctx.setHeader('content-type', 'custom/type');
             await ctx.file('/anything.unknown');
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Type']).toBe('custom/type');
+            expect(ctx.res_headers['content-type']).toBe('custom/type');
         });
 
-        it('Applies Content-Disposition for download=true', async () => {
+        it('Applies content-disposition for download=true', async () => {
             getStreamMock.mockResolvedValue({stream: 'x', size: 100});
             await ctx.file('/data.zip', {download: true});
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Disposition']).toBe('attachment; filename="data.zip"; filename*=UTF-8\'\'data.zip');
+            expect(ctx.res_headers['content-disposition']).toBe('attachment; filename="data.zip"; filename*=UTF-8\'\'data.zip');
         });
 
-        it('Applies Content-Disposition for download=filename', async () => {
+        it('Applies content-disposition for download=filename', async () => {
             getStreamMock.mockResolvedValue({stream: 'x', size: 100});
             await ctx.file('/data.zip', {download: 'résumé.pdf'});
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Disposition']).toMatch(/filename/i);
+            expect(ctx.res_headers['content-disposition']).toMatch(/filename/i);
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Disposition']).toContain('UTF-8');
+            expect(ctx.res_headers['content-disposition']).toContain('UTF-8');
         });
 
-        it('Skips Content-Disposition if download option not passed', async () => {
+        it('Skips content-disposition if download option not passed', async () => {
             getStreamMock.mockResolvedValue({stream: 'x', size: 1});
             await ctx.file('/no-disposition.pdf');
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Disposition']).toBeUndefined();
+            expect(ctx.res_headers['content-disposition']).toBeUndefined();
         });
 
-        it('Sets Content-Disposition correctly when download is true', async () => {
+        it('Sets content-disposition correctly when download is true', async () => {
             getStreamMock.mockResolvedValue({stream: 'x', size: 1});
             await ctx.file('/yes.txt', {download: true});
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Disposition']).toBe('attachment; filename="yes.txt"; filename*=UTF-8\'\'yes.txt');
+            expect(ctx.res_headers['content-disposition']).toBe('attachment; filename="yes.txt"; filename*=UTF-8\'\'yes.txt');
         });
 
         it('Handles download with ASCII-only filename', async () => {
             getStreamMock.mockResolvedValue({stream: 'x', size: 1});
             await ctx.file('/file.zip', {download: 'report.csv'});
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Disposition']).toBe('attachment; filename="report.csv"; filename*=UTF-8\'\'report.csv');
+            expect(ctx.res_headers['content-disposition']).toBe('attachment; filename="report.csv"; filename*=UTF-8\'\'report.csv');
         });
 
         it('Handles download with UTF-8 filename needing encoding', async () => {
             getStreamMock.mockResolvedValue({stream: 'x', size: 1});
             await ctx.file('/résumé.zip', {download: 'rêsumé.zip'});
             /* @ts-expect-error Should be good */
-            const header = ctx.res_headers['Content-Disposition'];
+            const header = ctx.res_headers['content-disposition'];
             expect(header).toContain('attachment;');
             expect(header).toContain('filename*=');
             expect(header).toMatch(/UTF-8''r%C3%AAsum%C3%A9\.zip/);
@@ -1843,8 +1843,8 @@ describe('Context', () => {
 
             /* @ts-expect-error Should be good */
             expect(ctx.res_headers).toEqual({
-                'Content-Disposition': 'attachment; filename=".pdf"; filename*=UTF-8\'\'%EF%BF%BD%EF%BF%BD.pdf',
-                'Content-Length': '1',
+                'content-disposition': 'attachment; filename=".pdf"; filename*=UTF-8\'\'%EF%BF%BD%EF%BF%BD.pdf',
+                'content-length': '1',
             });
         });
 
@@ -1856,8 +1856,8 @@ describe('Context', () => {
 
             /* @ts-expect-error Should be good */
             expect(ctx.res_headers).toEqual({
-                'Content-Disposition': 'attachment; filename="download"; filename*=UTF-8\'\'%EF%BF%BD%EF%BF%BD',
-                'Content-Length': '1',
+                'content-disposition': 'attachment; filename="download"; filename*=UTF-8\'\'%EF%BF%BD%EF%BF%BD',
+                'content-length': '1',
             });
         });
 
@@ -1869,12 +1869,12 @@ describe('Context', () => {
         });
 
         it('Skips setting Content-Type if already set', async () => {
-            ctx.setHeader('Content-Type', 'application/custom');
+            ctx.setHeader('content-type', 'application/custom');
             ctx.getStream = vi.fn().mockResolvedValue({stream: 'x', size: 1});
             await ctx.file('/file.png');
             /* @ts-expect-error Should be good */
             expect(ctx.res_headers).toEqual({
-                'Content-Type': 'application/custom',
+                'content-type': 'application/custom',
             });
         });
 
@@ -1916,18 +1916,18 @@ describe('Context', () => {
                 await ctx.file({stream, name: 'file.json'});
                 /* @ts-expect-error Should be good */
                 expect(ctx.res_headers).toEqual({
-                    'Content-Type': 'application/json',
+                    'content-type': 'application/json',
                 });
             });
 
-            it('Applies Content-Disposition from string `download`', async () => {
+            it('Applies content-disposition from string `download`', async () => {
                 const stream = {pipe: vi.fn()};
                 ctx.stream = vi.fn();
                 await ctx.file({stream, name: 'resume.pdf'}, {download: 'resume.pdf'});
                 /* @ts-expect-error Should be good */
                 expect(ctx.res_headers).toEqual({
-                    'Content-Disposition': 'attachment; filename="resume.pdf"; filename*=UTF-8\'\'resume.pdf',
-                    'Content-Type': 'application/pdf',
+                    'content-disposition': 'attachment; filename="resume.pdf"; filename*=UTF-8\'\'resume.pdf',
+                    'content-type': 'application/pdf',
                 });
             });
 
@@ -1968,15 +1968,15 @@ describe('Context', () => {
             expect(streamCtx.isDone).toBe(true);
         });
 
-        it('Sets Content-Length if valid size provided', () => {
+        it('Sets content-length if valid size provided', () => {
             streamCtx.stream('streamy', 512);
             /* @ts-expect-error Should be good */
             expect(streamCtx.res_headers).toEqual({
-                'Content-Length': '512',
+                'content-length': '512',
             });
         });
 
-        it('Does not set Content-Length if size is null', () => {
+        it('Does not set content-length if size is null', () => {
             streamCtx.stream('data', null);
             /* @ts-expect-error Should be good */
             expect(streamCtx.res_headers).toEqual({});
@@ -2105,20 +2105,20 @@ describe('Context', () => {
         it('Sets a valid MIME type', () => {
             ctx.setType('application/json');
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Type']).toBe('application/json');
+            expect(ctx.res_headers['content-type']).toBe('application/json');
         });
 
         it('Ignores unknown MIME types', () => {
             ctx.setType('application/unknown' as any);
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Type']).toBeUndefined();
+            expect(ctx.res_headers['content-type']).toBeUndefined();
         });
 
         it('Overwrites existing Content-Type', () => {
-            ctx.setHeader('Content-Type', 'text/plain');
+            ctx.setHeader('content-type', 'text/plain');
             ctx.setType('text/html');
             /* @ts-expect-error Should be good */
-            expect(ctx.res_headers['Content-Type']).toBe('text/html');
+            expect(ctx.res_headers['content-type']).toBe('text/html');
         });
 
         it('Is a no-op if MIME type is not in MimeTypesSet', () => {

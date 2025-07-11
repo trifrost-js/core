@@ -66,7 +66,7 @@ function createOptionsRoute<Env extends Record<string, any>>(path: string, route
         kind: 'options',
         path,
         fn: (ctx: TriFrostContext<Env>) => {
-            ctx.setHeaders({Allow: methods.join(', '), Vary: 'Origin'});
+            ctx.setHeaders({allow: methods.join(', '), vary: 'Origin'});
             ctx.status(204);
         },
         middleware: cors_mware ? [cors_mware] : [],

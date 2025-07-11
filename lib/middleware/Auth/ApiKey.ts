@@ -52,13 +52,16 @@ export function ApiKeyAuth<
 >(opts: ApiKeyAuthOptions<Env, State, Patch>) {
     if (typeof opts?.validate !== 'function') throw new Error('TriFrostMiddleware@ApiKeyAuth: A validate function must be provided');
 
-    if (!isNeString(opts.apiKey?.header) && !isNeString(opts.apiKey?.query)) {
+    const hasApiKeyHeader = isNeString(opts.apiKey?.header);
+    const hasApiKeyQuery = isNeString(opts.apiKey?.query);
+
+    if (!hasApiKeyHeader && !hasApiKeyQuery) {
         throw new Error('TriFrostMiddleware@ApiKeyAuth: You must configure apiKey header or query');
     }
 
     /* Determine key behavior */
-    const apiKeyHeader: string | null = isNeString(opts.apiKey?.header) ? opts.apiKey.header : null;
-    const apiKeyQuery: string | null = isNeString(opts.apiKey?.query) ? opts.apiKey.query : null;
+    const apiKeyHeader: string | null = hasApiKeyHeader ? opts.apiKey.header! : null;
+    const apiKeyQuery: string | null = hasApiKeyQuery ? opts.apiKey.query! : null;
 
     /* Determine client behavior */
     const apiClientHeader: string | null = isNeString(opts.apiClient?.header) ? opts.apiClient.header : null;

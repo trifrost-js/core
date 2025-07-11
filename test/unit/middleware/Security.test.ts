@@ -41,16 +41,16 @@ describe('Middleware - Security', () => {
         const ctx = new MockContext();
         Security()(ctx);
         expect(ctx.headers).toEqual({
-            'Cross-Origin-Opener-Policy': 'same-origin',
-            'Cross-Origin-Resource-Policy': 'same-site',
-            'Origin-Agent-Cluster': '?1',
-            'Referrer-Policy': 'no-referrer',
-            'Strict-Transport-Security': 'max-age=15552000; includeSubDomains',
-            'X-Content-Type-Options': 'nosniff',
-            'X-DNS-Prefetch-Control': 'off',
-            'X-Download-Options': 'noopen',
-            'X-Frame-Options': 'SAMEORIGIN',
-            'X-XSS-Protection': '0',
+            'cross-origin-opener-policy': 'same-origin',
+            'cross-origin-resource-policy': 'same-site',
+            'origin-agent-cluster': '?1',
+            'referrer-policy': 'no-referrer',
+            'strict-transport-security': 'max-age=15552000; includeSubDomains',
+            'x-content-type-options': 'nosniff',
+            'x-dns-prefetch-control': 'off',
+            'x-download-options': 'noopen',
+            'x-frame-options': 'SAMEORIGIN',
+            'x-xss-protection': '0',
         });
     });
 
@@ -59,16 +59,16 @@ describe('Middleware - Security', () => {
         /* @ts-expect-error Should be good */
         Security('bla')(ctx);
         expect(ctx.headers).toEqual({
-            'Cross-Origin-Opener-Policy': 'same-origin',
-            'Cross-Origin-Resource-Policy': 'same-site',
-            'Origin-Agent-Cluster': '?1',
-            'Referrer-Policy': 'no-referrer',
-            'Strict-Transport-Security': 'max-age=15552000; includeSubDomains',
-            'X-Content-Type-Options': 'nosniff',
-            'X-DNS-Prefetch-Control': 'off',
-            'X-Download-Options': 'noopen',
-            'X-Frame-Options': 'SAMEORIGIN',
-            'X-XSS-Protection': '0',
+            'cross-origin-opener-policy': 'same-origin',
+            'cross-origin-resource-policy': 'same-site',
+            'origin-agent-cluster': '?1',
+            'referrer-policy': 'no-referrer',
+            'strict-transport-security': 'max-age=15552000; includeSubDomains',
+            'x-content-type-options': 'nosniff',
+            'x-dns-prefetch-control': 'off',
+            'x-download-options': 'noopen',
+            'x-frame-options': 'SAMEORIGIN',
+            'x-xss-protection': '0',
         });
     });
 
@@ -89,7 +89,7 @@ describe('Middleware - Security', () => {
         const ctx = new MockContext();
         Security({crossOriginOpenerPolicy: 'unsafe-none'}, {use_defaults: false})(ctx);
         expect(ctx.headers).toEqual({
-            'Cross-Origin-Opener-Policy': 'unsafe-none',
+            'cross-origin-opener-policy': 'unsafe-none',
         });
     });
 
@@ -101,7 +101,7 @@ describe('Middleware - Security', () => {
                     [ContentSecurityPolicy.DefaultSrc]: '"self"',
                 },
             })(ctx);
-            expect(ctx.headers['Content-Security-Policy']).toBe('default-src "self"');
+            expect(ctx.headers['content-security-policy']).toBe('default-src "self"');
         });
 
         it('Sets multiple directives from string arrays (deduped)', () => {
@@ -112,7 +112,7 @@ describe('Middleware - Security', () => {
                     [ContentSecurityPolicy.StyleSrc]: ['"self"', 'fonts.com'],
                 },
             })(ctx);
-            expect(ctx.headers['Content-Security-Policy']).toBe('script-src "self" cdn.com; style-src "self" fonts.com');
+            expect(ctx.headers['content-security-policy']).toBe('script-src "self" cdn.com; style-src "self" fonts.com');
         });
 
         it('Handles base-uri as a special single string', () => {
@@ -122,7 +122,7 @@ describe('Middleware - Security', () => {
                     [ContentSecurityPolicy.BaseUri]: '"self"',
                 },
             })(ctx);
-            expect(ctx.headers['Content-Security-Policy']).toBe('base-uri "self"');
+            expect(ctx.headers['content-security-policy']).toBe('base-uri "self"');
         });
 
         it('Trims and dedupes multiple array values', () => {
@@ -132,7 +132,7 @@ describe('Middleware - Security', () => {
                     [ContentSecurityPolicy.ConnectSrc]: [' api.com ', 'api.com', '"self"'],
                 },
             })(ctx);
-            expect(ctx.headers['Content-Security-Policy']).toBe('connect-src api.com "self"');
+            expect(ctx.headers['content-security-policy']).toBe('connect-src api.com "self"');
         });
 
         it('Throws on invalid array values', () => {
@@ -188,7 +188,7 @@ describe('Middleware - Security', () => {
         it('Omits header when passed null', () => {
             const ctx = new MockContext();
             Security({contentSecurityPolicy: null})(ctx);
-            expect('Content-Security-Policy' in ctx.headers).toBe(false);
+            expect('content-security-policy' in ctx.headers).toBe(false);
         });
 
         it('Builds full CSP with all directives set', () => {
@@ -213,7 +213,7 @@ describe('Middleware - Security', () => {
                 },
             })(ctx);
 
-            expect(ctx.headers['Content-Security-Policy']).toEqual(
+            expect(ctx.headers['content-security-policy']).toEqual(
                 [
                     'default-src "self"',
                     'script-src "self" cdn.scripts.com',
@@ -246,7 +246,7 @@ describe('Middleware - Security', () => {
             expect(() => atob(nonce)).not.toThrow();
             expect(nonce).toMatch(/^[A-Za-z0-9+/]+={0,2}$/);
 
-            const csp = ctx.headers['Content-Security-Policy'];
+            const csp = ctx.headers['content-security-policy'];
             expect(csp).toBe(`script-src "self" 'nonce-${nonce}'`);
         });
 
@@ -260,7 +260,7 @@ describe('Middleware - Security', () => {
             })(ctx);
 
             expect(ctx.state).not.toHaveProperty('nonce');
-            expect(ctx.headers['Content-Security-Policy']).toBe('script-src "self" hello.nonce.com');
+            expect(ctx.headers['content-security-policy']).toBe('script-src "self" hello.nonce.com');
         });
 
         it('Replaces nonce placeholder in script-src and sets ctx.nonce but leaves things like hello.nonce.com intact', () => {
@@ -277,7 +277,7 @@ describe('Middleware - Security', () => {
             expect(() => atob(nonce)).not.toThrow();
             expect(nonce).toMatch(/^[A-Za-z0-9+/]+={0,2}$/);
 
-            const csp = ctx.headers['Content-Security-Policy'];
+            const csp = ctx.headers['content-security-policy'];
             expect(csp).toBe(`script-src "self" 'nonce-${nonce}'; style-src "self" hello.nonce.com 'nonce-${nonce}'`);
         });
 
@@ -304,7 +304,7 @@ describe('Middleware - Security', () => {
             })(ctx);
 
             const nonce = ctx.nonce;
-            const csp = ctx.headers['Content-Security-Policy'];
+            const csp = ctx.headers['content-security-policy'];
             const expected = `'nonce-${nonce}'`;
 
             expect(csp).toBe(`script-src "self" ${expected}; style-src "self" ${expected}`);
@@ -316,14 +316,14 @@ describe('Middleware - Security', () => {
             for (const el of Object.values(CrossOriginEmbedderPolicy)) {
                 const ctx = new MockContext();
                 Security({crossOriginEmbedderPolicy: el})(ctx);
-                expect(ctx.headers['Cross-Origin-Embedder-Policy']).toEqual(el);
+                expect(ctx.headers['cross-origin-embedder-policy']).toEqual(el);
             }
         });
 
         it('Omits header when null is passed', () => {
             const ctx = new MockContext();
             Security({crossOriginEmbedderPolicy: null})(ctx);
-            expect('Cross-Origin-Embedder-Policy' in ctx.headers).toBe(false);
+            expect('cross-origin-embedder-policy' in ctx.headers).toBe(false);
         });
 
         it('Throws on non-recognized values', () => {
@@ -341,14 +341,14 @@ describe('Middleware - Security', () => {
             for (const el of Object.values(CrossOriginOpenerPolicy)) {
                 const ctx = new MockContext();
                 Security({crossOriginOpenerPolicy: el})(ctx);
-                expect(ctx.headers['Cross-Origin-Opener-Policy']).toEqual(el);
+                expect(ctx.headers['cross-origin-opener-policy']).toEqual(el);
             }
         });
 
         it('Omits header when null is passed', () => {
             const ctx = new MockContext();
             Security({crossOriginOpenerPolicy: null})(ctx);
-            expect('Cross-Origin-Opener-Policy' in ctx.headers).toBe(false);
+            expect('cross-origin-opener-policy' in ctx.headers).toBe(false);
         });
 
         it('Throws on non-recognized values', () => {
@@ -366,14 +366,14 @@ describe('Middleware - Security', () => {
             for (const el of Object.values(CrossOriginResourcePolicy)) {
                 const ctx = new MockContext();
                 Security({crossOriginResourcePolicy: el})(ctx);
-                expect(ctx.headers['Cross-Origin-Resource-Policy']).toEqual(el);
+                expect(ctx.headers['cross-origin-resource-policy']).toEqual(el);
             }
         });
 
         it('Omits header when null is passed', () => {
             const ctx = new MockContext();
             Security({crossOriginResourcePolicy: null})(ctx);
-            expect('Cross-Origin-Resource-Policy' in ctx.headers).toBe(false);
+            expect('cross-origin-resource-policy' in ctx.headers).toBe(false);
         });
 
         it('Throws on non-recognized values', () => {
@@ -390,19 +390,19 @@ describe('Middleware - Security', () => {
         it('Sets "?1" when value is true', () => {
             const ctx = new MockContext();
             Security({originAgentCluster: true})(ctx);
-            expect(ctx.headers['Origin-Agent-Cluster']).toBe('?1');
+            expect(ctx.headers['origin-agent-cluster']).toBe('?1');
         });
 
         it('Sets "?0" when value is false', () => {
             const ctx = new MockContext();
             Security({originAgentCluster: false})(ctx);
-            expect(ctx.headers['Origin-Agent-Cluster']).toBe('?0');
+            expect(ctx.headers['origin-agent-cluster']).toBe('?0');
         });
 
         it('Omits header when null is passed', () => {
             const ctx = new MockContext();
             Security({originAgentCluster: null})(ctx);
-            expect('Origin-Agent-Cluster' in ctx.headers).toBe(false);
+            expect('origin-agent-cluster' in ctx.headers).toBe(false);
         });
 
         it('Throws on non-boolean, non-null values', () => {
@@ -419,26 +419,26 @@ describe('Middleware - Security', () => {
         it('Sets header from a valid single string', () => {
             const ctx = new MockContext();
             Security({referrerPolicy: 'no-referrer'})(ctx);
-            expect(ctx.headers['Referrer-Policy']).toBe('no-referrer');
+            expect(ctx.headers['referrer-policy']).toBe('no-referrer');
         });
 
         it('Sets header from a valid array of strings', () => {
             const ctx = new MockContext();
             Security({referrerPolicy: ['origin', 'same-origin']})(ctx);
-            expect(ctx.headers['Referrer-Policy']).toBe('origin, same-origin');
+            expect(ctx.headers['referrer-policy']).toBe('origin, same-origin');
         });
 
         it('Deduplicates repeated values in array', () => {
             const ctx = new MockContext();
             Security({referrerPolicy: ['strict-origin', 'strict-origin']})(ctx);
-            expect(ctx.headers['Referrer-Policy']).toBe('strict-origin');
+            expect(ctx.headers['referrer-policy']).toBe('strict-origin');
         });
 
         it('Trims and deduplicates strings with whitespace', () => {
             const ctx = new MockContext();
             /* @ts-expect-error Should be good */
             Security({referrerPolicy: [' strict-origin ', 'strict-origin']})(ctx);
-            expect(ctx.headers['Referrer-Policy']).toBe('strict-origin');
+            expect(ctx.headers['referrer-policy']).toBe('strict-origin');
         });
 
         it('Allows usage of ReferrerPolicy enum values', () => {
@@ -446,7 +446,7 @@ describe('Middleware - Security', () => {
             Security({
                 referrerPolicy: [ReferrerPolicy.Origin, ReferrerPolicy.SameOrigin],
             })(ctx);
-            expect(ctx.headers['Referrer-Policy']).toBe('origin, same-origin');
+            expect(ctx.headers['referrer-policy']).toBe('origin, same-origin');
         });
 
         it('Throws on a single invalid string', () => {
@@ -476,7 +476,7 @@ describe('Middleware - Security', () => {
         it('Omits header if passed null', () => {
             const ctx = new MockContext();
             Security({referrerPolicy: null})(ctx);
-            expect('Referrer-Policy' in ctx.headers).toBe(false);
+            expect('referrer-policy' in ctx.headers).toBe(false);
         });
 
         it('Throws on invalid types', () => {
@@ -495,7 +495,7 @@ describe('Middleware - Security', () => {
             Security({
                 strictTransportSecurity: {maxAge: 12345},
             })(ctx);
-            expect(ctx.headers['Strict-Transport-Security']).toBe('max-age=12345');
+            expect(ctx.headers['strict-transport-security']).toBe('max-age=12345');
         });
 
         it('Sets max-age + includeSubDomains when true', () => {
@@ -503,7 +503,7 @@ describe('Middleware - Security', () => {
             Security({
                 strictTransportSecurity: {maxAge: 86400, includeSubDomains: true},
             })(ctx);
-            expect(ctx.headers['Strict-Transport-Security']).toBe('max-age=86400; includeSubDomains');
+            expect(ctx.headers['strict-transport-security']).toBe('max-age=86400; includeSubDomains');
         });
 
         it('Sets preload if all criteria met', () => {
@@ -515,7 +515,7 @@ describe('Middleware - Security', () => {
                     preload: true,
                 },
             })(ctx);
-            expect(ctx.headers['Strict-Transport-Security']).toBe('max-age=31536001; includeSubDomains; preload');
+            expect(ctx.headers['strict-transport-security']).toBe('max-age=31536001; includeSubDomains; preload');
         });
 
         it('Omits preload if includeSubDomains not set', () => {
@@ -526,7 +526,7 @@ describe('Middleware - Security', () => {
                     preload: true,
                 },
             })(ctx);
-            expect(ctx.headers['Strict-Transport-Security']).toBe('max-age=31536001');
+            expect(ctx.headers['strict-transport-security']).toBe('max-age=31536001');
         });
 
         it('Omits preload if maxAge is too low', () => {
@@ -538,13 +538,13 @@ describe('Middleware - Security', () => {
                     preload: true,
                 },
             })(ctx);
-            expect(ctx.headers['Strict-Transport-Security']).toBe('max-age=1000; includeSubDomains');
+            expect(ctx.headers['strict-transport-security']).toBe('max-age=1000; includeSubDomains');
         });
 
         it('Handles null by omitting header', () => {
             const ctx = new MockContext();
             Security({strictTransportSecurity: null})(ctx);
-            expect('Strict-Transport-Security' in ctx.headers).toBe(false);
+            expect('strict-transport-security' in ctx.headers).toBe(false);
         });
 
         it('Throws when object lacks valid maxAge', () => {
@@ -582,14 +582,14 @@ describe('Middleware - Security', () => {
             for (const el of Object.values(XContentTypes)) {
                 const ctx = new MockContext();
                 Security({xContentTypeOptions: el})(ctx);
-                expect(ctx.headers['X-Content-Type-Options']).toEqual(el);
+                expect(ctx.headers['x-content-type-options']).toEqual(el);
             }
         });
 
         it('Omits header when null is passed', () => {
             const ctx = new MockContext();
             Security({xContentTypeOptions: null})(ctx);
-            expect('X-Content-Type-Options' in ctx.headers).toBe(false);
+            expect('x-content-type-options' in ctx.headers).toBe(false);
         });
 
         it('Throws on non-recognized values', () => {
@@ -607,14 +607,14 @@ describe('Middleware - Security', () => {
             for (const el of Object.values(XDnsPrefetchControl)) {
                 const ctx = new MockContext();
                 Security({xDnsPrefetchControl: el})(ctx);
-                expect(ctx.headers['X-DNS-Prefetch-Control']).toEqual(el);
+                expect(ctx.headers['x-dns-prefetch-control']).toEqual(el);
             }
         });
 
         it('Omits header when null is passed', () => {
             const ctx = new MockContext();
             Security({xDnsPrefetchControl: null})(ctx);
-            expect('X-DNS-Prefetch-Control' in ctx.headers).toBe(false);
+            expect('x-dns-prefetch-control' in ctx.headers).toBe(false);
         });
 
         it('Throws on non-recognized values', () => {
@@ -632,14 +632,14 @@ describe('Middleware - Security', () => {
             for (const el of Object.values(XDownloadOptions)) {
                 const ctx = new MockContext();
                 Security({xDownloadOptions: el})(ctx);
-                expect(ctx.headers['X-Download-Options']).toEqual(el);
+                expect(ctx.headers['x-download-options']).toEqual(el);
             }
         });
 
         it('Omits header when null is passed', () => {
             const ctx = new MockContext();
             Security({xDownloadOptions: null})(ctx);
-            expect('X-Download-Options' in ctx.headers).toBe(false);
+            expect('x-download-options' in ctx.headers).toBe(false);
         });
 
         it('Throws on non-recognized values', () => {
@@ -657,14 +657,14 @@ describe('Middleware - Security', () => {
             for (const el of Object.values(XFrameOptions)) {
                 const ctx = new MockContext();
                 Security({xFrameOptions: el})(ctx);
-                expect(ctx.headers['X-Frame-Options']).toEqual(el);
+                expect(ctx.headers['x-frame-options']).toEqual(el);
             }
         });
 
         it('Omits header when null is passed', () => {
             const ctx = new MockContext();
             Security({xFrameOptions: null})(ctx);
-            expect('X-Frame-Options' in ctx.headers).toBe(false);
+            expect('x-frame-options' in ctx.headers).toBe(false);
         });
 
         it('Throws on non-recognized values', () => {
@@ -681,37 +681,37 @@ describe('Middleware - Security', () => {
         it('Sets "0" to disable protection', () => {
             const ctx = new MockContext();
             Security({xXssProtection: '0'})(ctx);
-            expect(ctx.headers['X-XSS-Protection']).toBe('0');
+            expect(ctx.headers['x-xss-protection']).toBe('0');
         });
 
         it('Sets "1" to enable basic protection', () => {
             const ctx = new MockContext();
             Security({xXssProtection: '1'})(ctx);
-            expect(ctx.headers['X-XSS-Protection']).toBe('1');
+            expect(ctx.headers['x-xss-protection']).toBe('1');
         });
 
         it('Sets "block" to enable block mode', () => {
             const ctx = new MockContext();
             Security({xXssProtection: 'block'})(ctx);
-            expect(ctx.headers['X-XSS-Protection']).toBe('1; mode=block');
+            expect(ctx.headers['x-xss-protection']).toBe('1; mode=block');
         });
 
         it('Sets "report" with slash-prefixed URI', () => {
             const ctx = new MockContext();
             Security({xXssProtection: '/report/xss'})(ctx);
-            expect(ctx.headers['X-XSS-Protection']).toBe('1; report=/report/xss');
+            expect(ctx.headers['x-xss-protection']).toBe('1; report=/report/xss');
         });
 
         it('Trims and applies report URI', () => {
             const ctx = new MockContext();
             Security({xXssProtection: '  /report-me  '})(ctx);
-            expect(ctx.headers['X-XSS-Protection']).toBe('1; report=/report-me');
+            expect(ctx.headers['x-xss-protection']).toBe('1; report=/report-me');
         });
 
         it('Does not set header when explicitly null', () => {
             const ctx = new MockContext();
             Security({xXssProtection: null})(ctx);
-            expect('X-XSS-Protection' in ctx.headers).toBe(false);
+            expect('x-xss-protection' in ctx.headers).toBe(false);
         });
 
         it('Throws if string is not valid and doesn’t start with slash', () => {

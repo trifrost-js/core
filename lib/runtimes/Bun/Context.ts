@@ -30,9 +30,9 @@ export class BunContext extends Context {
         const headers: Record<string, string> = {};
         /* eslint-disable-next-line */
         /* @ts-ignore */
-        for (const [key, value] of req.headers.entries()) {
-            headers[key] = value;
-        }
+        req.headers.forEach((value, key) => {
+            headers[key.toLowerCase()] = value;
+        });
 
         super(logger, cfg, {
             path,
@@ -136,7 +136,7 @@ export class BunContext extends Context {
 
         switch (this.method) {
             case HttpMethods.HEAD: {
-                this.res_headers['Content-Length'] = typeof this.res_body === 'string' ? '' + encoder.encode(this.res_body).length : '0';
+                this.res_headers['content-length'] = typeof this.res_body === 'string' ? '' + encoder.encode(this.res_body).length : '0';
 
                 this.res = new Response(null, {
                     status: this.res_code,
@@ -193,6 +193,6 @@ export class BunContext extends Context {
     private writeCookies() {
         if (!this.$cookies) return;
         const outgoing = this.$cookies.outgoing;
-        for (let i = 0; i < outgoing.length; i++) this.res!.headers.append('Set-Cookie', outgoing[i]);
+        for (let i = 0; i < outgoing.length; i++) this.res!.headers.append('set-cookie', outgoing[i]);
     }
 }

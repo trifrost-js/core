@@ -95,7 +95,7 @@ export interface ServerResponse {
     /**
      * Sets a single response header.
      *
-     * @param name - The name of the header (e.g., 'Content-Type').
+     * @param name - The name of the header (e.g., 'content-type').
      * @param value - The value of the header.
      */
     setHeader(name: string, value: string | string[]): void;

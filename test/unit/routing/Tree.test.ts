@@ -1277,7 +1277,7 @@ describe('routing - Tree', () => {
     });
 
     describe('options + cors auto-generation', () => {
-        it('Auto-generates OPTIONS route with correct Allow header', async () => {
+        it('Auto-generates OPTIONS route with correct allow header', async () => {
             const handler = () => {};
             const corsMiddleware = (ctx: TriFrostContext) => {
                 ctx.setHeader('x-cors-hit', 'true');
@@ -1325,8 +1325,8 @@ describe('routing - Tree', () => {
             await match!.route.fn(ctx);
 
             expect(ctx.statusCode).toBe(204);
-            expect(ctx.headers.Allow).toBe('OPTIONS, GET, POST');
-            expect(ctx.headers.Vary).toBe('Origin');
+            expect(ctx.headers.allow).toBe('OPTIONS, GET, POST');
+            expect(ctx.headers.vary).toBe('Origin');
             expect(ctx.headers['x-cors-hit']).toBe('true');
         });
 
@@ -1353,7 +1353,7 @@ describe('routing - Tree', () => {
             await match!.route.fn(ctx);
 
             expect(ctx.statusCode).toBe(204);
-            expect(ctx.headers.Allow).toBe('OPTIONS, GET');
+            expect(ctx.headers.allow).toBe('OPTIONS, GET');
             expect(ctx.headers['x-cors-hit']).toBeUndefined();
         });
 
@@ -1392,9 +1392,9 @@ describe('routing - Tree', () => {
             await match!.route.fn(ctx);
 
             expect(ctx.statusCode).toBe(204);
-            expect(ctx.headers.Allow).toContain('OPTIONS');
-            expect(ctx.headers.Allow).toContain('GET');
-            expect(ctx.headers.Allow).toContain('PUT');
+            expect(ctx.headers.allow).toContain('OPTIONS');
+            expect(ctx.headers.allow).toContain('GET');
+            expect(ctx.headers.allow).toContain('PUT');
         });
 
         it('Auto-generates OPTIONS on wildcard routes', async () => {
@@ -1420,8 +1420,8 @@ describe('routing - Tree', () => {
             await match!.route.fn(ctx);
 
             expect(ctx.statusCode).toBe(204);
-            expect(ctx.headers.Allow).toContain('OPTIONS');
-            expect(ctx.headers.Allow).toContain('POST');
+            expect(ctx.headers.allow).toContain('OPTIONS');
+            expect(ctx.headers.allow).toContain('POST');
         });
 
         it('Does not generate OPTIONS routes in notfound trees', () => {
@@ -1494,12 +1494,12 @@ describe('routing - Tree', () => {
 
             expect(ctx.statusCode).toBe(204);
             for (const method of methods) {
-                expect(ctx.headers.Allow).toContain(method);
+                expect(ctx.headers.allow).toContain(method);
             }
-            expect(ctx.headers.Allow).toContain('OPTIONS');
+            expect(ctx.headers.allow).toContain('OPTIONS');
         });
 
-        it('Handles duplicate methods on same path without duplicating Allow header', async () => {
+        it('Handles duplicate methods on same path without duplicating allow header', async () => {
             const handler = () => {};
             const path = '/dup';
 
@@ -1538,7 +1538,7 @@ describe('routing - Tree', () => {
             await match!.route.fn(ctx);
 
             expect(ctx.statusCode).toBe(204);
-            const allow = ctx.headers.Allow.split(',').map(s => s.trim());
+            const allow = ctx.headers.allow.split(',').map(s => s.trim());
             const seen = new Set(allow);
             expect(seen.has(HttpMethods.GET)).toBe(true);
             expect(seen.has(HttpMethods.OPTIONS)).toBe(true);

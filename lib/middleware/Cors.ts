@@ -65,11 +65,11 @@ export function Cors<Env extends Record<string, any> = {}, State extends Record<
     let originWhiteList: Set<string> | null = null;
     let originFn: TriFrostCorsOriginFunction | null = null;
 
-    const computed: Record<string, string> = {Vary: 'Origin'};
+    const computed: Record<string, string> = {vary: 'Origin'};
 
     /* Access-Control-Allow-Origin */
     if (isNeString(origin)) {
-        computed['Access-Control-Allow-Origin'] = origin;
+        computed['access-control-allow-origin'] = origin;
     } else if (isNeArray(origin)) {
         originWhiteList = new Set();
         for (let i = 0; i < origin.length; i++) {
@@ -93,9 +93,9 @@ export function Cors<Env extends Record<string, any> = {}, State extends Record<
             if (!METHODSSet.has(method)) throw new Error('TriFrostMiddleware@Cors: Invalid method "' + method + '"');
             normalized.add(method);
         }
-        computed['Access-Control-Allow-Methods'] = [...normalized].join(', ');
+        computed['access-control-allow-methods'] = [...normalized].join(', ');
     } else if (methods === '*') {
-        computed['Access-Control-Allow-Methods'] = '*';
+        computed['access-control-allow-methods'] = '*';
     }
 
     /* Access-Control-Allow-Headers */
@@ -106,7 +106,7 @@ export function Cors<Env extends Record<string, any> = {}, State extends Record<
             if (!isNeString(el)) throw new Error('TriFrostMiddleware@Cors: Invalid header "' + el + '"');
             normalized.add(el.trim());
         }
-        computed['Access-Control-Allow-Headers'] = [...normalized.values()].join(', ');
+        computed['access-control-allow-headers'] = [...normalized.values()].join(', ');
     }
 
     /* Access-Control-Expose-Headers */
@@ -117,17 +117,17 @@ export function Cors<Env extends Record<string, any> = {}, State extends Record<
             if (!isNeString(el)) throw new Error('TriFrostMiddleware@Cors: Invalid expose "' + el + '"');
             normalized.add(el.trim());
         }
-        computed['Access-Control-Expose-Headers'] = [...normalized.values()].join(', ');
+        computed['access-control-expose-headers'] = [...normalized.values()].join(', ');
     }
 
     /* Access-Control-Allow-Credentials */
     if (credentials === true) {
-        computed['Access-Control-Allow-Credentials'] = 'true';
+        computed['access-control-allow-credentials'] = 'true';
     }
 
     /* Access-Control-Max-Age */
     if (isIntGte(maxage, 0)) {
-        computed['Access-Control-Max-Age'] = `${maxage}`;
+        computed['access-control-max-age'] = `${maxage}`;
     }
 
     /* Baseline Middleware function */
@@ -138,7 +138,7 @@ export function Cors<Env extends Record<string, any> = {}, State extends Record<
         /* If origin is function we should check to see if we need to add it */
         if (originFn) {
             const value = originFn(ctx.headers.origin ?? ctx.headers.Origin ?? null);
-            if (value !== null) ctx.setHeader('Access-Control-Allow-Origin', value);
+            if (value !== null) ctx.setHeader('access-control-allow-origin', value);
         }
 
         /* If it's an options call simply return a 204 status */

@@ -29,9 +29,9 @@ export class WorkerdContext extends Context {
         const headers: Record<string, string> = {};
         /* eslint-disable-next-line */
         /* @ts-ignore */
-        for (const [key, value] of req.headers.entries()) {
-            headers[key] = value;
-        }
+        req.headers.forEach((value, key) => {
+            headers[key.toLowerCase()] = value;
+        });
 
         super(logger, cfg, {
             path,
@@ -148,7 +148,7 @@ export class WorkerdContext extends Context {
 
         switch (this.method) {
             case HttpMethods.HEAD: {
-                this.res_headers['Content-Length'] = typeof this.res_body === 'string' ? '' + encoder.encode(this.res_body).length : '0';
+                this.res_headers['content-length'] = typeof this.res_body === 'string' ? '' + encoder.encode(this.res_body).length : '0';
 
                 /* Set response */
                 this.res = new Response(null, {
@@ -203,6 +203,6 @@ export class WorkerdContext extends Context {
     private writeCookies() {
         if (!this.$cookies) return;
         const outgoing = this.$cookies.outgoing;
-        for (let i = 0; i < outgoing.length; i++) this.response!.headers.append('Set-Cookie', outgoing[i]);
+        for (let i = 0; i < outgoing.length; i++) this.response!.headers.append('set-cookie', outgoing[i]);
     }
 }

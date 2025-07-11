@@ -24,7 +24,7 @@ describe('Middleware - Auth - Basic', () => {
             const ctx = makeCtx();
             const mw = BasicAuth({realm: el as string, validate: vi.fn()});
             await mw(ctx);
-            expect(ctx.headers['WWW-Authenticate']).toBe('Basic realm="Restricted Area"');
+            expect(ctx.headers['www-authenticate']).toBe('Basic realm="Restricted Area"');
             expect(ctx.$status).toBe(401);
         }
     });
@@ -33,7 +33,7 @@ describe('Middleware - Auth - Basic', () => {
         const ctx = makeCtx();
         const mw = BasicAuth({realm: 'MyRealm', validate: vi.fn()});
         await mw(ctx);
-        expect(ctx.headers['WWW-Authenticate']).toBe('Basic realm="MyRealm"');
+        expect(ctx.headers['www-authenticate']).toBe('Basic realm="MyRealm"');
         expect(ctx.$status).toBe(401);
     });
 

@@ -53,7 +53,7 @@ export function BasicAuth<
     ): Promise<void | TriFrostContext<Env, State & {$auth: Patch}>> {
         const authHeader = ctx.headers.authorization;
         if (typeof authHeader !== 'string' || !authHeader.startsWith('Basic ')) {
-            ctx.setHeader('WWW-Authenticate', NOT_AUTH);
+            ctx.setHeader('www-authenticate', NOT_AUTH);
             return ctx.status(401);
         }
 
@@ -65,7 +65,7 @@ export function BasicAuth<
         }
         const idx = decoded.indexOf(':');
         if (idx === -1) {
-            ctx.setHeader('WWW-Authenticate', NOT_AUTH);
+            ctx.setHeader('www-authenticate', NOT_AUTH);
             return ctx.status(401);
         }
 
@@ -74,7 +74,7 @@ export function BasicAuth<
 
         const result = await opts.validate(ctx, {user, pass});
         if (!result) {
-            ctx.setHeader('WWW-Authenticate', NOT_AUTH);
+            ctx.setHeader('www-authenticate', NOT_AUTH);
             return ctx.status(401);
         }
 

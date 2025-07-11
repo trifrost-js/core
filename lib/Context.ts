@@ -435,7 +435,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
      *  ctx.setHeader('Content-Type', 'application/json');
      */
     setHeader(key: string, val: string | number): void {
-        this.res_headers[String(key)] = String(val);
+        this.res_headers[String(key).toLowerCase()] = String(val);
     }
 
     /**
@@ -445,7 +445,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
      *  ctx.setHeader('Content-Type', 'application/json');
      */
     setHeaders(obj: Record<string, string | number>): void {
-        for (const key in obj) this.res_headers[String(key)] = String(obj[key]);
+        for (const key in obj) this.res_headers[String(key).toLowerCase()] = String(obj[key]);
     }
 
     /**
@@ -455,7 +455,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
      *  ctx.delHeader('Content-Type');
      */
     delHeader(key: string): void {
-        delete this.res_headers[String(key)];
+        delete this.res_headers[String(key).toLowerCase()];
     }
 
     /**
@@ -466,7 +466,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
      */
     setType(val: MimeType): void {
         if (!MimeTypesSet.has(val)) return;
-        this.res_headers['Content-Type'] = val;
+        this.res_headers['content-type'] = val;
     }
 
     /**
@@ -674,9 +674,9 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
             }
 
             /* Try determining the mime type from the name if no mime type was set already */
-            if (!this.res_headers['Content-Type']) {
+            if (!this.res_headers['content-type']) {
                 const mime = ExtensionToMimeType.get(name.split('.').pop() as string);
-                if (mime) this.res_headers['Content-Type'] = mime;
+                if (mime) this.res_headers['content-type'] = mime;
             }
 
             /**
@@ -686,7 +686,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
             const download: {encoded: string; ascii: string} | null =
                 opts?.download === true ? encodeFilename(name) : typeof opts?.download === 'string' ? encodeFilename(opts.download) : null;
             if (download) {
-                this.res_headers['Content-Disposition'] = download.ascii.length
+                this.res_headers['content-disposition'] = download.ascii.length
                     ? 'attachment; filename="' + download.ascii + "\"; filename*=UTF-8''" + download.encoded
                     : 'attachment; filename="download"; filename*=UTF-8\'\'' + download.encoded;
             }
@@ -710,7 +710,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
             if (opts?.cacheControl) ParseAndApplyCacheControl(this, opts.cacheControl);
 
             /* Set mime type if no mime type was set already */
-            if (!this.res_headers['Content-Type']) this.res_headers['Content-Type'] = MimeTypes.HTML;
+            if (!this.res_headers['content-type']) this.res_headers['content-type'] = MimeTypes.HTML;
 
             /* Render html */
             let html = typeof body === 'string' ? body : this.render(body, this.ctx_config);
@@ -723,7 +723,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
              * - full page: set tfnonce cookie and add tfnonce script for clientside usage
              * - partial page: swap out nonce usage with cookie nonce to ensure compliance with used values
              */
-            const csp = this.res_headers['Content-Security-Policy'];
+            const csp = this.res_headers['content-security-policy'];
             if (csp && csp.indexOf('nonce') > 0) {
                 if (html.startsWith('<!DOCTYPE')) {
                     this.cookies.set(NONCEMARKER, this.nonce, {
@@ -737,7 +737,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
                     const cookieNonce = this.cookies.get(NONCEMARKER);
                     if (cookieNonce) {
                         html = html.replace(/nonce="[^"]+"/g, 'nonce="' + cookieNonce + '"');
-                        this.setHeader('Content-Security-Policy', csp.replace(/'nonce-[^']*'/g, "'nonce-" + cookieNonce + "'"));
+                        this.res_headers['content-security-policy'] = csp.replace(/'nonce-[^']*'/g, "'nonce-" + cookieNonce + "'");
                     }
                 }
             }
@@ -769,7 +769,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
             if (opts?.cacheControl) ParseAndApplyCacheControl(this, opts.cacheControl);
 
             /* Set mime type if no mime type was set already */
-            if (!this.res_headers['Content-Type']) this.res_headers['Content-Type'] = MimeTypes.JSON;
+            if (!this.res_headers['content-type']) this.res_headers['content-type'] = MimeTypes.JSON;
 
             this.res_body = JSON.stringify(body);
 
@@ -812,7 +812,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
             if (opts?.cacheControl) ParseAndApplyCacheControl(this, opts.cacheControl);
 
             /* Set mime type if no mime type was set already */
-            if (!this.res_headers['Content-Type']) this.res_headers['Content-Type'] = MimeTypes.TEXT;
+            if (!this.res_headers['content-type']) this.res_headers['content-type'] = MimeTypes.TEXT;
 
             this.res_body = body;
 
@@ -866,7 +866,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
 
             /* This is a redirect, as such a body should not be present */
             this.res_body = null;
-            this.res_headers.Location = url;
+            this.res_headers.location = url;
             this.setStatus(opts?.status ?? 303);
             this.end();
         } catch (err) {
@@ -935,7 +935,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
         this.is_done = true;
 
         /* Add Content-Length to headers */
-        if (Number.isInteger(size) && (size as number) > 0) this.res_headers['Content-Length'] = '' + size;
+        if (Number.isInteger(size) && (size as number) > 0) this.res_headers['content-length'] = '' + size;
 
         /* Clear timeout */
         this.clearTimeout();

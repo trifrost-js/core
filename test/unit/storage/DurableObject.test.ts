@@ -937,10 +937,10 @@ describe('Storage - DurableObject', () => {
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(429);
                 expect(ctx.headers).toEqual({
-                    'Retry-After': 1,
-                    'X-RateLimit-Limit': 1,
-                    'X-RateLimit-Remaining': '0',
-                    'X-RateLimit-Reset': now + 1,
+                    'retry-after': 1,
+                    'x-ratelimit-limit': 1,
+                    'x-ratelimit-remaining': '0',
+                    'x-ratelimit-reset': now + 1,
                 });
                 expect(stub.calls).toEqual([
                     [`https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:test:POST')}`, {method: 'GET'}],
@@ -965,7 +965,7 @@ describe('Storage - DurableObject', () => {
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(429);
                 expect(ctx.headers).toEqual({
-                    'Retry-After': '60',
+                    'retry-after': '60',
                 });
                 expect(stub.calls).toEqual([
                     [`https://do/trifrost-ratelimit?key=${encodeURIComponent('127.0.0.1:test:POST')}`, {method: 'GET'}],
@@ -990,9 +990,9 @@ describe('Storage - DurableObject', () => {
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(200);
                 expect(ctx.headers).toEqual({
-                    'X-RateLimit-Limit': 10,
-                    'X-RateLimit-Remaining': 8,
-                    'X-RateLimit-Reset': now + rl.window,
+                    'x-ratelimit-limit': 10,
+                    'x-ratelimit-remaining': 8,
+                    'x-ratelimit-reset': now + rl.window,
                 });
                 expect(stub.calls).toEqual([
                     [`https://do/trifrost-ratelimit?key=${encodeURIComponent('ip:127.0.0.1')}`, {method: 'GET'}],

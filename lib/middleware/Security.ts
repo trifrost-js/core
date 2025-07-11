@@ -275,7 +275,7 @@ function contentSecurityPolicy(map: Record<string, string>, val: TriFrostSecurit
         if (isNeString(finalized_chunk)) parts.push(`${key} ${finalized_chunk.trim()}`);
     }
 
-    if (parts.length) map['Content-Security-Policy'] = parts.join('; ');
+    if (parts.length) map['content-security-policy'] = parts.join('; ');
 }
 
 /**
@@ -289,9 +289,9 @@ function contentSecurityPolicy(map: Record<string, string>, val: TriFrostSecurit
 function originAgentCluster(map: Record<string, string>, val: TriFrostSecurityOptions['originAgentCluster']) {
     switch (val) {
         case true:
-            return (map['Origin-Agent-Cluster'] = '?1');
+            return (map['origin-agent-cluster'] = '?1');
         case false:
-            return (map['Origin-Agent-Cluster'] = '?0');
+            return (map['origin-agent-cluster'] = '?0');
         case null:
         case undefined:
             return;
@@ -331,7 +331,7 @@ function referrerPolicy(map: Record<string, string>, val: TriFrostSecurityOption
         seen.add(el);
     }
 
-    map['Referrer-Policy'] = normalized.join(', ');
+    map['referrer-policy'] = normalized.join(', ');
 }
 
 /**
@@ -355,7 +355,7 @@ function strictTransportSecurity(map: Record<string, string>, val: TriFrostSecur
         if (parts.length === 2 && val.preload === true && isIntGt(val.maxAge, 31536000)) parts.push('preload');
 
         /* Only set header if we have parts */
-        return (map['Strict-Transport-Security'] = parts.join('; '));
+        return (map['strict-transport-security'] = parts.join('; '));
     }
 
     throw new Error('TriFrostMiddleware@Security: Invalid configuration for strictTransportSecurity');
@@ -372,14 +372,14 @@ function xXssProtection(map: Record<string, string>, val: TriFrostSecurityOption
     if (val === undefined || val === null) return;
 
     if (val === '0') {
-        return (map['X-XSS-Protection'] = '0');
+        return (map['x-xss-protection'] = '0');
     } else if (val === '1') {
-        return (map['X-XSS-Protection'] = '1');
+        return (map['x-xss-protection'] = '1');
     } else if (val === 'block') {
-        return (map['X-XSS-Protection'] = '1; mode=block');
+        return (map['x-xss-protection'] = '1; mode=block');
     } else if (typeof val === 'string') {
         const n_val = val.trim();
-        if (n_val.startsWith('/')) return (map['X-XSS-Protection'] = '1; report=' + n_val);
+        if (n_val.startsWith('/')) return (map['x-xss-protection'] = '1; report=' + n_val);
     }
 
     throw new Error('TriFrostMiddleware@Security: Invalid configuration for xXssProtection');
@@ -431,21 +431,21 @@ export function Security<Env extends Record<string, any> = {}, State extends Rec
      */
     header(
         map,
-        'Cross-Origin-Embedder-Policy',
+        'cross-origin-embedder-policy',
         cfg.crossOriginEmbedderPolicy!,
         Object.values(CrossOriginEmbedderPolicy),
         'crossOriginEmbedderPolicy',
     );
     header(
         map,
-        'Cross-Origin-Opener-Policy',
+        'cross-origin-opener-policy',
         cfg.crossOriginOpenerPolicy!,
         Object.values(CrossOriginOpenerPolicy),
         'crossOriginOpenerPolicy',
     );
     header(
         map,
-        'Cross-Origin-Resource-Policy',
+        'cross-origin-resource-policy',
         cfg.crossOriginResourcePolicy!,
         Object.values(CrossOriginResourcePolicy),
         'crossOriginResourcePolicy',
@@ -464,25 +464,25 @@ export function Security<Env extends Record<string, any> = {}, State extends Rec
      * X-Content-Type-Options
      * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
      */
-    header(map, 'X-Content-Type-Options', cfg.xContentTypeOptions!, Object.values(XContentTypes), 'xContentTypeOptions');
+    header(map, 'x-content-type-options', cfg.xContentTypeOptions!, Object.values(XContentTypes), 'xContentTypeOptions');
 
     /**
      * X-DNS-Prefetch-Control
      * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-DNS-Prefetch-Control
      */
-    header(map, 'X-DNS-Prefetch-Control', cfg.xDnsPrefetchControl!, Object.values(XDnsPrefetchControl), 'xDnsPrefetchControl');
+    header(map, 'x-dns-prefetch-control', cfg.xDnsPrefetchControl!, Object.values(XDnsPrefetchControl), 'xDnsPrefetchControl');
 
     /**
      * X-Download-Options
      * @see https://docs.microsoft.com/en-us/archive/blogs/ie/ie8-security-part-v-comprehensive-protection
      */
-    header(map, 'X-Download-Options', cfg.xDownloadOptions!, Object.values(XDownloadOptions), 'xDownloadOptions');
+    header(map, 'x-download-options', cfg.xDownloadOptions!, Object.values(XDownloadOptions), 'xDownloadOptions');
 
     /**
      * X-Frame-Options
      * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
      */
-    header(map, 'X-Frame-Options', cfg.xFrameOptions!, Object.values(XFrameOptions), 'xFrameOptions');
+    header(map, 'x-frame-options', cfg.xFrameOptions!, Object.values(XFrameOptions), 'xFrameOptions');
 
     /* X-XSS-Protection */
     xXssProtection(map, cfg.xXssProtection);
@@ -492,11 +492,11 @@ export function Security<Env extends Record<string, any> = {}, State extends Rec
         ctx.setHeaders(map);
 
         /* Replace nonce placeholder with a generated nonce */
-        if ('Content-Security-Policy' in map) {
-            const val = map['Content-Security-Policy'];
+        if ('content-security-policy' in map) {
+            const val = map['content-security-policy'];
             if (RGX_NONCE.test(val)) {
                 const nonce = btoa(hexId(8));
-                ctx.setHeader('Content-Security-Policy', val.replace(RGX_NONCE, "'nonce-" + nonce + "'"));
+                ctx.setHeader('content-security-policy', val.replace(RGX_NONCE, "'nonce-" + nonce + "'"));
                 ctx.setState({nonce});
             }
         }

@@ -28,43 +28,43 @@ describe('Middleware - CacheControl', () => {
         expect(Reflect.get(fn, Sym_TriFrostFingerPrint)).toBe(Sym_TriFrostMiddlewareCacheControl);
     });
 
-    it('Sets a valid Cache-Control header with type only', () => {
+    it('Sets a valid cache-control header with type only', () => {
         const ctx = new MockContext();
         CacheControl({type: 'no-cache'})(ctx);
-        expect(ctx.headers['Cache-Control']).toBe('no-cache');
+        expect(ctx.headers['cache-control']).toBe('no-cache');
     });
 
-    it('Sets a valid Cache-Control header with maxage only', () => {
+    it('Sets a valid cache-control header with maxage only', () => {
         const ctx = new MockContext();
         CacheControl({maxage: 3600})(ctx);
-        expect(ctx.headers['Cache-Control']).toBe('max-age=3600');
+        expect(ctx.headers['cache-control']).toBe('max-age=3600');
     });
 
-    it('Sets a valid Cache-Control header with proxyMaxage only', () => {
+    it('Sets a valid cache-control header with proxyMaxage only', () => {
         const ctx = new MockContext();
         CacheControl({proxyMaxage: 120})(ctx);
-        expect(ctx.headers['Cache-Control']).toBe('s-maxage=120');
+        expect(ctx.headers['cache-control']).toBe('s-maxage=120');
     });
 
-    it('Sets a valid Cache-Control header with immutable', () => {
+    it('Sets a valid cache-control header with immutable', () => {
         const ctx = new MockContext();
         CacheControl({immutable: true})(ctx);
-        expect(ctx.headers['Cache-Control']).toBe('immutable');
+        expect(ctx.headers['cache-control']).toBe('immutable');
     });
 
-    it('Sets a valid Cache-Control header with must-revalidate', () => {
+    it('Sets a valid cache-control header with must-revalidate', () => {
         const ctx = new MockContext();
         CacheControl({mustRevalidate: true})(ctx);
-        expect(ctx.headers['Cache-Control']).toBe('must-revalidate');
+        expect(ctx.headers['cache-control']).toBe('must-revalidate');
     });
 
-    it('Sets a valid Cache-Control header with proxy-revalidate', () => {
+    it('Sets a valid cache-control header with proxy-revalidate', () => {
         const ctx = new MockContext();
         CacheControl({proxyRevalidate: true})(ctx);
-        expect(ctx.headers['Cache-Control']).toBe('proxy-revalidate');
+        expect(ctx.headers['cache-control']).toBe('proxy-revalidate');
     });
 
-    it('Sets a combined Cache-Control header with multiple options', () => {
+    it('Sets a combined cache-control header with multiple options', () => {
         const ctx = new MockContext();
         CacheControl({
             type: 'public',
@@ -74,14 +74,14 @@ describe('Middleware - CacheControl', () => {
             mustRevalidate: true,
             proxyRevalidate: true,
         })(ctx);
-        expect(ctx.headers['Cache-Control']).toBe('public, max-age=300, s-maxage=600, immutable, must-revalidate, proxy-revalidate');
+        expect(ctx.headers['cache-control']).toBe('public, max-age=300, s-maxage=600, immutable, must-revalidate, proxy-revalidate');
     });
 
     it('Ignores invalid type', () => {
         for (const el of [...CONSTANTS.NOT_STRING_WITH_EMPTY, 'totally-bogus']) {
             const ctx = new MockContext();
             CacheControl({type: el as any, maxage: 120})(ctx);
-            expect(ctx.headers['Cache-Control']).toBe('max-age=120');
+            expect(ctx.headers['cache-control']).toBe('max-age=120');
         }
     });
 
@@ -89,7 +89,7 @@ describe('Middleware - CacheControl', () => {
         for (const el of [...CONSTANTS.NOT_INTEGER, 0, -10, 1.5, -99.99, 99.99]) {
             const ctx = new MockContext();
             CacheControl({type: 'public', maxage: el as number, proxyMaxage: el as number})(ctx);
-            expect(ctx.headers['Cache-Control']).toBe('public');
+            expect(ctx.headers['cache-control']).toBe('public');
         }
     });
 
@@ -98,7 +98,7 @@ describe('Middleware - CacheControl', () => {
         for (const el of invalids) {
             const ctx = new MockContext();
             CacheControl(el as TriFrostCacheControlOptions)(ctx);
-            expect(ctx.headers).not.toHaveProperty('Cache-Control');
+            expect(ctx.headers).not.toHaveProperty('cache-control');
         }
     });
 
@@ -111,14 +111,14 @@ describe('Middleware - CacheControl', () => {
                 proxyMaxage: 120,
                 immutable: true,
             });
-            expect(ctx.headers['Cache-Control']).toBe('public, max-age=60, s-maxage=120, immutable');
+            expect(ctx.headers['cache-control']).toBe('public, max-age=60, s-maxage=120, immutable');
         });
 
         it('Skips setting header if invalid', () => {
             const ctx = new MockContext();
             /* @ts-expect-error: testing invalid input */
             ParseAndApplyCacheControl(ctx, {type: 'wat', maxage: 0});
-            expect(ctx.headers).not.toHaveProperty('Cache-Control');
+            expect(ctx.headers).not.toHaveProperty('cache-control');
         });
     });
 });
