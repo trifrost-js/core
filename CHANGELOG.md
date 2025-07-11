@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.50.0] - 2025-07-11
+### Improved
+- **qol**: Wildcard (`*`) route segments now populate a `'*'` key in `ctx.state`, capturing the matched tail path.
+```typescript
+app.get('/docs/*', ctx => {
+  const rest = ctx.state['*']; // e.g. 'getting-started/setup'
+  return ctx.text(`Matched path: ${rest}`);
+});
+```
+```typescript
+app.get('/blog/:year/:month/*', ctx => {
+  const { year, month, '*': slugPath } = ctx.state;
+  return ctx.json({ year, month, slugPath });
+});
+```
+
+> Request to /blog/2024/07/post/deep/title yields:
+```json
+{
+  "year": "2024",
+  "month": "07",
+  "slugPath": "post/deep/title"
+}
+```
+
 ## [0.49.0] - 2025-07-11
 This update introduces a round of context ergonomics and spec-aligned header behavior improvements, ensuring TriFrost is even more predictable and introspectable at runtime.
 
