@@ -1,1 +1,1 @@
-export {createScript} from './use';
+export {createScript,createModule} from './use';
