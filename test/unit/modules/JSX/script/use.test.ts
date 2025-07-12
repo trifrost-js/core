@@ -1,10 +1,9 @@
 /// <reference lib="dom" />
 
 import {describe, it, expect, beforeEach, vi, expectTypeOf} from 'vitest';
-import {getActiveScriptEngine, setActiveScriptEngine, createScript} from '../../../../../lib/modules/JSX/script/use';
+import {getActiveScriptEngine, setActiveScriptEngine, createScript, createModule} from '../../../../../lib/modules/JSX/script/use';
 import {ScriptEngine} from '../../../../../lib/modules/JSX/script/Engine';
 import * as ScriptProxy from '../../../../../lib/modules/JSX/script/Script';
-import * as ModuleProxy from '../../../../../lib/modules/JSX/script/Module';
 import * as EnvProxy from '../../../../../lib/modules/JSX/ctx/env';
 import * as StateProxy from '../../../../../lib/modules/JSX/ctx/state';
 import * as NonceProxy from '../../../../../lib/modules/JSX/ctx/nonce';
@@ -42,6 +41,126 @@ describe('Modules - JSX - Script - use', () => {
         expect(getActiveScriptEngine()).toBe(b);
     });
 
+    describe('createModule', () => {
+        it('Returns a Module factory function', () => {
+            const {Module} = createModule();
+            expect(typeof Module).toBe('function');
+        });
+
+        it('Registers module with active script engine', () => {
+            setActiveScriptEngine(instance);
+            const spy = vi.spyOn(instance, 'registerModule');
+
+            const {Module} = createModule();
+            Module({
+                name: 'logger',
+                data: {msg: 'hello'},
+                mod: ({mod, data}) => {
+                    /* @ts-expect-error should be good */
+                    mod.$publish('log', data.msg);
+                    return {
+                        hello: true,
+                    };
+                },
+            });
+
+            expect(spy).toHaveBeenCalled();
+        });
+
+        it('Throws if no engine is active', () => {
+            setActiveScriptEngine(null);
+            const {Module} = createModule();
+            expect(() =>
+                Module({
+                    name: 'foo',
+                    mod: () => ({}),
+                }),
+            ).toThrow('No active script engine');
+        });
+
+        it('Correctly infers module return type', () => {
+            setActiveScriptEngine(instance);
+            const {Module} = createModule<{
+                css: {
+                    var: {
+                        padding: string;
+                    };
+                    theme: {
+                        dark: string;
+                    };
+                };
+            }>();
+
+            const output = Module({
+                name: 'audio',
+                mod: ({mod, data, $}) => {
+                    return {
+                        play: () => {
+                            /* @ts-expect-error should be good */
+                            mod.$publish('play', data?.track ?? []);
+                        },
+                    };
+                },
+                data: {
+                    track: ['track1', 'track2'],
+                },
+            });
+
+            expectTypeOf(output).toMatchTypeOf<{
+                play: () => void;
+            }>();
+        });
+
+        it('Escapes </script> in data correctly', () => {
+            setActiveScriptEngine(instance);
+            const spy = vi.spyOn(instance, 'registerModule');
+
+            const {Module} = createModule();
+            Module({
+                name: 'example',
+                data: {
+                    html: '</script><script>alert("oops")</script>',
+                },
+                mod: () => ({}),
+            });
+
+            const [fn, data] = [...spy.mock.calls[0]].slice(0, 2);
+            expect(typeof fn).toBe('string');
+            expect(data).toContain('<\\/script>');
+        });
+
+        it('Deduplicates module registration by name', () => {
+            setActiveScriptEngine(instance);
+            const spy = vi.spyOn(instance, 'registerModule');
+
+            const {Module} = createModule();
+            Module({
+                name: 'dupe',
+                data: {a: 1},
+                mod: () => ({a: true}),
+            });
+
+            Module({
+                name: 'dupe',
+                data: {a: 2},
+                mod: () => ({a: true}),
+            });
+
+            expect(spy).toHaveBeenCalledTimes(2);
+            /* @ts-expect-error should be good */
+            expect([...instance.map_modules.entries()]).toEqual([
+                [
+                    'yis70h',
+                    {
+                        data: '{"a":1}',
+                        fn: '()=>({a:true})',
+                        ogname: 'dupe',
+                    },
+                ],
+            ]);
+        });
+    });
+
     describe('createScript()', () => {
         beforeEach(() => {
             setActiveScriptEngine(instance);
@@ -49,7 +168,13 @@ describe('Modules - JSX - Script - use', () => {
 
         it('Sets atomic mode when passed in config', () => {
             const spy = vi.spyOn(instance, 'setAtomic');
-            const factory = createScript({atomic: true});
+            const factory = createScript({
+                atomic: true,
+                css: {
+                    var: {foo: 'bar'},
+                    theme: {dark: 'yes'},
+                },
+            });
             factory.Script({children: () => {}});
             expect(spy).toHaveBeenCalledWith(true);
         });
@@ -68,7 +193,8 @@ describe('Modules - JSX - Script - use', () => {
             const stateSpy = vi.spyOn(StateProxy, 'state');
             const nonceSpy = vi.spyOn(NonceProxy, 'nonce');
 
-            const {script} = createScript();
+            const {script} = createScript({});
+            /* @ts-expect-error should be good */
             script.env('FOO');
             script.state('bar');
             script.nonce();
@@ -80,23 +206,15 @@ describe('Modules - JSX - Script - use', () => {
 
         it('Proxies Script to original implementation', () => {
             const spy = vi.spyOn(ScriptProxy, 'Script').mockImplementation(() => 'MockScript' as any);
-            const {Script} = createScript();
+            const {Script} = createScript({});
             const out = Script({children: () => {}});
             expect(spy).toHaveBeenCalled();
             expect(out).toBe('MockScript');
         });
 
-        it('Proxies Module to original implementation', () => {
-            const spy = vi.spyOn(ModuleProxy, 'Module').mockImplementation(() => 'MockModule' as any);
-            const {Module} = createScript();
-            const out = Module({name: 'abc', children: () => {}});
-            expect(spy).toHaveBeenCalled();
-            expect(out).toBe('MockModule');
-        });
-
         it('Forwards mount path to ScriptEngine in root()', () => {
             const spy = vi.spyOn(instance, 'setMountPath');
-            const {script} = createScript();
+            const {script} = createScript({});
             script.setMountPath('/runtime.js');
             script.root();
             expect(spy).toHaveBeenCalledWith('/runtime.js');
@@ -104,7 +222,7 @@ describe('Modules - JSX - Script - use', () => {
 
         it('Skips setMountPath if null passed', () => {
             const spy = vi.spyOn(instance, 'setMountPath');
-            const {script} = createScript();
+            const {script} = createScript({});
             script.setMountPath(null);
             script.root();
             expect(spy).not.toHaveBeenCalled();
@@ -112,7 +230,7 @@ describe('Modules - JSX - Script - use', () => {
 
         it('Auto-instantiates ScriptEngine on Script call if none is set', () => {
             setActiveScriptEngine(null);
-            const {Script} = createScript();
+            const {Script} = createScript({});
             const out = Script({children: () => {}});
             expect(getActiveScriptEngine()).toBeInstanceOf(ScriptEngine);
             expect(out).not.toBeNull();
@@ -120,17 +238,9 @@ describe('Modules - JSX - Script - use', () => {
 
         it('Auto-instantiates ScriptEngine on root() if none is set', () => {
             setActiveScriptEngine(null);
-            const {script} = createScript();
+            const {script} = createScript({});
             script.root();
             expect(getActiveScriptEngine()).toBeInstanceOf(ScriptEngine);
-        });
-
-        it('Auto-instantiates ScriptEngine on Module call if none is set', () => {
-            setActiveScriptEngine(null);
-            const {Module} = createScript();
-            const out = Module({name: 'abc', children: () => {}});
-            expect(getActiveScriptEngine()).toBeInstanceOf(ScriptEngine);
-            expect(out).not.toBeNull();
         });
 
         it('Infers CSS var and theme types from config correctly', () => {
@@ -148,16 +258,43 @@ describe('Modules - JSX - Script - use', () => {
                 atomic: true,
             } as const;
 
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const {Script, Module} = createScript<typeof config>(config);
+            const {Script} = createScript<typeof config, {FOO: string}>(config);
 
             type ScriptProps = Parameters<typeof Script>[0];
-            type ModuleProps = Parameters<typeof Module>[0];
-
-            // expectTypeOf() ensures correct key inference for both
             expectTypeOf<ScriptProps>().toMatchTypeOf<ScriptProxy.ScriptProps<any, any, any, 'fontSize' | 'gap', 'light' | 'dark'>>();
+        });
 
-            expectTypeOf<ModuleProps>().toMatchTypeOf<ModuleProxy.ModuleProps<any, any, any, 'fontSize' | 'gap', 'light' | 'dark'>>();
+        it('Infers module shape and keys', () => {
+            const {Script} = createScript<
+                {
+                    css: {
+                        var: {x: string};
+                        theme: {y: string};
+                    };
+                    atomic: true;
+                    modules: {
+                        audio: () => {play: () => void};
+                        modal: () => {open: () => void};
+                    };
+                },
+                {FOO: string}
+            >({
+                css: {
+                    var: {x: '1px'},
+                    theme: {y: 'white'},
+                },
+                atomic: true,
+                modules: {
+                    audio: () => ({play: () => {}}),
+                    modal: () => ({open: () => {}}),
+                },
+            });
+
+            type ScriptProps = Parameters<typeof Script>[0];
+
+            expectTypeOf<ScriptProps>().toMatchTypeOf<
+                ScriptProxy.ScriptProps<any, any, any, 'x', 'y', {audio: {play: () => void}; modal: {open: () => void}}>
+            >();
         });
     });
 });
