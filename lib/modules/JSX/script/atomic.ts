@@ -267,6 +267,25 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d){
 
     const clone = v => !isObj(v) && !isArr(v) ? v : structuredClone(v);
 
+    const qScope = (n, q) => n.nodeType === Node.ELEMENT_NODE && !q.trimStart().startsWith(":scope") ? ":scope " + q : q;
+    const qOne = (n, q) => {
+        if (!n?.querySelector || !isStr(q)) return null;
+        try {
+            return n.querySelector(qScope(n,q));
+        } catch {
+            return null;
+        }
+    };
+
+    const qAll = (n, q) => {
+        if (!n?.querySelectorAll || !isStr(q)) return [];
+        try {
+            return [...n.querySelectorAll(qScope(n,q))];
+        } catch {
+            return [];
+        }
+    };
+
     const cEvent = (t, o) => {
         try {
             return new CustomEvent(t, o);
@@ -518,7 +537,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d){
             get(_, key) {
                 switch (key) {
                     case "$bind": return (p, s, o) => {
-                        const nI = w.${GLOBAL_UTILS_NAME}.queryAll(root, s);
+                        const nI = qAll(root, s);
                         if (!nI.length) return;
 
                         const c = get(p);
@@ -530,11 +549,11 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d){
                         }
 
                         const fn = () => {
-                            set(p, getIV(w.${GLOBAL_UTILS_NAME}.queryAll(root, s), p));
+                            set(p, getIV(qAll(root, s), p));
                             notify(p);
                         };
 
-                        const sync = v => setIV(w.${GLOBAL_UTILS_NAME}.queryAll(root, s), v);
+                        const sync = v => setIV(qAll(root, s), v);
                         sync._isSync = true;
                         (subs[p] ??= []).push(sync);
 
@@ -577,180 +596,166 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d){
 
     /* Utils */
     def("${GLOBAL_UTILS_NAME}", (() => {
-        const obj = Object.create(null);
-        const oD = (n, v) => def(n, v, obj);
-        oD("blurActive", () => {
-            if (d.activeElement instanceof HTMLElement) d.activeElement.blur();
-        });
-        oD("clear", n => {
-            while (n.firstChild) n.removeChild(n.firstChild);
-        });
-        oD("create", (() => {
-            const s = new Set(["svg", "path", "circle", "rect", "g", "defs", "text", "use", "line", "polyline", "polygon", "ellipse", "symbol", "clipPath", "linearGradient", "radialGradient", "filter", "mask", "pattern"]);
-            return (t, o = {}) => {
-                const e = s.has(t)
-                    ? d.createElementNS("http://www.w3.org/2000/svg", t)
-                    : d.createElement(t);
-                if (isObj(o.attrs)) for (const k in o.attrs) e.setAttribute(k, o.attrs[k]);
-                if (isObj(o.style)) for (const k in o.style) e.style[k] = o.style[k];
-                if (isArr(o.children)) for (const c of o.children) e.appendChild(isStr(c) ? d.createTextNode(c) : c);
-                return e;
-            };
-        })());
-        oD("debounce", (fn, ms) => {
-            let t;
-            return (...args) => {
-                clearTimeout(t);
-                t = setTimeout(() => fn(...args), ms);
-            };
-        });
-        oD("eq", eq);
-        oD("uid", () => crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
-        oD("sleep", ms => new Promise(r => setTimeout(r, ms)));
-        oD("fetch", async (url, o = {}) => {
-            const { method = "GET", headers = {}, body, timeout, credentials = "include" } = o;
-            const isJSON = body && typeof body === "object" && !(body instanceof FormData);
-            const nHeaders = { ...headers };
-            const payload = isJSON ? JSON.stringify(body) : body;
-
-            if (isJSON && !("Content-Type" in nHeaders))
-                nHeaders["Content-Type"] = "application/json";
-
-            const ctrl = isInt(timeout) ? new AbortController() : null;
-            const tId = ctrl
-                ? setTimeout(() => ctrl.abort(), timeout)
-                : null;
-
-            try {
-                const r = await fetch(url, {
-                    method,
-                    headers: nHeaders,
-                    body: method !== "GET" && body !== undefined ? payload : undefined,
-                    signal: ctrl?.signal,
-                    credentials
-                });
-
-                if (tId) clearTimeout(tId);
-
-                const rt = r.headers.get("Content-Type")?.toLowerCase() || "";
-                let c;
-                try {
-                    if (rt.includes("application/json")) c = await r.json();
-                    else if (rt.includes("text/html")) {
-                        const v = await r.text();
-                        c = d.createRange().createContextualFragment(v);
-                    }
-                    else if (rt.includes("text/")) c = await r.text();
-                    else if (rt.includes("application/octet-stream")) c = await r.blob();
-                    else c = await r.text();
-                } catch (err) {
-                    w.${GLOBAL_ARC_LOG}.debug("[Atomic] Fetch failure", err);
-                }
-
-                return {
-                    content: c ?? null,
-                    ok: r.status >= 200 && r.status < 300,
-                    status: r.status,
-                    headers: r.headers,
-                    raw: r
+        return (ext={}) => {
+            const obj = Object.create(null);
+            const oD = (n, v) => def(n, v, obj);
+            oD("blurActive", () => {
+                if (d.activeElement instanceof HTMLElement) d.activeElement.blur();
+            });
+            oD("clear", n => {
+                while (n.firstChild) n.removeChild(n.firstChild);
+            });
+            oD("create", (() => {
+                const s = new Set(["svg", "path", "circle", "rect", "g", "defs", "text", "use", "line", "polyline", "polygon", "ellipse", "symbol", "clipPath", "linearGradient", "radialGradient", "filter", "mask", "pattern"]);
+                return (t, o = {}) => {
+                    const e = s.has(t)
+                        ? d.createElementNS("http://www.w3.org/2000/svg", t)
+                        : d.createElement(t);
+                    if (isObj(o.attrs)) for (const k in o.attrs) e.setAttribute(k, o.attrs[k]);
+                    if (isObj(o.style)) for (const k in o.style) e.style[k] = o.style[k];
+                    if (isArr(o.children)) for (const c of o.children) e.appendChild(isStr(c) ? d.createTextNode(c) : c);
+                    return e;
                 };
-            } catch (err) {
-                if (tId) clearTimeout(tId);
-                if (err?.name === "AbortError") {
+            })());
+            oD("debounce", (fn, ms) => {
+                let t;
+                return (...args) => {
+                    clearTimeout(t);
+                    t = setTimeout(() => fn(...args), ms);
+                };
+            });
+            oD("eq", eq);
+            oD("uid", () => crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
+            oD("sleep", ms => new Promise(r => setTimeout(r, ms)));
+            oD("fetch", async (url, o = {}) => {
+                const { method = "GET", headers = {}, body, timeout, credentials = "include" } = o;
+                const isJSON = body && typeof body === "object" && !(body instanceof FormData);
+                const nHeaders = { ...headers };
+                const payload = isJSON ? JSON.stringify(body) : body;
+
+                if (isJSON && !("Content-Type" in nHeaders))
+                    nHeaders["Content-Type"] = "application/json";
+
+                const ctrl = isInt(timeout) ? new AbortController() : null;
+                const tId = ctrl
+                    ? setTimeout(() => ctrl.abort(), timeout)
+                    : null;
+
+                try {
+                    const r = await fetch(url, {
+                        method,
+                        headers: nHeaders,
+                        body: method !== "GET" && body !== undefined ? payload : undefined,
+                        signal: ctrl?.signal,
+                        credentials
+                    });
+
+                    if (tId) clearTimeout(tId);
+
+                    const rt = r.headers.get("Content-Type")?.toLowerCase() || "";
+                    let c;
+                    try {
+                        if (rt.includes("application/json")) c = await r.json();
+                        else if (rt.includes("text/html")) {
+                            const v = await r.text();
+                            c = d.createRange().createContextualFragment(v);
+                        }
+                        else if (rt.includes("text/")) c = await r.text();
+                        else if (rt.includes("application/octet-stream")) c = await r.blob();
+                        else c = await r.text();
+                    } catch (err) {
+                        w.${GLOBAL_ARC_LOG}.debug("[Atomic] Fetch failure", err);
+                    }
+
                     return {
-                        content: null,
-                        ok: false,
-                        status: 408,
-                        headers: new Headers(),
-                        raw: null
+                        content: c ?? null,
+                        ok: r.status >= 200 && r.status < 300,
+                        status: r.status,
+                        headers: r.headers,
+                        raw: r
                     };
+                } catch (err) {
+                    if (tId) clearTimeout(tId);
+                    if (err?.name === "AbortError") {
+                        return {
+                            content: null,
+                            ok: false,
+                            status: 408,
+                            headers: new Headers(),
+                            raw: null
+                        };
+                    }
+                    throw err;
                 }
-                throw err;
-            }
-        });
-        oD("fire", (n, t, o) => n.dispatchEvent(cEvent(t, {
-            detail: o?.data,
-            bubbles:(o?.mode ?? "up") === "up",
-            cancelable:!0
-        })));
-        oD("isArr", isArr);
-        oD("isBool", isBool);
-        oD("isDate", isDate);
-        oD("isFn", isFn);
-        oD("isInt", isInt);
-        oD("isNum", isNum);
-        oD("isObj", isObj);
-        oD("isStr", isStr);
-        oD("isTouch", (() => "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0)());
-        oD("on", (n, t, f) => {
-            n.addEventListener(t, f);
-            return () => n?.removeEventListener(t, f);
-        });
-        oD("once", (n, t, f) => {
-            const w = e => {
-                try { f(e); }
-                finally { n?.removeEventListener(t, w); }
-            };
-            n.addEventListener(t, w);
-        });
-        oD("query", (n, q) => {
-            if (!n?.querySelector || !isStr(q)) return null;
-            const scopable = n.nodeType === Node.ELEMENT_NODE && !q.trimStart().startsWith(":scope");
+            });
+            oD("fire", (n, t, o) => n.dispatchEvent(cEvent(t, {
+                detail: o?.data,
+                bubbles:(o?.mode ?? "up") === "up",
+                cancelable:!0
+            })));
+            oD("isArr", isArr);
+            oD("isBool", isBool);
+            oD("isDate", isDate);
+            oD("isFn", isFn);
+            oD("isInt", isInt);
+            oD("isNum", isNum);
+            oD("isObj", isObj);
+            oD("isStr", isStr);
+            oD("isTouch", (() => "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0)());
+            oD("on", (n, t, f) => {
+                n.addEventListener(t, f);
+                return () => n?.removeEventListener(t, f);
+            });
+            oD("once", (n, t, f) => {
+                const w = e => {
+                    try { f(e); }
+                    finally { n?.removeEventListener(t, w); }
+                };
+                n.addEventListener(t, w);
+            });
+            oD("query", qOne);
+            oD("queryAll", qAll);
+            oD("storeGet", w.${GLOBAL_STORE_NAME}.get);
+            oD("storeSet", w.${GLOBAL_STORE_NAME}.set);
+            oD("storeDel", w.${GLOBAL_STORE_NAME}.del);
+            oD("timedAttr", (n, k, o) => {
+                n.setAttribute(k, o.value ?? "");
+                return setTimeout(() => {
+                    if (o.cleanup !== false) n.removeAttribute(k);
+                    o.after?.();
+                }, o.duration);
+            });
+            oD("timedClass", (n, k, o) => {
+                n.classList.add(k);
+                return setTimeout(() => {
+                    if (o.cleanup !== false) n.classList.remove(k);
+                    o.after?.();
+                }, o.duration);
+            });
+            oD("cssVar", (() => {
+                let c;
+                return v => {
+                    if (!c) c = getComputedStyle(d.documentElement);
+                    return c.getPropertyValue(v.startsWith("--") ? v : "--v-" + v).trim() || "";
+                };
+            })());
+            oD("cssTheme", (() => {
+                let c, t;
+                return v => {
+                    const n = d.documentElement;
+                    const tc = n.getAttribute("data-theme");
+                    if (!c || tc !== t) {
+                        c = getComputedStyle(n);
+                        t = tc;
+                    }
+                    return c.getPropertyValue(v.startsWith("--") ? v : "--t-" + v).trim() || "";
+                };
+            })());
 
-            try {
-                return n.querySelector(scopable ? ":scope " + q : q);
-            } catch {
-                return null;
-            }
-        });
-        oD("queryAll", (n, q) => {
-            if (!n?.querySelectorAll || !isStr(q)) return [];
-            const scopable = n.nodeType === Node.ELEMENT_NODE && !q.trimStart().startsWith(":scope");
+            for (const k in ext) oD(k, ext[k]);
 
-            try {
-                return [...n.querySelectorAll(scopable ? ":scope " + q : q)];
-            } catch {
-                return [];
-            }
-        });
-        oD("storeGet", w.${GLOBAL_STORE_NAME}.get);
-        oD("storeSet", w.${GLOBAL_STORE_NAME}.set);
-        oD("storeDel", w.${GLOBAL_STORE_NAME}.del);
-        oD("timedAttr", (n, k, o) => {
-            n.setAttribute(k, o.value ?? "");
-            return setTimeout(() => {
-                if (o.cleanup !== false) n.removeAttribute(k);
-                o.after?.();
-            }, o.duration);
-        });
-        oD("timedClass", (n, k, o) => {
-            n.classList.add(k);
-            return setTimeout(() => {
-                if (o.cleanup !== false) n.classList.remove(k);
-                o.after?.();
-            }, o.duration);
-        });
-        oD("cssVar", (() => {
-            let c;
-            return v => {
-                if (!c) c = getComputedStyle(d.documentElement);
-                return c.getPropertyValue(v.startsWith("--") ? v : "--v-" + v).trim() || "";
-            };
-        })());
-        oD("cssTheme", (() => {
-            let c, t;
-            return v => {
-                const n = d.documentElement;
-                const tc = n.getAttribute("data-theme");
-                if (!c || tc !== t) {
-                    c = getComputedStyle(n);
-                    t = tc;
-                }
-                return c.getPropertyValue(v.startsWith("--") ? v : "--t-" + v).trim() || "";
-            };
-        })());
-
-        return Object.freeze(obj);
+            return Object.freeze(obj);
+        };
     })());
 
     /* __name shim */
@@ -772,7 +777,7 @@ export const ARC_GLOBAL = memoize((debug: boolean) => {
     oD("${GLOBAL_ARC_LOG}", {debug:${debug ? 'console.debug' : '() => {}'}}, w);
 
     oD("${GLOBAL_ARC_NAME}", (() => {
-        const f=new Map(),d=new Map(),v=new Map(),m=new Map();
+        const f=new Map(),d=new Map(),v=new Map(),m=new Map(),extensions={};
 
         return Object.freeze({
             release(uid){
@@ -784,10 +789,12 @@ export const ARC_GLOBAL = memoize((debug: boolean) => {
             },
             spark(FNS, DAT, scope = d){
                 const ATOMIC = !!w.${GLOBAL_HYDRATED_NAME};
+
                 for (const [DID, val] of DAT) {
                     if(!d.has(DID))d.set(DID,{val,refs:0});
                 }
 
+                const $ = ATOMIC ? w.${GLOBAL_UTILS_NAME}(extensions) : {};
                 for (const [FID, fn] of FNS) {
                     if(fn !== undefined && !f.has(FID)) f.set(FID, {fn});
 
@@ -812,7 +819,7 @@ export const ARC_GLOBAL = memoize((debug: boolean) => {
                         }
                         try {
                             FREG.fn(ATOMIC
-                                ? {el:n, data: w.${GLOBAL_DATA_REACTOR_NAME}(n,DREG?.val??{}), $: w.${GLOBAL_UTILS_NAME}}
+                                ? {el:n, data: w.${GLOBAL_DATA_REACTOR_NAME}(n,DREG?.val??{}), $}
                                 : {el:n, data: DREG?.val??{}});
                             v.set(UID, {fn_id: FID, data_id: DID});
                             if (DID && DREG) DREG.refs++;
@@ -831,9 +838,10 @@ export const ARC_GLOBAL = memoize((debug: boolean) => {
             },
             sparkModule(MODS) {
                 const ATOMIC = !!w.${GLOBAL_HYDRATED_NAME};
+                const $ = ATOMIC ? w.${GLOBAL_UTILS_NAME}(extensions) : {};
 
                 for (let i = 0; i < MODS.length; i++) {
-                    const [FID, fn, data] = MODS[i];
+                    const [FID, fn, name, data] = MODS[i];
                     if (m.has(FID)) continue;
 
                     const UID = gI();
@@ -849,9 +857,10 @@ export const ARC_GLOBAL = memoize((debug: boolean) => {
                     oD("${VM_RELAY_PUBLISH_NAME}", (t, v) => w.${GLOBAL_RELAY_NAME}.publish(t, v), n);
 
                     try {
-                        fn(ATOMIC
-                            ? {mod:n, data: w.${GLOBAL_DATA_REACTOR_NAME}({}, data || {}), $: w.${GLOBAL_UTILS_NAME}}
+                        const ext = fn(ATOMIC
+                            ? {mod:n, data: w.${GLOBAL_DATA_REACTOR_NAME}({}, data || {}), $}
                             : {mod:n, data});
+                        if (ATOMIC && Object.prototype.toString.call(ext) === "[object Object]") extensions[name] = ext;
                     } catch (err) {
                         w.${GLOBAL_ARC_LOG}.debug("[Atomic] Module Instantiation Error", err);
                     }
