@@ -16,7 +16,7 @@ export {cache, cacheFn, cacheSkip} from './modules/Cache';
 export {ConsoleExporter, JsonExporter, OtelHttpExporter, span, spanFn} from './modules/Logger';
 
 /* Modules - JSX */
-export {createCss, createScript, Style, nonce} from './modules/JSX';
+export {createCss, createScript, createModule, Style, nonce} from './modules/JSX';
 
 /* Modules - JWT */
 export {

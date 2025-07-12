@@ -11,7 +11,7 @@ import {Sym_TriFrostMiddlewareRateLimit} from '../../lib/modules/RateLimit';
 import {cache, cacheFn, cacheSkip} from '../../lib/modules/Cache/util';
 import {ConsoleExporter, JsonExporter, OtelHttpExporter, span, spanFn} from '../../lib/modules/Logger';
 import {createCss, Style} from '../../lib/modules/JSX/style';
-import {createScript} from '../../lib/modules/JSX/script';
+import {createScript, createModule} from '../../lib/modules/JSX/script';
 import {
     jwtSign,
     jwtVerify,
@@ -169,6 +169,10 @@ describe('index', () => {
 
         it('createScript', () => {
             expect(Index.createScript).toBe(createScript);
+        });
+
+        it('createModule', () => {
+            expect(Index.createModule).toBe(createModule);
         });
 
         it('Style', () => {
