@@ -10,7 +10,6 @@ import {ScriptEngine} from './script/Engine';
 import {SCRIPT_MARKER} from './script/Script';
 import {setActiveScriptEngine, getActiveScriptEngine} from './script/use';
 import {setActiveCtx} from './ctx/use';
-import {MODULE_MARKER} from './script/Module';
 
 const SCRIPT_LRU = 'tfscriptlru';
 const MODULES_LRU = 'tfmoduleslru';
@@ -174,29 +173,23 @@ export function render(node: JSX.Element | string | number | boolean | null, par
             switch (typeof node?.type) {
                 case 'string': {
                     const tag = node.type;
-                    switch (tag) {
-                        case MODULE_MARKER:
-                            return '';
-                        case SCRIPT_MARKER:
-                            if (node.props!.fn_id) {
-                                parentProps['data-tfhf'] = node.props!.fn_id;
-                                if (node.props!.data_id) parentProps['data-tfhd'] = node.props!.data_id;
-                            }
-                            return ''; /* Dont render the marker */
-                        default: {
-                            /* Render children */
-                            const innerHTML =
-                                typeof node.props!.dangerouslySetInnerHTML?.__html === 'string'
-                                    ? node.props!.dangerouslySetInnerHTML!.__html
-                                    : renderChildren(node.props!.children, node.props!);
-
-                            const out = VOID_TAGS[tag as keyof typeof VOID_TAGS]
-                                ? '<' + tag + renderProps(node.props) + ' />'
-                                : '<' + tag + renderProps(node.props) + '>' + innerHTML + '</' + tag + '>';
-
-                            return out;
+                    if (tag === SCRIPT_MARKER) {
+                        if (node.props!.fn_id) {
+                            parentProps['data-tfhf'] = node.props!.fn_id;
+                            if (node.props!.data_id) parentProps['data-tfhd'] = node.props!.data_id;
                         }
+                        return ''; /* Dont render the marker */
                     }
+
+                    /* Render children */
+                    const innerHTML =
+                        typeof node.props!.dangerouslySetInnerHTML?.__html === 'string'
+                            ? node.props!.dangerouslySetInnerHTML!.__html
+                            : renderChildren(node.props!.children, node.props!);
+
+                    return VOID_TAGS[tag as keyof typeof VOID_TAGS]
+                        ? '<' + tag + renderProps(node.props) + ' />'
+                        : '<' + tag + renderProps(node.props) + '>' + innerHTML + '</' + tag + '>';
                 }
                 case 'function':
                     return node.type === Fragment

@@ -10,7 +10,7 @@ import {Style} from '../../../../lib/modules/JSX/style/Style';
 import {Script} from '../../../../lib/modules/JSX/script/Script';
 import * as Generic from '../../../../lib/utils/Generic';
 import {MockContext} from '../../../MockContext';
-import {createScript} from '../../../../lib/modules/JSX/script/use';
+import {createModule, createScript} from '../../../../lib/modules/JSX/script/use';
 import {ARC_GLOBAL, ARC_GLOBAL_OBSERVER, ATOMIC_GLOBAL} from '../../../../lib/modules/JSX/script/atomic';
 import {OBSERVER} from '../../../../lib/modules/JSX/style/Engine';
 
@@ -1694,151 +1694,23 @@ describe('Modules - JSX - Renderer', () => {
                 expect(ctx2.cookies.outgoing).toEqual([]);
             });
 
-            it('Injects modules and updates tfmoduleslru cookie', () => {
-                const client = createScript({atomic: true});
-
-                const ctx = new MockContext();
-                expect(
-                    rootRender(
-                        ctx,
-                        {
-                            type: 'div',
-                            props: {
-                                children: {
-                                    type: client.Module,
-                                    props: {
-                                        children: ({mod}) => mod.audio.play('beep'),
-                                        name: 'audio',
-                                    },
-                                },
-                            },
-                        },
-                        {script: client.script},
-                    ),
-                ).toBe(
-                    [
-                        '<div></div>',
-                        '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;w.$tfarc.sparkModule([["2tc0gj",({mod})=>mod.audio.play("beep")]]);setTimeout(()=>self?.remove?.(),0);})(window);</script>',
-                    ].join(''),
-                );
-
-                expect(ctx.cookies.outgoing).toEqual(['tfmoduleslru=2tc0gj; Secure; HttpOnly']);
-            });
-
-            it('Deduplicates module ids across multiple usages', () => {
-                const ctx = new MockContext();
-                const client = createScript({atomic: true});
-
-                expect(
-                    rootRender(
-                        ctx,
-                        {
-                            type: 'main',
-                            props: {
-                                children: [
-                                    {
-                                        type: client.Module,
-                                        props: {
-                                            name: 'audio',
-                                            children: ({mod}) => mod.audio.play('A'),
-                                        },
-                                    },
-                                    {
-                                        type: client.Module,
-                                        props: {
-                                            name: 'audio',
-                                            children: ({mod}) => mod.audio.play('B'),
-                                        },
-                                    },
-                                ],
-                            },
-                        },
-                        {script: client.script},
-                    ),
-                ).toBe(
-                    [
-                        '<main></main>',
-                        '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;w.$tfarc.sparkModule([["2tc0gj",({mod})=>mod.audio.play("A")]]);setTimeout(()=>self?.remove?.(),0);})(window);</script>',
-                    ].join(''),
-                );
-
-                expect(ctx.cookies.outgoing).toEqual(['tfmoduleslru=2tc0gj; Secure; HttpOnly']);
-            });
-
-            it('Does not update cookie if module id is already known', () => {
-                const client = createScript({atomic: true});
-                const knownId = 'abc123';
-                const knownIdHashed = 'llnsr9';
-                const ctx = new MockContext({
-                    headers: {
-                        cookie: `tfmoduleslru=${knownIdHashed}`,
-                    },
-                });
-
-                expect(
-                    rootRender(
-                        ctx,
-                        {
-                            type: 'div',
-                            props: {
-                                children: {
-                                    type: client.Module,
-                                    props: {
-                                        children: () => {},
-                                        name: knownId,
-                                    },
-                                },
-                            },
-                        },
-                        {script: client.script},
-                    ),
-                ).toBe('<div></div>');
-
-                expect(ctx.cookies.outgoing).toEqual([]);
-            });
-
-            it('Caps module LRU at 64 entries', () => {
-                const client = createScript({atomic: true});
-                const longList = Array.from({length: 70}, (_, i) => `mod${i}`);
-                const lruStr = longList.join('|');
-
-                const ctx = new MockContext({
-                    headers: {
-                        cookie: `tfmoduleslru=${lruStr}`,
-                    },
-                });
-
-                expect(
-                    rootRender(
-                        ctx,
-                        {
-                            type: 'div',
-                            props: {
-                                children: {
-                                    type: client.Module,
-                                    props: {
-                                        children: () => {},
-                                        name: 'newmodule',
-                                    },
-                                },
-                            },
-                        },
-                        {script: client.script},
-                    ),
-                ).toBe(
-                    [
-                        '<div></div>',
-                        '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;w.$tfarc.sparkModule([["10m0lj7",()=>{}]]);setTimeout(()=>self?.remove?.(),0);})(window);</script>',
-                    ].join(''),
-                );
-
-                expect(ctx.cookies.outgoing).toEqual([
-                    'tfmoduleslru=mod7%7Cmod8%7Cmod9%7Cmod10%7Cmod11%7Cmod12%7Cmod13%7Cmod14%7Cmod15%7Cmod16%7Cmod17%7Cmod18%7Cmod19%7Cmod20%7Cmod21%7Cmod22%7Cmod23%7Cmod24%7Cmod25%7Cmod26%7Cmod27%7Cmod28%7Cmod29%7Cmod30%7Cmod31%7Cmod32%7Cmod33%7Cmod34%7Cmod35%7Cmod36%7Cmod37%7Cmod38%7Cmod39%7Cmod40%7Cmod41%7Cmod42%7Cmod43%7Cmod44%7Cmod45%7Cmod46%7Cmod47%7Cmod48%7Cmod49%7Cmod50%7Cmod51%7Cmod52%7Cmod53%7Cmod54%7Cmod55%7Cmod56%7Cmod57%7Cmod58%7Cmod59%7Cmod60%7Cmod61%7Cmod62%7Cmod63%7Cmod64%7Cmod65%7Cmod66%7Cmod67%7Cmod68%7Cmod69%7C10m0lj7; Secure; HttpOnly',
-                ]);
-            });
-
             it('Injects both script and module correctly in one render', () => {
-                const client = createScript({atomic: true});
+                const {Module} = createModule({});
+                const client = createScript({
+                    atomic: true,
+                    modules: {
+                        logger: () => {
+                            return Module({
+                                name: 'logger',
+                                mod: () => {
+                                    return {
+                                        log: (msg:string) => console.log(msg),
+                                    };
+                                },
+                            });
+                        },
+                    },
+                });
                 const ctx = new MockContext();
 
                 expect(
@@ -1851,14 +1723,10 @@ describe('Modules - JSX - Renderer', () => {
                                     {
                                         type: client.Script,
                                         props: {
-                                            children: ({el}) => (el.textContent = 'Hi'),
-                                        },
-                                    },
-                                    {
-                                        type: client.Module,
-                                        props: {
-                                            name: 'logger',
-                                            children: ({mod}) => mod.logger.log('msg'),
+                                            children: ({el, $}) => {
+                                                el.textContent = 'Hi';
+                                                $.logger.log('Hello World');
+                                            },
                                         },
                                     },
                                 ],
@@ -1868,17 +1736,134 @@ describe('Modules - JSX - Renderer', () => {
                     ),
                 ).toBe(
                     [
-                        '<main data-tfhf="15ee2w7"></main>',
+                        '<main data-tfhf="te98po"></main>',
                         '<script nonce="aWQtMQ==">(function(w){',
                         'const self=document.currentScript;',
-                        'w.$tfarc.sparkModule([["nipv2p",({mod})=>mod.logger.log("msg")]]);',
-                        'w.$tfarc.spark([["15ee2w7",({el})=>el.textContent="Hi"]],[],self?.parentNode);',
-                        'setTimeout(()=>self?.remove?.(),0);',
-                        '})(window);</script>',
+                        'w.$tfarc.sparkModule([["nipv2p",()=>{return {log:(msg)=>console.log(msg)};},"logger"]]);',
+                        'w.$tfarc.spark(',
+                        '[["te98po",({el,$})=>{el.textContent="Hi";$.logger.log("Hello World");}]],',
+                        '[],',
+                        'self?.parentNode);',
+                        'setTimeout(()=>self?.remove?.(),0);})(window);</script>',
                     ].join(''),
                 );
 
-                expect(ctx.cookies.outgoing).toEqual(['tfscriptlru=15ee2w7; Secure; HttpOnly', 'tfmoduleslru=nipv2p; Secure; HttpOnly']);
+                expect(ctx.cookies.outgoing).toEqual(['tfscriptlru=te98po; Secure; HttpOnly', 'tfmoduleslru=nipv2p; Secure; HttpOnly']);
+            });
+
+            it('Injects only script if module is not used', () => {
+                const {Module} = createModule({});
+                const client = createScript({
+                    atomic: true,
+                    modules: {
+                        logger: () => {
+                            return Module({
+                                name: 'logger',
+                                mod: () => {
+                                    return {
+                                        log: (msg:string) => console.log(msg),
+                                    };
+                                },
+                            });
+                        },
+                    },
+                });
+                const ctx = new MockContext();
+
+                expect(
+                    rootRender(
+                        ctx,
+                        {
+                            type: 'main',
+                            props: {
+                                children: [
+                                    {
+                                        type: client.Script,
+                                        props: {
+                                            children: ({el, $}) => {
+                                                el.textContent = 'Hi';
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                        {script: client.script},
+                    ),
+                ).toBe(
+                    [
+                        '<main data-tfhf="p16xw2"></main>',
+                        '<script nonce="aWQtMQ==">(function(w){',
+                        'const self=document.currentScript;',
+                        'w.$tfarc.spark(',
+                        '[["p16xw2",({el,$})=>{el.textContent="Hi";}]],',
+                        '[],',
+                        'self?.parentNode);',
+                        'setTimeout(()=>self?.remove?.(),0);})(window);</script>',
+                    ].join(''),
+                );
+
+                expect(ctx.cookies.outgoing).toEqual(['tfscriptlru=p16xw2; Secure; HttpOnly']);
+            });
+
+            it('Injects only script if module is already on client', () => {
+                const {Module} = createModule({});
+                const client = createScript({
+                    atomic: true,
+                    modules: {
+                        logger: () => {
+                            return Module({
+                                name: 'logger',
+                                mod: () => {
+                                    return {
+                                        log: (msg:string) => console.log(msg),
+                                    };
+                                },
+                            });
+                        },
+                    },
+                });
+                const ctx = new MockContext({
+                    headers: {
+                        cookie: `tfmoduleslru=nipv2p`,
+                    },
+                });
+
+                expect(
+                    rootRender(
+                        ctx,
+                        {
+                            type: 'main',
+                            props: {
+                                children: [
+                                    {
+                                        type: client.Script,
+                                        props: {
+                                            children: ({el, $}) => {
+                                                el.textContent = 'Hi';
+                                                $.logger.log('Hello World');
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                        {script: client.script},
+                    ),
+                ).toBe(
+                    [
+                        '<main data-tfhf="te98po"></main>',
+                        '<script nonce="aWQtMQ==">(function(w){',
+                        'const self=document.currentScript;',
+                        'w.$tfarc.spark(',
+                        '[["te98po",({el,$})=>{el.textContent="Hi";$.logger.log("Hello World");}]],',
+                        '[],',
+                        'self?.parentNode);',
+                        'setTimeout(()=>self?.remove?.(),0);})(window);</script>',
+                    ].join(''),
+                );
+
+                expect(ctx.cookies.outgoing).toEqual(['tfscriptlru=te98po; Secure; HttpOnly']);
             });
         });
     });

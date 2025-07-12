@@ -146,6 +146,7 @@ describe('Modules - JSX - script - Engine', () => {
                     {
                         data: data1,
                         fn: fn1,
+                        ogname: 'foo',
                     },
                 ],
                 [
@@ -153,6 +154,7 @@ describe('Modules - JSX - script - Engine', () => {
                     {
                         data: data2,
                         fn: fn2,
+                        ogname: 'bar',
                     },
                 ],
             ]);
@@ -176,6 +178,7 @@ describe('Modules - JSX - script - Engine', () => {
                     {
                         data: data1,
                         fn: fn1,
+                        ogname: 'mod-dup',
                     },
                 ],
             ]);
@@ -354,7 +357,7 @@ describe('Modules - JSX - script - Engine', () => {
                 [
                     '<script nonce="abc123">',
                     '(function(w){const self=document.currentScript;',
-                    'w.$tfarc.sparkModule([["id-1",({mod,data})=>mod.$publish("x",data),{"x":123}]]);',
+                    'w.$tfarc.sparkModule([["id-1",({mod,data})=>mod.$publish("x",data),"foo",{"x":123}]]);',
                     'setTimeout(()=>self?.remove?.(),0);',
                     '})(window);</script>',
                 ].join(''),
@@ -388,8 +391,8 @@ describe('Modules - JSX - script - Engine', () => {
                     '<script nonce="abc123">',
                     '(function(w){const self=document.currentScript;',
                     'w.$tfarc.sparkModule([',
-                    '["id-1",({mod})=>mod.$publish("a")],',
-                    '["id-2",({mod})=>mod.$publish("b"),{"b":true}]',
+                    '["id-1",({mod})=>mod.$publish("a"),"mod-a"],',
+                    '["id-2",({mod})=>mod.$publish("b"),"mod-b",{"b":true}]',
                     ']);',
                     'setTimeout(()=>self?.remove?.(),0);',
                     '})(window);</script>',
@@ -424,7 +427,7 @@ describe('Modules - JSX - script - Engine', () => {
                 [
                     '<script nonce="abc123">(function(w){',
                     'const self=document.currentScript;',
-                    'w.$tfarc.sparkModule([["mod-1",({mod})=>mod.$publish("ready")]]);',
+                    'w.$tfarc.sparkModule([["mod-1",({mod})=>mod.$publish("ready"),"module"]]);',
                     'w.$tfarc.spark(',
                     '[["id-1",function({el,data}){el.textContent=data.msg}]],',
                     '[["hash",{"msg":"hi"}]],',
@@ -793,7 +796,7 @@ describe('Modules - JSX - script - Engine', () => {
                     '<main>Module Render</main>',
                     '<script nonce="abc123">(function(w){',
                     'const self=document.currentScript;',
-                    'w.$tfarc.sparkModule([["id-1",({mod})=>mod.$publish("x")]]);',
+                    'w.$tfarc.sparkModule([["id-1",({mod})=>mod.$publish("x"),"module-a"]]);',
                     'setTimeout(()=>self?.remove?.(),0);',
                     '})(window);</script>',
                 ].join(''),
@@ -834,7 +837,7 @@ describe('Modules - JSX - script - Engine', () => {
                     '<script nonce="abc123">(function(w){',
                     'const self=document.currentScript;',
                     'const run=()=>{',
-                    'w.$tfarc.sparkModule([["id-1",({mod})=>mod.$publish("x"),{"x":123}]]);',
+                    'w.$tfarc.sparkModule([["id-1",({mod})=>mod.$publish("x"),"example",{"x":123}]]);',
                     'setTimeout(()=>self?.remove?.(),0);',
                     '};',
                     'if(!w.$tfarc){const wait=()=>{w.$tfarc?run():setTimeout(wait,1)};wait();}else{run()}',
@@ -876,7 +879,7 @@ describe('Modules - JSX - script - Engine', () => {
         it('Injects only runtime globals if fragment is empty string', () => {
             engine.registerModule('({mod})=>mod.$publish("event")', '{"ready":true}', 'alpha');
             expect(engine.inject('')).toBe(
-                '<script nonce="abc123">(function(w){const self=document.currentScript;w.$tfarc.sparkModule([["id-1",({mod})=>mod.$publish("event"),{"ready":true}]]);setTimeout(()=>self?.remove?.(),0);})(window);</script>',
+                '<script nonce="abc123">(function(w){const self=document.currentScript;w.$tfarc.sparkModule([["id-1",({mod})=>mod.$publish("event"),"alpha",{"ready":true}]]);setTimeout(()=>self?.remove?.(),0);})(window);</script>',
             );
         });
 
@@ -892,7 +895,7 @@ describe('Modules - JSX - script - Engine', () => {
                 [
                     '<script nonce="abc123">(function(w){',
                     'const self=document.currentScript;',
-                    'w.$tfarc.sparkModule([["id-3",({mod})=>mod.$publish("abc"),{"k":true}]]);',
+                    'w.$tfarc.sparkModule([["id-3",({mod})=>mod.$publish("abc"),"moduleX",{"k":true}]]);',
                     'w.$tfarc.spark([["id-1",function x(){}]],[["id-2",{"msg":"hello"}]],self?.parentNode);',
                     'setTimeout(()=>self?.remove?.(),0);',
                     '})(window);</script>',
@@ -936,8 +939,8 @@ describe('Modules - JSX - script - Engine', () => {
                     '<script nonce="abc123">(function(w){',
                     'const self=document.currentScript;',
                     'w.$tfarc.sparkModule([',
-                    '["id-1",({mod})=>{console.log("Alpha")}],',
-                    '["id-3",({mod})=>{console.log("Gamma")}]',
+                    '["id-1",({mod})=>{console.log("Alpha")},"Alpha"],',
+                    '["id-3",({mod})=>{console.log("Gamma")},"Gamma"]',
                     ']);',
                     'setTimeout(()=>self?.remove?.(),0);',
                     '})(window);</script>',

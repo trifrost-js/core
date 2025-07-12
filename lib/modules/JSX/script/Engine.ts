@@ -17,7 +17,7 @@ export class ScriptEngine {
     protected map_data = new Map<string, string>();
 
     /* Map storing modules */
-    protected map_modules = new Map<string, {fn: string; data: string | null}>();
+    protected map_modules = new Map<string, {fn: string; data: string | null; ogname: string}>();
 
     /* Whether or not TriFrost atomic is enabled */
     protected atomic_enabled: boolean = false;
@@ -28,12 +28,24 @@ export class ScriptEngine {
     /* Mount path for root styles */
     protected mount_path: string | null = null;
 
+    /* Known modules */
+    protected known_modules: Record<string, () => Record<string, any>> = {};
+
+    public known_modules_rgx: RegExp | null = null;
+
+    protected used_modules = new Set();
+
     setAtomic(is_atomic: boolean) {
         this.atomic_enabled = is_atomic === true;
     }
 
     setRoot(is_root: boolean) {
         this.root_renderer = is_root === true;
+    }
+
+    setModules(modules: Record<string, () => Record<string, any>>) {
+        this.known_modules = modules;
+        this.known_modules_rgx = new RegExp(`\\$\\.(${Object.keys(modules).join('|')})\\.`, 'g');
     }
 
     /**
@@ -50,6 +62,12 @@ export class ScriptEngine {
         if (!fn_id) {
             fn_id = djb2Hash(minified_fn);
             this.map_fn.set(minified_fn, fn_id);
+            if (this.known_modules_rgx) {
+                const matches = minified_fn.matchAll(this.known_modules_rgx);
+                for (const match of matches) {
+                    if (match[1] && !this.used_modules.has(match[1])) this.known_modules[match[1]]();
+                }
+            }
         }
 
         let data_id: string | null = null;
@@ -77,7 +95,9 @@ export class ScriptEngine {
 
         const minified_fn = atomicMinify(fn);
         if (!minified_fn) return {};
-        this.map_modules.set(hash, {fn: minified_fn, data});
+        this.map_modules.set(hash, {fn: minified_fn, data, ogname: name});
+
+        this.used_modules.add(name);
 
         return {name: hash};
     }
@@ -96,7 +116,7 @@ export class ScriptEngine {
             const MNS = [];
             for (const [name, val] of [...this.map_modules]) {
                 if (!seen.modules.has(name)) {
-                    let mod = '["' + name + '",' + val.fn;
+                    let mod = '["' + name + '",' + val.fn + ',"' + val.ogname + '"';
                     if (val.data) mod += ',' + val.data;
                     mod += ']';
                     MNS.push(mod);

@@ -30,14 +30,14 @@ describe('Modules - JSX - script - Module', () => {
             },
         });
 
-        expect(out).toEqual({ ok: true });
+        expect(out).toEqual(undefined);
 
         expect(engine.flush()).toBe(
             [
                 '<script nonce="my-nonce">(function(w){',
                 'const self=document.currentScript;',
                 'w.$tfarc.sparkModule([',
-                '["6fmj1",({mod,data})=>{mod.$publish("log",data.autoplay);},{"autoplay":true}]',
+                '["6fmj1",({mod,data})=>{mod.$publish("log",data.autoplay);return {ok:true};},"audio-player",{"autoplay":true}]',
                 ']);',
                 'setTimeout(()=>self?.remove?.(),0);',
                 '})(window);</script>',
@@ -54,14 +54,14 @@ describe('Modules - JSX - script - Module', () => {
             },
         });
 
-        expect(out).toEqual('done');
+        expect(out).toEqual(undefined);
 
         expect(engine.flush()).toBe(
             [
                 '<script nonce="my-nonce">(function(w){',
                 'const self=document.currentScript;',
                 'w.$tfarc.sparkModule([',
-                '["yiwydn",({mod})=>{mod.$publish("start");}]',
+                '["yiwydn",({mod})=>{mod.$publish("start");return "done";},"game"]',
                 ']);',
                 'setTimeout(()=>self?.remove?.(),0);',
                 '})(window);</script>',
@@ -90,7 +90,7 @@ describe('Modules - JSX - script - Module', () => {
                 '<script nonce="my-nonce">(function(w){',
                 'const self=document.currentScript;',
                 'w.$tfarc.sparkModule([',
-                '["375gv7",()=>{"first"},{"msg":"first"}]',
+                '["375gv7",()=>"first","foo",{"msg":"first"}]',
                 ']);',
                 'setTimeout(()=>self?.remove?.(),0);',
                 '})(window);</script>',
@@ -110,7 +110,7 @@ describe('Modules - JSX - script - Module', () => {
                 '<script nonce="my-nonce">(function(w){',
                 'const self=document.currentScript;',
                 'w.$tfarc.sparkModule([',
-                '["1kumf3o",()=>null,{"html":"<\\/script><script>alert(1)<\\/script>"}]',
+                '["1kumf3o",()=>null,"breakout",{"html":"<\\/script><script>alert(1)<\\/script>"}]',
                 ']);',
                 'setTimeout(()=>self?.remove?.(),0);',
                 '})(window);</script>',
