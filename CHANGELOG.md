@@ -4,6 +4,201 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.52.0] - 2025-07-12
+This is a transformative release introducing the renewed **Atomic Modules** system, a zero-bundle, zero-compiler approach to embedding server-defined modules directly into the browser.
+
+Modules are now delivered **just-in-time**, only when referenced inside `<Script>` blocks. No bundling, no imports, no dead code.
+
+### Added
+- **feat**: `createModule(...)` API, define modules using a dedicated factory:
+```typescript
+export const { Module } = createModule({ css });
+```
+- **feat**: `createScript(...)` now accepts a `modules` map:
+```typescript
+export const { Script } = createScript({
+  atomic: true,
+  css,
+  modules: {
+    modal: Modal,
+    audio: AudioPlayer,
+  },
+});
+```
+- **feat**: Atomic utils (`$`) now receive **typed access** to the modules you register:
+```tsx
+<Script>
+  {({ el, $ }) => {
+    $.modal.open({ frag: '/about' });
+    $.audio.play('intro');
+  }}
+</Script>
+```
+- **feat**: **Just-In-Time Module Delivery**, Modules referenced via `$.<name>` inside a script block will be **automatically detected** and included in the client payload **only if they aren't already present**.
+
+### Improved
+- **feat**: **Smarter ScriptEngine** - Function bodies are now parsed for `$.<module>` references. Missing modules are auto-registered and included in SSR output **if not yet on the frontend**.
+- **feat**: **Flexible Module Design** - Modules are now plain functions — no JSX, no wrappers, no need to render anything:
+```typescript
+export function Modal () {
+  return Module({
+    name: 'modal',
+    mod: ({ mod, $ }) => {
+      ... // Do logic here (eg define functions, create dom nodes if necessary)
+
+      /* The return result will be registered on Atomic Utils */
+      return {
+        open: () => ...,
+        close: () => ... 
+      };
+    },
+  });
+}
+```
+- **dx**: **Full Typing Pipeline** - Your module return types flow into the `$` util with no manual typing, making authoring expressive and predictable.
+
+### Breaking
+- `Module` **is no longer part of** `createScript(...)` return, you must now use `createModule(...)` to get access to the `Module` factory.
+- `Module` is no longer a JSX element. The new API:
+```typescript
+import {Module} from "~/script";
+
+export function Modal () {
+  ...
+
+  return Module({
+    name: "modal",
+    data: {cls},
+    mod: ({data, $}) => {
+      ...
+
+      return {
+        ... // Your methods that you want to expose to $.modal.X
+      };
+    },
+  });
+}
+```
+
+### Why Atomic Modules?
+Scripts are often the connective tissue between your UI and logic, but traditionally require bundlers, import graphs, or manual registration.
+
+Atomic Modules remove that constraint. They're:
+- Declared server-side
+- Registered as functions
+- Used on-demand
+- Delivered just-in-time
+
+This gives you fully reactive, client-accessible logic with **no bundling** or compilers. Just fragments and function literals.
+
+✅ Use case: Modal, Audio, Notifications, Haptics, Services, Shared Methods, etc.
+
+##### 📦 Examples
+**Define a Module**
+```typescript
+// Modal.ts
+export const Modal = Module({
+  name: 'modal',
+  mod: ({ $ }) => {
+    let root: HTMLDivElement | null = null;
+
+    function open(frag: DocumentFragment) {
+      root = $.create('div', { children: [frag] });
+      document.body.appendChild(root);
+    }
+
+    function close() {
+      if (root) root.remove();
+      root = null;
+    }
+
+    return {
+      open: async ({frag}:{frag:string}) => {
+        if (root) root.remove();
+
+        const res = await $.fetch<DocumentFragment>(frag);
+        if (res.ok && res.content) open(res.content);
+      },
+      close,
+    };
+  },
+});
+```
+
+**Register It**
+```typescript
+// script.ts
+import { createScript, createModule } from '@trifrost/core';
+import { type Env } from './types';
+import { css } from './css';
+import { Modal } from './components/modules/Modal';
+
+export const { Module } = createModule<Env>({css});
+
+const config = {
+  atomic: true,
+  css,
+  modules: {
+    modal: Modal,
+    ... // Other modules
+  },
+} as const;
+
+export const { Script, script } = createScript<typeof config, Env>(config);
+```
+
+**Access It in Markup**:
+```tsx
+// Within a component
+<button type="button" className={css.use('linkButton')}>
+  What's this?
+  <Script>
+    {({ el, $ }) => {
+      // Note $.modal.open, this is fully typed
+      $.on(el, 'click', () => $.modal.open(...)); 
+    }}
+  </Script>
+</button>
+```
+
+**AudioPlayer Example**:
+```typescript
+// Atomic module declaration
+export function AudioPlayer () {
+  return Module({
+    name: 'audio',
+    mod: () => ({
+      play: (track: string) => { new Audio(`/sounds/${track}.mp3`).play(); },
+      fx: (key: string) => { /* play fx */ },
+    }),
+  });
+}
+```
+```tsx
+// Script usage
+<Script>
+  {({ $, el }) => $.on(el, 'click', () => $.audio.fx('click'))}
+</Script>
+```
+
+No imports. No runtime shimming. No bundlers. Just logic — shipped atomically.
+
+---
+
+This is the final major release before **TriFrost v1.0**.
+
+It lays the groundwork for the **Atomic Ecosystem**, where modules are treated as first-class, isolated, reactive, typed fragments of behavior.
+
+TriFrost remains committed to:
+- Zero-runtime boilerplate
+- Full type inference
+- Fine-grained delivery
+- Build system independence
+
+Welcome to **Atomic Dawn**, where logic fragments are first-class, and delivery is intelligent by default.
+
+As always, stay frosty ❄️.
+
 ## [0.51.0] - 2025-07-11
 TriFrost 0.51.0 brings improvements to atomic utilities, developer experience, and type inference. This release focuses on reducing friction in script composition and enhancing the typing system for relay events and store access.
 
