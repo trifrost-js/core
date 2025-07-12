@@ -1,12 +1,11 @@
 import {describe, it, expect, afterEach, beforeEach, vi} from 'vitest';
-import {Module, MODULE_MARKER} from '../../../../../lib/modules/JSX/script/Module';
+import {Module} from '../../../../../lib/modules/JSX/script/Module';
 import {setActiveCtx} from '../../../../../lib/modules/JSX/ctx/use';
 import {ScriptEngine} from '../../../../../lib/modules/JSX/script/Engine';
 import {setActiveScriptEngine} from '../../../../../lib/modules/JSX/script/use';
-import CONSTANTS from '../../../../constants';
 import {MockContext} from '../../../../MockContext';
 
-describe('Modules - JSX - script - <Module>', () => {
+describe('Modules - JSX - script - Module', () => {
     let engine: ScriptEngine;
 
     beforeEach(() => {
@@ -21,39 +20,17 @@ describe('Modules - JSX - script - <Module>', () => {
         setActiveScriptEngine(null);
     });
 
-    it('Returns null if no function is provided', () => {
-        for (const el of CONSTANTS.NOT_FUNCTION) {
-            expect(Module({children: el as any, name: 'audio'})).toBe(null);
-        }
-    });
-
-    it('Returns null if no name is provided', () => {
-        for (const el of [...CONSTANTS.NOT_STRING, '']) {
-            expect(Module({children: () => {}, name: el as any})).toBe(null);
-        }
-    });
-
-    it('Returns null if no engine is active', () => {
-        setActiveScriptEngine(null);
-        expect(Module({name: 'abc', children: () => {}})).toBe(null);
-    });
-
     it('Registers module correctly with function and data', () => {
         const out = Module({
             name: 'audio-player',
             data: {autoplay: true},
-            children: ({mod, data}) => {
+            mod: ({mod, data}) => {
                 mod.$publish('log', data.autoplay);
+                return { ok: true };
             },
         });
 
-        expect(out).toEqual({
-            key: null,
-            type: MODULE_MARKER,
-            props: {
-                name: '6fmj1',
-            },
-        });
+        expect(out).toEqual({ ok: true });
 
         expect(engine.flush()).toBe(
             [
@@ -71,18 +48,13 @@ describe('Modules - JSX - script - <Module>', () => {
     it('Registers module correctly without data', () => {
         const out = Module({
             name: 'game',
-            children: ({mod}) => {
+            mod: ({mod}) => {
                 mod.$publish('start');
+                return 'done';
             },
         });
 
-        expect(out).toEqual({
-            key: null,
-            type: MODULE_MARKER,
-            props: {
-                name: 'yiwydn',
-            },
-        });
+        expect(out).toEqual('done');
 
         expect(engine.flush()).toBe(
             [
@@ -101,12 +73,13 @@ describe('Modules - JSX - script - <Module>', () => {
         Module({
             name: 'foo',
             data: {msg: 'first'},
-            children: () => {},
+            mod: () => 'first',
         });
+
         Module({
             name: 'foo',
             data: {msg: 'second'},
-            children: () => {},
+            mod: () => 'second',
         });
 
         const flushed = engine.flush();
@@ -117,7 +90,7 @@ describe('Modules - JSX - script - <Module>', () => {
                 '<script nonce="my-nonce">(function(w){',
                 'const self=document.currentScript;',
                 'w.$tfarc.sparkModule([',
-                '["375gv7",()=>{},{"msg":"first"}]',
+                '["375gv7",()=>{"first"},{"msg":"first"}]',
                 ']);',
                 'setTimeout(()=>self?.remove?.(),0);',
                 '})(window);</script>',
@@ -129,7 +102,7 @@ describe('Modules - JSX - script - <Module>', () => {
         Module({
             name: 'breakout',
             data: {html: '</script><script>alert(1)</script>'},
-            children: () => {},
+            mod: () => null,
         });
 
         expect(engine.flush()).toBe(
@@ -137,7 +110,7 @@ describe('Modules - JSX - script - <Module>', () => {
                 '<script nonce="my-nonce">(function(w){',
                 'const self=document.currentScript;',
                 'w.$tfarc.sparkModule([',
-                '["1kumf3o",()=>{},{"html":"<\\/script><script>alert(1)<\\/script>"}]',
+                '["1kumf3o",()=>null,{"html":"<\\/script><script>alert(1)<\\/script>"}]',
                 ']);',
                 'setTimeout(()=>self?.remove?.(),0);',
                 '})(window);</script>',
@@ -148,5 +121,15 @@ describe('Modules - JSX - script - <Module>', () => {
     it('Returns empty string from flush if no modules registered', () => {
         engine.reset();
         expect(engine.flush()).toBe('');
+    });
+
+    it('Throws error if no active engine', () => {
+        setActiveScriptEngine(null);
+        expect(() =>
+            Module({
+                name: 'fail',
+                mod: () => 'test',
+            }),
+        ).toThrow('No active script engine');
     });
 });
