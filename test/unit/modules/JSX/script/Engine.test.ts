@@ -116,6 +116,25 @@ describe('Modules - JSX - script - Engine', () => {
             /* @ts-expect-error Should be good */
             expect([...engine.map_data.entries()]).toEqual([]);
         });
+
+        it('Triggers known module factory when referenced via regex in function body', () => {
+            const mockFn = vi.fn().mockReturnValue({});
+            engine.setModules({utils: mockFn});
+
+            engine.register('function(){$.utils.log("hi")}', null);
+
+            expect(mockFn).toHaveBeenCalledTimes(1);
+        });
+
+        it('Avoids repeated invocation of known module factories once used', () => {
+            const mockFn = vi.fn().mockReturnValue({});
+            engine.setModules({api: mockFn});
+
+            engine.register('function(){$.api.send()}', null);
+            engine.register('function(){$.api.send("again")}', null);
+
+            expect(mockFn).toHaveBeenCalledTimes(1);
+        });
     });
 
     describe('registerModule', () => {
@@ -437,6 +456,35 @@ describe('Modules - JSX - script - Engine', () => {
                     '})(window);</script>',
                 ].join(''),
             );
+        });
+
+        it('Includes script referencing known module from setModules', () => {
+            vi.spyOn(Generic, 'djb2Hash').mockImplementation(str => {
+                if (str.includes('log')) return 'id-script';
+                return 'id-data';
+            });
+
+            const modFn = vi.fn().mockReturnValue({});
+            engine.setModules({utils: modFn});
+
+            engine.register('function(){$.utils.log("hello")}', null);
+
+            const html = engine.flush();
+            expect(html).toContain('"id-script",function(){$.utils.log("hello")}');
+            expect(modFn).toHaveBeenCalledTimes(1);
+        });
+
+        it('Does not invoke known module factory if not matched in function body', () => {
+            vi.spyOn(Generic, 'djb2Hash').mockReturnValue('id-x');
+
+            const mockFn = vi.fn().mockReturnValue({});
+            engine.setModules({ghost: mockFn});
+
+            engine.register('function(){$.nope()}', null);
+
+            const html = engine.flush();
+            expect(html).toContain('"id-x",function(){$.nope()}');
+            expect(mockFn).not.toHaveBeenCalled();
         });
     });
 

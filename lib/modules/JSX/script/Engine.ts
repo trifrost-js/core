@@ -65,7 +65,10 @@ export class ScriptEngine {
             if (this.known_modules_rgx) {
                 const matches = minified_fn.matchAll(this.known_modules_rgx);
                 for (const match of matches) {
-                    if (match[1] && !this.used_modules.has(match[1])) this.known_modules[match[1]]();
+                    if (match[1] && !this.used_modules.has(match[1])) {
+                        this.known_modules[match[1]]();
+                        this.used_modules.add(match[1]);
+                    }
                 }
             }
         }
@@ -138,7 +141,7 @@ export class ScriptEngine {
                 }
             }
             const DAT = '[' + [...this.map_data].map(([val, id]) => '["' + id + '",' + val + ']').join(',') + ']';
-            if (FNS.length || DAT.length) out += `w.${GLOBAL_ARC_NAME}.spark(${'[' + FNS.join(',') + ']'},${DAT},self?.parentNode);`;
+            out += `w.${GLOBAL_ARC_NAME}.spark(${'[' + FNS.join(',') + ']'},${DAT},self?.parentNode);`;
         }
 
         if (!out.length) return '';
@@ -213,6 +216,9 @@ export class ScriptEngine {
         this.map_data = new Map();
         this.map_fn = new Map();
         this.map_modules = new Map();
+        this.known_modules = {};
+        this.known_modules_rgx = null;
+        this.used_modules = new Set();
     }
 
     /**

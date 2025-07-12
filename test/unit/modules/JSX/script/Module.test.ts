@@ -26,7 +26,7 @@ describe('Modules - JSX - script - Module', () => {
             data: {autoplay: true},
             mod: ({mod, data}) => {
                 mod.$publish('log', data.autoplay);
-                return { ok: true };
+                return {ok: true};
             },
         });
 

@@ -1,5 +1,7 @@
 /// <reference lib="dom" />
 
+/* eslint-disable indent */
+
 import {describe, it, expect, beforeEach, vi, expectTypeOf} from 'vitest';
 import {getActiveScriptEngine, setActiveScriptEngine, createScript, createModule} from '../../../../../lib/modules/JSX/script/use';
 import {ScriptEngine} from '../../../../../lib/modules/JSX/script/Engine';
@@ -93,7 +95,7 @@ describe('Modules - JSX - Script - use', () => {
 
             const output = Module({
                 name: 'audio',
-                mod: ({mod, data, $}) => {
+                mod: ({mod, data}) => {
                     return {
                         play: () => {
                             /* @ts-expect-error should be good */
@@ -258,13 +260,25 @@ describe('Modules - JSX - Script - use', () => {
                 atomic: true,
             } as const;
 
-            const {Script} = createScript<typeof config, {FOO: string}>(config);
+            const {Script} = createScript<typeof config, {FOO: string}>(config); // eslint-disable-line @typescript-eslint/no-unused-vars
 
             type ScriptProps = Parameters<typeof Script>[0];
             expectTypeOf<ScriptProps>().toMatchTypeOf<ScriptProxy.ScriptProps<any, any, any, 'fontSize' | 'gap', 'light' | 'dark'>>();
         });
 
+        it('Instantiates and sets a new ScriptEngine if none is active when Script is called', () => {
+            const {Script} = createScript({});
+            setActiveScriptEngine(null);
+
+            const out = Script({children: () => {}});
+
+            const engine = getActiveScriptEngine();
+            expect(engine).toBeInstanceOf(ScriptEngine);
+            expect(out).not.toBeNull();
+        });
+
         it('Infers module shape and keys', () => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const {Script} = createScript<
                 {
                     css: {

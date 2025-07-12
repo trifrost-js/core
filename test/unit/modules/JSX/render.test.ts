@@ -1704,7 +1704,7 @@ describe('Modules - JSX - Renderer', () => {
                                 name: 'logger',
                                 mod: () => {
                                     return {
-                                        log: (msg:string) => console.log(msg),
+                                        log: (msg: string) => console.log(msg),
                                     };
                                 },
                             });
@@ -1761,7 +1761,7 @@ describe('Modules - JSX - Renderer', () => {
                                 name: 'logger',
                                 mod: () => {
                                     return {
-                                        log: (msg:string) => console.log(msg),
+                                        log: (msg: string) => console.log(msg),
                                     };
                                 },
                             });
@@ -1780,7 +1780,7 @@ describe('Modules - JSX - Renderer', () => {
                                     {
                                         type: client.Script,
                                         props: {
-                                            children: ({el, $}) => {
+                                            children: ({el}) => {
                                                 el.textContent = 'Hi';
                                             },
                                         },
@@ -1792,18 +1792,18 @@ describe('Modules - JSX - Renderer', () => {
                     ),
                 ).toBe(
                     [
-                        '<main data-tfhf="p16xw2"></main>',
+                        '<main data-tfhf="tifgyi"></main>',
                         '<script nonce="aWQtMQ==">(function(w){',
                         'const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["p16xw2",({el,$})=>{el.textContent="Hi";}]],',
+                        '[["tifgyi",({el})=>{el.textContent="Hi";}]],',
                         '[],',
                         'self?.parentNode);',
                         'setTimeout(()=>self?.remove?.(),0);})(window);</script>',
                     ].join(''),
                 );
 
-                expect(ctx.cookies.outgoing).toEqual(['tfscriptlru=p16xw2; Secure; HttpOnly']);
+                expect(ctx.cookies.outgoing).toEqual(['tfscriptlru=tifgyi; Secure; HttpOnly']);
             });
 
             it('Injects only script if module is already on client', () => {
@@ -1816,7 +1816,7 @@ describe('Modules - JSX - Renderer', () => {
                                 name: 'logger',
                                 mod: () => {
                                     return {
-                                        log: (msg:string) => console.log(msg),
+                                        log: (msg: string) => console.log(msg),
                                     };
                                 },
                             });
