@@ -4,7 +4,7 @@ import {ConsoleExporter, JsonExporter, OtelHttpExporter} from '../../../lib/modu
 import {RateLimitKeyGeneratorRegistry} from '../../../lib/modules/RateLimit/_RateLimit';
 import {createCss} from '../../../lib/modules/JSX/style/use';
 import {Style} from '../../../lib/modules/JSX/style/Style';
-import {createScript} from '../../../lib/modules/JSX/script/use';
+import {createScript, createModule} from '../../../lib/modules/JSX/script/use';
 import {
     jwtSign,
     jwtVerify,
@@ -41,6 +41,10 @@ describe('Modules - Index', () => {
 
         it('createScript should link to the correct module', () => {
             expect(Modules.createScript).toEqual(createScript);
+        });
+
+        it('createModule should link to the correct module', () => {
+            expect(Modules.createModule).toEqual(createModule);
         });
 
         it('Style should link to the correct module', () => {
