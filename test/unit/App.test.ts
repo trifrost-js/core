@@ -110,6 +110,18 @@ describe('App', () => {
             expect((app as any).requestId).toBe(tracing.requestId);
         });
 
+        it('Allows passing requestId as null', () => {
+            const exporter = () => [];
+            const tracing = {
+                exporters: vi.fn(() => [exporter]),
+                requestId: null,
+            } as any;
+
+            const app = new App({tracing});
+            expect((app as any).exporters).toBe(tracing.exporters);
+            expect((app as any).requestId).toBe(null);
+        });
+
         it('Initializes global cookie config with defaults', () => {
             const app = new App();
             const cookieCfg = (app as any).cookies.config;

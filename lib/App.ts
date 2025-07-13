@@ -155,6 +155,7 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
 
         /* Request ID */
         if (options.tracing?.requestId) this.requestId = options.tracing.requestId;
+        else if (options.tracing?.requestId === null) this.requestId = null;
 
         /* Exporters */
         if (options.tracing?.exporters) this.exporters = options.tracing.exporters;
