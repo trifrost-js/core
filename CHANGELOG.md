@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.53.1] - 2025-07-13
+### Improved
+- **feat**: `trustProxy` is now automatically inferred from the environment. It checks `TRIFROST_TRUSTPROXY`, falling back to `SERVICE_TRUSTPROXY` and `TRUSTPROXY` in order. This improves DX and removes the need for manual config in non-trusted environments.
+```bash
+# Example
+TRIFROST_TRUSTPROXY=true
+```
+- **feat**: You can now turn off `requestId` in tracing config by passing it as `null` explicitly.
+
+### Breaking
+- Removed explicit `trustProxy` option from the `App` constructor. Environment-based inference is now canonical. This change **centralizes trust detection and reduces the chance of misconfiguration in edge or proxy-aware environments**. At the same time it also allows the same App to be deployed in multiple locations without any code changes.
+
 ## [0.53.0] - 2025-07-13
 This release introduces dedicated support for healthcheck routes, improves dx with tracing exporters, and resolves a typing inconsistency in cookie configuration. It’s a quality-of-life bump with production-readiness in mind.
 
