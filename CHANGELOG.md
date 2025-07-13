@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.53.0] - 2025-07-13
+This release introduces dedicated support for healthcheck routes, improves dx with tracing exporters, and resolves a typing inconsistency in cookie configuration. It’s a quality-of-life bump with production-readiness in mind.
+
+### Added
+- **feat**: `App.health` and `Router.health`, shortcut methods to register a `GET` route with kind `"health"`. These routes are excluded from rate limiting and are intended for health checks (e.g., Kubernetes probes).
+
+### Improved
+- **dx**: `tracing.exporters` can now return a single exporter object in addition to an array. Previously, only arrays were accepted.
+
+### Fixed
+- **dx**: Fixed a type mismatch in the `cookies` option of `App`. The option now properly accepts `cookies` as the configuration object, instead of requiring `{config}` wrapping.
+
+---
+
+As always, stay frosty ❄️.
+
 ## [0.52.0] - 2025-07-12
 This is a transformative release introducing the renewed **Atomic Modules** system, a zero-bundle, zero-compiler approach to embedding server-defined modules directly into the browser.
 
