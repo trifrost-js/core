@@ -1,6 +1,6 @@
 {
     "name": "@trifrost/core",
-    "version": "0.53.1",
+    "version": "0.53.2",
     "description": "Blazingly fast, runtime-agnostic server framework for modern edge and node environments",
     "scripts": {
         "build": "npm run lint && npm run test && npm run build:esm && npm run build:cjs && npm run build:types && npm run build:jsx",
@@ -94,6 +94,21 @@
             "types": "./types/modules/RateLimit/index.d.ts",
             "import": "./esm/modules/RateLimit/index.js",
             "require": "./cjs/modules/RateLimit/index.js"
+        },
+        "./runtimes/Bun/Runtime": {
+            "types": "./types/runtimes/Bun/Runtime.d.ts",
+            "import": "./esm/runtimes/Bun/Runtime.js",
+            "require": "./cjs/runtimes/Bun/Runtime.js"
+        },
+        "./runtimes/Node/Runtime": {
+            "types": "./types/runtimes/Node/Runtime.d.ts",
+            "import": "./esm/runtimes/Node/Runtime.js",
+            "require": "./cjs/runtimes/Node/Runtime.js"
+        },
+        "./runtimes/Workerd/Runtime": {
+            "types": "./types/runtimes/Workerd/Runtime.d.ts",
+            "import": "./esm/runtimes/Workerd/Runtime.js",
+            "require": "./cjs/runtimes/Workerd/Runtime.js"
         }
     },
     "dependencies": {

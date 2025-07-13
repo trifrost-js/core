@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.53.2] - 2025-07-13
+### Improved
+- **sys**: Add NodeRuntime, BunRuntime, WorkerdRuntime to package exports
+
 ## [0.53.1] - 2025-07-13
 ### Improved
 - **feat**: `trustProxy` is now automatically inferred from the environment. It checks `TRIFROST_TRUSTPROXY`, falling back to `SERVICE_TRUSTPROXY` and `TRUSTPROXY` in order. This improves DX and removes the need for manual config in non-trusted environments.
@@ -77,7 +81,7 @@ export function Modal () {
       /* The return result will be registered on Atomic Utils */
       return {
         open: () => ...,
-        close: () => ... 
+        close: () => ...
       };
     },
   });
@@ -183,7 +187,7 @@ export const { Script, script } = createScript<typeof config, Env>(config);
   <Script>
     {({ el, $ }) => {
       // Note $.modal.open, this is fully typed
-      $.on(el, 'click', () => $.modal.open(...)); 
+      $.on(el, 'click', () => $.modal.open(...));
     }}
   </Script>
 </button>
