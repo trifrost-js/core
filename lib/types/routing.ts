@@ -164,6 +164,11 @@ export type TriFrostRouter<Env extends Record<string, any> = {}, State extends R
         path: Path,
         handler: TriFrostRouteHandler<Env, State & PathParam<Path>>,
     ) => TriFrostRouter<Env, State>;
+
+    health: <Path extends string = string>(
+        path: Path,
+        handler: TriFrostHandler<Env, State & PathParam<Path>>,
+    ) => TriFrostRouter<Env, State>;
 };
 
 /**

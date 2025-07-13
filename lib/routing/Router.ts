@@ -32,14 +32,14 @@ class Router<Env extends Record<string, any> = {}, State extends Record<string, 
     /* Configured Body Parser options */
     #bodyParser: TriFrostBodyParserOptions | null = null;
 
-    /* Tree passed by parent */
-    #tree: RouteTree<Env>;
-
     /* Timeout effective for this router and subrouters/routes */
     #timeout: number | null = null;
 
     /* Middleware */
     #middleware: TriFrostMiddleware<Env, State>[];
+
+    /* Tree passed by parent */
+    protected tree: RouteTree<Env>;
 
     constructor(options: TriFrostRouterOptions<Env, State>) {
         /* Check path */
@@ -74,7 +74,7 @@ class Router<Env extends Record<string, any> = {}, State extends Record<string, 
         this.#bodyParser = options.bodyParser;
 
         /* Configure tree */
-        this.#tree = options.tree;
+        this.tree = options.tree;
 
         /* Configure Middleware */
         this.#middleware = [...options.middleware];
@@ -158,7 +158,7 @@ class Router<Env extends Record<string, any> = {}, State extends Record<string, 
         fn(
             new Router<Env, State & PathParam<Path>>({
                 path: this.#path + path,
-                tree: this.#tree,
+                tree: this.tree,
                 rateLimit: this.#rateLimit,
                 timeout: timeout !== undefined ? timeout : this.#timeout,
                 middleware: this.#middleware as TriFrostMiddleware<Env, State & PathParam<Path>>[],
@@ -202,7 +202,7 @@ class Router<Env extends Record<string, any> = {}, State extends Record<string, 
         if (typeof handler !== 'function')
             throw new Error('TriFrostRoute@onNotFound: Invalid handler provided for router on "' + this.#path + '"');
 
-        this.#tree.addNotFound({
+        this.tree.addNotFound({
             path: this.#path + '/*',
             fn: handler as unknown as TriFrostHandler<Env, {}>,
             middleware: normalizeMiddleware<Env>(this.#middleware as TriFrostMiddleware<Env>[]),
@@ -225,7 +225,7 @@ class Router<Env extends Record<string, any> = {}, State extends Record<string, 
         if (typeof handler !== 'function')
             throw new Error('TriFrostRoute@onError: Invalid handler provided for router on "' + this.#path + '"');
 
-        this.#tree.addError({
+        this.tree.addError({
             path: this.#path + '/*',
             fn: handler as unknown as TriFrostHandler<Env, {}>,
             middleware: normalizeMiddleware<Env>(this.#middleware as TriFrostMiddleware<Env>[]),
@@ -285,6 +285,18 @@ class Router<Env extends Record<string, any> = {}, State extends Record<string, 
     }
 
     /**
+     * Configure a health route
+     */
+    health<Path extends string = string>(path: Path, handler: TriFrostHandler<Env, State & PathParam<Path>>) {
+        return this.get(path, {
+            kind: 'health',
+            name: 'healthcheck',
+            description: 'Healthcheck Route',
+            fn: handler,
+        });
+    }
+
+    /**
      * MARK: Private Fn
      */
 
@@ -332,7 +344,7 @@ class Router<Env extends Record<string, any> = {}, State extends Record<string, 
         for (let i = 0; i < methods.length; i++) {
             const method = methods[i];
 
-            this.#tree.add({
+            this.tree.add({
                 name: n_name ? (method === 'HEAD' ? 'HEAD_' : '') + n_name : method + '_' + n_path,
                 description: n_desc,
                 meta: isNeObject(config.meta) ? config.meta : null,

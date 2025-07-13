@@ -2030,6 +2030,146 @@ describe('routing - Router', () => {
         });
     });
 
+    describe('verb:health', () => {
+        let router: Router<any, any>;
+        let tree: RouteTree<any>;
+
+        beforeEach(() => {
+            tree = new RouteTree();
+            router = new Router({
+                path: '/api',
+                timeout: 30000,
+                tree,
+                middleware: [],
+                rateLimit: null,
+                bodyParser: null,
+            });
+        });
+
+        it('Registers a GET + HEAD route with kind "health" and correct metadata', () => {
+            const handler = vi.fn();
+            router.health('/ping', handler);
+
+            const stack = tree.stack;
+            expect(stack.length).toBe(3);
+
+            expect(stack.find(r => r.method === 'GET')).toEqual({
+                path: '/api/ping',
+                method: 'GET',
+                kind: 'health',
+                fn: handler,
+                timeout: 30000,
+                middleware: [],
+                bodyParser: null,
+                name: 'healthcheck',
+                description: 'Healthcheck Route',
+                meta: null,
+            });
+
+            expect(stack.find(r => r.method === 'HEAD')).toEqual({
+                path: '/api/ping',
+                method: 'HEAD',
+                kind: 'health',
+                fn: handler,
+                timeout: 30000,
+                middleware: [],
+                bodyParser: null,
+                name: 'HEAD_healthcheck',
+                description: 'Healthcheck Route',
+                meta: null,
+            });
+
+            expect(stack.find(r => r.method === 'OPTIONS')).toMatchObject({
+                path: '/api/ping',
+                method: 'OPTIONS',
+                kind: 'options',
+                timeout: null,
+                middleware: [],
+                bodyParser: null,
+                name: 'OPTIONS_/api/ping',
+                description: 'Auto-generated OPTIONS handler',
+                meta: null,
+            });
+        });
+
+        it('Preserves middleware chain when used after .use()', () => {
+            const m1 = vi.fn();
+            const handler = vi.fn();
+
+            router.use(m1).health('/check', handler);
+
+            const stack = tree.stack;
+            expect(stack.length).toBe(3);
+
+            const expectedMiddleware = [
+                {
+                    name: 'spy',
+                    description: null,
+                    fingerprint: null,
+                    handler: m1,
+                },
+            ];
+
+            expect(stack.find(r => r.method === 'GET')).toMatchObject({
+                path: '/api/check',
+                method: 'GET',
+                kind: 'health',
+                fn: handler,
+                timeout: 30000,
+                middleware: expectedMiddleware,
+                bodyParser: null,
+                name: 'healthcheck',
+                description: 'Healthcheck Route',
+                meta: null,
+            });
+
+            expect(stack.find(r => r.method === 'HEAD')).toMatchObject({
+                path: '/api/check',
+                method: 'HEAD',
+                kind: 'health',
+                fn: handler,
+                timeout: 30000,
+                middleware: expectedMiddleware,
+                bodyParser: null,
+                name: 'HEAD_healthcheck',
+                description: 'Healthcheck Route',
+                meta: null,
+            });
+
+            expect(stack.find(r => r.method === 'OPTIONS')).toMatchObject({
+                path: '/api/check',
+                method: 'OPTIONS',
+                kind: 'options',
+                timeout: null,
+                middleware: [],
+                bodyParser: null,
+                name: 'OPTIONS_/api/check',
+                description: 'Auto-generated OPTIONS handler',
+                meta: null,
+            });
+        });
+
+        it('Throws if path is not a string', () => {
+            const handler = vi.fn();
+
+            for (const el of CONSTANTS.NOT_STRING) {
+                /* @ts-expect-error Should be good */
+                expect(() => router.health(el, handler)).toThrow(/TriFrostRouter@get: Invalid path/);
+            }
+
+            expect(tree.stack.length).toBe(0);
+        });
+
+        it('Throws if handler is not a function', () => {
+            for (const el of CONSTANTS.NOT_FUNCTION) {
+                /* @ts-expect-error Should be good */
+                expect(() => router.health('/bad', el)).toThrow(/TriFrostRouter@get: Invalid handler/);
+            }
+
+            expect(tree.stack.length).toBe(0);
+        });
+    });
+
     describe('complex integration', () => {
         let router: Router<any, any>;
         let tree: RouteTree<any>;

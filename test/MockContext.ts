@@ -28,6 +28,7 @@ export class MockContext<State extends Record<string | number, unknown> = Record
     #path: string;
     #query: URLSearchParams;
     #logger: TriFrostLogger;
+    #locked = false;
     #cookies;
     #kind: TriFrostContextKind;
     #ip: string | null;
@@ -122,7 +123,7 @@ export class MockContext<State extends Record<string | number, unknown> = Record
         return false;
     }
     get isLocked() {
-        return false;
+        return this.#locked;
     }
     get headers() {
         return this.#headers;
@@ -212,13 +213,17 @@ export class MockContext<State extends Record<string | number, unknown> = Record
         this.#status = status;
     };
 
-    end = (): void => {};
+    end = (): void => {
+        this.#locked = true;
+    };
 
     addAfter = (fn: () => Promise<void>): void => {
         this.#after.push(fn);
     };
 
-    runAfter: () => void;
+    runAfter = (): void => {
+        for (const el of this.#after) el();
+    };
 
     json = (_body?: Record<string, unknown> | unknown[], _opts?: TriFrostContextResponseOptions): void => {};
     html = (_body?: string | any, _opts?: TriFrostContextResponseOptions): void => {};
