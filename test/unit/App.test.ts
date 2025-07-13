@@ -69,14 +69,6 @@ describe('App', () => {
             expect((app as any).runtime).toBe(runtime);
         });
 
-        it('Applies trustProxy if passed', () => {
-            const app = new App({trustProxy: true});
-            expect((app as any).trustProxy).toBe(true);
-
-            const app2 = new App({trustProxy: false});
-            expect((app2 as any).trustProxy).toBe(false);
-        });
-
         it('Applies env if passed', () => {
             const env = {foo: 'bar'};
             const app = new App({env});
@@ -616,13 +608,12 @@ describe('App', () => {
             expect(errorHandler).toHaveBeenCalledWith(ctx);
         });
 
-        it('Passes optional config props (port, trustProxy, css, script) to runtime.boot', async () => {
+        it('Passes optional config props (port, css, script) to runtime.boot', async () => {
             const css = createCss({});
             const {script} = createScript({});
 
             const app = new App({
                 runtime,
-                trustProxy: true,
                 timeout: 5000,
                 client: {css, script},
             });
@@ -632,7 +623,6 @@ describe('App', () => {
             const passedCfg = runtime.boot.mock.calls[0][0].cfg;
 
             expect(passedCfg.port).toBe(1234);
-            expect(passedCfg.trustProxy).toBe(true);
             expect(passedCfg.css).toBe(css);
             expect(passedCfg.script).toBe(script);
         });

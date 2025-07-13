@@ -75,11 +75,6 @@ type AppOptions<Env extends Record<string, any>> = {
      * @note defaults to 30 000
      */
     timeout?: number | null;
-    /**
-     * Whether or not to trust proxy, eg: can we trust x-forwarded-for headers.
-     * @note Different runtimes have different defaults.
-     */
-    trustProxy?: boolean;
     client?: {
         script?: ReturnType<typeof createScript>['script'];
         css?: CssGeneric<any>;
@@ -122,9 +117,6 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
     /* Client-script instance */
     protected script: ReturnType<typeof createScript>['script'] | null = null;
 
-    /* Trust Proxy */
-    protected trustProxy: boolean | null = null;
-
     /* Passed Environment */
     protected env: Env;
 
@@ -147,9 +139,6 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
 
         /* Set runtime if provided */
         if (options.runtime) this.runtime = options.runtime;
-
-        /* Configure trust proxy */
-        if ('trustProxy' in options) this.trustProxy = !!options.trustProxy;
 
         /* Configure provided env, take note runtime-specifics will be added by runtime */
         this.env = (isObject(options.env) ? options.env : {}) as Env;
@@ -265,7 +254,6 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
                     env: this.env as unknown as Env,
                     timeout: this.timeout,
                     ...(options?.port && {port: options.port}),
-                    ...(this.trustProxy !== null && {trustProxy: this.trustProxy}),
                     ...(this.css !== null && {css: this.css as any}),
                     ...(this.script !== null && {script: this.script}),
                 },

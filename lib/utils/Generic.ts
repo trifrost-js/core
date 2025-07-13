@@ -148,6 +148,26 @@ export function isDevMode(env: Record<string, unknown>): boolean {
 }
 
 /**
+ * Determines based on a provided env object and default value what the correct trustProxy value is
+ *
+ * @param {Record<string, unknown>} env - Env object to check from
+ * @param {boolean} defaultTo - Default value if no env config is found
+ */
+export function determineTrustProxy(env: Record<string, unknown>, defaultTo: boolean): boolean {
+    const val = env.TRIFROST_TRUSTPROXY ?? env.SERVICE_TRUSTPROXY ?? env.TRUSTPROXY;
+    switch (String(val ?? '').toLowerCase()) {
+        case 'false':
+        case '0':
+            return false;
+        case 'true':
+        case '1':
+            return true;
+        default:
+            return defaultTo;
+    }
+}
+
+/**
  * Determine name for telemetry
  * @note Otel specification requires name to be between 1 and 255 characters
  *

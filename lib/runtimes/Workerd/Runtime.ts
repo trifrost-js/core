@@ -1,7 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 
 import {type TriFrostRootLogger, ConsoleExporter, JsonExporter} from '../../modules/Logger';
-import {isDevMode} from '../../utils/Generic';
+import {determineTrustProxy, isDevMode} from '../../utils/Generic';
 import {type TriFrostRuntime, type TriFrostRuntimeOnIncoming, type TriFrostRuntimeBootOptions} from '../types';
 import {WorkerdContext} from './Context';
 
@@ -28,9 +28,12 @@ export class WorkerdRuntime implements TriFrostRuntime {
 
             /* JIT Runtime config resolution */
             if (!this.#runtimeCfg) {
+                const runtimeEnv = {...env, ...(this.#cfg!.env || {})};
+
                 this.#runtimeCfg = {
                     ...this.#cfg,
-                    env: {...env, ...(this.#cfg!.env || {})},
+                    env: runtimeEnv,
+                    trustProxy: determineTrustProxy(runtimeEnv, true),
                 } as TriFrostRuntimeBootOptions['cfg'];
             }
 
@@ -72,7 +75,7 @@ export class WorkerdRuntime implements TriFrostRuntime {
          * Take Note: Given that cloudflare workers/workerd by design runs in a trusted environment
          * we default trustProxy to true here.
          */
-        this.#cfg = {trustProxy: true, ...opts.cfg};
+        this.#cfg = {...opts.cfg};
 
         this.#logger!.debug('WorkerdRuntime@boot');
     }

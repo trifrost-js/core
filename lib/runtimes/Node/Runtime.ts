@@ -2,7 +2,7 @@ import {ConsoleExporter, type TriFrostRootLogger} from '../../modules/Logger';
 import {type TriFrostRuntime, type TriFrostRuntimeOnIncoming, type TriFrostRuntimeBootOptions} from '../types';
 import {NodeContext} from './Context';
 import {type IncomingMessage, type ServerResponse} from './types';
-import {determinePort, isDevMode} from '../../utils/Generic';
+import {determinePort, determineTrustProxy, isDevMode} from '../../utils/Generic';
 
 export class NodeRuntime implements TriFrostRuntime {
     /* Node Http server instance */
@@ -65,10 +65,12 @@ export class NodeRuntime implements TriFrostRuntime {
              * behind a proxy we default trustProxy to false here.
              */
             const cfg = {
-                trustProxy: false,
                 ...opts.cfg,
                 env: {...process.env, ...opts.cfg.env},
             };
+
+            /* Determine trust proxy */
+            cfg.trustProxy = determineTrustProxy(cfg.env, false);
 
             /* Create new server instance */
             this.#server = createServer(async (req, res) =>

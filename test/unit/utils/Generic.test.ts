@@ -10,6 +10,7 @@ import {
     injectBefore,
     prependDocType,
     determineHost,
+    determineTrustProxy,
 } from '../../../lib/utils/Generic';
 import CONSTANTS from '../../constants';
 
@@ -212,6 +213,47 @@ describe('Utils - Generic', () => {
 
         it('Defaults to false if neither TRIFROST_DEV nor NODE_ENV is set', () => {
             expect(isDevMode({})).toBe(false);
+        });
+    });
+
+    describe('determineTrustProxy', () => {
+        it('Returns true if TRIFROST_TRUSTPROXY is "true" or "1"', () => {
+            expect(determineTrustProxy({TRIFROST_TRUSTPROXY: 'true'}, false)).toBe(true);
+            expect(determineTrustProxy({TRIFROST_TRUSTPROXY: '1'}, false)).toBe(true);
+            expect(determineTrustProxy({TRIFROST_TRUSTPROXY: 'TrUe'}, false)).toBe(true);
+        });
+
+        it('Returns false if TRIFROST_TRUSTPROXY is "false" or "0"', () => {
+            expect(determineTrustProxy({TRIFROST_TRUSTPROXY: 'false'}, true)).toBe(false);
+            expect(determineTrustProxy({TRIFROST_TRUSTPROXY: '0'}, true)).toBe(false);
+            expect(determineTrustProxy({TRIFROST_TRUSTPROXY: 'FaLsE'}, true)).toBe(false);
+        });
+
+        it('Falls back to SERVICE_TRUSTPROXY if TRIFROST_TRUSTPROXY is not set', () => {
+            expect(determineTrustProxy({SERVICE_TRUSTPROXY: '1'}, false)).toBe(true);
+            expect(determineTrustProxy({SERVICE_TRUSTPROXY: 'false'}, true)).toBe(false);
+        });
+
+        it('Falls back to TRUSTPROXY if others are not set', () => {
+            expect(determineTrustProxy({TRUSTPROXY: 'true'}, false)).toBe(true);
+            expect(determineTrustProxy({TRUSTPROXY: '0'}, true)).toBe(false);
+        });
+
+        it('Returns default if all relevant env values are undefined', () => {
+            expect(determineTrustProxy({}, true)).toBe(true);
+            expect(determineTrustProxy({}, false)).toBe(false);
+        });
+
+        it('Returns default if env value is an unrecognized string', () => {
+            expect(determineTrustProxy({TRIFROST_TRUSTPROXY: 'maybe'}, true)).toBe(true);
+            expect(determineTrustProxy({TRUSTPROXY: 'nope'}, false)).toBe(false);
+        });
+
+        it('Handles boolean and numeric values correctly', () => {
+            expect(determineTrustProxy({TRUSTPROXY: true}, false)).toBe(true);
+            expect(determineTrustProxy({TRUSTPROXY: false}, true)).toBe(false);
+            expect(determineTrustProxy({TRUSTPROXY: 1}, false)).toBe(true);
+            expect(determineTrustProxy({TRUSTPROXY: 0}, true)).toBe(false);
         });
     });
 

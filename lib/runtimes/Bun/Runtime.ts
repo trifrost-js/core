@@ -4,7 +4,7 @@ import {isInt, isIntBetween} from '@valkyriestudios/utils/number';
 import {ConsoleExporter, type TriFrostRootLogger} from '../../modules/Logger';
 import {BunContext} from './Context';
 import {type TriFrostRuntime, type TriFrostRuntimeOnIncoming, type TriFrostRuntimeBootOptions} from '../types';
-import {determineHost, determinePort, isDevMode} from '../../utils/Generic';
+import {determineHost, determinePort, determineTrustProxy, isDevMode} from '../../utils/Generic';
 
 export class BunRuntime implements TriFrostRuntime {
     /* Bun Http server instance */
@@ -60,10 +60,12 @@ export class BunRuntime implements TriFrostRuntime {
          * behind a proxy we default trustProxy to false here.
          */
         const cfg = {
-            trustProxy: false,
             ...opts.cfg,
             env: {...process.env, ...opts.cfg.env},
         };
+
+        /* Determine trust proxy */
+        cfg.trustProxy = determineTrustProxy(cfg.env, false);
 
         /* Construct options for serve */
         const serveOpts = {
