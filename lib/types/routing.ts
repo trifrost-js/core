@@ -4,6 +4,7 @@ import {type TriFrostRateLimitLimitFunction, type TriFrostRateLimit} from '../mo
 import {type Route} from '../routing/Route';
 import {type RouteTree} from '../routing/Tree';
 import {type TriFrostBodyParserOptions} from '../utils/BodyParser/types';
+import {type Lazy} from '../utils/Lazy';
 import {type HttpMethod, Sym_TriFrostDescription, Sym_TriFrostName} from './constants';
 import {type TriFrostContext, type TriFrostContextKind} from './context';
 import {type Promisify} from './generic';
@@ -107,7 +108,7 @@ export type TriFrostRouterOptions<Env extends Record<string, any> = {}, State ex
     /**
      * Global Rate Limit instance or null
      */
-    rateLimit: TriFrostRateLimit<Env> | null;
+    rateLimit: Lazy<TriFrostRateLimit<Env>, Env> | null;
     /**
      * Body Parser Config
      */

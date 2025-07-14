@@ -126,14 +126,13 @@ export class MemoryStore<T extends TriFrostStoreValue = TriFrostStoreValue> exte
 export class MemoryCache<Env extends Record<string, any> = Record<string, any>> extends TriFrostCache<Env> {
     constructor(cfg?: Pick<MemoryStoreAdapterOptions, 'gc_interval' | 'max_items'>) {
         super({
-            store: () =>
-                new Store(
-                    'MemoryCache',
-                    new MemoryStoreAdapter({
-                        gc_interval: isIntGt(cfg?.gc_interval, 0) ? cfg?.gc_interval : 60_000,
-                        ...(cfg?.max_items !== null && {max_items: isIntGt(cfg?.max_items, 0) ? cfg.max_items : 1_000}),
-                    }),
-                ),
+            store: new Store(
+                'MemoryCache',
+                new MemoryStoreAdapter({
+                    gc_interval: isIntGt(cfg?.gc_interval, 0) ? cfg?.gc_interval : 60_000,
+                    ...(cfg?.max_items !== null && {max_items: isIntGt(cfg?.max_items, 0) ? cfg.max_items : 1_000}),
+                }),
+            ),
         });
     }
 }
@@ -161,7 +160,7 @@ export class MemoryRateLimit<Env extends Record<string, any> = Record<string, an
 
         super({
             ...(cfg || {}),
-            store: () => new Store('MemoryRateLimit', adapter),
+            store: new Store('MemoryRateLimit', adapter),
         });
     }
 }

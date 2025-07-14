@@ -2,7 +2,7 @@ import {isIntGt} from '@valkyriestudios/utils/number';
 import {isObject} from '@valkyriestudios/utils/object';
 import {type TriFrostCache} from './modules/Cache';
 import {type TriFrostCookieOptions} from './modules/Cookies';
-import {type TriFrostRateLimit, type TriFrostRateLimitLimitFunction} from './modules/RateLimit/_RateLimit';
+import {TriFrostRateLimit, type TriFrostRateLimitLimitFunction} from './modules/RateLimit/_RateLimit';
 import {TriFrostRootLogger, type TriFrostLoggerExporter} from './modules/Logger';
 import {Sym_TriFrostSpan} from './modules/Logger/util';
 import {Router} from './routing/Router';
@@ -19,7 +19,7 @@ import {
 } from './types/routing';
 import {type TriFrostContext, type TriFrostContextIdOptions} from './types/context';
 import {type TriFrostBodyParserOptions} from './utils/BodyParser/types';
-import {type LazyInitFn} from './utils/Lazy';
+import {Lazy, type LazyInitFn} from './utils/Lazy';
 import {RouteTree} from './routing/Tree';
 import {type createScript} from './modules';
 import {mount as mountCss} from './modules/JSX/style/mount';
@@ -42,11 +42,11 @@ type AppOptions<Env extends Record<string, any>> = {
     /**
      * Rate Limiter instance
      */
-    rateLimit?: TriFrostRateLimit<Env>;
+    rateLimit?: LazyInitFn<TriFrostRateLimit<Env>, Env>;
     /**
      * Cache instance
      */
-    cache?: TriFrostCache<Env>;
+    cache?: LazyInitFn<TriFrostCache<Env>, Env>;
     /**
      * Tracing Setup
      */
@@ -109,7 +109,7 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
     protected cookies: {config: Partial<TriFrostCookieOptions>};
 
     /* Global cache */
-    protected cache: TriFrostCache<Env>;
+    protected cache: Lazy<TriFrostCache<Env>, Env>;
 
     /* Client-css instance */
     protected css: CssInstance<any, any, any, any> | null = null;
@@ -131,7 +131,7 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
         super({
             path: '',
             timeout: options.timeout === null || isIntGt(options.timeout, 0) ? options.timeout : 30_000,
-            rateLimit: 'rateLimit' in options && options.rateLimit ? options.rateLimit : null,
+            rateLimit: options.rateLimit ? new Lazy(options.rateLimit) : null,
             tree: new RouteTree<Env>(),
             middleware: [],
             bodyParser: null,
@@ -151,7 +151,7 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
         };
 
         /* Cache */
-        this.cache = options.cache || new MemoryCache();
+        this.cache = new Lazy(options.cache || new MemoryCache());
 
         /* Request ID */
         if (options.tracing?.requestId) this.requestId = options.tracing.requestId;
@@ -250,7 +250,7 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
                 logger: this.logger as TriFrostRootLogger,
                 cfg: {
                     cookies: this.cookies.config,
-                    cache: this.cache as TriFrostCache,
+                    cache: this.cache as Lazy<TriFrostCache<Record<string, any>>, Record<string, any>>,
                     requestId: this.requestId,
                     env: this.env as unknown as Env,
                     timeout: this.timeout,

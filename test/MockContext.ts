@@ -16,6 +16,7 @@ import {Logger, type TriFrostLogger} from '../lib/modules/Logger';
 import {MemoryCache} from '../lib/storage/Memory';
 import {hexId} from '../lib/utils/Generic';
 import {TriFrostBodyParserOptions, type ParsedBody} from '../lib/utils/BodyParser/types';
+import { Lazy } from '../lib/utils/Lazy';
 
 export class MockContext<State extends Record<string | number, unknown> = Record<string | number, unknown>> implements TriFrostContext<any, State> { // eslint-disable-line prettier/prettier
     #headers: Record<string, string>;
@@ -36,7 +37,7 @@ export class MockContext<State extends Record<string | number, unknown> = Record
     #name: string;
     #nonce: string | null;
     #requestId: string = '123456789';
-    #cache: TriFrostCache;
+    #cache: Lazy<TriFrostCache>;
     #after: (() => Promise<void>)[];
 
     constructor(
@@ -70,9 +71,9 @@ export class MockContext<State extends Record<string | number, unknown> = Record
         this.#limit = opts.limit ?? null;
         this.#name = opts.name ?? 'mock-handler';
         this.#nonce = 'nonce' in opts ? opts.nonce || null : btoa(hexId(8));
-        this.#cache = opts.cache ?? new MemoryCache();
+        this.#cache = new Lazy(opts.cache ?? (() => new MemoryCache()));
         this.#requestId = '123456789';
-        this.#cache?.stop?.();
+        this.#cache?.resolved?.stop?.();
         this.#after = [];
         this.#domain = opts.domain ?? null;
     }
@@ -138,7 +139,7 @@ export class MockContext<State extends Record<string | number, unknown> = Record
         return this.#cookies;
     }
     get cache() {
-        return this.#cache;
+        return this.#cache.resolve(this);
     }
     get statusCode() {
         return this.#status as HttpStatusCode;

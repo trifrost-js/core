@@ -1,6 +1,6 @@
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {isNeObject} from '@valkyriestudios/utils/object';
-import {type TriFrostRateLimit, type TriFrostRateLimitLimitFunction} from '../modules/RateLimit/_RateLimit';
+import {limitMiddleware, type TriFrostRateLimit, type TriFrostRateLimitLimitFunction} from '../modules/RateLimit/_RateLimit';
 import {
     type TriFrostRoute,
     type TriFrostRouter,
@@ -19,6 +19,7 @@ import {Route} from './Route';
 import {RouteTree} from './Tree';
 import {isValidBodyParser, isValidGrouper, isValidHandler, isValidLimit, isValidMiddleware, normalizeMiddleware} from './util';
 import {type TriFrostBodyParserOptions} from '../utils/BodyParser/types';
+import {Lazy} from '../utils/Lazy';
 
 const RGX_SLASH = /\/{2,}/g;
 
@@ -27,7 +28,7 @@ class Router<Env extends Record<string, any> = {}, State extends Record<string, 
     #path: string;
 
     /* Configured Rate limit instance from the app */
-    #rateLimit: TriFrostRateLimit<Env> | null = null;
+    #rateLimit: Lazy<TriFrostRateLimit<Env>, Env> | null = null;
 
     /* Configured Body Parser options */
     #bodyParser: TriFrostBodyParserOptions | null = null;
@@ -49,7 +50,7 @@ class Router<Env extends Record<string, any> = {}, State extends Record<string, 
         if (options.timeout !== null && !isIntGt(options.timeout, 0)) throw new Error('TriFrostRouter@ctor: Timeout is invalid');
 
         /* Check rate limit instance */
-        if (options.rateLimit !== null && typeof options.rateLimit?.limit !== 'function')
+        if (options.rateLimit !== null && !(options.rateLimit instanceof Lazy))
             throw new Error('TriFrostRouter@ctor: RateLimit is invalid');
 
         /* Check rate limit instance */
@@ -128,7 +129,7 @@ class Router<Env extends Record<string, any> = {}, State extends Record<string, 
     limit(limit: number | TriFrostRateLimitLimitFunction<Env, State>) {
         if (!this.#rateLimit) throw new Error('TriFrostRouter@limit: RateLimit is not configured on App');
         if (!isValidLimit<Env, State>(limit)) throw new Error('TriFrostRouter@limit: Invalid limit');
-        this.use(this.#rateLimit.limit<Env, State>(limit));
+        this.use(limitMiddleware<Env, State>(this.#rateLimit, limit));
         return this;
     }
 

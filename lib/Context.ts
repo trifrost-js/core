@@ -292,7 +292,8 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
      */
     get cache(): TriFrostCache {
         if (!this.#cache) {
-            this.#cache = this.ctx_config.cache?.['spawn'](this as TriFrostContext<Env>) as TriFrostCache;
+            const resolved = this.ctx_config.cache.resolve(this);
+            this.#cache = resolved['spawn'](this as TriFrostContext<Env>) as TriFrostCache;
         }
         return this.#cache;
     }

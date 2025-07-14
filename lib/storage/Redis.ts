@@ -2,7 +2,6 @@ import {split} from '@valkyriestudios/utils/array';
 import {TriFrostCache} from '../modules/Cache/_Cache';
 import {TriFrostRateLimit, type TriFrostRateLimitOptions} from '../modules/RateLimit/_RateLimit';
 import {type TriFrostRedis} from '../types/providers';
-import {type LazyInitFn} from '../utils/Lazy';
 import {type TriFrostStoreAdapter, type TriFrostStoreValue} from './types';
 import {Store} from './_Storage';
 
@@ -66,10 +65,10 @@ export class RedisStore<T extends TriFrostStoreValue = TriFrostStoreValue> exten
  */
 
 export class RedisCache<Env extends Record<string, any> = Record<string, any>> extends TriFrostCache<Env> {
-    constructor(cfg: {store: LazyInitFn<TriFrostRedis, Env>}) {
-        if (typeof cfg?.store !== 'function') throw new Error('RedisCache: Expected a store initializer');
+    constructor(cfg: {store: TriFrostRedis}) {
+        if (!cfg?.store) throw new Error('RedisCache: Expected a store initializer');
         super({
-            store: ({env}) => new Store('RedisCache', new RedisStoreAdapter(cfg.store({env}))),
+            store: new Store('RedisCache', new RedisStoreAdapter(cfg.store)),
         });
     }
 }
@@ -79,15 +78,11 @@ export class RedisCache<Env extends Record<string, any> = Record<string, any>> e
  */
 
 export class RedisRateLimit<Env extends Record<string, any> = Record<string, any>> extends TriFrostRateLimit<Env> {
-    constructor(
-        cfg: Omit<TriFrostRateLimitOptions<Env>, 'store'> & {
-            store: LazyInitFn<TriFrostRedis, Env>;
-        },
-    ) {
-        if (typeof cfg?.store !== 'function') throw new Error('RedisRateLimit: Expected a store initializer');
+    constructor(cfg: Omit<TriFrostRateLimitOptions<Env>, 'store'> & {store: TriFrostRedis}) {
+        if (!cfg?.store) throw new Error('RedisRateLimit: Expected a store initializer');
         super({
             ...cfg,
-            store: ({env}) => new Store('RedisRateLimit', new RedisStoreAdapter(cfg.store({env}))),
+            store: new Store('RedisRateLimit', new RedisStoreAdapter(cfg.store)),
         });
     }
 }

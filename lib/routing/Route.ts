@@ -1,8 +1,9 @@
 import {type TriFrostMiddleware, type TriFrostRouteHandler} from '../types/routing';
 import {HttpMethods, type HttpMethod} from '../types/constants';
-import {type TriFrostRateLimit, type TriFrostRateLimitLimitFunction} from '../modules/RateLimit/_RateLimit';
+import {limitMiddleware, type TriFrostRateLimit, type TriFrostRateLimitLimitFunction} from '../modules/RateLimit/_RateLimit';
 import {isValidHandler, isValidLimit, isValidMiddleware, isValidBodyParser} from './util';
 import {type TriFrostBodyParserOptions} from '../utils/BodyParser/types';
+import {type Lazy} from '../utils/Lazy';
 
 export class Route<Env extends Record<string, any> = {}, State extends Record<string, unknown> = {}> {
     /* Array of middleware for this route */
@@ -19,12 +20,12 @@ export class Route<Env extends Record<string, any> = {}, State extends Record<st
     > = Object.create(null);
 
     /* Configured Rate limit instance from the app */
-    #rateLimit: TriFrostRateLimit<Env> | null = null;
+    #rateLimit: Lazy<TriFrostRateLimit<Env>, Env> | null = null;
 
     /* Configured body parser from the parent router */
     #bodyParser: TriFrostBodyParserOptions | null = null;
 
-    constructor(options: {rateLimit: TriFrostRateLimit<Env> | null; bodyParser: TriFrostBodyParserOptions | null}) {
+    constructor(options: {rateLimit: Lazy<TriFrostRateLimit<Env>, Env> | null; bodyParser: TriFrostBodyParserOptions | null}) {
         this.#rateLimit = options.rateLimit;
         this.#bodyParser = options.bodyParser;
     }
@@ -67,7 +68,7 @@ export class Route<Env extends Record<string, any> = {}, State extends Record<st
         if (!this.#rateLimit) throw new Error('TriFrostRoute@limit: RateLimit is not configured on App');
         if (!isValidLimit<Env, State>(limit)) throw new Error('TriFrostRoute@limit: Invalid limit');
 
-        this.use(this.#rateLimit.limit<Env, State>(limit));
+        this.use(limitMiddleware(this.#rateLimit, limit));
         return this;
     }
 

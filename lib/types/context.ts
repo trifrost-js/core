@@ -6,6 +6,7 @@ import {type TriFrostRouteMatch} from './routing';
 import {type TriFrostBodyParserOptions, type ParsedBody} from '../utils/BodyParser/types';
 import {type HttpRedirectStatusCode, type HttpStatusCode, type MimeType, type HttpMethod} from './constants';
 import {type createCss, type createScript} from '../modules';
+import { Lazy } from '../utils/Lazy';
 
 export type TriFrostContextKind = 'std' | 'notfound' | 'error' | 'options' | 'health';
 
@@ -30,7 +31,7 @@ export type TriFrostContextIdOptions = {
 
 export type TriFrostContextConfig<Env extends Record<string, any> = Record<string, any>> = Readonly<{
     cookies: Partial<TriFrostCookieOptions>;
-    cache: TriFrostCache<Env>;
+    cache: Lazy<TriFrostCache<Env>, Env>;
     port?: number;
     timeout: number | null;
     env: Env;

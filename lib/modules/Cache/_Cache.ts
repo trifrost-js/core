@@ -1,7 +1,6 @@
-import {Lazy, type LazyInitFn} from '../../utils/Lazy';
 import {type Store} from '../../storage/_Storage';
 import {type TriFrostStoreValue} from '../../storage/types';
-import {cacheSkipped} from './util';
+import {cacheSkip, cacheSkipped} from './util';
 import {type TriFrostContext} from '../../types';
 
 export type CacheOptions = {
@@ -11,25 +10,22 @@ export type CacheOptions = {
 export type TriFrostCacheValue = number | string | boolean | null | TriFrostStoreValue;
 
 export class TriFrostCache<Env extends Record<string, any> = Record<string, any>> {
-    #store: Lazy<Store, Env>;
+    #store: Store;
 
-    constructor(opts: {store: LazyInitFn<Store, Env> | Store}) {
-        if (Object.prototype.toString.call(opts?.store) === '[object Object]') {
-            this.#store = new Lazy(opts.store);
-        } else if (typeof opts?.store === 'function') {
-            this.#store = new Lazy(opts.store as LazyInitFn<Store, Env>);
+    constructor(opts: {store: Store}) {
+        if (
+            typeof opts?.store?.set === 'function' &&
+            typeof opts?.store?.get === 'function' &&
+            typeof opts?.store?.del === 'function'
+        ) {
+            this.#store = opts.store;
         } else {
-            throw new Error('TriFrostCache: Expected a store initializer');
+            throw new Error('TriFrostCache: Expected a store');
         }
     }
 
-    init(env: Env) {
-        if (this.#store.resolved) return;
-        this.#store.resolve({env});
-    }
-
-    protected get resolvedStore(): Store | null {
-        return this.#store?.resolved;
+    protected get store(): Store {
+        return this.#store;
     }
 
     /**
@@ -39,8 +35,7 @@ export class TriFrostCache<Env extends Record<string, any> = Record<string, any>
      * @param {string} key - Key of the value you wish to retrieve
      */
     async get<TVal extends TriFrostCacheValue = TriFrostCacheValue>(key: string): Promise<TVal | null> {
-        if (!this.#store.resolved) throw new Error('TriFrostCache@get: Cache needs to be initialized first');
-        const stored = (await this.#store.resolved.get(key)) as {v: TriFrostStoreValue} | null;
+        const stored = (await this.#store.get(key)) as {v: TriFrostStoreValue} | null;
         return Object.prototype.toString.call(stored) === '[object Object]' && 'v' in stored! ? (stored.v as TVal) : null;
     }
 
@@ -52,9 +47,8 @@ export class TriFrostCache<Env extends Record<string, any> = Record<string, any>
      * @param {CacheOptions?} opts - Options for caching, eg: {ttl: 3600} means cache for 1 hour
      */
     async set<TVal extends TriFrostCacheValue = TriFrostCacheValue>(key: string, value: TVal, opts?: CacheOptions): Promise<void> {
-        if (!this.#store.resolved) throw new Error('TriFrostCache@set: Cache needs to be initialized first');
         if (value === undefined) throw new Error('TriFrostCache@set: Value can not be undefined');
-        await this.#store.resolved.set(key, {v: value}, opts);
+        await this.#store.set(key, {v: value}, opts);
     }
 
     /**
@@ -63,8 +57,7 @@ export class TriFrostCache<Env extends Record<string, any> = Record<string, any>
      * @param {string|{prefix:string}} val - Value or group you wish to delete
      */
     async del(val: string | {prefix: string}): Promise<void> {
-        if (!this.#store.resolved) throw new Error('TriFrostCache@del: Cache needs to be initialized first');
-        await this.#store.resolved.del(val);
+        await this.#store.del(val);
     }
 
     /**
@@ -79,8 +72,6 @@ export class TriFrostCache<Env extends Record<string, any> = Record<string, any>
         compute: () => Promise<TVal>,
         opts?: CacheOptions,
     ): Promise<TVal> {
-        if (!this.#store.resolved) throw new Error('TriFrostCache@wrap: Cache needs to be initialized first');
-
         /* Check if it exists in cache */
         const existing = await this.get<TVal>(key);
         if (existing !== null) return existing;
@@ -98,12 +89,18 @@ export class TriFrostCache<Env extends Record<string, any> = Record<string, any>
     }
 
     /**
+     * Instance alias for cacheSkip
+     */
+    skip<T>(value: T): T {
+        return cacheSkip(value);
+    }
+
+    /**
      * Stops the cache, for most storage adapters this is a no-op, but some storage adapters (eg: Memory) use
      * this to kill internal timers and what not.
      */
     async stop() {
-        if (!this.#store.resolved) return;
-        await this.#store.resolved.stop();
+        await this.#store.stop();
     }
 
     /**
@@ -111,12 +108,9 @@ export class TriFrostCache<Env extends Record<string, any> = Record<string, any>
      *
      * @note This is an internal method
      */
-    private spawn(ctx: TriFrostContext<Env>): TriFrostCache<Env> {
-        const resolved = this.#store.resolved ?? this.#store.resolve({env: ctx.env as Env});
-        const store_spawn = resolved.spawn(ctx);
-
+    private spawn (ctx: TriFrostContext<Env>): TriFrostCache<Env> {
         return new TriFrostCache<Env>({
-            store: store_spawn,
+            store: this.#store.spawn(ctx),
         });
     }
 }

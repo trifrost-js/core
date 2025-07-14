@@ -1,7 +1,6 @@
 import {TriFrostCache} from '../modules/Cache/_Cache';
 import {TriFrostRateLimit, type TriFrostRateLimitOptions} from '../modules/RateLimit/_RateLimit';
 import {type TriFrostCFDurableObjectId, type TriFrostCFDurableObjectNamespace} from '../types/providers';
-import {type LazyInitFn} from '../utils/Lazy';
 import {type TriFrostStoreAdapter, type TriFrostStoreValue} from './types';
 import {Store} from './_Storage';
 
@@ -75,10 +74,10 @@ export class DurableObjectStore<T extends TriFrostStoreValue = TriFrostStoreValu
  */
 
 export class DurableObjectCache<Env extends Record<string, any> = Record<string, any>> extends TriFrostCache<Env> {
-    constructor(cfg: {store: LazyInitFn<TriFrostCFDurableObjectNamespace, Env>}) {
-        if (typeof cfg?.store !== 'function') throw new Error('DurableObjectCache: Expected a store initializer');
+    constructor(cfg: {store: TriFrostCFDurableObjectNamespace}) {
+        if (!cfg?.store) throw new Error('DurableObjectCache: Expected a store initializer');
         super({
-            store: ({env}) => new Store('DurableObjectCache', new DurableObjectStoreAdapter(cfg.store({env}), 'cache')),
+            store: new Store('DurableObjectCache', new DurableObjectStoreAdapter(cfg.store, 'cache')),
         });
     }
 }
@@ -88,11 +87,11 @@ export class DurableObjectCache<Env extends Record<string, any> = Record<string,
  */
 
 export class DurableObjectRateLimit<Env extends Record<string, any> = Record<string, any>> extends TriFrostRateLimit<Env> {
-    constructor(cfg: Omit<TriFrostRateLimitOptions<Env>, 'store'> & {store: LazyInitFn<TriFrostCFDurableObjectNamespace, Env>}) {
-        if (typeof cfg?.store !== 'function') throw new Error('DurableObjectRateLimit: Expected a store initializer');
+    constructor(cfg: Omit<TriFrostRateLimitOptions<Env>, 'store'> & {store: TriFrostCFDurableObjectNamespace}) {
+        if (!cfg?.store) throw new Error('DurableObjectRateLimit: Expected a store initializer');
         super({
             ...cfg,
-            store: ({env}) => new Store('DurableObjectRateLimit', new DurableObjectStoreAdapter(cfg.store({env}), 'ratelimit')),
+            store: new Store('DurableObjectRateLimit', new DurableObjectStoreAdapter(cfg.store, 'ratelimit')),
         });
     }
 }

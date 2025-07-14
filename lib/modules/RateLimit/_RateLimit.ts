@@ -59,7 +59,7 @@ export const RateLimitKeyGeneratorRegistry: Record<TriFrostRateLimitKeyGenerator
  */
 export type TriFrostRateLimitOptions<Env extends Record<string, any> = {}> = {
     strategy?: TriFrostRateLimitStrategy;
-    store: LazyInitFn<Store, Env>;
+    store: Store;
     window?: number;
     keygen?: TriFrostRateLimitKeyGenerator | TriFrostRateLimitKeyGeneratorFn;
     exceeded?: TriFrostRateLimitExceededFunction;
@@ -71,7 +71,7 @@ export class TriFrostRateLimit<Env extends Record<string, any> = Record<string, 
 
     #exceeded: TriFrostRateLimitExceededFunction;
 
-    #store: Lazy<TriFrostRateLimitStrategizedStore, Env>;
+    #store: TriFrostRateLimitStrategizedStore;
 
     #headers: boolean;
 
@@ -80,7 +80,10 @@ export class TriFrostRateLimit<Env extends Record<string, any> = Record<string, 
     #window: number;
 
     constructor(opts: TriFrostRateLimitOptions<Env>) {
-        if (typeof opts?.store !== 'function') throw new Error('TriFrostRateLimit: Expected a store initializer');
+        if (
+            typeof opts?.store?.get !== 'function' ||
+            typeof opts?.store?.set !== 'function'
+        ) throw new Error('TriFrostRateLimit: Expected a store initializer');
 
         /* Define keygen or fallback to ip_name_method */
         this.#keygen = (
@@ -104,19 +107,44 @@ export class TriFrostRateLimit<Env extends Record<string, any> = Record<string, 
         this.#window = isIntGt(opts?.window, 0) ? opts?.window : 60;
 
         /* Create lazy store */
-        this.#store = new Lazy<TriFrostRateLimitStrategizedStore, Env>((initopts: {env: Env}) => {
-            switch (this.#strategy) {
-                case 'sliding':
-                    return new Sliding(this.#window, opts.store(initopts) as unknown as Store<number[]>);
-                default:
-                    return new Fixed(this.#window, opts.store(initopts) as unknown as Store<TriFrostRateLimitObject>);
-            }
-        });
+        switch (this.#strategy) {
+            case 'sliding':
+                this.#store = new Sliding(this.#window, opts.store as Store<number[]>);
+                break;
+            default:
+                this.#store = new Fixed(this.#window, opts.store as Store<TriFrostRateLimitObject>);
+                break;
+        }
     }
 
-    protected get resolvedStore(): TriFrostRateLimitStrategizedStore | null {
-        return this.#store?.resolved;
+    /**
+     * Configured keygen handler
+     */
+    get keygen () {
+        return this.#keygen;
     }
+
+    /**
+     * Configured exceeded behavior
+     */
+    get exceeded () {
+        return this.#exceeded;
+    }
+
+    /**
+     * Configured store
+     */
+    get store () {
+        return this.#store;
+    }
+
+    /**
+     * Configured headers (default=true)
+     */
+    get headers () {
+        return this.#headers;
+    }
+
 
     /**
      * The configured strategy type (default=fixed)
@@ -133,69 +161,69 @@ export class TriFrostRateLimit<Env extends Record<string, any> = Record<string, 
     }
 
     /**
-     * Creates a reusable "rate limit" middleware with a given limit.
-     *
-     * @param {number|TriFrostRateLimitLimitFunction} limit - The limit to use, either a number or a rate limit function
-     */
-    limit<E extends Env = Env, S extends Record<string, unknown> = {}>(
-        limit: number | TriFrostRateLimitLimitFunction<E, S>,
-    ): TriFrostMiddleware<E, S> {
-        const limit_fn = (typeof limit === 'function' ? limit : () => limit) as TriFrostRateLimitLimitFunction<E, S>;
-
-        const mware = async function TriFrostRateLimitedMiddleware(
-            this: TriFrostRateLimit<E>,
-            ctx: TriFrostContext<E, S>,
-        ): Promise<void | TriFrostContext<E, S>> {
-            if (ctx.kind !== 'std') return;
-
-            /* Get limit for context */
-            const n_limit = limit_fn(ctx);
-            if (!isIntGt(n_limit, 0)) return ctx.status(500);
-
-            /* Resolve our store */
-            const store = this.#store.resolve(ctx);
-
-            /* Consume */
-            const key = this.#keygen(ctx);
-            const usage = await store.consume(typeof key === 'string' && key.length ? key : 'unknown', n_limit);
-            if (usage.amt > n_limit) {
-                if (this.#headers) {
-                    ctx.setHeaders({
-                        'retry-after': usage.reset - Math.floor(Date.now() / 1000),
-                        'x-ratelimit-limit': n_limit,
-                        'x-ratelimit-remaining': '0',
-                        'x-ratelimit-reset': usage.reset,
-                    });
-                } else {
-                    ctx.setHeader('retry-after', usage.reset - Math.floor(Date.now() / 1000));
-                }
-                return this.#exceeded(ctx);
-            }
-
-            if (this.#headers) {
-                ctx.setHeaders({
-                    'x-ratelimit-limit': n_limit,
-                    'x-ratelimit-remaining': n_limit - usage.amt,
-                    'x-ratelimit-reset': usage.reset,
-                });
-            }
-        };
-
-        const bound = mware.bind(this as TriFrostRateLimit<E>);
-
-        /* Add symbols for introspection/use further down the line */
-        Reflect.set(bound, Sym_TriFrostName, 'TriFrostRateLimit');
-        Reflect.set(bound, Sym_TriFrostDescription, 'Middleware for rate limitting contexts passing through it');
-        Reflect.set(bound, Sym_TriFrostFingerPrint, Sym_TriFrostMiddlewareRateLimit);
-
-        return bound as TriFrostMiddleware<E, S>;
-    }
-
-    /**
      * This function is meant specifically to call a 'stop' function on implementing stores.
      */
     async stop() {
-        if (!this.#store.resolved) return;
-        await this.#store.resolved.stop();
+        await this.#store.stop();
     }
+}
+
+/**
+ * Creates a reusable "rate limit" middleware with a given limit.
+ *
+ * @param {Lazy<TriFrostRateLimit>} rateLimiter - Lazy rate limit instance resolver
+ * @param {number|TriFrostRateLimitLimitFunction} limit - The limit to use, either a number or a rate limit function
+ */
+export function limitMiddleware <
+    Env extends Record<string, any> = Record<string, any>,
+    State extends Record<string, unknown> = {}
+> (
+    limiter: Lazy<TriFrostRateLimit<Env>, Env>,
+    limit: number | TriFrostRateLimitLimitFunction<Env, State>,
+): TriFrostMiddleware<Env, State> {
+    const limit_fn = (typeof limit === 'function' ? limit : () => limit) as TriFrostRateLimitLimitFunction<Env, State>;
+
+    const mware = async function TriFrostRateLimitedMiddleware(
+        ctx: TriFrostContext<Env, State>,
+    ): Promise<void | TriFrostContext<Env, State>> {
+        if (ctx.kind !== 'std') return;
+
+        const instance = limiter.resolve(ctx);
+
+        /* Get limit for context */
+        const n_limit = limit_fn(ctx);
+        if (!isIntGt(n_limit, 0)) return ctx.status(500);
+
+        /* Consume */
+        const key = instance.keygen(ctx);
+        const usage = await instance.store.consume(typeof key === 'string' && key.length ? key : 'unknown', n_limit);
+        if (usage.amt > n_limit) {
+            if (instance.headers) {
+                ctx.setHeaders({
+                    'retry-after': usage.reset - Math.floor(Date.now() / 1000),
+                    'x-ratelimit-limit': n_limit,
+                    'x-ratelimit-remaining': '0',
+                    'x-ratelimit-reset': usage.reset,
+                });
+            } else {
+                ctx.setHeader('retry-after', usage.reset - Math.floor(Date.now() / 1000));
+            }
+            return instance.exceeded(ctx);
+        }
+
+        if (instance.headers) {
+            ctx.setHeaders({
+                'x-ratelimit-limit': n_limit,
+                'x-ratelimit-remaining': n_limit - usage.amt,
+                'x-ratelimit-reset': usage.reset,
+            });
+        }
+    };
+
+    /* Add symbols for introspection/use further down the line */
+    Reflect.set(mware, Sym_TriFrostName, 'TriFrostRateLimit');
+    Reflect.set(mware, Sym_TriFrostDescription, 'Middleware for rate limitting contexts passing through it');
+    Reflect.set(mware, Sym_TriFrostFingerPrint, Sym_TriFrostMiddlewareRateLimit);
+
+    return mware as TriFrostMiddleware<Env, State>;
 }

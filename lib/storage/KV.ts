@@ -2,7 +2,6 @@ import {split} from '@valkyriestudios/utils/array';
 import {TriFrostCache} from '../modules/Cache/_Cache';
 import {TriFrostRateLimit, type TriFrostRateLimitOptions} from '../modules/RateLimit/_RateLimit';
 import {type TriFrostCFKVNamespace} from '../types/providers';
-import {type LazyInitFn} from '../utils/Lazy';
 import {type TriFrostStoreAdapter, type TriFrostStoreValue} from './types';
 import {Store} from './_Storage';
 
@@ -69,10 +68,10 @@ export class KVStore<T extends TriFrostStoreValue = TriFrostStoreValue> extends 
  */
 
 export class KVCache<Env extends Record<string, any> = Record<string, any>> extends TriFrostCache<Env> {
-    constructor(cfg: {store: LazyInitFn<TriFrostCFKVNamespace, Env>}) {
-        if (typeof cfg?.store !== 'function') throw new Error('KVCache: Expected a store initializer');
+    constructor(cfg: {store: TriFrostCFKVNamespace}) {
+        if (!cfg?.store) throw new Error('KVCache: Expected a store initializer');
         super({
-            store: ({env}) => new Store('KVCache', new KVStoreAdapter(cfg.store({env}))),
+            store: new Store('KVCache', new KVStoreAdapter(cfg.store)),
         });
     }
 }
@@ -82,11 +81,11 @@ export class KVCache<Env extends Record<string, any> = Record<string, any>> exte
  */
 
 export class KVRateLimit<Env extends Record<string, any> = Record<string, any>> extends TriFrostRateLimit<Env> {
-    constructor(cfg: Omit<TriFrostRateLimitOptions<Env>, 'store'> & {store: LazyInitFn<TriFrostCFKVNamespace, Env>}) {
-        if (typeof cfg?.store !== 'function') throw new Error('KVRateLimit: Expected a store initializer');
+    constructor(cfg: Omit<TriFrostRateLimitOptions<Env>, 'store'> & {store: TriFrostCFKVNamespace}) {
+        if (!cfg?.store) throw new Error('KVRateLimit: Expected a store initializer');
         super({
             ...cfg,
-            store: ({env}) => new Store('KVRateLimit', new KVStoreAdapter(cfg.store({env}))),
+            store: new Store('KVRateLimit', new KVStoreAdapter(cfg.store)),
         });
     }
 }
