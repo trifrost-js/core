@@ -141,8 +141,8 @@ export class MemoryCache<Env extends Record<string, any> = Record<string, any>> 
  * MARK: RateLimit
  */
 
-export class MemoryRateLimit<Env extends Record<string, any> = Record<string, any>> extends TriFrostRateLimit<Env> {
-    constructor(cfg?: Omit<TriFrostRateLimitOptions<Env>, 'store'> & Pick<MemoryStoreAdapterOptions, 'gc_interval'>) {
+export class MemoryRateLimit extends TriFrostRateLimit {
+    constructor(cfg?: Omit<TriFrostRateLimitOptions, 'store'> & Pick<MemoryStoreAdapterOptions, 'gc_interval'>) {
         const window = isIntGt(cfg?.window, 0) ? cfg.window : 60_000;
 
         let adapter: MemoryStoreAdapter;

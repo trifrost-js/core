@@ -8,8 +8,10 @@ import * as scriptModule from '../../lib/modules/JSX/script/mount';
 import * as cssModule from '../../lib/modules/JSX/style/mount';
 import * as LoggerModule from '../../lib/modules/Logger';
 import * as RuntimeModule from '../../lib/runtimes/Runtime';
+import * as Limiter from '../../lib/modules/RateLimit/_RateLimit';
 import {MockContext} from '../MockContext';
 import {Sym_TriFrostSpan} from '../../lib/modules/Logger/util';
+import {Lazy} from '../../lib/utils/Lazy';
 
 describe('App', () => {
     let app: App<any, any>;
@@ -77,13 +79,15 @@ describe('App', () => {
 
         it('Initializes memory cache if not passed', () => {
             const app = new App();
-            expect((app as any).cache).toBeInstanceOf(MemoryCache);
+            expect((app as any).cache).toBeInstanceOf(Lazy);
+            expect((app as any).cache.resolve()).toBeInstanceOf(MemoryCache);
         });
 
         it('Uses provided cache instance', () => {
             const cache = {get: vi.fn(), set: vi.fn()};
-            const app = new App({cache: cache as any});
-            expect((app as any).cache).toEqual(cache);
+            const app = new App({cache: () => cache as any});
+            expect((app as any).cache).toBeInstanceOf(Lazy);
+            expect((app as any).cache.resolve()).toEqual(cache);
         });
 
         it('Bootstraps default requestId config', () => {
@@ -727,15 +731,16 @@ describe('App', () => {
     });
 
     describe('limit', () => {
-        const dummyMware = vi.fn();
-        const mockRateLimit = {
-            limit: vi.fn(() => dummyMware),
-        };
+        let limitSpy;
+        let limitMock;
+        const dummyMiddleware = vi.fn();
 
         beforeEach(() => {
+            limitMock = {};
+            limitSpy = vi.spyOn(Limiter, 'limitMiddleware').mockReturnValue(dummyMiddleware);
             tree = new RouteTree();
             app = new App({
-                rateLimit: mockRateLimit as any,
+                rateLimit: () => limitMock as any,
             });
             /* @ts-expect-error protected, but we need it */
             app.tree = tree;
@@ -746,8 +751,8 @@ describe('App', () => {
             app.limit(5).get('/rl', handler);
 
             const route = tree.stack.find(r => r.path === '/rl' && r.method === 'GET');
-            expect(mockRateLimit.limit).toHaveBeenCalledWith(5);
-            expect(route?.middleware?.some(m => m.handler === dummyMware)).toBe(true);
+            expect(limitSpy).toHaveBeenCalledWith(limitMock, 5);
+            expect(route?.middleware?.some(m => m.handler === dummyMiddleware)).toBe(true);
         });
 
         it('Throws if no rateLimit is configured', () => {

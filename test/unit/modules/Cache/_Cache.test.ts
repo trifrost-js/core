@@ -1,7 +1,7 @@
 import {isObject} from '@valkyriestudios/utils/object';
 import {describe, it, expect, beforeEach, vi} from 'vitest';
 import {TriFrostCache} from '../../../../lib/modules/Cache/_Cache';
-import {cacheSkip} from '../../../../lib/modules/Cache/util';
+import {cacheSkip, Sym_TriFrostSkipCache} from '../../../../lib/modules/Cache/util';
 import {Store} from '../../../../lib/storage/_Storage';
 import CONSTANTS from '../../../constants';
 import {TriFrostStoreValue} from '../../../../lib/storage/types';
@@ -35,9 +35,7 @@ describe('Modules - Cache - TriFrostCache', () => {
 
     beforeEach(() => {
         store = mockStore();
-        cache = new TriFrostCache({
-            store: () => store,
-        });
+        cache = new TriFrostCache({store});
     });
 
     describe('ctor', () => {
@@ -45,42 +43,19 @@ describe('Modules - Cache - TriFrostCache', () => {
             for (const el of CONSTANTS.NOT_FUNCTION) {
                 if (isObject(el)) continue;
                 /* @ts-expect-error Should be good */
-                expect(() => new TriFrostCache({store: el})).toThrow(/TriFrostCache: Expected a store initializer/);
+                expect(() => new TriFrostCache({store: el})).toThrow(/TriFrostCache: Expected a store/);
             }
         });
 
-        it('Accepts an already-resolved store directly', () => {
-            const direct = new TriFrostCache({store});
-            direct.init({env: true});
-            /* @ts-expect-error Should be good */
-            expect(direct.resolvedStore).toBe(store);
-        });
-
-        it('Throws if store is not object or function', () => {
-            for (const el of [...CONSTANTS.NOT_OBJECT_WITH_EMPTY, ...CONSTANTS.NOT_FUNCTION]) {
-                if (typeof el === 'function' || typeof el === 'object') continue;
+        it('Throws if store is not object', () => {
+            for (const el of CONSTANTS.NOT_OBJECT_WITH_EMPTY) {
                 /* @ts-expect-error Should be good */
-                expect(() => new TriFrostCache({store: el})).toThrow(/TriFrostCache: Expected a store initializer/);
+                expect(() => new TriFrostCache({store: el})).toThrow(/TriFrostCache: Expected a store/);
             }
-        });
-    });
-
-    describe('initialization', () => {
-        it('Throws if used before init', async () => {
-            await expect(cache.get('foo')).rejects.toThrow(/TriFrostCache@get: Cache needs to be initialized first/);
-            await expect(cache.set('foo', 'bar')).rejects.toThrow(/TriFrostCache@set: Cache needs to be initialized first/);
-            await expect(cache.del('foo')).rejects.toThrow(/TriFrostCache@del: Cache needs to be initialized first/);
-            await expect(cache.wrap('foo', async () => 'val')).rejects.toThrow(/TriFrostCache@wrap: Cache needs to be initialized first/);
-        });
-
-        it('Initializes and resolves', () => {
-            expect(() => cache.init({env: true})).not.toThrow();
         });
     });
 
     describe('get', () => {
-        beforeEach(() => cache.init({env: true}));
-
         it('Delegates get to store and returns value', async () => {
             await store.set('key', {v: 123});
             expect(await cache.get('key')).toBe(123);
@@ -104,8 +79,6 @@ describe('Modules - Cache - TriFrostCache', () => {
     });
 
     describe('set', () => {
-        beforeEach(() => cache.init({env: true}));
-
         it('Stores wrapped value', async () => {
             await cache.set('a', [1, 2, 3]);
             expect(store.set).toHaveBeenCalledWith('a', {v: [1, 2, 3]}, undefined);
@@ -122,8 +95,6 @@ describe('Modules - Cache - TriFrostCache', () => {
     });
 
     describe('del', () => {
-        beforeEach(() => cache.init({env: true}));
-
         it('Delegates delete', async () => {
             await cache.set('gone', 'yes');
             await cache.del('gone');
@@ -133,8 +104,6 @@ describe('Modules - Cache - TriFrostCache', () => {
     });
 
     describe('wrap', () => {
-        beforeEach(() => cache.init({env: true}));
-
         it('Returns cached value if present', async () => {
             await cache.set('wrapped', 999);
             const result = await cache.wrap('wrapped', async () => 111);
@@ -167,23 +136,42 @@ describe('Modules - Cache - TriFrostCache', () => {
         });
     });
 
-    describe('stop', () => {
-        it('Calls stop() on store if resolved', async () => {
-            cache.init({env: true});
-            await cache.stop();
-            expect(store.stop).toHaveBeenCalled();
+    describe('skip', () => {
+        it('Preserves original value', () => {
+            const obj = {user: 1};
+            const result = cache.skip(obj);
+            /* @ts-expect-error The return type of cacheSkip is ON PURPOSE the type of the original value */
+            expect(result.value).toBe(obj);
         });
 
-        it('Does not throw if store not resolved', async () => {
-            await expect(cache.stop()).resolves.toBe(undefined);
+        it('Allows passing primitives', () => {
+            for (const el of [null, undefined, 1, true, false, 'hello', 0.999]) {
+                /* @ts-expect-error The return type of cacheSkip is ON PURPOSE the type of the original value */
+                expect(cache.skip(el).value).toEqual(el);
+            }
+        });
+
+        it('Attaches Sym_TriFrostSkipCache to result', () => {
+            const result = cache.skip(123);
+            /* @ts-expect-error The return type of cacheSkip is ON PURPOSE the type of the original value */
+            expect(Reflect.get(result, Sym_TriFrostSkipCache)).toBe(true);
+        });
+
+        it('Result remains an object and serializable', () => {
+            const result = cache.skip({x: 1});
+            expect(isObject(result)).toBe(true);
+            expect(JSON.stringify(result)).toEqual('{"value":{"x":1}}');
+        });
+    });
+
+    describe('stop', () => {
+        it('Calls stop() on store', async () => {
+            await cache.stop();
+            expect(store.stop).toHaveBeenCalled();
         });
     });
 
     describe('spawn', () => {
-        beforeEach(() => {
-            cache.init({env: true});
-        });
-
         it('Spawns a new cache instance with a spawned store', () => {
             const spawnMock = vi.fn().mockImplementation(
                 ctx =>
@@ -202,27 +190,6 @@ describe('Modules - Cache - TriFrostCache', () => {
             expect(spawnMock).toHaveBeenCalledWith(ctx);
         });
 
-        it('Spawns from unresolved cache and resolves using ctx.env', () => {
-            const rawStore = mockStore();
-            const lazyCache = new TriFrostCache({
-                store: () => rawStore,
-            });
-
-            rawStore.spawn = vi.fn().mockImplementation(
-                () =>
-                    ({
-                        ...mockStore(),
-                        name: 'LazySpawned',
-                    }) as unknown as Store,
-            );
-
-            const ctx = {env: {env: true}, logger: {}} as any;
-            const spawned = (lazyCache as any).spawn(ctx);
-
-            expect(spawned).toBeInstanceOf(TriFrostCache);
-            expect(rawStore.spawn).toHaveBeenCalledWith(ctx);
-        });
-
         describe('Spawned Store: behavioral', () => {
             let baseStore: Store;
             let spawnCache: TriFrostCache<{env: boolean}>;
@@ -235,8 +202,6 @@ describe('Modules - Cache - TriFrostCache', () => {
             it('should set and get using spawned cache', async () => {
                 const ctx = {env: {env: true}} as any;
                 const spawned = (spawnCache as any).spawn(ctx);
-                spawned.init(ctx.env);
-
                 await spawned.set('hello', 'world');
                 expect(await spawned.get('hello')).toBe('world');
             });
@@ -244,8 +209,6 @@ describe('Modules - Cache - TriFrostCache', () => {
             it('should delete values using spawned cache', async () => {
                 const ctx = {env: {env: true}} as any;
                 const spawned = (spawnCache as any).spawn(ctx);
-                spawned.init(ctx.env);
-
                 await spawned.set('bye', 'world');
                 await spawned.del('bye');
                 expect(await spawned.get('bye')).toBe(null);

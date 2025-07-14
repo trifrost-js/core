@@ -1,11 +1,12 @@
 import {describe, it, expect, beforeEach, vi} from 'vitest';
-import {Sym_TriFrostMiddlewareRateLimit, TriFrostRateLimit} from '../../../../lib/modules/RateLimit/_RateLimit';
+import {Sym_TriFrostMiddlewareRateLimit, TriFrostRateLimit, limitMiddleware} from '../../../../lib/modules/RateLimit/_RateLimit';
 import CONSTANTS from '../../../constants';
 import {Store} from '../../../../lib/storage/_Storage';
 import {MockContext} from '../../../MockContext';
 import {sleep} from '@valkyriestudios/utils/function';
 import {Sym_TriFrostDescription, Sym_TriFrostFingerPrint, Sym_TriFrostName} from '../../../../lib/types/constants';
 import {TriFrostContextKind} from '../../../../lib/types/context';
+import {Lazy} from '../../../../lib/utils/Lazy';
 
 const mockStore = () => {
     const mock = {
@@ -45,9 +46,9 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
         });
 
         it('Initializes with default strategy (fixed) and window (60)', async () => {
-            const rl = new TriFrostRateLimit({store: () => store});
+            const rl = new TriFrostRateLimit({store});
             const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
-            const mw = rl.limit(2);
+            const mw = limitMiddleware(new Lazy(() => rl), 2);
             const now = Math.floor(Date.now() / 1000);
             await mw(ctx);
             expect(ctx.statusCode).not.toBe(429);
@@ -61,11 +62,11 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
 
         it('Initializes with sliding strategy', async () => {
             const rl = new TriFrostRateLimit({
-                store: () => store,
+                store,
                 strategy: 'sliding',
             });
             const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
-            const mw = rl.limit(2);
+            const mw = limitMiddleware(new Lazy(() => rl), 2);
             const now = Math.floor(Date.now() / 1000);
             await mw(ctx);
             expect(ctx.statusCode).not.toBe(429);
@@ -75,9 +76,9 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
         });
 
         it('Throws for invalid limit types', async () => {
-            const rl = new TriFrostRateLimit({store: () => store});
+            const rl = new TriFrostRateLimit({store});
             const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
-            const mw = rl.limit(() => -1);
+            const mw = limitMiddleware(new Lazy(() => rl), () => -1);
             await mw(ctx);
             expect(ctx.statusCode).toBe(500);
             expect(rl.strategy).toBe('fixed');
@@ -86,8 +87,8 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
         });
 
         it('Skips processing for non-std context kinds', async () => {
-            const rl = new TriFrostRateLimit({store: () => store});
-            const mw = rl.limit(1);
+            const rl = new TriFrostRateLimit({store});
+            const mw = limitMiddleware(new Lazy(() => rl), 1);
 
             for (const kind of ['notfound', 'health', 'options']) {
                 const ctx = new MockContext({kind: kind as TriFrostContextKind});
@@ -99,8 +100,8 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
         });
 
         it('Registers correct introspection symbols', async () => {
-            const rl = new TriFrostRateLimit({store: () => store});
-            const mw = rl.limit(5);
+            const rl = new TriFrostRateLimit({store});
+            const mw = limitMiddleware(new Lazy(() => rl), 5);
 
             expect(rl.strategy).toBe('fixed');
             expect(rl.window).toBe(60);
@@ -110,8 +111,8 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
         });
 
         it('Registers specific symbol to identify rate limiter to middleware', async () => {
-            const rl = new TriFrostRateLimit({store: () => store});
-            const mw = rl.limit(5);
+            const rl = new TriFrostRateLimit({store});
+            const mw = limitMiddleware(new Lazy(() => rl), 5);
 
             expect(rl.strategy).toBe('fixed');
             expect(rl.window).toBe(60);
@@ -121,9 +122,9 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
 
         it('Sets rate limit headers when enabled', async () => {
             const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-            const rl = new TriFrostRateLimit({window: 1, store: () => store});
+            const rl = new TriFrostRateLimit({window: 1, store});
             const now = Math.floor(Date.now() / 1000);
-            const mw = rl.limit(1);
+            const mw = limitMiddleware(new Lazy(() => rl), 1);
             await mw(ctx);
             await mw(ctx);
             expect(ctx.statusCode).toBe(429);
@@ -142,8 +143,8 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
 
         it('Disables rate limit headers when disabled', async () => {
             const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-            const rl = new TriFrostRateLimit({headers: false, store: () => store});
-            const mw = rl.limit(1);
+            const rl = new TriFrostRateLimit({headers: false, store});
+            const mw = limitMiddleware(new Lazy(() => rl), 1);
             const now = Math.floor(Date.now() / 1000);
             await mw(ctx);
             await mw(ctx);
@@ -160,8 +161,8 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
 
         it('Supports custom key generators', async () => {
             const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-            const rl = new TriFrostRateLimit({keygen: el => `ip:${el.ip}`, store: () => store});
-            const mw = rl.limit(10);
+            const rl = new TriFrostRateLimit({keygen: el => `ip:${el.ip}`, store});
+            const mw = limitMiddleware(new Lazy(() => rl), 10);
             const now = Math.floor(Date.now() / 1000);
             await mw(ctx);
             await mw(ctx);
@@ -182,8 +183,8 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
         it('Supports custom exceeded handler', async () => {
             const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
             const exceeded = vi.fn(el => el.status(400));
-            const rl = new TriFrostRateLimit({exceeded, store: () => store});
-            const mw = rl.limit(1);
+            const rl = new TriFrostRateLimit({exceeded, store});
+            const mw = limitMiddleware(new Lazy(() => rl), 1);
             const now = Math.floor(Date.now() / 1000);
             await mw(ctx);
             await mw(ctx);
@@ -207,8 +208,8 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
             };
 
             for (const [key, key_expected] of Object.entries(expected)) {
-                const rl = new TriFrostRateLimit({keygen: key as any, store: () => store});
-                const mw = rl.limit(1);
+                const rl = new TriFrostRateLimit({keygen: key as any, store});
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 await mw(ctx);
@@ -234,8 +235,8 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
             };
 
             for (const [key, key_expected] of Object.entries(expected)) {
-                const rl = new TriFrostRateLimit({keygen: key as any, store: () => store});
-                const mw = rl.limit(1);
+                const rl = new TriFrostRateLimit({keygen: key as any, store});
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 await mw(ctx);
@@ -252,12 +253,12 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
 
         it('Falls back to "unknown" if keygen returns falsy', async () => {
             const rl = new TriFrostRateLimit({
-                store: () => store,
+                store,
                 keygen: () => undefined as unknown as string /* Force falsy value */,
             });
 
             const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-            const mw = rl.limit(1);
+            const mw = limitMiddleware(new Lazy(() => rl), 1);
             const now = Math.floor(Date.now() / 1000);
             await mw(ctx);
             await mw(ctx);
@@ -270,8 +271,8 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
     describe('strategy:fixed', () => {
         it('Allows requests within limit', async () => {
             const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-            const rl = new TriFrostRateLimit({window: 1000, store: () => store});
-            const mw = rl.limit(2);
+            const rl = new TriFrostRateLimit({window: 1000, store});
+            const mw = limitMiddleware(new Lazy(() => rl), 2);
             await mw(ctx);
             expect(ctx.statusCode).toBe(200);
             await mw(ctx);
@@ -280,8 +281,8 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
 
         it('Blocks requests over the limit', async () => {
             const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-            const rl = new TriFrostRateLimit({window: 1000, store: () => store});
-            const mw = rl.limit(1);
+            const rl = new TriFrostRateLimit({window: 1000, store});
+            const mw = limitMiddleware(new Lazy(() => rl), 1);
             await mw(ctx);
             await mw(ctx);
             expect(ctx.statusCode).toBe(429);
@@ -291,8 +292,8 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
     describe('strategy:sliding', () => {
         it('Allows requests within windowed limit', async () => {
             const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-            const rl = new TriFrostRateLimit({strategy: 'sliding', window: 1, store: () => store});
-            const mw = rl.limit(3);
+            const rl = new TriFrostRateLimit({strategy: 'sliding', window: 1, store});
+            const mw = limitMiddleware(new Lazy(() => rl), 3);
             await mw(ctx);
             await mw(ctx);
             expect(ctx.statusCode).toBe(200);
@@ -300,8 +301,8 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
 
         it('Blocks when timestamps exceed limit in window', async () => {
             const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-            const rl = new TriFrostRateLimit({strategy: 'sliding', window: 1, store: () => store});
-            const mw = rl.limit(1);
+            const rl = new TriFrostRateLimit({strategy: 'sliding', window: 1, store});
+            const mw = limitMiddleware(new Lazy(() => rl), 1);
             await mw(ctx);
             await mw(ctx);
             expect(ctx.statusCode).toBe(429);
@@ -309,8 +310,8 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
 
         it('Clears oldest timestamps after window expiry', async () => {
             const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-            const rl = new TriFrostRateLimit({strategy: 'sliding', window: 1, store: () => store});
-            const mw = rl.limit(1);
+            const rl = new TriFrostRateLimit({strategy: 'sliding', window: 1, store});
+            const mw = limitMiddleware(new Lazy(() => rl), 1);
             await mw(ctx);
             await sleep(2000);
             await mw(ctx);
@@ -318,21 +319,19 @@ describe('Modules - RateLimit - TriFrostRateLimit', () => {
         });
 
         it('Prunes first timestamp if it falls outside the window', async () => {
-            const rl = new TriFrostRateLimit({strategy: 'sliding', window: 1, store: () => store});
+            const rl = new TriFrostRateLimit({strategy: 'sliding', window: 1, store});
             const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-            const mw = rl.limit(2);
+            const mw = limitMiddleware(new Lazy(() => rl), 2);
 
             /* First request */
             await mw(ctx);
 
-            /* @ts-expect-error Manually insert an old timestamp to simulate an aged entry */
-            await rl.resolvedStore.store.set('127.0.0.1:test:POST', [Math.floor(Date.now() / 1000) - 2]);
+            await store.set('127.0.0.1:test:POST', [Math.floor(Date.now() / 1000) - 2]);
 
             /* Second request triggers pruning of old timestamp */
             await mw(ctx);
 
-            /* @ts-expect-error We want to test this */
-            const val = await rl.resolvedStore.store.get('127.0.0.1:test:POST');
+            const val = (await store.get('127.0.0.1:test:POST')) as number[];
 
             expect(Array.isArray(val)).toBe(true);
             expect(val.length).toBe(1); /* old timestamp pruned */

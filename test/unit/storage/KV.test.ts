@@ -8,6 +8,8 @@ import {type TriFrostContextKind} from '../../../lib/types/context';
 import {MockKV} from '../../MockKV';
 import {MockContext} from '../../MockContext';
 import CONSTANTS from '../../constants';
+import {Lazy} from '../../../lib/utils/Lazy';
+import {limitMiddleware} from '../../../lib/modules/RateLimit/_RateLimit';
 
 describe('Storage - KV', () => {
     let kv: MockKV;
@@ -324,54 +326,19 @@ describe('Storage - KV', () => {
         let cache: KVCache;
 
         beforeEach(() => {
-            cache = new KVCache({store: () => kv});
+            cache = new KVCache({store: kv});
         });
 
         describe('init', () => {
             it('Should throw if not provided a store', () => {
-                for (const el of [...CONSTANTS.NOT_OBJECT_WITH_EMPTY, ...[...CONSTANTS.NOT_FUNCTION].map(val => ({store: val}))]) {
+                for (const el of [...CONSTANTS.NOT_OBJECT_WITH_EMPTY, {store: null}]) {
                     /* @ts-expect-error Should be good */
                     expect(() => new KVCache(el)).toThrow(/KVCache: Expected a store initializer/);
                 }
             });
-
-            it('Throws on get before init', async () => {
-                await expect(cache.get('x')).rejects.toThrow(/TriFrostCache@get: Cache needs to be initialized first/);
-            });
-
-            it('Throws on set before init', async () => {
-                await expect(cache.set('x', {fail: true})).rejects.toThrow(/TriFrostCache@set: Cache needs to be initialized first/);
-            });
-
-            it('Throws on delete before init', async () => {
-                await expect(cache.del('x')).rejects.toThrow(/TriFrostCache@del: Cache needs to be initialized first/);
-            });
-
-            it('Throws on wrap before init', async () => {
-                await expect(cache.wrap('x', async () => ({computed: true}))).rejects.toThrow(
-                    /TriFrostCache@wrap: Cache needs to be initialized first/,
-                );
-            });
-
-            it('Does not throw on stop before init', async () => {
-                await expect(cache.stop()).resolves.toBe(undefined);
-            });
-
-            it('Initializes without throwing', () => {
-                expect(() => cache.init({env: true})).not.toThrow();
-            });
-
-            it('Can be initialized more than once safely', () => {
-                cache.init({env: true});
-                expect(() => cache.init({env: true})).not.toThrow();
-            });
         });
 
         describe('get', () => {
-            beforeEach(() => {
-                cache.init({env: true});
-            });
-
             it('Returns null for missing key', async () => {
                 expect(await cache.get('missing')).toBe(null);
             });
@@ -423,10 +390,6 @@ describe('Storage - KV', () => {
         });
 
         describe('set', () => {
-            beforeEach(() => {
-                cache.init({env: true});
-            });
-
             it('Throws if provided undefined', async () => {
                 /* @ts-expect-error Should be good */
                 await expect(cache.set('x')).rejects.toThrow(/TriFrostCache@set: Value can not be undefined/);
@@ -478,10 +441,6 @@ describe('Storage - KV', () => {
         });
 
         describe('delete', () => {
-            beforeEach(() => {
-                cache.init({env: true});
-            });
-
             it('Deletes a key', async () => {
                 await cache.set('gone', {v: 1});
                 await cache.del('gone');
@@ -501,10 +460,6 @@ describe('Storage - KV', () => {
         });
 
         describe('wrap', () => {
-            beforeEach(() => {
-                cache.init({env: true});
-            });
-
             it('Returns cached value if present', async () => {
                 await cache.set('wrapped', {a: 1});
                 const result = await cache.wrap('wrapped', async () => ({fail: true}));
@@ -581,12 +536,7 @@ describe('Storage - KV', () => {
         });
 
         describe('stop', () => {
-            it('Can be called before init', async () => {
-                await expect(cache.stop()).resolves.toBe(undefined);
-            });
-
-            it('Completes cleanly after init', async () => {
-                cache.init({env: true});
+            it('Completes cleanly', async () => {
                 await expect(cache.stop()).resolves.toBe(undefined);
             });
         });
@@ -595,16 +545,16 @@ describe('Storage - KV', () => {
     describe('RateLimit', () => {
         describe('init', () => {
             it('Should throw if not provided a store', () => {
-                for (const el of [...CONSTANTS.NOT_OBJECT_WITH_EMPTY, ...[...CONSTANTS.NOT_FUNCTION].map(val => ({store: val}))]) {
+                for (const el of [...CONSTANTS.NOT_OBJECT_WITH_EMPTY, {store: null}]) {
                     /* @ts-expect-error Should be good */
                     expect(() => new KVRateLimit(el)).toThrow(/KVRateLimit: Expected a store initializer/);
                 }
             });
 
             it('Initializes with default strategy (fixed) and window (60)', async () => {
-                const rl = new KVRateLimit({store: () => kv});
+                const rl = new KVRateLimit({store: kv});
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
-                const mw = rl.limit(2);
+                const mw = limitMiddleware(new Lazy(() => rl), 2);
                 const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 expect(ctx.statusCode).not.toBe(429);
@@ -618,11 +568,11 @@ describe('Storage - KV', () => {
 
             it('Initializes with sliding strategy', async () => {
                 const rl = new KVRateLimit({
-                    store: () => kv,
+                    store: kv,
                     strategy: 'sliding',
                 });
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
-                const mw = rl.limit(2);
+                const mw = limitMiddleware(new Lazy(() => rl), 2);
                 const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 expect(ctx.statusCode).not.toBe(429);
@@ -635,9 +585,9 @@ describe('Storage - KV', () => {
             });
 
             it('Throws for invalid limit types', async () => {
-                const rl = new KVRateLimit({store: () => kv});
+                const rl = new KVRateLimit({store: kv});
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
-                const mw = rl.limit(() => -1);
+                const mw = limitMiddleware(new Lazy(() => rl), () => -1);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(500);
                 expect(rl.strategy).toBe('fixed');
@@ -646,8 +596,8 @@ describe('Storage - KV', () => {
             });
 
             it('Skips processing for non-std context kinds', async () => {
-                const rl = new KVRateLimit({store: () => kv});
-                const mw = rl.limit(1);
+                const rl = new KVRateLimit({store: kv});
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
 
                 for (const kind of ['notfound', 'health', 'options']) {
                     const ctx = new MockContext({kind: kind as TriFrostContextKind});
@@ -659,8 +609,8 @@ describe('Storage - KV', () => {
             });
 
             it('Registers correct introspection symbols', async () => {
-                const rl = new KVRateLimit({store: () => kv});
-                const mw = rl.limit(5);
+                const rl = new KVRateLimit({store: kv});
+                const mw = limitMiddleware(new Lazy(() => rl), 5);
 
                 expect(rl.strategy).toBe('fixed');
                 expect(rl.window).toBe(60);
@@ -671,9 +621,9 @@ describe('Storage - KV', () => {
 
             it('Sets rate limit headers when enabled', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-                const rl = new KVRateLimit({window: 1, store: () => kv});
+                const rl = new KVRateLimit({window: 1, store: kv});
                 const now = Math.floor(Date.now() / 1000);
-                const mw = rl.limit(1);
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 await mw(ctx);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(429);
@@ -692,8 +642,8 @@ describe('Storage - KV', () => {
 
             it('Disables rate limit headers when disabled', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-                const rl = new KVRateLimit({headers: false, store: () => kv});
-                const mw = rl.limit(1);
+                const rl = new KVRateLimit({headers: false, store: kv});
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 await mw(ctx);
@@ -710,8 +660,8 @@ describe('Storage - KV', () => {
 
             it('Supports custom key generators', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-                const rl = new KVRateLimit({keygen: el => `ip:${el.ip}`, store: () => kv});
-                const mw = rl.limit(10);
+                const rl = new KVRateLimit({keygen: el => `ip:${el.ip}`, store: kv});
+                const mw = limitMiddleware(new Lazy(() => rl), 10);
                 const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 await mw(ctx);
@@ -732,8 +682,8 @@ describe('Storage - KV', () => {
             it('Supports custom exceeded handler', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const exceeded = vi.fn(el => el.status(400));
-                const rl = new KVRateLimit({exceeded, store: () => kv});
-                const mw = rl.limit(1);
+                const rl = new KVRateLimit({exceeded, store: kv});
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 await mw(ctx);
@@ -757,8 +707,8 @@ describe('Storage - KV', () => {
                 };
 
                 for (const [key, key_expected] of Object.entries(expected)) {
-                    const rl = new KVRateLimit({keygen: key as any, store: () => kv});
-                    const mw = rl.limit(1);
+                    const rl = new KVRateLimit({keygen: key as any, store: kv});
+                    const mw = limitMiddleware(new Lazy(() => rl), 1);
                     const now = Math.floor(Date.now() / 1000);
                     await mw(ctx);
                     await mw(ctx);
@@ -784,8 +734,8 @@ describe('Storage - KV', () => {
                 };
 
                 for (const [key, key_expected] of Object.entries(expected)) {
-                    const rl = new KVRateLimit({keygen: key as any, store: () => kv});
-                    const mw = rl.limit(1);
+                    const rl = new KVRateLimit({keygen: key as any, store: kv});
+                    const mw = limitMiddleware(new Lazy(() => rl), 1);
                     const now = Math.floor(Date.now() / 1000);
                     await mw(ctx);
                     await mw(ctx);
@@ -802,12 +752,12 @@ describe('Storage - KV', () => {
 
             it('Falls back to "unknown" if keygen returns falsy', async () => {
                 const rl = new KVRateLimit({
-                    store: () => kv,
+                    store: kv,
                     keygen: () => undefined as unknown as string /* Force falsy value */,
                 });
 
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-                const mw = rl.limit(1);
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 await mw(ctx);
@@ -824,8 +774,8 @@ describe('Storage - KV', () => {
         describe('strategy:fixed', () => {
             it('Allows requests within limit', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-                const rl = new KVRateLimit({window: 1000, store: () => kv});
-                const mw = rl.limit(2);
+                const rl = new KVRateLimit({window: 1000, store: kv});
+                const mw = limitMiddleware(new Lazy(() => rl), 2);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(200);
                 await mw(ctx);
@@ -834,8 +784,8 @@ describe('Storage - KV', () => {
 
             it('Blocks requests over the limit', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-                const rl = new KVRateLimit({window: 1000, store: () => kv});
-                const mw = rl.limit(1);
+                const rl = new KVRateLimit({window: 1000, store: kv});
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 await mw(ctx);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(429);
@@ -845,8 +795,8 @@ describe('Storage - KV', () => {
         describe('strategy:sliding', () => {
             it('Allows requests within windowed limit', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-                const rl = new KVRateLimit({strategy: 'sliding', window: 1, store: () => kv});
-                const mw = rl.limit(3);
+                const rl = new KVRateLimit({strategy: 'sliding', window: 1, store: kv});
+                const mw = limitMiddleware(new Lazy(() => rl), 3);
                 await mw(ctx);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(200);
@@ -854,8 +804,8 @@ describe('Storage - KV', () => {
 
             it('Blocks when timestamps exceed limit in window', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-                const rl = new KVRateLimit({strategy: 'sliding', window: 1, store: () => kv});
-                const mw = rl.limit(1);
+                const rl = new KVRateLimit({strategy: 'sliding', window: 1, store: kv});
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 await mw(ctx);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(429);
@@ -863,34 +813,11 @@ describe('Storage - KV', () => {
 
             it('Clears oldest timestamps after window expiry', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-                const rl = new KVRateLimit({strategy: 'sliding', window: 1, store: () => kv});
-                const mw = rl.limit(1);
+                const rl = new KVRateLimit({strategy: 'sliding', window: 1, store: kv});
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 await mw(ctx);
                 await sleep(2000);
                 await mw(ctx);
-                expect(ctx.statusCode).toBe(200);
-            });
-
-            it('Prunes first timestamp if it falls outside the window', async () => {
-                const rl = new KVRateLimit({strategy: 'sliding', window: 1, store: () => kv});
-                const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-                const mw = rl.limit(2);
-
-                /* First request */
-                await mw(ctx);
-
-                /* @ts-expect-error Should be good */
-                await rl.resolvedStore.store.set('127.0.0.1:test:POST', [Math.floor(Date.now() / 1000) - 2]);
-
-                /* Second request triggers pruning of old timestamp */
-                await mw(ctx);
-
-                /* @ts-expect-error Should be good */
-                const val = await rl.resolvedStore.store.get('127.0.0.1:test:POST');
-
-                expect(Array.isArray(val)).toBe(true);
-                expect(val.length).toBe(1); /* old timestamp pruned */
-                expect(val[0]).toBeGreaterThan(Math.floor(Date.now() / 1000) - 1); /* only recent timestamp remains */
                 expect(ctx.statusCode).toBe(200);
             });
         });

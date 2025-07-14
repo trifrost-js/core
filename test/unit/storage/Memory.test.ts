@@ -7,6 +7,8 @@ import {Sym_TriFrostDescription, Sym_TriFrostName} from '../../../lib/types/cons
 import {type TriFrostContextKind} from '../../../lib/types/context';
 import {MockContext} from '../../MockContext';
 import CONSTANTS from '../../constants';
+import {limitMiddleware} from '../../../lib/modules/RateLimit/_RateLimit';
+import {Lazy} from '../../../lib/utils/Lazy';
 
 describe('Storage - Memory', () => {
     afterEach(() => {
@@ -412,49 +414,15 @@ describe('Storage - Memory', () => {
             cache.stop();
         });
 
-        describe('init', () => {
-            it('Throws on get before init', async () => {
-                await expect(cache.get('x')).rejects.toThrow(/TriFrostCache@get: Cache needs to be initialized first/);
-            });
-
-            it('Throws on set before init', async () => {
-                await expect(cache.set('x', {fail: true})).rejects.toThrow(/TriFrostCache@set: Cache needs to be initialized first/);
-            });
-
-            it('Throws on delete before init', async () => {
-                await expect(cache.del('x')).rejects.toThrow(/TriFrostCache@del: Cache needs to be initialized first/);
-            });
-
-            it('Throws on wrap before init', async () => {
-                await expect(cache.wrap('x', async () => ({computed: true}))).rejects.toThrow(
-                    /TriFrostCache@wrap: Cache needs to be initialized first/,
-                );
-            });
-
-            it('Does not throw on stop before init', async () => {
-                await expect(cache.stop()).resolves.toBe(undefined);
-            });
-
-            it('Initializes without throwing', () => {
-                expect(() => cache.init({env: true})).not.toThrow();
-            });
-
-            it('Can be initialized more than once safely', () => {
-                cache.init({env: true});
-                expect(() => cache.init({env: true})).not.toThrow();
-            });
-        });
-
         describe('get', () => {
             let getSpy: ReturnType<(typeof vi)['spyOn']>;
             let setSpy: ReturnType<(typeof vi)['spyOn']>;
 
             beforeEach(() => {
-                cache.init({env: true});
                 /* @ts-expect-error Should be good */
-                getSpy = vi.spyOn(cache.resolvedStore, 'get');
+                getSpy = vi.spyOn(cache.store, 'get');
                 /* @ts-expect-error Should be good */
-                setSpy = vi.spyOn(cache.resolvedStore, 'set');
+                setSpy = vi.spyOn(cache.store, 'set');
             });
 
             afterEach(() => {
@@ -504,11 +472,10 @@ describe('Storage - Memory', () => {
             let setSpy: ReturnType<(typeof vi)['spyOn']>;
 
             beforeEach(() => {
-                cache.init({env: true});
                 /* @ts-expect-error Should be good */
-                getSpy = vi.spyOn(cache.resolvedStore, 'get');
+                getSpy = vi.spyOn(cache.store, 'get');
                 /* @ts-expect-error Should be good */
-                setSpy = vi.spyOn(cache.resolvedStore, 'set');
+                setSpy = vi.spyOn(cache.store, 'set');
             });
 
             afterEach(() => {
@@ -568,10 +535,6 @@ describe('Storage - Memory', () => {
         });
 
         describe('delete', () => {
-            beforeEach(() => {
-                cache.init({env: true});
-            });
-
             it('Removes an existing key', async () => {
                 await cache.set('gone', {v: 1});
                 await cache.del('gone');
@@ -584,7 +547,7 @@ describe('Storage - Memory', () => {
 
             it('Delegates to internal store.del', async () => {
                 /* @ts-expect-error Should be good */
-                const spy = vi.spyOn(cache.resolvedStore, 'del');
+                const spy = vi.spyOn(cache.store, 'del');
 
                 await cache.set('x', {v: 1});
                 await cache.del('x');
@@ -598,11 +561,10 @@ describe('Storage - Memory', () => {
             let setSpy: ReturnType<(typeof vi)['spyOn']>;
 
             beforeEach(() => {
-                cache.init({env: true});
                 /* @ts-expect-error Should be good */
-                getSpy = vi.spyOn(cache.resolvedStore, 'get');
+                getSpy = vi.spyOn(cache.store, 'get');
                 /* @ts-expect-error Should be good */
-                setSpy = vi.spyOn(cache.resolvedStore, 'set');
+                setSpy = vi.spyOn(cache.store, 'set');
             });
 
             afterEach(() => {
@@ -668,12 +630,7 @@ describe('Storage - Memory', () => {
         });
 
         describe('stop', () => {
-            it('Can be called before init safely', async () => {
-                await expect(cache.stop()).resolves.toBe(undefined);
-            });
-
-            it('Stops cleanly after init and usage', async () => {
-                cache.init({env: true});
+            it('Stops cleanly', async () => {
                 await cache.set('x', {stop: true});
                 await expect(cache.stop()).resolves.toBe(undefined);
             });
@@ -689,7 +646,7 @@ describe('Storage - Memory', () => {
             it('Initializes with default strategy (fixed) and window (60)', async () => {
                 const rl = new MemoryRateLimit();
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
-                const mw = rl.limit(2);
+                const mw = limitMiddleware(new Lazy(() => rl), 2);
                 await mw(ctx);
                 expect(ctx.statusCode).not.toBe(429);
                 expect(rl.strategy).toBe('fixed');
@@ -700,7 +657,7 @@ describe('Storage - Memory', () => {
             it('Initializes with sliding strategy', async () => {
                 const rl = new MemoryRateLimit({strategy: 'sliding'});
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
-                const mw = rl.limit(2);
+                const mw = limitMiddleware(new Lazy(() => rl), 2);
                 await mw(ctx);
                 expect(ctx.statusCode).not.toBe(429);
                 expect(rl.strategy).toBe('sliding');
@@ -711,7 +668,7 @@ describe('Storage - Memory', () => {
             it('Throws for invalid limit types', async () => {
                 const rl = new MemoryRateLimit();
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'route', method: 'GET'});
-                const mw = rl.limit(() => -1);
+                const mw = limitMiddleware(new Lazy(() => rl), () => -1);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(500);
                 expect(rl.strategy).toBe('fixed');
@@ -721,7 +678,7 @@ describe('Storage - Memory', () => {
 
             it('Skips processing for non-std context kinds', async () => {
                 const rl = new MemoryRateLimit();
-                const mw = rl.limit(1);
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
 
                 for (const kind of ['notfound', 'health', 'options']) {
                     const ctx = new MockContext({kind: kind as TriFrostContextKind});
@@ -734,7 +691,7 @@ describe('Storage - Memory', () => {
 
             it('Registers correct introspection symbols', async () => {
                 const rl = new MemoryRateLimit();
-                const mw = rl.limit(5);
+                const mw = limitMiddleware(new Lazy(() => rl), 5);
 
                 expect(rl.strategy).toBe('fixed');
                 expect(rl.window).toBe(60);
@@ -747,7 +704,7 @@ describe('Storage - Memory', () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new MemoryRateLimit({window: 1});
                 const now = Math.floor(Date.now() / 1000);
-                const mw = rl.limit(1);
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 await mw(ctx);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(429);
@@ -763,7 +720,7 @@ describe('Storage - Memory', () => {
             it('Disables rate limit headers when disabled', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new MemoryRateLimit({headers: false});
-                const mw = rl.limit(1);
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 await mw(ctx);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(429);
@@ -776,14 +733,14 @@ describe('Storage - Memory', () => {
             it('Supports custom key generators', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new MemoryRateLimit({keygen: el => `ip:${el.ip}`});
-                const mw = rl.limit(10);
+                const mw = limitMiddleware(new Lazy(() => rl), 10);
                 const now = Math.floor(Date.now() / 1000);
                 await mw(ctx);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(200);
 
                 /* @ts-expect-error Should be good */
-                const val = await rl.resolvedStore.store.get('ip:127.0.0.1');
+                const val = await rl.store.store.get('ip:127.0.0.1');
                 expect(val.amt).toBe(2);
                 expect(val.reset).toBeGreaterThanOrEqual(now + rl.window);
 
@@ -799,7 +756,7 @@ describe('Storage - Memory', () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const exceeded = vi.fn(el => el.status(400));
                 const rl = new MemoryRateLimit({exceeded});
-                const mw = rl.limit(1);
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 await mw(ctx);
                 await mw(ctx);
                 expect(exceeded).toHaveBeenCalledOnce();
@@ -819,14 +776,14 @@ describe('Storage - Memory', () => {
 
                 for (const [key, key_expected] of Object.entries(expected)) {
                     const rl = new MemoryRateLimit({keygen: key as any});
-                    const mw = rl.limit(1);
+                    const mw = limitMiddleware(new Lazy(() => rl), 1);
                     const now = Math.floor(Date.now() / 1000);
                     await mw(ctx);
                     await mw(ctx);
                     expect(ctx.statusCode).toBe(429);
 
                     /* @ts-expect-error Should be good */
-                    const val = await rl.resolvedStore.store.get(key_expected);
+                    const val = await rl.store.store.get(key_expected);
                     expect(val.amt).toBe(1);
                     expect(val.reset).toBeGreaterThanOrEqual(now + rl.window);
                     await rl.stop();
@@ -845,14 +802,14 @@ describe('Storage - Memory', () => {
 
                 for (const [key, key_expected] of Object.entries(expected)) {
                     const rl = new MemoryRateLimit({keygen: key as any});
-                    const mw = rl.limit(1);
+                    const mw = limitMiddleware(new Lazy(() => rl), 1);
                     const now = Math.floor(Date.now() / 1000);
                     await mw(ctx);
                     await mw(ctx);
                     expect(ctx.statusCode).toBe(429);
 
                     /* @ts-expect-error Should be good */
-                    const val = await rl.resolvedStore.store.get(key_expected);
+                    const val = await rl.store.store.get(key_expected);
                     expect(val.amt).toBe(1);
                     expect(val.reset).toBeGreaterThanOrEqual(now + rl.window);
                     await rl.stop();
@@ -865,20 +822,20 @@ describe('Storage - Memory', () => {
                 });
 
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-                const mw = rl.limit(1);
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 const now = Math.floor(Date.now() / 1000);
 
                 await mw(ctx);
 
                 /* @ts-expect-error Should be good */
-                const val = await rl.resolvedStore.store.get('unknown');
+                const val = await rl.store.store.get('unknown');
                 expect(val.amt).toBe(1);
                 expect(val.reset).toBeGreaterThanOrEqual(now + rl.window);
 
                 await mw(ctx);
 
                 /* @ts-expect-error Should be good */
-                const val2 = await rl.resolvedStore.store.get('unknown');
+                const val2 = await rl.store.store.get('unknown');
                 expect(val2.amt).toBe(1); /* It should not have touched on the value as we shouldn't have done writes*/
                 expect(val2.reset).toBeGreaterThanOrEqual(now + rl.window);
 
@@ -891,7 +848,7 @@ describe('Storage - Memory', () => {
             it('Allows requests within limit', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new MemoryRateLimit({window: 1});
-                const mw = rl.limit(2);
+                const mw = limitMiddleware(new Lazy(() => rl), 2);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(200);
                 await mw(ctx);
@@ -901,7 +858,7 @@ describe('Storage - Memory', () => {
             it('Blocks requests over the limit', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new MemoryRateLimit({window: 1});
-                const mw = rl.limit(1);
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 await mw(ctx);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(429);
@@ -912,21 +869,21 @@ describe('Storage - Memory', () => {
                 const rl = new MemoryRateLimit({window: 1, strategy: 'fixed', gc_interval: 50});
 
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-                const mw = rl.limit(1);
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
 
                 await mw(ctx);
 
                 const now = Math.floor(Date.now() / 1000);
 
                 /* @ts-expect-error Should be good */
-                const val = await rl.resolvedStore.store.get('127.0.0.1:test:POST');
+                const val = await rl.store.store.get('127.0.0.1:test:POST');
                 expect(val.amt).toBe(1);
                 expect(val.reset).toBeGreaterThanOrEqual(now + rl.window);
 
                 await sleep(100); /* Allow gc to run */
 
                 /* @ts-expect-error Should be good */
-                expect(await rl.resolvedStore.store.get('127.0.0.1:test:POST')).toBeNull();
+                expect(await rl.store.store.get('127.0.0.1:test:POST')).toBeNull();
                 await rl.stop(); /* gc cleanup */
             });
 
@@ -938,7 +895,7 @@ describe('Storage - Memory', () => {
             it('Calls stop() without error when the store was resolved', async () => {
                 const rl = new MemoryRateLimit({strategy: 'fixed'});
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-                const mw = rl.limit(1);
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 await mw(ctx);
                 await expect(rl.stop()).resolves.toBeUndefined();
             });
@@ -948,7 +905,7 @@ describe('Storage - Memory', () => {
             it('Allows requests within windowed limit', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new MemoryRateLimit({strategy: 'sliding', window: 1});
-                const mw = rl.limit(3);
+                const mw = limitMiddleware(new Lazy(() => rl), 3);
                 await mw(ctx);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(200);
@@ -958,7 +915,7 @@ describe('Storage - Memory', () => {
             it('Blocks when timestamps exceed limit in window', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new MemoryRateLimit({strategy: 'sliding', window: 1});
-                const mw = rl.limit(1);
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 await mw(ctx);
                 await mw(ctx);
                 expect(ctx.statusCode).toBe(429);
@@ -968,7 +925,7 @@ describe('Storage - Memory', () => {
             it('[is:slow] Clears oldest timestamps after window expiry', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new MemoryRateLimit({strategy: 'sliding', window: 1});
-                const mw = rl.limit(1);
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 await mw(ctx);
                 await sleep(1100);
                 await mw(ctx);
@@ -979,7 +936,7 @@ describe('Storage - Memory', () => {
             it('[is:slow] Removes old timestamps using GC filter (sliding)', async () => {
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
                 const rl = new MemoryRateLimit({strategy: 'sliding', window: 1, gc_interval: 50});
-                const mw = rl.limit(1);
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 await mw(ctx);
                 await sleep(2000);
                 await mw(ctx);
@@ -990,19 +947,19 @@ describe('Storage - Memory', () => {
             it('Prunes first timestamp if it falls outside the window', async () => {
                 const rl = new MemoryRateLimit({strategy: 'sliding', window: 1});
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-                const mw = rl.limit(2);
+                const mw = limitMiddleware(new Lazy(() => rl), 2);
 
                 /* First request */
                 await mw(ctx);
 
                 /* @ts-expect-error Should be good */
-                await rl.resolvedStore.store.set('127.0.0.1:test:POST', [Math.floor(Date.now() / 1000) - 2]);
+                await rl.store.store.set('127.0.0.1:test:POST', [Math.floor(Date.now() / 1000) - 2]);
 
                 /* Second request triggers pruning of old timestamp */
                 await mw(ctx);
 
                 /* @ts-expect-error Should be good */
-                const val = await rl.resolvedStore.store.get('127.0.0.1:test:POST');
+                const val = await rl.store.store.get('127.0.0.1:test:POST');
 
                 expect(Array.isArray(val)).toBe(true);
                 expect(val.length).toBe(1); /* old timestamp pruned */
@@ -1019,7 +976,7 @@ describe('Storage - Memory', () => {
             it('Calls stop() without error when the store was resolved', async () => {
                 const rl = new MemoryRateLimit({strategy: 'sliding'});
                 const ctx = new MockContext({ip: '127.0.0.1', name: 'test', method: 'POST'});
-                const mw = rl.limit(1);
+                const mw = limitMiddleware(new Lazy(() => rl), 1);
                 await mw(ctx);
                 await expect(rl.stop()).resolves.toBeUndefined();
             });

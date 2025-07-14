@@ -13,11 +13,7 @@ export class TriFrostCache<Env extends Record<string, any> = Record<string, any>
     #store: Store;
 
     constructor(opts: {store: Store}) {
-        if (
-            typeof opts?.store?.set === 'function' &&
-            typeof opts?.store?.get === 'function' &&
-            typeof opts?.store?.del === 'function'
-        ) {
+        if (typeof opts?.store?.set === 'function' && typeof opts?.store?.get === 'function' && typeof opts?.store?.del === 'function') {
             this.#store = opts.store;
         } else {
             throw new Error('TriFrostCache: Expected a store');
@@ -108,7 +104,7 @@ export class TriFrostCache<Env extends Record<string, any> = Record<string, any>
      *
      * @note This is an internal method
      */
-    private spawn (ctx: TriFrostContext<Env>): TriFrostCache<Env> {
+    private spawn(ctx: TriFrostContext<Env>): TriFrostCache<Env> {
         return new TriFrostCache<Env>({
             store: this.#store.spawn(ctx),
         });

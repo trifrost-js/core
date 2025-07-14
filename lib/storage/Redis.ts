@@ -77,8 +77,8 @@ export class RedisCache<Env extends Record<string, any> = Record<string, any>> e
  * MARK: RateLimit
  */
 
-export class RedisRateLimit<Env extends Record<string, any> = Record<string, any>> extends TriFrostRateLimit<Env> {
-    constructor(cfg: Omit<TriFrostRateLimitOptions<Env>, 'store'> & {store: TriFrostRedis}) {
+export class RedisRateLimit extends TriFrostRateLimit {
+    constructor(cfg: Omit<TriFrostRateLimitOptions, 'store'> & {store: TriFrostRedis}) {
         if (!cfg?.store) throw new Error('RedisRateLimit: Expected a store initializer');
         super({
             ...cfg,

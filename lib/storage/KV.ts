@@ -80,8 +80,8 @@ export class KVCache<Env extends Record<string, any> = Record<string, any>> exte
  * MARK: RateLimit
  */
 
-export class KVRateLimit<Env extends Record<string, any> = Record<string, any>> extends TriFrostRateLimit<Env> {
-    constructor(cfg: Omit<TriFrostRateLimitOptions<Env>, 'store'> & {store: TriFrostCFKVNamespace}) {
+export class KVRateLimit extends TriFrostRateLimit {
+    constructor(cfg: Omit<TriFrostRateLimitOptions, 'store'> & {store: TriFrostCFKVNamespace}) {
         if (!cfg?.store) throw new Error('KVRateLimit: Expected a store initializer');
         super({
             ...cfg,

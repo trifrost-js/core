@@ -6,7 +6,7 @@ import {type TriFrostRouteMatch} from './routing';
 import {type TriFrostBodyParserOptions, type ParsedBody} from '../utils/BodyParser/types';
 import {type HttpRedirectStatusCode, type HttpStatusCode, type MimeType, type HttpMethod} from './constants';
 import {type createCss, type createScript} from '../modules';
-import { Lazy } from '../utils/Lazy';
+import {Lazy} from '../utils/Lazy';
 
 export type TriFrostContextKind = 'std' | 'notfound' | 'error' | 'options' | 'health';
 

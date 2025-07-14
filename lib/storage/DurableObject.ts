@@ -86,8 +86,8 @@ export class DurableObjectCache<Env extends Record<string, any> = Record<string,
  * MARK: RateLimit
  */
 
-export class DurableObjectRateLimit<Env extends Record<string, any> = Record<string, any>> extends TriFrostRateLimit<Env> {
-    constructor(cfg: Omit<TriFrostRateLimitOptions<Env>, 'store'> & {store: TriFrostCFDurableObjectNamespace}) {
+export class DurableObjectRateLimit extends TriFrostRateLimit {
+    constructor(cfg: Omit<TriFrostRateLimitOptions, 'store'> & {store: TriFrostCFDurableObjectNamespace}) {
         if (!cfg?.store) throw new Error('DurableObjectRateLimit: Expected a store initializer');
         super({
             ...cfg,

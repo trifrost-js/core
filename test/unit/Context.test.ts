@@ -11,6 +11,8 @@ import {Cookies} from '../../lib/modules';
 import {NONCE_WIN_SCRIPT} from '../../lib/modules/JSX/ctx/nonce';
 import {ARC_GLOBAL, ARC_GLOBAL_OBSERVER} from '../../lib/modules/JSX/script/atomic';
 import * as Generic from '../../lib/utils/Generic';
+import {MemoryCache} from '../../lib';
+import {Lazy} from '../../lib/utils/Lazy';
 
 class TestContext extends Context {
     constructor(logger: TriFrostRootLogger, cfg: TriFrostContextConfig, req: any) {
@@ -56,7 +58,7 @@ describe('Context', () => {
     const baseEnv = {};
     const baseConfig = {
         env: baseEnv,
-        cache: null,
+        cache: new Lazy(() => new MemoryCache()),
         cookies: {},
         trustProxy: true,
     };
@@ -638,7 +640,7 @@ describe('Context', () => {
 
             const cfg = {
                 ...baseConfig,
-                cache: {spawn: spawnMock},
+                cache: new Lazy(() => ({spawn: spawnMock})),
             };
 
             const ctx2 = new TestContext(mockLogger as any, cfg as any, baseRequest);

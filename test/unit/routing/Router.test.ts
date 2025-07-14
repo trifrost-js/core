@@ -1,11 +1,12 @@
 import {describe, it, expect, beforeEach, vi} from 'vitest';
 import {Router} from '../../../lib/routing/Router';
 import {RouteTree} from '../../../lib/routing/Tree';
-import {TriFrostRateLimit} from '../../../lib/modules/RateLimit/_RateLimit';
 import {TriFrostMiddleware} from '../../../lib/types/routing';
 import CONSTANTS from '../../constants';
 import {normalizeMiddleware} from '../../../lib/routing/util';
 import {Sym_TriFrostName} from '../../../lib';
+import {Lazy} from '../../../lib/utils/Lazy';
+import * as Limiter from '../../../lib/modules/RateLimit/_RateLimit';
 
 describe('routing - Router', () => {
     const EXAMPLE_CONFIG = {
@@ -51,7 +52,7 @@ describe('routing - Router', () => {
                     () =>
                         new Router({
                             ...EXAMPLE_CONFIG,
-                            rateLimit: el as TriFrostRateLimit,
+                            rateLimit: el as any,
                         }),
                 ).toThrowError(/TriFrostRouter@ctor: RateLimit is invalid/);
             }
@@ -153,9 +154,13 @@ describe('routing - Router', () => {
         let router: Router<any, any>;
         let tree: RouteTree<any>;
         const dummyMiddleware = vi.fn();
+        let limitSpy;
+        let limitMock;
 
         beforeEach(() => {
             tree = new RouteTree();
+            limitMock = new Lazy(() => ({limit: vi.fn(() => dummyMiddleware)}));
+            limitSpy = vi.spyOn(Limiter, 'limitMiddleware').mockReturnValue(dummyMiddleware);
         });
 
         it('Throws if no rateLimit instance is configured', () => {
@@ -174,14 +179,12 @@ describe('routing - Router', () => {
         });
 
         it('Throws if invalid limit value is provided', () => {
-            const rateLimitMock = {limit: vi.fn(() => dummyMiddleware)};
-
             router = new Router({
                 path: '/api',
                 timeout: null,
                 tree,
                 middleware: [],
-                rateLimit: rateLimitMock as unknown as TriFrostRateLimit<any>,
+                rateLimit: limitMock,
                 bodyParser: null,
             });
 
@@ -192,14 +195,12 @@ describe('routing - Router', () => {
         });
 
         it('Adds rateLimit middleware to router stack', () => {
-            const rateLimitMock = {limit: vi.fn(() => dummyMiddleware)};
-
             router = new Router({
                 path: '/api',
                 timeout: null,
                 tree,
                 middleware: [],
-                rateLimit: rateLimitMock as unknown as TriFrostRateLimit<any>,
+                rateLimit: limitMock,
                 bodyParser: null,
             });
 
@@ -214,21 +215,20 @@ describe('routing - Router', () => {
                     handler: dummyMiddleware,
                 },
             ]);
-            expect(rateLimitMock.limit).toHaveBeenCalledWith(5);
+            expect(limitSpy).toHaveBeenCalledWith(limitMock, 5);
         });
 
         it('Chains correctly with use() and verbs', () => {
             const m1 = vi.fn();
             const m2 = vi.fn();
             const handler = vi.fn();
-            const rateLimitMock = {limit: vi.fn(() => dummyMiddleware)};
 
             router = new Router({
                 path: '/api',
                 timeout: null,
                 tree,
                 middleware: [],
-                rateLimit: rateLimitMock as unknown as TriFrostRateLimit<any>,
+                rateLimit: limitMock,
                 bodyParser: null,
             });
 
@@ -255,20 +255,19 @@ describe('routing - Router', () => {
                     handler: m2,
                 },
             ]);
-            expect(rateLimitMock.limit).toHaveBeenCalledWith(10);
+            expect(limitSpy).toHaveBeenCalledWith(limitMock, 10);
         });
 
         it('Attaches middleware on multiple verbs under same router', () => {
             const handler1 = vi.fn();
             const handler2 = vi.fn();
-            const rateLimitMock = {limit: vi.fn(() => dummyMiddleware)};
 
             router = new Router({
                 path: '/api',
                 timeout: null,
                 tree,
                 middleware: [],
-                rateLimit: rateLimitMock as unknown as TriFrostRateLimit<any>,
+                rateLimit: limitMock,
                 bodyParser: null,
             });
 
@@ -2181,16 +2180,16 @@ describe('routing - Router', () => {
         const handlerGroup = vi.fn();
         const handlerRouteGet = vi.fn();
         const handlerRoutePost = vi.fn();
-        const rateLimitMock = {limit: vi.fn(() => dummyMiddleware)};
-
+        let limitMock;
         beforeEach(() => {
             tree = new RouteTree();
+            limitMock = new Lazy(() => ({limit: vi.fn(() => dummyMiddleware)}));
             router = new Router({
                 path: '/api',
                 timeout: null,
                 tree,
                 middleware: [],
-                rateLimit: rateLimitMock as unknown as TriFrostRateLimit<any>,
+                rateLimit: limitMock,
                 bodyParser: null,
             });
         });

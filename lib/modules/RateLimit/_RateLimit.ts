@@ -1,5 +1,5 @@
 import {isIntGt} from '@valkyriestudios/utils/number';
-import {Lazy, type LazyInitFn} from '../../utils/Lazy';
+import {Lazy} from '../../utils/Lazy';
 import {type TriFrostContext} from '../../types/context';
 import {type Store} from '../../storage/_Storage';
 import {type TriFrostMiddleware} from '../../types/routing';
@@ -57,7 +57,7 @@ export const RateLimitKeyGeneratorRegistry: Record<TriFrostRateLimitKeyGenerator
 /**
  * TriFrost RateLimit Options
  */
-export type TriFrostRateLimitOptions<Env extends Record<string, any> = {}> = {
+export type TriFrostRateLimitOptions = {
     strategy?: TriFrostRateLimitStrategy;
     store: Store;
     window?: number;
@@ -66,7 +66,7 @@ export type TriFrostRateLimitOptions<Env extends Record<string, any> = {}> = {
     headers?: boolean;
 };
 
-export class TriFrostRateLimit<Env extends Record<string, any> = Record<string, any>> {
+export class TriFrostRateLimit {
     #keygen: TriFrostRateLimitKeyGeneratorFn;
 
     #exceeded: TriFrostRateLimitExceededFunction;
@@ -79,11 +79,9 @@ export class TriFrostRateLimit<Env extends Record<string, any> = Record<string, 
 
     #window: number;
 
-    constructor(opts: TriFrostRateLimitOptions<Env>) {
-        if (
-            typeof opts?.store?.get !== 'function' ||
-            typeof opts?.store?.set !== 'function'
-        ) throw new Error('TriFrostRateLimit: Expected a store initializer');
+    constructor(opts: TriFrostRateLimitOptions) {
+        if (typeof opts?.store?.get !== 'function' || typeof opts?.store?.set !== 'function')
+            throw new Error('TriFrostRateLimit: Expected a store initializer');
 
         /* Define keygen or fallback to ip_name_method */
         this.#keygen = (
@@ -120,31 +118,30 @@ export class TriFrostRateLimit<Env extends Record<string, any> = Record<string, 
     /**
      * Configured keygen handler
      */
-    get keygen () {
+    get keygen() {
         return this.#keygen;
     }
 
     /**
      * Configured exceeded behavior
      */
-    get exceeded () {
+    get exceeded() {
         return this.#exceeded;
     }
 
     /**
      * Configured store
      */
-    get store () {
+    get store() {
         return this.#store;
     }
 
     /**
      * Configured headers (default=true)
      */
-    get headers () {
+    get headers() {
         return this.#headers;
     }
-
 
     /**
      * The configured strategy type (default=fixed)
@@ -174,11 +171,8 @@ export class TriFrostRateLimit<Env extends Record<string, any> = Record<string, 
  * @param {Lazy<TriFrostRateLimit>} rateLimiter - Lazy rate limit instance resolver
  * @param {number|TriFrostRateLimitLimitFunction} limit - The limit to use, either a number or a rate limit function
  */
-export function limitMiddleware <
-    Env extends Record<string, any> = Record<string, any>,
-    State extends Record<string, unknown> = {}
-> (
-    limiter: Lazy<TriFrostRateLimit<Env>, Env>,
+export function limitMiddleware<Env extends Record<string, any> = Record<string, any>, State extends Record<string, unknown> = {}>(
+    limiter: Lazy<TriFrostRateLimit, Env>,
     limit: number | TriFrostRateLimitLimitFunction<Env, State>,
 ): TriFrostMiddleware<Env, State> {
     const limit_fn = (typeof limit === 'function' ? limit : () => limit) as TriFrostRateLimitLimitFunction<Env, State>;

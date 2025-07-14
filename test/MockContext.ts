@@ -16,9 +16,10 @@ import {Logger, type TriFrostLogger} from '../lib/modules/Logger';
 import {MemoryCache} from '../lib/storage/Memory';
 import {hexId} from '../lib/utils/Generic';
 import {TriFrostBodyParserOptions, type ParsedBody} from '../lib/utils/BodyParser/types';
-import { Lazy } from '../lib/utils/Lazy';
+import {Lazy} from '../lib/utils/Lazy';
 
 export class MockContext<State extends Record<string | number, unknown> = Record<string | number, unknown>> implements TriFrostContext<any, State> { // eslint-disable-line prettier/prettier
+
     #headers: Record<string, string>;
     #method: HttpMethod;
     #status: HttpStatusCode = 200;

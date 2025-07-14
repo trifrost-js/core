@@ -1,13 +1,21 @@
-import {describe, it, expect, vi} from 'vitest';
+import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {Route} from '../../../lib/routing/Route';
 import {HttpMethods} from '../../../lib/types/constants';
-import {TriFrostRateLimit} from '../../../lib/modules/RateLimit/_RateLimit';
 import {type TriFrostRouteHandler} from '../../../lib/types/routing';
 import CONSTANTS from '../../constants';
+import {Lazy} from '../../../lib/utils/Lazy';
+import * as Limiter from '../../../lib/modules/RateLimit/_RateLimit';
 
 describe('routing - Route', () => {
+    let limitSpy;
+    let limitMock;
     const dummyHandler = vi.fn();
     const dummyMiddleware = vi.fn();
+
+    beforeEach(() => {
+        limitMock = new Lazy(() => ({limit: vi.fn(() => dummyMiddleware)}));
+        limitSpy = vi.spyOn(Limiter, 'limitMiddleware').mockReturnValue(dummyMiddleware);
+    });
 
     describe('.use()', () => {
         it('Attaches middleware', () => {
@@ -68,11 +76,8 @@ describe('routing - Route', () => {
         });
 
         it('Throws if invalid limit is passed', () => {
-            const limitMock = vi.fn().mockReturnValue(dummyMiddleware);
-            const rateLimitMock = {limit: limitMock};
-
             const route = new Route({
-                rateLimit: rateLimitMock as unknown as TriFrostRateLimit,
+                rateLimit: limitMock,
                 bodyParser: null,
             });
             for (const el of [...CONSTANTS.NOT_FUNCTION, ...CONSTANTS.NOT_INTEGER, 0, -10, 10.5]) {
@@ -83,16 +88,13 @@ describe('routing - Route', () => {
         });
 
         it('Adds rate-limit middleware when configured', () => {
-            const limitMock = vi.fn().mockReturnValue(dummyMiddleware);
-            const rateLimitMock = {limit: limitMock};
-
             const route = new Route({
-                rateLimit: rateLimitMock as unknown as TriFrostRateLimit,
+                rateLimit: limitMock,
                 bodyParser: null,
             });
             route.limit(10);
             route.get(dummyHandler);
-            expect(limitMock).toHaveBeenCalledWith(10);
+            expect(limitSpy).toHaveBeenCalledWith(limitMock, 10);
             expect(route.stack).toEqual([
                 {
                     bodyParser: null,
@@ -385,11 +387,8 @@ describe('routing - Route', () => {
 
         it('Handles chaining .use() + .limit()', () => {
             const m1 = vi.fn();
-            const limitMock = vi.fn().mockReturnValue(dummyMiddleware);
-            const rateLimitMock = {limit: limitMock};
-
             const route = new Route({
-                rateLimit: rateLimitMock as unknown as TriFrostRateLimit,
+                rateLimit: limitMock,
                 bodyParser: null,
             });
             route.use(m1).limit(5).get(dummyHandler);
@@ -410,15 +409,13 @@ describe('routing - Route', () => {
         });
 
         it('Handles chaining .use() + .limit() across multiple methods', () => {
-            const limitMock = vi.fn().mockReturnValue(dummyMiddleware);
-            const rateLimitMock = {limit: limitMock};
             const m1 = vi.fn();
             const m2 = vi.fn();
             const handler1 = vi.fn();
             const handler2 = vi.fn();
 
             const route = new Route({
-                rateLimit: rateLimitMock as unknown as TriFrostRateLimit,
+                rateLimit: limitMock,
                 bodyParser: null,
             });
             route.use(m1).limit(5).get(handler1).use(m2).post(handler2);

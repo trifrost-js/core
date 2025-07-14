@@ -108,7 +108,7 @@ export type TriFrostRouterOptions<Env extends Record<string, any> = {}, State ex
     /**
      * Global Rate Limit instance or null
      */
-    rateLimit: Lazy<TriFrostRateLimit<Env>, Env> | null;
+    rateLimit: Lazy<TriFrostRateLimit, Env> | null;
     /**
      * Body Parser Config
      */

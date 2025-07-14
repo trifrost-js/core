@@ -42,7 +42,7 @@ type AppOptions<Env extends Record<string, any>> = {
     /**
      * Rate Limiter instance
      */
-    rateLimit?: LazyInitFn<TriFrostRateLimit<Env>, Env>;
+    rateLimit?: LazyInitFn<TriFrostRateLimit, Env>;
     /**
      * Cache instance
      */
