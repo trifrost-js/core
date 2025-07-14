@@ -2184,6 +2184,7 @@ describe('routing - Router', () => {
         beforeEach(() => {
             tree = new RouteTree();
             limitMock = new Lazy(() => ({limit: vi.fn(() => dummyMiddleware)}));
+            vi.spyOn(Limiter, 'limitMiddleware').mockReturnValue(dummyMiddleware);
             router = new Router({
                 path: '/api',
                 timeout: null,

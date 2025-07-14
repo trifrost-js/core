@@ -4,6 +4,98 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.54.0] - 2025-07-14
+This release includes a few final breaking adjustments and ergonomic improvements, the result of formalizing the caching and rate limiting subsystems during documentation.
+
+These changes align the cache and rateLimit options with how tracing exporters are already defined, improving flexibility and consistency across runtime-bound environments like Cloudflare Workers.
+
+### Added
+- **feat**: `ctx.cache.skip(...)` as an instance alias for `cacheSkip(...)`. You can now dynamically opt out of caching results during execution, even inside `.wrap(...)` or `@cache(...)`-decorated methods straight from `ctx.cache` without having to import `cacheSkip`. Cache skipping avoids polluting your cache with nulls, errors, or partial fallbacks, especially useful when working with flaky APIs or time-sensitive data.
+```typescript
+const data = await ctx.cache.wrap('expensive:key', async () => {
+  try {
+    const result = await fetchStuff();
+    return result;
+  } catch (err) {
+    ctx.logger.warn('Failed to fetch', err);
+    return ctx.cache.skip(null); // ❌ don't cache failures
+  }
+});
+```
+```typescript
+import {cache} from '@trifrost/core';
+
+class MyService {
+  @cache(ctx => `user:${ctx.state.userId}`, {ttl: 300})
+  async getUser(ctx) {
+    try {
+      return await fetchUser(ctx.state.userId);
+    } catch {
+      return ctx.cache.skip(null); // ❌ don't cache error state
+    }
+  }
+}
+```
+
+### Breaking
+- App options `cache` and `rateLimit` now **require deferred initializer functions**. Previously, you could pass a fully constructed `TriFrostCache` or `TriFrostRateLimit` instance directly into `new App(...)`. This is no longer supported. Instead, you must now provide **a function that receives {env} and returns the instance**. This enables runtime-aware setup, lazy wiring, and conditional logic like isDevMode(...) and also **aligns it with how tracing exporters** are configured.
+
+**Before (❌ now invalid)**:
+```typescript
+new App<Env>({
+  cache: new DurableObjectCache({
+    store: ({env}) => env.MainDurable,
+    ttl: 60
+  }),
+  rateLimit: new DurableObjectRateLimit({
+    store: ({env}) => env.MainDurable,
+    strategy: 'sliding',
+    window: 60,
+  }),
+});
+```
+
+**After (✔ required)**:
+```typescript
+new App<Env>({
+  cache: ({env}) => new DurableObjectCache({
+    store: env.MainDurable,
+    ttl: 60
+  }),
+  rateLimit: ({env}) => new DurableObjectRateLimit({
+    store: env.MainDurable,
+    strategy: 'sliding',
+    window: 60,
+  }),
+});
+```
+
+**Allows for logic regarding cache/rateLimit selection**:
+```typescript
+new App<Env>({
+  cache: ({env}) => {
+    if (isDevMode(env)) return new MemoryCache({ttl: 60});
+    return new DurableObjectCache({store: env.MainDurable, ttl: 60});
+  },
+  rateLimit: ({env}) => {
+    if (isDevMode(env)) return new MemoryRateLimit({strategy: 'sliding', window: 60});
+    return new DurableObjectRateLimit({
+      store: env.MainDurable,
+      strategy: 'sliding',
+      window: 60,
+    });
+  }
+});
+```
+
+---
+
+TriFrost continues to move toward a tightly consistent, runtime-aware core. 
+
+With caching and rate limiting now unified under deferred initialization, and with skip logic formalized, we’re within reach of a stable surface for 1.0.
+
+Let’s lock it down, and as always, stay frosty ❄️.
+
 ## [0.53.2] - 2025-07-13
 ### Improved
 - **sys**: Add NodeRuntime, BunRuntime, WorkerdRuntime to package exports
