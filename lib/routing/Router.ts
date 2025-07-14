@@ -28,7 +28,7 @@ class Router<Env extends Record<string, any> = {}, State extends Record<string, 
     #path: string;
 
     /* Configured Rate limit instance from the app */
-    #rateLimit: Lazy<TriFrostRateLimit<Env>, Env> | null = null;
+    #rateLimit: Lazy<TriFrostRateLimit, Env> | null = null;
 
     /* Configured Body Parser options */
     #bodyParser: TriFrostBodyParserOptions | null = null;

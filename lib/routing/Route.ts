@@ -20,12 +20,12 @@ export class Route<Env extends Record<string, any> = {}, State extends Record<st
     > = Object.create(null);
 
     /* Configured Rate limit instance from the app */
-    #rateLimit: Lazy<TriFrostRateLimit<Env>, Env> | null = null;
+    #rateLimit: Lazy<TriFrostRateLimit, Env> | null = null;
 
     /* Configured body parser from the parent router */
     #bodyParser: TriFrostBodyParserOptions | null = null;
 
-    constructor(options: {rateLimit: Lazy<TriFrostRateLimit<Env>, Env> | null; bodyParser: TriFrostBodyParserOptions | null}) {
+    constructor(options: {rateLimit: Lazy<TriFrostRateLimit, Env> | null; bodyParser: TriFrostBodyParserOptions | null}) {
         this.#rateLimit = options.rateLimit;
         this.#bodyParser = options.bodyParser;
     }
