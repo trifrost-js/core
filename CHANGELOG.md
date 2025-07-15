@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2025-07-15
+🎉 First stable release of TriFrost!
+
+This version finalizes the internal architecture and public API surface, locking in the core building blocks for long-term stability across runtimes.
+
+### Ecosystem
+- CLI scaffolder is stable and DX-polished ([create-trifrost](https://github.com/trifrost-js/create-trifrost))
+- Documentation available at [trifrost.dev](https://trifrost.dev)
+- JSX-native support (opt-in) is ready for real-world use
+- Production demo: [Atomic Arcade](https://arcade.trifrost.dev)
+
+---
+
+This is just the beginning.
+
+More runtimes, examples, new modules will arrive in the next couple of months — TriFrost 1.0 is the foundation, not the finish line.
+
+Stay frosty. ❄️
+
 ## [0.54.1] - 2025-07-15
 ### Improved
 - **deps**: Upgrade @cloudflare/workers-types to 4.20250715.0
