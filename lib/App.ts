@@ -151,7 +151,7 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
         };
 
         /* Cache */
-        this.cache = new Lazy(options.cache || new MemoryCache());
+        this.cache = new Lazy(options.cache || (() => new MemoryCache()));
 
         /* Request ID */
         if (options.tracing?.requestId) this.requestId = options.tracing.requestId;
