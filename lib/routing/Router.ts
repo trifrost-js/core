@@ -356,7 +356,7 @@ class Router<Env extends Record<string, any> = {}, State extends Record<string, 
                 middleware: n_middleware,
                 timeout: n_timeout,
                 bodyParser: n_bodyparser,
-            } as unknown as TriFrostRoute<Env, State>);
+            } as unknown as TriFrostRoute<Env>);
         }
 
         return this;

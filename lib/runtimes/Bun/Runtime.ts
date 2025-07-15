@@ -69,7 +69,7 @@ export class BunRuntime implements TriFrostRuntime {
 
         /* Construct options for serve */
         const serveOpts = {
-            port: determinePort(cfg.env, cfg.port || null),
+            port: determinePort(cfg.env, cfg.port),
             hostname: determineHost(cfg.env),
             fetch: async (req: Request) => {
                 const ctx = new BunContext(cfg, opts.logger, apis, req);

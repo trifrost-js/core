@@ -25,7 +25,7 @@ async function loadBody(req: IncomingMessage): Promise<Uint8Array> {
 
 export class NodeContext extends Context {
     /* Node Apis */
-    #node: {
+    private node: {
         Readable: (typeof import('node:stream'))['Readable'];
         statSync: (typeof import('node:fs'))['statSync'];
         createReadStream: (typeof import('node:fs'))['createReadStream'];
@@ -33,10 +33,10 @@ export class NodeContext extends Context {
     };
 
     /* Incoming Message */
-    #node_req: IncomingMessage;
+    private node_req: IncomingMessage;
 
     /* Outgoing Response */
-    #node_res: ServerResponse;
+    private node_res: ServerResponse;
 
     constructor(
         cfg: TriFrostContextConfig,
@@ -67,9 +67,9 @@ export class NodeContext extends Context {
             query,
         });
 
-        this.#node = nodeApis;
-        this.#node_req = req;
-        this.#node_res = res;
+        this.node = nodeApis;
+        this.node_req = req;
+        this.node_res = res;
     }
 
     /**
@@ -77,7 +77,7 @@ export class NodeContext extends Context {
      */
     async init(val: TriFrostRouteMatch) {
         await super.init(val, async () => {
-            const raw_body = await loadBody(this.#node_req);
+            const raw_body = await loadBody(this.node_req);
             return parseBody(this, raw_body, val.route.bodyParser || DEFAULT_BODY_PARSER_OPTIONS);
         });
     }
@@ -89,10 +89,10 @@ export class NodeContext extends Context {
      */
     async getStream(path: string) {
         try {
-            const stat = this.#node.statSync(path);
+            const stat = this.node.statSync(path);
             if (!stat || stat.size <= 0) return null;
 
-            const stream = this.#node.createReadStream(path);
+            const stream = this.node.createReadStream(path);
             return {stream, size: stat.size};
         } catch (err) {
             this.logger.error('NodeContext@getStream: Failed to create stream', {msg: (err as Error).message, path});
@@ -114,7 +114,7 @@ export class NodeContext extends Context {
         if (typeof (stream as any)?.pipe !== 'function') {
             if (stream instanceof ReadableStream) {
                 const reader = stream.getReader();
-                stream = new this.#node.Readable({
+                stream = new this.node.Readable({
                     async read() {
                         const {value, done} = await reader.read();
                         if (done) return this.push(null);
@@ -127,7 +127,7 @@ export class NodeContext extends Context {
                 stream instanceof ArrayBuffer ||
                 stream instanceof Blob
             ) {
-                stream = this.#node.Readable.from(stream as any);
+                stream = this.node.Readable.from(stream as any);
             } else {
                 const type = Object.prototype.toString.call(stream);
                 throw new Error(`NodeContext@stream: Unsupported stream type (${type})`);
@@ -137,19 +137,19 @@ export class NodeContext extends Context {
         super.stream(stream, size);
 
         /* Write headers */
-        this.#node_res.writeHead(this.res_code, this.res_headers);
+        this.node_res.writeHead(this.res_code, this.res_headers);
 
         /* Write cookies */
-        this.#writeCookies();
+        this.writeCookies();
 
         switch (this.method) {
             case HttpMethods.HEAD:
-                this.#node_res.end();
+                this.node_res.end();
                 (stream as import('node:stream').Readable).destroy?.();
                 break;
             default: {
-                this.#node
-                    .pipeline(stream as import('node:stream').Readable, this.#node_res as unknown as NodeJS.WritableStream)
+                this.node
+                    .pipeline(stream as import('node:stream').Readable, this.node_res as unknown as NodeJS.WritableStream)
                     .catch(err => {
                         switch (err.code) {
                             case 'ERR_STREAM_PREMATURE_CLOSE': /* Stream closed by client (eg: browser refresh) */
@@ -160,7 +160,7 @@ export class NodeContext extends Context {
                                 break;
                             default: {
                                 this.logger.error('NodeContext@stream: Failed to stream', {msg: err.message});
-                                this.#node_res.destroy(err);
+                                this.node_res.destroy(err);
                             }
                         }
                     });
@@ -180,10 +180,10 @@ export class NodeContext extends Context {
         super.abort(status);
 
         /* Write Cookies */
-        this.#writeCookies();
+        this.writeCookies();
 
         /* Write other headers and status */
-        this.#node_res.writeHead(this.res_code, this.res_headers).end();
+        this.node_res.writeHead(this.res_code, this.res_headers).end();
     }
 
     /**
@@ -195,15 +195,15 @@ export class NodeContext extends Context {
         super.end();
 
         /* Write Cookies */
-        this.#writeCookies();
+        this.writeCookies();
 
         switch (this.method) {
             case HttpMethods.HEAD:
                 this.res_headers['content-length'] = typeof this.res_body === 'string' ? '' + encoder.encode(this.res_body).length : '0';
-                this.#node_res.writeHead(this.res_code, this.res_headers).end();
+                this.node_res.writeHead(this.res_code, this.res_headers).end();
                 break;
             default:
-                this.#node_res
+                this.node_res
                     .writeHead(this.res_code, this.res_headers)
                     .end(typeof this.res_body === 'string' ? this.res_body : undefined);
                 break;
@@ -233,17 +233,17 @@ export class NodeContext extends Context {
      */
 
     protected getIP(): string | null {
-        return this.#node_req.connection?.socket?.remoteAddress ?? this.#node_req.socket?.remoteAddress ?? null;
+        return this.node_req.connection?.socket?.remoteAddress ?? this.node_req.socket?.remoteAddress ?? null;
     }
 
     /**
      * MARK: Private
      */
 
-    #writeCookies() {
+    private writeCookies() {
         if (!this.$cookies) return;
         const outgoing = this.$cookies.outgoing;
         if (!outgoing.length) return;
-        this.#node_res.setHeader('set-cookie', outgoing);
+        this.node_res.setHeader('set-cookie', outgoing);
     }
 }
