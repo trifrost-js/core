@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.54.1] - 2025-07-15
+### Improved
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250715.0
+- **deps**: Upgrade @types/node to 22.16.4
+- **deps**: Upgrade eslint to 9.31.0
+- **deps**: Upgrade typescript-eslint to 8.37.0
+
+### Fixed
+- Fix an issue in Workerd where default MemoryCache was not wrapped in a lazy init method during app construction if no cache is provided. (global `setInterval` is disallowed in Workerd)
+
 ## [0.54.0] - 2025-07-14
 This release includes a few final breaking adjustments and ergonomic improvements, the result of formalizing the caching and rate limiting subsystems during documentation.
 
