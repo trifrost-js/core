@@ -591,4 +591,68 @@ describe('Modules - Logger - Exporters - OtelHttpExporter', () => {
             ]),
         );
     });
+
+    it('Requeues logs if flush fails and buffer has room', async () => {
+        /* @ts-expect-error Should be good */
+        vi.spyOn(globalThis, 'fetch').mockResolvedValue({ok: false});
+
+        const exporter = new OtelHttpExporter({
+            logEndpoint: 'http://mock',
+            maxBatchSize: 1,
+            maxBufferSize: 10,
+            maxRetries: 1,
+        });
+        exporter.init({});
+
+        const log = {
+            time: fixedDate,
+            level: 'info',
+            message: 'requeue test',
+        } as TriFrostLoggerLogPayload;
+
+        await exporter.pushLog(log);
+        await exporter.flush();
+
+        expect((exporter as any).buffer).toHaveLength(1);
+    });
+
+    it('Requeues spans if flush fails and buffer has room', async () => {
+        /* @ts-expect-error Should be good */
+        vi.spyOn(globalThis, 'fetch').mockResolvedValue({ok: false});
+
+        const exporter = new OtelHttpExporter({
+            logEndpoint: 'http://mock',
+            maxBatchSize: 1,
+            maxBufferSize: 5,
+            maxRetries: 1,
+        });
+        exporter.init({});
+
+        const span = {
+            name: 'span-retry',
+            traceId: 'trace-1',
+            spanId: 'span-1',
+            start: fixedDate.getTime(),
+            end: fixedDate.getTime() + 100,
+            ctx: {},
+        };
+
+        await exporter.pushSpan(span);
+        await exporter.flush();
+
+        expect((exporter as any).spanBuffer).toHaveLength(1);
+    });
+
+    it('sendWithRetry returns false when all retries fail', async () => {
+        const exporter = new OtelHttpExporter({
+            logEndpoint: 'http://mock',
+            maxRetries: 1,
+        });
+
+        vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('fail'));
+
+        const result = await (exporter as any).sendWithRetry('http://mock', {some: 'body'});
+
+        expect(result).toBe(false);
+    });
 });

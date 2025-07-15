@@ -203,9 +203,7 @@ export class NodeContext extends Context {
                 this.node_res.writeHead(this.res_code, this.res_headers).end();
                 break;
             default:
-                this.node_res
-                    .writeHead(this.res_code, this.res_headers)
-                    .end(typeof this.res_body === 'string' ? this.res_body : undefined);
+                this.node_res.writeHead(this.res_code, this.res_headers).end(typeof this.res_body === 'string' ? this.res_body : undefined);
                 break;
         }
     }
