@@ -11,24 +11,45 @@
 
 **TriFrost** is a blazing-fast, runtime-agnostic server framework built for the modern JavaScript ecosystem — from low-latency edge environments to traditional backend infrastructure.
 
-Whether you're deploying to Node.js, Bun or Cloudflare Workers, TriFrost provides a unified API and internal architecture that adapts to the runtime — without compromising on performance, developer experience, or clarity.
+Whether you're deploying to Node.js, Bun, or Cloudflare Workers, TriFrost provides a unified API and internal architecture that adapts to the runtime — without compromising on performance, developer experience, or clarity.
 
 ---
 
 ## ✨ Why TriFrost?
 TriFrost is the result of deep experience across frameworks, runtimes, and production systems. It combines:
 
-- 🧩 **Koa-like composability**: build with middleware that’s small, explicit, and powerful
-- ⚡ **High performance**: thanks to tight internal control over routing, context, and async flows, how fast? [Take a look at a benchmark we did](https://www.trifrost.dev/news/blog/hello_world_benchmark_trifrost)
-- 🌐 **Edge-native philosophy**: designed from the ground up to support Cloudflare Workers, and other emerging runtimes
-- 🧠 **Observability-first design**: tracing is not an afterthought; it’s a core design concern with built-in support for structured telemetry
+- 🧩 **Koa-like composability** – build with middleware that’s small, explicit, and powerful
+- ⚡ **High performance** – with zero-cost abstractions and extremely efficient internals ([see benchmark](https://www.trifrost.dev/news/blog/hello_world_benchmark_trifrost))
+- 🌐 **Edge-native** – designed from the ground up to support Workers, Bun, and other emerging runtimes
+- 📊 **Observability-first** – tracing and structured logging are core to the architecture
 
-Unlike many frameworks, TriFrost doesn't bind itself to Node-specific APIs or assume a single deployment model. It’s truly runtime-flexible, letting you write code once and run it almost anywhere.
+Unlike many frameworks, TriFrost doesn't bind itself to Node-specific APIs or assume a single deployment model. It’s truly runtime-flexible, **write once, run anywhere**.
+
+For a deeper read:
+- [What is TriFrost](https://www.trifrost.dev/docs/what-is-trifrost)
+- [Why TriFrost?](https://www.trifrost.dev/news/blog/why_trifrost_exists)
+
+---
+
+## 🚀 1.0.0 — Stable and Ready
+TriFrost v1.0.0 marks the first **stable release**, with a production-ready core and a fully typed public API surface.
+
+- ✅ Finalized runtime contract (Node, Bun, Workerd, Cloudflare)
+- ✅ Stable context, routing, and middleware layers
+- ✅ Full test coverage and CI/CD hardening
+- ✅ Built-in logger with structured telemetry + OpenTelemetry support
+- ✅ Clean internal design with runtime adaptation and zero runtime bloat
+- ✅ JSX-native request handlers (opt-in, fully typed)
+
+> If you've been waiting to try TriFrost in production — this is the version to start with.
+
+> If you want to play games 🎮 check out [Atomic Arcade](https://arcade.trifrost.dev), a mini arcade powered by [TriFrost Atomic](https://www.trifrost.dev/docs/jsx-atomic)
 
 ---
 
 ## 📦 Quickstart
-TriFrost has a [creation cli](https://github.com/trifrost-js/create-trifrost) which is available through npm/bun create, just run:
+TriFrost has a [starter CLI](https://github.com/trifrost-js/create-trifrost) available via `npm create` / `bun create`:
+
 ```bash
 # npm
 npm create trifrost@latest
@@ -37,70 +58,54 @@ npm create trifrost@latest
 bun create trifrost@latest
 ```
 
-And you'll be set up with a starter project in under a minute.
+It’ll scaffold a project in under 60 seconds with routing, logging, and runtime setup built-in.
+
+View the [doc page for more info](https://www.trifrost.dev/docs/cli-quickstart).
 
 ---
 
 ## 📦 From Scratch
-Using your favorite package manager:
-
-```bash
-# bun
-bun add @trifrost/core
-
-# npm
-npm install @trifrost/core
-
-# pnpm
-pnpm add @trifrost/core
-
-# yarn
-yarn add @trifrost/core
-```
+You can also start from first principles. See the [Hello World example](https://www.trifrost.dev/docs/hello-world-example) to build step-by-step with only the core package.
 
 ---
 
 ## 🧠 Core Principles
-TriFrost is guided by a few key beliefs:
+TriFrost is built on these foundations:
+- 🧠 **No magic**: You should be able to trace exactly how requests are routed and handled
+- 🧱 **Lean by default**: No unnecessary dependencies, no bloat
+- 🧾 **Typed end-to-end**: Full TypeScript support with strong generics and inference
+- 🧬 **Runtime-adaptable**: Internals are modular, composable, and runtime-aware
 
-- **No magic. Ever.** You should be able to trace exactly how data flows and how handlers resolve.
-- **Lean by default.** We ship zero dependencies that aren’t critical to the core behavior.
-- **Typed end-to-end.** First-class TypeScript support with generics and inference deeply embedded.
-- **Adaptable internals.** Routing, context, and state management are designed to be both composable and overridable.
+For a full view read [Core Principles](https://www.trifrost.dev/docs/core-principles).
 
 ---
 
-## 🚀 Project Status
-TriFrost is under active development as we build toward a solid `v1.0` milestone.
-
-The internal architecture is already production-grade, but APIs may still evolve as we polish developer ergonomics, refine edge-case behaviors, and finalize DX across runtimes.
-
-If you're early-adopting:
-- We recommend pinning patch versions
-- Feedback and PRs are very welcome
-- Expect aggressive iteration
+## 🛠️ API Docs
+Full documentation for core modules, types, and runtime behavior is available on [trifrost.dev/docs](https://www.trifrost.dev/docs)
 
 ---
 
 ## 🔗 Resources
 - 🧑‍💻 GitHub: [trifrost-js/core](https://github.com/trifrost-js/core)
-- 📦 npm: [`@trifrost/core`](https://www.npmjs.com/package/@trifrost/core)
-- 🌐 Website: [trifrost.dev](https://trifrost.dev)
+- 📦 npm: [@trifrost/core](https://www.npmjs.com/package/@trifrost/core)
+- 🌐 Website: [trifrost.dev](https://trifrost.dev/)
+- 🤖 CLI: [Creation CLI](https://github.com/trifrost-js/create-trifrost)
 - 💬 Discord: [Join the community](https://discord.gg/e9zTXmtBG8)
 
 ---
 
 ## 🤝 Contributing
-Contributions are very welcome!
+TriFrost is open to contributions and collaboration.
+- 🛠️ See [open issues](https://github.com/trifrost-js/core/issues)
+- 💬 Join [discussions](https://github.com/trifrost-js/core/discussions)
+- 🧪 Run tests with `npm run test` or check coverage via `npm run test:coverage`
 
-If you're looking to get involved:
-- 📄 Check the [open issues](https://github.com/trifrost-js/core/issues) or [discussion threads](https://github.com/trifrost-js/core/discussions)
-- 🧪 Run tests with `npm run test` or check coverage with `npm run test:coverage`
-- 🔧 Code is written in modern TypeScript — **type safety and performance matter**
-
-Whether it's a bug fix, new module, test case, or doc improvement — PRs are appreciated and reviewed quickly.
+All code is modern TypeScript. **Performance and type safety are first-class concerns, and PRs are reviewed fast**.
 
 ---
 
-## 👤 Author
-Created and maintained by [Peter Vermeulen](https://github.com/peterver)
+## 👤 Authors
+Created and maintained by:
+- [Peter Vermeulen](https://github.com/peterver)
+
+With love from the [Atomic](https://arcade.trifrost.dev) systems team.
