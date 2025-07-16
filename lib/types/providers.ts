@@ -41,7 +41,7 @@ export interface TriFrostCFDurableObjectNamespace {
 
 export interface TriFrostRedis {
     get: (key: string) => Promise<string | null>;
-    set: (key: string, value: string, ...args: any[]) => Promise<void>;
-    del: (...keys: string[]) => Promise<void>;
+    set: (key: string, value: string, ...args: any[]) => Promise<void | unknown>;
+    del: (...keys: string[]) => Promise<void | unknown>;
     scan: (cursor: string, ...args: any[]) => Promise<[string, string[]]>;
 }
