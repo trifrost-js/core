@@ -112,6 +112,26 @@ describe('Modules - Cache - Utils', () => {
             expect(setFn).toHaveBeenCalledWith('dynamic:42', 'result-for-42', undefined);
         });
 
+        it('Respects computed dynamic key function and passes the args it requires', async () => {
+            const getFn = vi.fn(() => null);
+            const setFn = vi.fn();
+            const keyFn = vi.fn((ctx, orgId) => `dynamic:${ctx.userId}:${orgId}`);
+
+            class Example {
+                @cache(keyFn)
+                async get(ctx: any, orgId: string, bla: string) {
+                    return `result-for-${ctx.userId}`;
+                }
+            }
+
+            const inst = new Example();
+            const ctx = {userId: 42, cache: {get: getFn, set: setFn}};
+            expect(await inst.get(ctx, '123', 'abc')).toBe('result-for-42');
+            expect(keyFn).toHaveBeenCalledWith(ctx, '123');
+            expect(getFn).toHaveBeenCalledWith('dynamic:42:123');
+            expect(setFn).toHaveBeenCalledWith('dynamic:42:123', 'result-for-42', undefined);
+        });
+
         it('Returns raw result and skips caching if key resolution fails', async () => {
             const getFn = vi.fn();
             const setFn = vi.fn();
@@ -455,6 +475,20 @@ describe('Modules - Cache - Utils', () => {
             expect(await wrapped({id: 7, cache: {get: getFn, set: setFn}})).toBe('by-user');
             expect(getFn).toHaveBeenCalledWith('user:7');
             expect(setFn).toHaveBeenCalledWith('user:7', 'by-user', undefined);
+        });
+
+        it('Supports dynamic key via function with parameters', async () => {
+            const getFn = vi.fn(() => null);
+            const setFn = vi.fn();
+            const fn = vi.fn(() => 'by-user');
+
+            const keyFn = vi.fn((ctx, orgId) => `user:${ctx.id}:${orgId}`);
+            const wrapped = cacheFn(keyFn)(fn);
+            const ctx = {id: 7, cache: {get: getFn, set: setFn}};
+            expect(await wrapped(ctx, '123', 'abc')).toBe('by-user');
+            expect(keyFn).toHaveBeenCalledWith(ctx, '123');
+            expect(getFn).toHaveBeenCalledWith('user:7:123');
+            expect(setFn).toHaveBeenCalledWith('user:7:123', 'by-user', undefined);
         });
 
         it('Skips caching if dynamic key resolution fails', async () => {
