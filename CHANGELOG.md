@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-07-17
+### Improved
+- **dx**: `@cache` decorator and `cacheFn` helper now support **partial argument key functions**, allowing key generators to use only a subset of parameters. This improves flexibility without losing type safety
+```typescript
+@cache((ctx, userId) => `user:${userId}`)
+async getUser(ctx: Context, userId: string, includeMeta = false) {
+  ...
+}
+
+const fn = cacheFn((ctx, userId) => `user:${userId}`)(
+  async (ctx:Context, userId:string, includeMeta:boolean) => {
+    ...
+  }
+);
+```
+- **dx**: `TriFrostRedis`, the provider shim type used inside of the RedisCache now has its `set` and `del` return type set as `Promise<unknown>` instead of `Promise<void>`
+
 ## [1.0.0] - 2025-07-15
 🎉 First stable release of TriFrost!
 
@@ -119,7 +136,7 @@ new App<Env>({
 
 ---
 
-TriFrost continues to move toward a tightly consistent, runtime-aware core. 
+TriFrost continues to move toward a tightly consistent, runtime-aware core.
 
 With caching and rate limiting now unified under deferred initialization, and with skip logic formalized, we’re within reach of a stable surface for 1.0.
 
