@@ -716,7 +716,9 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d,loc){
             goto: (v, o) => {
                 if (!isStr(v) || !v) return;
 
-                if (v.startsWith("#")) {
+                if (v[0] === "?") v = loc.pathname + v;
+
+                if (v[0] === "#") {
                     loc.hash = v;
                     return;
                 }
@@ -748,8 +750,8 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d,loc){
                     }
                 }
 
-                if (f.blank && isfull && !isorig) window.open(nv, "_blank");
-                else if (f.replace) loc.replace(nv);
+                if (f.blank && isfull && !isorig) w.open(nv, "_blank");
+                else if (f.replace) w.history.replaceState({}, "", nv);
                 else loc.href = nv;
             },
             isArr,
@@ -760,7 +762,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d,loc){
             isNum,
             isObj,
             isStr,
-            isTouch: (() => "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0)(),
+            isTouch: (() => "ontouchstart" in w || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0)(),
             on: (n, t, f) => {
                 n.addEventListener(t, f);
                 const h = () => {
