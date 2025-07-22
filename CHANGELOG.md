@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 ### Added
+- **feat**: `$.goto` utility, a high-level navigation helper for declarative and ergonomic client-side routing with built-in handling for query merging, blank tab opening, and replace-mode navigation.
+```typescript
+$.goto("/dashboard");
+// → Navigates to: /dashboard
+```
+```typescript
+$.goto("/login", "replace");
+// → Replaces current history entry with /login
+```
+```typescript
+$.goto("https://external.site", "blank");
+// → Opens https://external.site in a new tab
+```
+```typescript
+// Current url: https://app.local/settings?page=2&theme=dark
+
+$.goto("/account", "query");
+// → Navigates to: /account?page=2&theme=dark
+
+$.goto("/search?q=test", "query");
+// → Navigates to: /search?q=test&page=2&theme=dark
+
+$.goto("/search?q=test&page=3", "query");
+// → Navigates to: /search?q=test&page=3&theme=dark
+
+$.goto("/profile", {
+  replace: true,
+  includeQuery: true
+});
+// → Replaces history with: /profile?page=2&theme=dark
+```
 - **feat**: Default CSS media breakpoints now includes `tabletUp`, allowing you to target tablet and above. The current set of default breakpoints is now:
 ```typescript
 css.media.mobile /* <= 600px */
@@ -39,6 +70,35 @@ css({
 - **deps**: Upgrade eslint-config-prettier to 10.1.8
 - **deps**: Upgrade eslint-plugin-prettier to 5.5.3
 - **deps**: Upgrade typescript-eslint to 8.38.0
+- **feat**: `$.storeSet` now short-circuits when provided value equals the current value, reducing unnecessary storage operations.
+- **feat**: `$bind` avoids re-binding already-bound inputs if passed multiple times, preventing redundant event wiring.
+- **feat**: `$.uid` now falls back to `Date.now()` + RNG if `crypto.randomUUID` is unavailable
+- **feat**: **Automatic Cleanup** for `$.on` event listeners. Listeners are now **auto-unregistered** when **a VM unmounts**, an element is **detached from the DOM**, dynamic elements created via `$.create` are removed.
+
+##### $.on Before (Manual Cleanup)
+```typescript
+const listener = $.on(window, "resize", () => {
+  console.log("Resized");
+});
+
+el.$unmount = () => {
+  listener();
+};
+```
+
+##### $.on After (Automatic Cleanup)
+```typescript
+$.on(window, "resize", () => {
+  console.log("Resized");
+});
+
+// No manual cleanup needed — handled by the VM and node itself
+```
+
+The same applies to:
+- Element listeners (`$.on(el, "click", ...)`)
+- Global listeners (`$.on(window, "keydown", ...)`)
+- Listeners added to dynamically created elements using `$.create("div")`
 
 ## [1.1.0] - 2025-07-17
 ### Improved

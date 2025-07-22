@@ -13,6 +13,7 @@ const GLOBAL_STORE_NAME = '$tfs';
 const GLOBAL_CLOCK = '$tfc';
 const GLOBAL_CLOCK_TICK = '$tfcr';
 const VM_NAME = '$tfVM';
+const VM_CLEANUP_ARR = '$tfVMC';
 export const VM_ID_NAME = '$uid';
 const VM_RELAY_SUBSCRIBE_NAME = '$subscribe';
 const VM_RELAY_SUBSCRIBE_ONCE_NAME = '$subscribeOnce';
@@ -139,9 +140,9 @@ export type TriFrostAtomicUtils<
     TFCSSVar extends string = string,
     TFCSSTheme extends string = string,
 > = {
-    /* Blurs the currently focussed dom element */
+    /* Blurs the currently focused DOM element */
     blurActive: () => void;
-    /* Clears the children from a dom node */
+    /* Clears the children from a DOM node */
     clear: (el: Element) => void;
     create: <K extends keyof KnownTagNameMap>(
         tag: K,
@@ -173,6 +174,19 @@ export type TriFrostAtomicUtils<
     }>;
     /* Event Dispatch */
     fire: <T = unknown>(el: Element, type: string, options?: {data?: T; mode?: 'up' | 'down'}) => void;
+    /* Go To navigation utility */
+    goto: (
+        url: string,
+        opts?:
+            | 'blank'
+            | 'replace'
+            | 'query'
+            | {
+                  blank?: boolean;
+                  replace?: boolean;
+                  includeQuery?: boolean;
+              },
+    ) => void;
     /* Generic is* */
     isArr: <T = unknown>(val: unknown) => val is T[];
     isBool: (val: unknown) => val is boolean;
@@ -222,7 +236,7 @@ export type TriFrostAtomicUtils<
     cssTheme: (name: TFCSSTheme | `--${string}`) => string;
 };
 
-export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d){
+export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d,loc){
     const def = (n, v, t = w) => {
         if (!t[n]) Object.defineProperty(t, n, {value:v, configurable:!1, writable:!1});
     };
@@ -339,6 +353,11 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d){
                 w.${GLOBAL_CLOCK}?.delete(nR.${VM_ID_NAME});
                 w.${GLOBAL_ARC_NAME}?.release(nR.${VM_ID_NAME});
             }
+            if (isArr(nR.${VM_CLEANUP_ARR})) {
+                for (let i = 0; i < nR.${VM_CLEANUP_ARR}.length; i++) {
+                    nR.${VM_CLEANUP_ARR}[i]();
+                }
+            }
             if (nR.children?.length) {
                 for (let i = 0; i < nR.children.length; i++) {
                     clean(nR.children[i]);
@@ -377,7 +396,7 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d){
                 return s[k]
             },
             set: (k, v, o = {}) => {
-                if (!isStr(k) || !k) return;
+                if (!isStr(k) || !k || eq(s[k], v)) return;
                 s[k] = v;
                 if (o?.persist === true) {
                     try {
@@ -558,12 +577,14 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d){
                         (subs[p] ??= []).push(sync);
 
                         for (const n of nI) {
+                            if (n.$tfbound) continue;
                             n.addEventListener("input", fn);
                             if (
                                 n.type === "checkbox" ||
                                 n.type === "radio" ||
                                 n.tagName === "SELECT"
                             ) n.addEventListener("change", fn);
+                            def("$tfbound", 1, n);
                         }
 
                         if (isFn(o)) {
@@ -596,16 +617,14 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d){
 
     /* Utils */
     def("${GLOBAL_UTILS_NAME}", (() => {
-        return (ext={}) => {
-            const obj = Object.create(null);
-            const oD = (n, v) => def(n, v, obj);
-            oD("blurActive", () => {
+        return (ext={}, cArr = null) => Object.freeze(Object.assign(Object.create(null), {
+            blurActive: () => {
                 if (d.activeElement instanceof HTMLElement) d.activeElement.blur();
-            });
-            oD("clear", n => {
+            },
+            clear: n => {
                 while (n.firstChild) n.removeChild(n.firstChild);
-            });
-            oD("create", (() => {
+            },
+            create: (() => {
                 const s = new Set(["svg", "path", "circle", "rect", "g", "defs", "text", "use", "line", "polyline", "polygon", "ellipse", "symbol", "clipPath", "linearGradient", "radialGradient", "filter", "mask", "pattern"]);
                 return (t, o = {}) => {
                     const e = s.has(t)
@@ -614,20 +633,21 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d){
                     if (isObj(o.attrs)) for (const k in o.attrs) e.setAttribute(k, o.attrs[k]);
                     if (isObj(o.style)) for (const k in o.style) e.style[k] = o.style[k];
                     if (isArr(o.children)) for (const c of o.children) e.appendChild(isStr(c) ? d.createTextNode(c) : c);
+                    if (e.nodeType === Node.ELEMENT_NODE && !isArr(e.${VM_CLEANUP_ARR})) def("${VM_CLEANUP_ARR}", [], e);
                     return e;
                 };
-            })());
-            oD("debounce", (fn, ms) => {
+            })(),
+            debounce: (fn, ms) => {
                 let t;
                 return (...args) => {
                     clearTimeout(t);
                     t = setTimeout(() => fn(...args), ms);
                 };
-            });
-            oD("eq", eq);
-            oD("uid", () => crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
-            oD("sleep", ms => new Promise(r => setTimeout(r, ms)));
-            oD("fetch", async (url, o = {}) => {
+            },
+            eq,
+            uid: () => crypto?.randomUUID?.() ?? (Date.now().toString(36) + Math.random().toString(36).slice(2)),
+            sleep: ms => new Promise(r => setTimeout(r, ms)),
+            fetch: async (url, o = {}) => {
                 const { method = "GET", headers = {}, body, timeout, credentials = "include" } = o;
                 const isJSON = body && typeof body === "object" && !(body instanceof FormData);
                 const nHeaders = { ...headers };
@@ -687,59 +707,106 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d){
                     }
                     throw err;
                 }
-            });
-            oD("fire", (n, t, o) => n.dispatchEvent(cEvent(t, {
+            },
+            fire: (n, t, o) => n.dispatchEvent(cEvent(t, {
                 detail: o?.data,
                 bubbles:(o?.mode ?? "up") === "up",
                 cancelable:!0
-            })));
-            oD("isArr", isArr);
-            oD("isBool", isBool);
-            oD("isDate", isDate);
-            oD("isFn", isFn);
-            oD("isInt", isInt);
-            oD("isNum", isNum);
-            oD("isObj", isObj);
-            oD("isStr", isStr);
-            oD("isTouch", (() => "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0)());
-            oD("on", (n, t, f) => {
+            })),
+            goto: (v, o) => {
+                if (!isStr(v) || !v) return;
+
+                if (v.startsWith("#")) {
+                    loc.hash = v;
+                    return;
+                }
+
+                const isfull = /^[a-zA-Z][a-zA-Z\\d+\\-.]*:/.test(v);
+                const isorig = (() => {
+                    try {
+                        const u = new URL(v, loc.origin);
+                        return u.origin === loc.origin;
+                    } catch {
+                        return false;
+                    }
+                })();
+
+                const f = isStr(o)
+                    ? {blank: o === "blank", replace: o === "replace", includeQuery: o === "query"}
+                    : isObj(o) ? o : {};
+
+                let nv = v;
+                if (f.includeQuery && (!isfull || isorig)) {
+                    try {
+                        const t = new URL(v, loc.origin);
+                        const c = new URLSearchParams(loc.search);
+                        const e = [...c.entries()];
+                        for (let i = 0; i < e.length; i++) t.searchParams.set(e[i][0], e[i][1]);
+                        nv = t.pathname + (t.searchParams.toString() ? "?" + t.searchParams : "") + t.hash;
+                    } catch {
+                        if (!v.includes("?") && loc.search) nv += loc.search;
+                    }
+                }
+
+                if (f.blank && isfull && !isorig) window.open(nv, "_blank");
+                else if (f.replace) loc.replace(nv);
+                else loc.href = nv;
+            },
+            isArr,
+            isBool,
+            isDate,
+            isFn,
+            isInt,
+            isNum,
+            isObj,
+            isStr,
+            isTouch: (() => "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0)(),
+            on: (n, t, f) => {
                 n.addEventListener(t, f);
-                return () => n?.removeEventListener(t, f);
-            });
-            oD("once", (n, t, f) => {
+                const h = () => {
+                    try {n?.removeEventListener(t, f);} catch {}
+                };
+                if (isArr(cArr) && cArr !== n.${VM_CLEANUP_ARR}) cArr.push(h);
+                if (n.nodeType === Node.ELEMENT_NODE) {
+                    if (!isArr(n.${VM_CLEANUP_ARR})) def("${VM_CLEANUP_ARR}", [], n);
+                    n.${VM_CLEANUP_ARR}.push(h);
+                }
+                return h;
+            },
+            once: (n, t, f) => {
                 const w = e => {
                     try { f(e); }
                     finally { n?.removeEventListener(t, w); }
                 };
                 n.addEventListener(t, w);
-            });
-            oD("query", qOne);
-            oD("queryAll", qAll);
-            oD("storeGet", w.${GLOBAL_STORE_NAME}.get);
-            oD("storeSet", w.${GLOBAL_STORE_NAME}.set);
-            oD("storeDel", w.${GLOBAL_STORE_NAME}.del);
-            oD("timedAttr", (n, k, o) => {
+            },
+            query: qOne,
+            queryAll: qAll,
+            storeGet: w.${GLOBAL_STORE_NAME}.get,
+            storeSet: w.${GLOBAL_STORE_NAME}.set,
+            storeDel: w.${GLOBAL_STORE_NAME}.del,
+            timedAttr: (n, k, o) => {
                 n.setAttribute(k, o.value ?? "");
                 return setTimeout(() => {
                     if (o.cleanup !== false) n.removeAttribute(k);
                     o.after?.();
                 }, o.duration);
-            });
-            oD("timedClass", (n, k, o) => {
+            },
+            timedClass: (n, k, o) => {
                 n.classList.add(k);
                 return setTimeout(() => {
                     if (o.cleanup !== false) n.classList.remove(k);
                     o.after?.();
                 }, o.duration);
-            });
-            oD("cssVar", (() => {
+            },
+            cssVar: (() => {
                 let c;
                 return v => {
                     if (!c) c = getComputedStyle(d.documentElement);
                     return c.getPropertyValue(v.startsWith("--") ? v : "--v-" + v).trim() || "";
                 };
-            })());
-            oD("cssTheme", (() => {
+            })(),
+            cssTheme: (() => {
                 let c, t;
                 return v => {
                     const n = d.documentElement;
@@ -750,12 +817,8 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d){
                     }
                     return c.getPropertyValue(v.startsWith("--") ? v : "--t-" + v).trim() || "";
                 };
-            })());
-
-            for (const k in ext) oD(k, ext[k]);
-
-            return Object.freeze(obj);
-        };
+            })(),
+        }, ext));
     })());
 
     /* __name shim */
@@ -765,16 +828,16 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d){
     });
 
     def("${GLOBAL_HYDRATED_NAME}", !0);
-})(window,document);`);
+})(window,document,location);`);
 
 export const ARC_GLOBAL = memoize((debug: boolean) => {
-    return atomicMinify(`(function(w,d){
+    return atomicMinify(`(function(win,doc){
     const oD = (n, v, t) => {
         if (!t[n]) Object.defineProperty(t, n, {value:v, configurable:!1, writable:!1});
     };
     const gI = () => Math.random().toString(36).slice(2);
 
-    oD("${GLOBAL_ARC_LOG}", {debug:${debug ? 'console.debug' : '() => {}'}}, w);
+    oD("${GLOBAL_ARC_LOG}", {debug:${debug ? 'console.debug' : '() => {}'}}, win);
 
     oD("${GLOBAL_ARC_NAME}", (() => {
         const f=new Map(),d=new Map(),v=new Map(),m=new Map(),extensions={};
@@ -787,20 +850,19 @@ export const ARC_GLOBAL = memoize((debug: boolean) => {
                 const de = d.get(r.data_id);
                 if(de && --de.refs <= 0) d.delete(r.data_id);
             },
-            spark(FNS, DAT, scope = d){
-                const ATOMIC = !!w.${GLOBAL_HYDRATED_NAME};
+            spark(FNS, DAT, scope = doc){
+                const ATOMIC = !!win.${GLOBAL_HYDRATED_NAME};
 
                 for (const [DID, val] of DAT) {
                     if(!d.has(DID))d.set(DID,{val,refs:0});
                 }
 
-                const $ = ATOMIC ? w.${GLOBAL_UTILS_NAME}(extensions) : {};
                 for (const [FID, fn] of FNS) {
                     if(fn !== undefined && !f.has(FID)) f.set(FID, {fn});
 
                     const FREG = f.get(FID);
                     if (!FREG?.fn) continue;
-                    const nodes = (scope || d).querySelectorAll?.(\`[data-tfhf="\${FID}"]\`) || [];
+                    const nodes = (scope || doc).querySelectorAll?.(\`[data-tfhf="\${FID}"]\`) || [];
                     for (const n of nodes) {
                         if (n.${VM_ID_NAME}) continue;
                         const DID = n.getAttribute("data-tfhd") || undefined;
@@ -808,37 +870,40 @@ export const ARC_GLOBAL = memoize((debug: boolean) => {
                         const UID = gI();
                         oD("${VM_ID_NAME}", UID, n);
                         if (ATOMIC) {
-                            oD("${VM_RELAY_SUBSCRIBE_NAME}", (t, c) => w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, t, c), n);
-                            oD("${VM_RELAY_SUBSCRIBE_ONCE_NAME}", (t, c) => w.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, t, v => {
+                            oD("${VM_RELAY_SUBSCRIBE_NAME}", (t, c) => win.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, t, c), n);
+                            oD("${VM_RELAY_SUBSCRIBE_ONCE_NAME}", (t, c) => win.${GLOBAL_RELAY_NAME}.subscribe(n.${VM_ID_NAME}, t, v => {
                                 c(v);
                                 n.${VM_RELAY_UNSUBSCRIBE_NAME}(t);
                             }), n);
-                            oD("${VM_RELAY_UNSUBSCRIBE_NAME}", t => w.${GLOBAL_RELAY_NAME}.unsubscribe(n.${VM_ID_NAME}, t), n);
-                            oD("${VM_RELAY_PUBLISH_NAME}", (t, v) => w.${GLOBAL_RELAY_NAME}.publish(t, v), n);
+                            oD("${VM_RELAY_UNSUBSCRIBE_NAME}", t => win.${GLOBAL_RELAY_NAME}.unsubscribe(n.${VM_ID_NAME}, t), n);
+                            oD("${VM_RELAY_PUBLISH_NAME}", (t, v) => win.${GLOBAL_RELAY_NAME}.publish(t, v), n);
                             oD("${VM_NAME}", true, n);
+                            oD("${VM_CLEANUP_ARR}", [], n);
                         }
                         try {
-                            FREG.fn(ATOMIC
-                                ? {el:n, data: w.${GLOBAL_DATA_REACTOR_NAME}(n,DREG?.val??{}), $}
-                                : {el:n, data: DREG?.val??{}});
+                            FREG.fn({
+                                el: n,
+                                data: ATOMIC ? win.${GLOBAL_DATA_REACTOR_NAME}(n,DREG?.val??{}) : DREG?.val??{},
+                                $: ATOMIC ? win.${GLOBAL_UTILS_NAME}(extensions, n.${VM_CLEANUP_ARR}) : undefined
+                            });
                             v.set(UID, {fn_id: FID, data_id: DID});
                             if (DID && DREG) DREG.refs++;
                             if (ATOMIC && typeof n.${VM_HOOK_MOUNT_NAME} === "function") {
                                 try {n.${VM_HOOK_MOUNT_NAME}()}
-                                catch (err) {w.${GLOBAL_ARC_LOG}.debug("[Atomic] Failed to mount", err);}
+                                catch (err) {win.${GLOBAL_ARC_LOG}.debug("[Atomic] Failed to mount", err);}
                             }
 
                             n.removeAttribute("data-tfhf");
                             n.removeAttribute("data-tfhd");
                         } catch (err) {
-                            w.${GLOBAL_ARC_LOG}.debug("[Atomic] Script Instantiation Error", err);
+                            win.${GLOBAL_ARC_LOG}.debug("[Atomic] Script Instantiation Error", err);
                         }
                     }
                 }
             },
             sparkModule(MODS) {
-                const ATOMIC = !!w.${GLOBAL_HYDRATED_NAME};
-                const $ = ATOMIC ? w.${GLOBAL_UTILS_NAME}(extensions) : {};
+                const ATOMIC = !!win.${GLOBAL_HYDRATED_NAME};
+                const $ = ATOMIC ? win.${GLOBAL_UTILS_NAME}(extensions) : {};
 
                 for (let i = 0; i < MODS.length; i++) {
                     const [FID, fn, name, data] = MODS[i];
@@ -848,26 +913,26 @@ export const ARC_GLOBAL = memoize((debug: boolean) => {
                     m.set(FID, UID);
 
                     const n = {};
-                    oD("${VM_RELAY_SUBSCRIBE_NAME}", (t, c) => w.${GLOBAL_RELAY_NAME}.subscribe(UID, t, c), n);
-                    oD("${VM_RELAY_SUBSCRIBE_ONCE_NAME}", (t, c) => w.${GLOBAL_RELAY_NAME}.subscribe(UID, t, v => {
+                    oD("${VM_RELAY_SUBSCRIBE_NAME}", (t, c) => win.${GLOBAL_RELAY_NAME}.subscribe(UID, t, c), n);
+                    oD("${VM_RELAY_SUBSCRIBE_ONCE_NAME}", (t, c) => win.${GLOBAL_RELAY_NAME}.subscribe(UID, t, v => {
                         c(v);
-                        w.${GLOBAL_RELAY_NAME}.unsubscribe(UID, t);
+                        win.${GLOBAL_RELAY_NAME}.unsubscribe(UID, t);
                     }), n);
-                    oD("${VM_RELAY_UNSUBSCRIBE_NAME}", t => w.${GLOBAL_RELAY_NAME}.unsubscribe(UID, t), n);
-                    oD("${VM_RELAY_PUBLISH_NAME}", (t, v) => w.${GLOBAL_RELAY_NAME}.publish(t, v), n);
+                    oD("${VM_RELAY_UNSUBSCRIBE_NAME}", t => win.${GLOBAL_RELAY_NAME}.unsubscribe(UID, t), n);
+                    oD("${VM_RELAY_PUBLISH_NAME}", (t, v) => win.${GLOBAL_RELAY_NAME}.publish(t, v), n);
 
                     try {
                         const ext = fn(ATOMIC
-                            ? {mod:n, data: w.${GLOBAL_DATA_REACTOR_NAME}({}, data || {}), $}
+                            ? {mod:n, data: win.${GLOBAL_DATA_REACTOR_NAME}({}, data || {}), $}
                             : {mod:n, data});
                         if (ATOMIC && Object.prototype.toString.call(ext) === "[object Object]") extensions[name] = ext;
                     } catch (err) {
-                        w.${GLOBAL_ARC_LOG}.debug("[Atomic] Module Instantiation Error", err);
+                        win.${GLOBAL_ARC_LOG}.debug("[Atomic] Module Instantiation Error", err);
                     }
                 }
             },
         });
-    })(), w);
+    })(), win);
 })(window,document);`);
 });
 
