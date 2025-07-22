@@ -18,6 +18,7 @@ const FIXED_FEATURE_QUERIES = {
 const DEFAULT_BREAKPOINTS = {
     mobile: '@media (max-width: 600px)',
     tablet: '@media (max-width: 1199px)',
+    tabletUp: '@media (min-width: 601px)',
     tabletOnly: '@media (min-width: 601px) and (max-width: 1199px)',
     desktop: '@media (min-width: 1200px)',
 } as const;

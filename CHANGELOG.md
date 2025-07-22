@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- **feat**: Default CSS media breakpoints now includes `tabletUp`, allowing you to target tablet and above. The current set of default breakpoints is now:
+```typescript
+css.media.mobile /* <= 600px */
+css.media.tablet /* <= 1199px */
+css.media.tabletOnly /* > 600px AND < 1200px */
+css.media.tabletUp /* > 600px */
+css.media.desktop /* >= 1200px */
+```
+
+Where previously you'd do something like:
+```typescript
+css({
+  [css.media.tablet]: {flexDirection: 'row'},
+  [css.media.desktop]: {flexDirection: 'row'},
+  [css.media.mobile]: {flexDirection: 'column'},
+})
+```
+
+You can now shorten this to:
+```typescript
+css({
+  [css.media.tabletUp]: {flexDirection: 'row'},
+  [css.media.mobile]: {flexDirection: 'column'},
+})
+```
+
 ## [1.1.0] - 2025-07-17
 ### Improved
 - **dx**: `@cache` decorator and `cacheFn` helper now support **partial argument key functions**, allowing key generators to use only a subset of parameters. This improves flexibility without losing type safety
