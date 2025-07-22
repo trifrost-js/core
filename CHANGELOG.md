@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2025-07-22
+### Improved
+- **feat**: Enhanced `$.goto` with ergonomic support for query-only shorthands. If the URL starts with `?`, the current `location.pathname` is automatically prepended. Example:
+```typescript
+// Current URL: /dashboard?page=1
+$.goto("?page=2");
+// → Navigates to: /dashboard?page=2
+
+// This was previously already there, but:
+$.goto("#top");
+// → Updates hash to /dashboard#top (no navigation)
+```
+- **feat**: `$.goto(..., { replace: true })` now uses `history.replaceState(...)` internally, allowing **non-navigational updates** to the URL, ideal for in-place query string modifications without reloads.
+
 ## [1.2.0] - 2025-07-22
 This update brings quality-of-life enhancements to TriFrost’s client-side utilities, focused on ergonomics and resilience in dynamic UIs.
 
