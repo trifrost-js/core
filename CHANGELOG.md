@@ -32,6 +32,14 @@ css({
 })
 ```
 
+### Improved
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250722.0
+- **deps**: Upgrade @types/node to 22.16.5
+- **deps**: Upgrade bun-types to 1.2.19
+- **deps**: Upgrade eslint-config-prettier to 10.1.8
+- **deps**: Upgrade eslint-plugin-prettier to 5.5.3
+- **deps**: Upgrade typescript-eslint to 8.38.0
+
 ## [1.1.0] - 2025-07-17
 ### Improved
 - **dx**: `@cache` decorator and `cacheFn` helper now support **partial argument key functions**, allowing key generators to use only a subset of parameters. This improves flexibility without losing type safety

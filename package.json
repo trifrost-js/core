@@ -115,17 +115,17 @@
         "@valkyriestudios/utils": "^12.42.0"
     },
     "devDependencies": {
-        "@cloudflare/workers-types": "^4.20250715.0",
-        "@types/node": "^22.16.4",
+        "@cloudflare/workers-types": "^4.20250722.0",
+        "@types/node": "^22.16.5",
         "@vitest/coverage-v8": "^3.2.4",
-        "bun-types": "^1.2.18",
+        "bun-types": "^1.2.19",
         "esbuild-register": "^3.6.0",
         "eslint": "^9.31.0",
-        "eslint-config-prettier": "^10.1.5",
-        "eslint-plugin-prettier": "^5.5.1",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-prettier": "^5.5.3",
         "prettier": "^3.6.2",
         "typescript": "^5.8.3",
-        "typescript-eslint": "^8.37.0",
+        "typescript-eslint": "^8.38.0",
         "vitest": "^3.2.4"
     }
 }
