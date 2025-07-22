@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2025-07-22
+This update brings quality-of-life enhancements to TriFrost’s client-side utilities, focused on ergonomics and resilience in dynamic UIs.
+
 ### Added
 - **feat**: `$.goto` utility, a high-level navigation helper for declarative and ergonomic client-side routing with built-in handling for query merging, blank tab opening, and replace-mode navigation.
 ```typescript
@@ -99,6 +101,12 @@ The same applies to:
 - Element listeners (`$.on(el, "click", ...)`)
 - Global listeners (`$.on(window, "keydown", ...)`)
 - Listeners added to dynamically created elements using `$.create("div")`
+
+---
+
+These changes reduce boilerplate and improve durability, especially in ephemeral or reactive UI flows.
+
+As always. Stay frosty. ❄️
 
 ## [1.1.0] - 2025-07-17
 ### Improved
