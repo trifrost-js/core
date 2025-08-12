@@ -3,18 +3,18 @@
     "version": "1.2.1",
     "description": "Blazingly fast, runtime-agnostic server framework for modern edge and node environments",
     "scripts": {
-        "build": "npm run lint && npm run test && npm run build:esm && npm run build:cjs && npm run build:types && npm run build:jsx",
+        "build": "node ./scripts/build-all.mjs",
         "build:esm": "tsc -p tsconfig.build.esm.json",
         "build:cjs": "tsc -p tsconfig.build.cjs.json",
         "build:types": "tsc -p tsconfig.types.json",
-        "build:jsx": "cp ./lib/modules/JSX/jsx.d.ts ./dist/types/modules/JSX/jsx.d.ts && cp ./lib/modules/JSX/atomic.d.ts ./dist/types/modules/JSX/atomic.d.ts && cp ./lib/jsx-runtime.d.ts ./dist/types/jsx-runtime.d.ts",
-        "test": "vitest run --config vitest.config.ts",
-        "test:coverage": "vitest run --coverage --config vitest.coverage.config.ts",
+        "build:jsx": "node ./scripts/postbuild.mjs",
+        "test": "npx vitest run --config vitest.config.ts",
+        "test:coverage": "npx vitest run --coverage --config vitest.coverage.config.ts",
         "lint": "npm run lint:src && npm run lint:test",
-        "lint:src": "./node_modules/.bin/eslint ./lib",
-        "lint:test": "./node_modules/.bin/eslint ./test",
-        "benchmark": "vitest bench --config vitest.config.ts",
-        "types": "tsc -p ./tsconfig.json --noEmit"
+        "lint:src": "npx eslint ./lib",
+        "lint:test": "npx eslint ./test",
+        "benchmark": "npx vitest bench --config vitest.config.ts",
+        "types": "npx tsc -p ./tsconfig.json --noEmit"
     },
     "author": {
         "name": "Peter Vermeulen",
