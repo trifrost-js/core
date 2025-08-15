@@ -1,4 +1,4 @@
-export type FileStreamLike = ReadableStream | Uint8Array | ArrayBuffer | Blob | string;
+export type FileStreamLike = ReadableStream | Uint8Array<ArrayBuffer> | ArrayBuffer | Blob | string;
 
 /**
  * Verifies that an unknown stream is file-stream-like for usage in new Response

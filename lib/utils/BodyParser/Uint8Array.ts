@@ -96,7 +96,7 @@ export async function parseMultipart(
             continue;
         }
 
-        const content = part.subarray(header_end_idx + 4);
+        const content = part.subarray(header_end_idx + 4) as Uint8Array<ArrayBuffer>;
 
         let disposition: string | null = null;
         let type: string | null = null;
