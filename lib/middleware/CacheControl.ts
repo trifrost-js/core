@@ -97,7 +97,10 @@ function parse(opts: TriFrostCacheControlOptions): string | null {
  * @param {TriFrostContext} ctx - Context the headers are to be applied to
  * @param {TriFrostCacheControlOptions} opts - Cache Header Options
  */
-export function ParseAndApplyCacheControl(ctx: TriFrostContext, opts: TriFrostCacheControlOptions) {
+export function ParseAndApplyCacheControl<Env extends Record<string, any> = {}, State extends Record<string, unknown> = {}>(
+    ctx: TriFrostContext<Env, State>,
+    opts: TriFrostCacheControlOptions,
+) {
     const val = parse(opts);
     if (val) ctx.setHeader('cache-control', val);
 }

@@ -6,8 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 ### Improved
-- **feat**: [Added support to run scripts on windows machines](https://github.com/trifrost-js/core/pull/3) by [@dennishavermans](https://github.com/dennishavermans)
-- **misc**: Migrated to typescript 5.9 and updated types to align with [lib.d.ts changes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-9.html#libdts-changes)
+- **feat**: [Added support to run scripts on Windows machines](https://github.com/trifrost-js/core/pull/3) by [@dennishavermans](https://github.com/dennishavermans)
+- **feat**: `afterHooks` (added through `.addAfter`, which get run after the request finishes) now receive the `context` instance, allowing hooks to inspect context state or perform additional actions using the context without being tied to request lifetime.
+- **misc**: Migrated to TypeScript 5.9 and updated types to align with [lib.d.ts changes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-9.html#libdts-changes)
 - **deps**: Upgrade @cloudflare/workers-types to 4.20250813.0
 - **deps**: Upgrade @types/node to 22.17.2
 - **deps**: Upgrade bun-types to 1.2.20

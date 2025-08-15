@@ -180,7 +180,7 @@ export class WorkerdContext extends Context {
         const hooks = this.afterHooks;
         for (let i = 0; i < hooks.length; i++) {
             try {
-                this.workerd_ctx.waitUntil(hooks[i]());
+                this.workerd_ctx.waitUntil(hooks[i](this));
             } catch {
                 /* No-Op */
             }

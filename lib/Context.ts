@@ -102,7 +102,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
     #timeout_id: any | null = null;
 
     /* Hooks to be executed after the context has finished */
-    #after: (() => Promise<void>)[] = [];
+    #after: (<S extends {}>(ctx: TriFrostContext<Env, S>) => Promise<void>)[] = [];
 
     /**
      * MARK: Protected
@@ -302,7 +302,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
      * Cookies for context
      */
     get cookies(): Cookies {
-        if (!this.$cookies) this.$cookies = new Cookies(this as TriFrostContext, this.ctx_config.cookies);
+        if (!this.$cookies) this.$cookies = new Cookies(this as TriFrostContext<Env, State>, this.ctx_config.cookies);
         return this.$cookies;
     }
 
@@ -375,7 +375,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
     /**
      * Returns the currently registered after hooks
      */
-    get afterHooks(): (() => Promise<void>)[] {
+    get afterHooks(): (<S extends {}>(ctx: TriFrostContext<Env, S>) => Promise<void>)[] {
         return this.#after;
     }
 
@@ -648,9 +648,9 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
     /**
      * Register an after hook
      */
-    addAfter(fn: () => Promise<void>) {
+    addAfter<S extends {}>(fn: (ctx: TriFrostContext<Env, S>) => Promise<void>) {
         if (typeof fn !== 'function') return;
-        this.#after.push(fn);
+        this.#after.push(fn as any);
     }
 
     /**
@@ -672,7 +672,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
             if (this.isLocked) throw new Error('Context@file: Cannot modify a finalized response');
 
             /* Cache Control */
-            if (opts?.cacheControl) ParseAndApplyCacheControl(this as TriFrostContext, opts.cacheControl);
+            if (opts?.cacheControl) ParseAndApplyCacheControl<Env, State>(this, opts.cacheControl);
 
             let stream: unknown;
             let size: number | null = null;
@@ -727,7 +727,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
             if (this.isLocked) throw new Error('Context@html: Cannot modify a finalized response');
 
             /* Cache Control */
-            if (opts?.cacheControl) ParseAndApplyCacheControl(this, opts.cacheControl);
+            if (opts?.cacheControl) ParseAndApplyCacheControl<Env, State>(this, opts.cacheControl);
 
             /* Set mime type if no mime type was set already */
             if (!this.res_headers['content-type']) this.res_headers['content-type'] = MimeTypes.HTML;
@@ -786,7 +786,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
                 throw new Error('Context@json: Invalid Payload');
 
             /* Cache Control */
-            if (opts?.cacheControl) ParseAndApplyCacheControl(this, opts.cacheControl);
+            if (opts?.cacheControl) ParseAndApplyCacheControl<Env, State>(this, opts.cacheControl);
 
             /* Set mime type if no mime type was set already */
             if (!this.res_headers['content-type']) this.res_headers['content-type'] = MimeTypes.JSON;
@@ -829,7 +829,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
             if (this.isLocked) throw new Error('Context@text: Cannot modify a finalized response');
 
             /* Cache Control */
-            if (opts?.cacheControl) ParseAndApplyCacheControl(this, opts.cacheControl);
+            if (opts?.cacheControl) ParseAndApplyCacheControl<Env, State>(this, opts.cacheControl);
 
             /* Set mime type if no mime type was set already */
             if (!this.res_headers['content-type']) this.res_headers['content-type'] = MimeTypes.TEXT;

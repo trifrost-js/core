@@ -99,7 +99,7 @@ export type TriFrostContext<Env extends Record<string, any> = {}, State extends 
     get state(): Readonly<State>;
     get statusCode(): HttpStatusCode;
     get timeout(): number | null;
-    get afterHooks(): (() => Promise<void>)[];
+    get afterHooks(): (<S extends State>(ctx: TriFrostContext<Env, S>) => Promise<void>)[];
 
     setState: <Patch extends Record<string, unknown>>(patch: Patch) => TriFrostContext<Env, State & Patch>;
     delState: <K extends keyof State>(keys: K[]) => TriFrostContext<Env, Omit<State, K>>;
@@ -123,7 +123,7 @@ export type TriFrostContext<Env extends Record<string, any> = {}, State extends 
     fetch: (input: string | URL, init?: RequestInit) => Promise<Response>;
     status: (status: HttpStatusCode) => void;
     end: () => void | Response;
-    addAfter: (fn: () => Promise<void>) => void;
+    addAfter: <S extends State>(fn: (ctx: TriFrostContext<Env, S>) => Promise<void>) => void;
     runAfter: () => void;
 
     json: (body?: Record<string, unknown> | unknown[], opts?: TriFrostContextResponseOptions) => void;

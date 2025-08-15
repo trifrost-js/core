@@ -170,7 +170,7 @@ export class BunContext extends Context {
         queueMicrotask(() => {
             for (let i = 0; i < hooks.length; i++) {
                 try {
-                    hooks[i]();
+                    hooks[i](this);
                 } catch {
                     /* No-Op */
                 }
