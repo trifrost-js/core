@@ -5,6 +5,8 @@ import {isObject} from '@valkyriestudios/utils/object';
 import {describe, it, expect, vi} from 'vitest';
 import {cache, cacheFn, cacheSkip, cacheSkipped, Sym_TriFrostCached, Sym_TriFrostSkipCache} from '../../../../lib/modules/Cache/util';
 import CONSTANTS from '../../../constants';
+import {activateCtx} from '../../../../lib/utils/Als';
+import {TriFrostContext} from '../../../../lib';
 
 describe('Modules - Cache - Utils', () => {
     describe('@cache', () => {
@@ -71,6 +73,28 @@ describe('Modules - Cache - Utils', () => {
 
             const inst = new Example();
             expect(await inst.get()).toBe('nested');
+            expect(getFn).toHaveBeenCalledWith('deep-key');
+            expect(setFn).toHaveBeenCalledWith('deep-key', 'nested', undefined);
+        });
+
+        it('Uses active ctx if available', async () => {
+            const getFn = vi.fn(() => null);
+            const setFn = vi.fn();
+            const ctx = {cache: {get: getFn, set: setFn}};
+
+            class Example {
+                @cache('deep-key')
+                async get() {
+                    return 'nested';
+                }
+            }
+
+            const inst = new Example();
+            let out;
+            await activateCtx('abc', ctx as unknown as TriFrostContext, async () => {
+                out = await inst.get();
+            });
+            expect(out).toBe('nested');
             expect(getFn).toHaveBeenCalledWith('deep-key');
             expect(setFn).toHaveBeenCalledWith('deep-key', 'nested', undefined);
         });
@@ -410,6 +434,22 @@ describe('Modules - Cache - Utils', () => {
 
             const wrapped = cacheFn('deep-key')(fn);
             expect(await wrapped.call({ctx: {cache: {get: getFn, set: setFn}}}, {})).toBe('deep-cache');
+            expect(getFn).toHaveBeenCalledWith('deep-key');
+            expect(setFn).toHaveBeenCalledWith('deep-key', 'deep-cache', undefined);
+        });
+
+        it('Uses active ctx if available', async () => {
+            const getFn = vi.fn(() => null);
+            const setFn = vi.fn();
+            const fn = vi.fn(() => 'deep-cache');
+            const ctx = {cache: {get: getFn, set: setFn}};
+
+            const wrapped = cacheFn('deep-key')(fn);
+            let out;
+            await activateCtx('abc', ctx as unknown as TriFrostContext, async () => {
+                out = await wrapped.call({});
+            });
+            expect(out).toBe('deep-cache');
             expect(getFn).toHaveBeenCalledWith('deep-key');
             expect(setFn).toHaveBeenCalledWith('deep-key', 'deep-cache', undefined);
         });

@@ -5,13 +5,67 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.3.0] - 2025-08-15
+This release introduces `ctx()`, a lightweight utility with big ambitions. Access the active request context from anywhere in your code, no need to pass it through every method.
+
+In addition, smarter `@cache` and `@span` decorators, enhanced `afterHooks` and some much-needed love for Windows developers.
+
 ### Added
-- **feat**: `ctx()` utility, available via `import {ctx} from '@trifrost/core'`, which returns the active `TriFrostContext` for the current request. This allows you to access `ctx()` from anywhere in your request lifecycle without explicitly passing the context around.
+- **feat**: `ctx()` utility, available via `import {ctx} from '@trifrost/core'`, which returns the active `TriFrostContext` for the **current request**. No more manual parameter threading, you can now access `ctx()` anywhere in your request lifecycle:
+```ts
+import {ctx} from '@trifrost/core';
+
+export async function doSomething() {
+  ctx().logger.info('Hello from anywhere!');
+}
+```
 
 ### Improved
 - **feat**: [Added support to run scripts on Windows machines](https://github.com/trifrost-js/core/pull/3) by [@dennishavermans](https://github.com/dennishavermans)
-- **feat**: `afterHooks` (added through `.addAfter`, which get run after the request finishes) now receive the `context` instance, allowing hooks to inspect context state or perform additional actions using the context without being tied to request lifetime.
 - **feat**: Internal context tracking now uses **AsyncLocalStorage** under the hood, enabling request-scoped data access across the entire call stack (see Added).
+- **feat**: `afterHooks` (added through `.addAfter`, which get run after the request finishes) now receive the `context` instance, allowing hooks to inspect context state or perform additional actions using the context without being tied to request lifetime. **Important to note that the AsyncLocalStorage context is not available in after hooks**.
+```ts
+app.get('/hello', ctx => {
+  ctx.addAfter(context => {
+    context.logger.info(`Response sent with status ${context.statusCode}`);
+  });
+  return 'Hello World';
+});
+```
+- **feat**: `@cache` and `@span` decorators no longer require ctx to be passed and will tap into the active context coming from **AsyncLocalStorage** (using the new `ctx()` util, see Added)
+```ts
+import {cache, span} from '@trifrost/core';
+
+class Example {
+  @cache('user:123') // ctx not required
+  async fetchUser() {
+    return await db.getUser(123);
+  }
+
+  @span('expensive-op') // ctx not required
+  async doWork() { /* ... */ }
+}
+```
+```ts
+import {cache, span, ctx} from '@trifrost/core';
+import {type Context} from '~/types';
+
+class UserService {
+  @cache(() => `user:${(ctx() as Context<{id:string}>).state.id}`) // ctx() here for dynamic key
+  @span('fetch-user')
+  async getUser() {
+    const context = ctx() as Context<{id:string}>; // full access to request context
+    context.logger.info(`Fetching user ${context.state.id}`);
+    return await db.getUser(context.state.id);
+  }
+}
+```
+- **feat**: `cacheFn` and `spanFn` helpers no longer require ctx to be passed and will tap into the active context coming from **AsyncLocalStorage** (using the new `ctx()` util, see Added)
+```ts
+import {cacheFn, spanFn} from '@trifrost/core';
+
+const getData = cacheFn('data-key')(async () => fetchData());
+const process = spanFn('processing')(async () => doProcessing());
+```
 - **misc**: Migrated to TypeScript 5.9 and updated types to align with [lib.d.ts changes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-9.html#libdts-changes)
 - **deps**: Upgrade @cloudflare/workers-types to 4.20250813.0
 - **deps**: Upgrade @types/node to 22.17.2
@@ -22,7 +76,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **deps**: Upgrade typescript-eslint to 8.39.1
 
 ### Announcements
-- First contribution by [@dennishavermans](https://github.com/dennishavermans) 🚀
+- First community contribution by [@dennishavermans](https://github.com/dennishavermans) 🎉
+
+---
+
+This one’s all about making TriFrost feel lighter in the hands and sharper at the edges. The less you fight with boilerplate, the more you can focus on building things that matter.
+
+We’ve got more lined up, so keep your eyes open and go ship something cool.
+
+As always. Stay frosty ❄️
 
 ## [1.2.1] - 2025-07-22
 ### Improved

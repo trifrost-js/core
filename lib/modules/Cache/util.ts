@@ -1,11 +1,40 @@
 import {isNeString} from '@valkyriestudios/utils/string';
 import {type TriFrostCache, type CacheOptions, type TriFrostCacheValue} from './_Cache';
 import {type TriFrostContext} from '../../types/context';
+import {ctx as getCtx} from '../../utils/Als';
 
 type CacheKeyFn<Args extends any[] = any[]> = (...args: Args) => string;
 
 export const Sym_TriFrostCached = Symbol('trifrost.cache.cached');
 export const Sym_TriFrostSkipCache = Symbol('trifrost.cache.skip');
+
+function hasCache(val: any) {
+    return val?.cache && typeof val.cache.get === 'function' && typeof val.cache.set === 'function';
+}
+
+/**
+ * Resolve a TriFrostCache instance from any combination of:
+ * - ALS-bound context (if available)
+ * - First argument (if it's a TriFrostContext)
+ * - `this.cache` or `this.ctx.cache` (for instance methods)
+ */
+function resolveCache(self: any, args: any[]) {
+    // ALS-bound context
+    const ctxAls: TriFrostContext | undefined = getCtx();
+    if (hasCache(ctxAls)) return ctxAls?.cache as TriFrostCache;
+
+    // First argument
+    const ctxArg: TriFrostContext | undefined = Array.isArray(args) && args.length ? (args[0] as TriFrostContext) : undefined;
+    if (hasCache(ctxArg)) return ctxArg?.cache as TriFrostCache;
+
+    // Fallback to self.cache
+    if (hasCache(self)) return self.cache as TriFrostCache;
+
+    // Fallback to self.ctx.cache
+    if (hasCache(self?.ctx)) return self.ctx.cache as TriFrostCache;
+
+    return null;
+}
 
 export function cache<This, Args extends any[], Ret, ArgsSubset extends Partial<Args> = Args>(
     key: string | CacheKeyFn<ArgsSubset>,
@@ -16,13 +45,11 @@ export function cache<This, Args extends any[], Ret, ArgsSubset extends Partial<
         if (Reflect.get(method, Sym_TriFrostCached)) return method;
 
         const wrapped = async function (this: This, ...args: Args): Promise<Ret> {
-            const ctx: TriFrostContext | undefined = Array.isArray(args) && args.length ? args[0] : undefined;
-
             /* Get trifrost cache either from passed ctx, this.cache or this.ctx.cache */
-            const trifrost_cache: TriFrostCache | undefined = ctx?.cache ?? (this as any)?.cache ?? (this as any)?.ctx?.cache;
+            const trifrost_cache: TriFrostCache | null = resolveCache(this, args);
 
             /* No viable cache found */
-            if (typeof trifrost_cache?.get !== 'function' || typeof trifrost_cache?.set !== 'function') return method.call(this, ...args);
+            if (!trifrost_cache) return method.call(this, ...args);
 
             /* Determine cache key */
             const ckey = typeof key === 'function' ? key(...(args.slice(0, key.length) as ArgsSubset)) : isNeString(key) ? key : null;
@@ -79,12 +106,11 @@ export function cacheFn<T extends (...args: any[]) => any, ArgsSubset extends Pa
         if (Reflect.get(fn, Sym_TriFrostCached)) return fn;
 
         const wrapped = async function (this: any, ...args: Parameters<T>): Promise<ReturnType<T>> {
-            const ctx: TriFrostContext | undefined = Array.isArray(args) && args.length ? args[0] : undefined;
-
-            const trifrost_cache = ctx?.cache ?? this?.cache ?? this?.ctx?.cache;
+            /* Get trifrost cache either from passed ctx, this.cache or this.ctx.cache */
+            const trifrost_cache: TriFrostCache | null = resolveCache(this, args);
 
             /* No viable cache found */
-            if (typeof trifrost_cache?.get !== 'function' || typeof trifrost_cache?.set !== 'function') return fn.apply(this, args);
+            if (!trifrost_cache) return fn.apply(this, args);
 
             /* Determine cache key */
             const ckey = typeof key === 'function' ? key(...(args.slice(0, key.length) as ArgsSubset)) : isNeString(key) ? key : null;
@@ -92,7 +118,7 @@ export function cacheFn<T extends (...args: any[]) => any, ArgsSubset extends Pa
 
             /* Retrieve from cache, if exists -> return */
             const cached = await trifrost_cache.get(ckey);
-            if (cached !== null && cached !== undefined) return cached;
+            if (cached !== null && cached !== undefined) return cached as ReturnType<T>;
 
             /* Run method */
             const result = await fn.apply(this, args);

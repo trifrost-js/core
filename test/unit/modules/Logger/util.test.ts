@@ -3,6 +3,8 @@
 import {describe, it, expect, vi} from 'vitest';
 import {span, spanFn, Sym_TriFrostSpan} from '../../../../lib/modules/Logger/util';
 import CONSTANTS from '../../../constants';
+import {activateCtx} from '../../../../lib/utils/Als';
+import {TriFrostContext} from '../../../../lib';
 
 describe('Modules - Logger - Utils', () => {
     describe('@span', () => {
@@ -88,6 +90,28 @@ describe('Modules - Logger - Utils', () => {
             const result = inst.run();
 
             expect(result).toBe('ctx-logger');
+            expect(spy).toHaveBeenCalledWith('fallback-to-this.ctx.logger', expect.any(Function));
+        });
+
+        it('Uses active ctx if available', async () => {
+            const spy = vi.fn((_name, run) => run());
+            const ctx = {logger: {span: spy}};
+
+            class Example {
+                @span('fallback-to-this.ctx.logger')
+                run() {
+                    return 'ctx-logger';
+                }
+            }
+
+            const inst = new Example();
+            let out;
+
+            await activateCtx('abc', ctx as unknown as TriFrostContext, async () => {
+                out = inst.run();
+            });
+
+            expect(out).toBe('ctx-logger');
             expect(spy).toHaveBeenCalledWith('fallback-to-this.ctx.logger', expect.any(Function));
         });
 
