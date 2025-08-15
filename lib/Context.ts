@@ -660,7 +660,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
     /**
      * Render a JSX body to a string
      */
-    render(body: JSX.Element, opts?: TriFrostContextRenderOptions): string {
+    async render(body: JSX.Element, opts?: TriFrostContextRenderOptions): Promise<string> {
         return prependDocType(rootRender<Env, State>(this, body, isObject(opts) ? {...this.ctx_config, ...opts} : this.ctx_config));
     }
 
@@ -721,7 +721,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
     /**
      * Respond with HTML
      */
-    html(body: string | JSX.Element = '', opts?: TriFrostContextResponseOptions): void {
+    async html(body: string | JSX.Element = '', opts?: TriFrostContextResponseOptions): Promise<void> {
         try {
             /* Ensure we dont double write */
             if (this.isLocked) throw new Error('Context@html: Cannot modify a finalized response');
@@ -733,7 +733,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
             if (!this.res_headers['content-type']) this.res_headers['content-type'] = MimeTypes.HTML;
 
             /* Render html */
-            let html = typeof body === 'string' ? body : this.render(body, this.ctx_config);
+            let html = typeof body === 'string' ? body : await this.render(body, this.ctx_config);
 
             /* Auto-prepend <!DOCTYPE html> if starts with <html */
             html = prependDocType(html.trimStart());

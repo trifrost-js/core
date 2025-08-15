@@ -127,7 +127,8 @@ export type TriFrostContext<Env extends Record<string, any> = {}, State extends 
     runAfter: () => void;
 
     json: (body?: Record<string, unknown> | unknown[], opts?: TriFrostContextResponseOptions) => void;
-    html: (body?: string | JSX.Element, opts?: TriFrostContextResponseOptions) => void;
+    html: (body?: string | JSX.Element, opts?: TriFrostContextResponseOptions) => Promise<void>;
+    render: (body: JSX.Element, opts?: TriFrostContextRenderOptions) => Promise<string>;
     text: (body: string, opts?: TriFrostContextResponseOptions) => void;
     redirect: (to: string, opts?: TriFrostContextRedirectOptions) => void;
     file: (path: string | {stream: unknown; size?: number | null; name: string}, opts?: TriFrostContextFileOptions) => Promise<void>;
