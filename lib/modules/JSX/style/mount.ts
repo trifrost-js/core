@@ -1,6 +1,5 @@
 import {type Router} from '../../../routing/Router';
 import {MimeTypes} from '../../../types';
-import {setActiveCtx} from '../ctx/use';
 import {StyleEngine} from './Engine';
 import {setActiveStyleEngine, type CssInstance} from './use';
 import {isDevMode} from '../../../utils/Generic';
@@ -20,13 +19,11 @@ export function mount<
     router.get(path, ctx => {
         if (!content) {
             const style_engine = setActiveStyleEngine(new StyleEngine());
-            setActiveCtx(ctx);
             /* We wrap in setMountPath(path) and setMountPath(null) to tell the module we're rendering our mounted parts */
             module.setMountPath(null);
             module.root();
             module.setMountPath(path);
             content = style_engine.flush({mode: 'file'});
-            setActiveCtx(null);
             setActiveStyleEngine(null);
         }
 

@@ -51,5 +51,6 @@ export {
 export {TriFrostDurableObject} from './runtimes/Workerd/DurableObject';
 
 /* Utils */
+export {ctx} from './utils/Als';
 export {isDevMode} from './utils/Generic';
 export {OMIT_PRESETS} from './utils/Scrambler';

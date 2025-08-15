@@ -5,9 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **feat**: `ctx()` utility, available via `import {ctx} from '@trifrost/core'`, which returns the active `TriFrostContext` for the current request. This allows you to access `ctx()` from anywhere in your request lifecycle without explicitly passing the context around.
+
 ### Improved
 - **feat**: [Added support to run scripts on Windows machines](https://github.com/trifrost-js/core/pull/3) by [@dennishavermans](https://github.com/dennishavermans)
 - **feat**: `afterHooks` (added through `.addAfter`, which get run after the request finishes) now receive the `context` instance, allowing hooks to inspect context state or perform additional actions using the context without being tied to request lifetime.
+- **feat**: Internal context tracking now uses **AsyncLocalStorage** under the hood, enabling request-scoped data access across the entire call stack (see Added).
 - **misc**: Migrated to TypeScript 5.9 and updated types to align with [lib.d.ts changes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-9.html#libdts-changes)
 - **deps**: Upgrade @cloudflare/workers-types to 4.20250813.0
 - **deps**: Upgrade @types/node to 22.17.2

@@ -25,6 +25,8 @@ import {type createScript} from './modules';
 import {mount as mountCss} from './modules/JSX/style/mount';
 import {mount as mountScript} from './modules/JSX/script/mount';
 import {type CssGeneric, type CssInstance} from './modules/JSX/style/use';
+import {activateCtx} from './utils/Als';
+import {hexId} from './utils/Generic';
 
 const RGX_RID = /^[a-z0-9-]{8,64}$/i;
 
@@ -259,81 +261,85 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
                     ...(this.script !== null && {script: this.script}),
                 },
                 onIncoming: (async (ctx: TriFrostContext<Env, State>) => {
-                    const {path, method} = ctx;
-                    this.logger!.debug('onIncoming', {method, path});
+                    const ctx_id = ctx.logger.traceId || hexId(8);
 
-                    /* Get matching route */
-                    let match = this.tree.match(method, path);
-                    try {
-                        /* If we have no match check the notfound handlers */
-                        if (!match) {
-                            match = this.tree.matchNotFound(path);
-                            if (match) ctx.setStatus(404);
-                        }
+                    return activateCtx(ctx_id, ctx, async () => {
+                        const {path, method} = ctx;
+                        this.logger!.debug('onIncoming', {method, path});
 
-                        /* Generic 404 response if we still dont have anything */
-                        if (!match) return ctx.status(404);
-
-                        /* Add route meta */
-                        if (match.route.meta) ctx.logger.setAttributes(match.route.meta);
-
-                        /* Add attributes to tracer */
-                        ctx.logger.setAttributes({
-                            'http.host': ctx.host,
-                            'http.method': method,
-                            'http.target': path,
-                            'http.route': match.route.path,
-                            'http.status_code': 200,
-                            'otel.status_code': 'OK',
-                            'user_agent.original': ctx.headers['user-agent'] ?? '',
-                        });
-
-                        /* Initialize Timeout */
-                        ctx.setTimeout(match.route.timeout);
-
-                        /* Initialize context with matched route data, check if triage is necessary (eg payload too large) */
-                        await ctx.init(match);
-                        if (ctx.statusCode >= 400) return await runTriage(path, ctx);
-
-                        /* Run chain */
-                        for (let i = 0; i < match.route.middleware.length; i++) {
-                            const el = match.route.middleware[i];
-                            if (Reflect.get(el.handler, Sym_TriFrostSpan)) {
-                                await el.handler(ctx);
-                            } else {
-                                await ctx.logger.span(el.name, async () => el.handler(ctx as TriFrostContext<Env, State>));
+                        /* Get matching route */
+                        let match = this.tree.match(method, path);
+                        try {
+                            /* If we have no match check the notfound handlers */
+                            if (!match) {
+                                match = this.tree.matchNotFound(path);
+                                if (match) ctx.setStatus(404);
                             }
 
-                            /* If context is locked at this point, return as the route has been handled */
-                            if (ctx.isLocked) return;
+                            /* Generic 404 response if we still dont have anything */
+                            if (!match) return ctx.status(404);
 
-                            /* Check if triage is necessary */
+                            /* Add route meta */
+                            if (match.route.meta) ctx.logger.setAttributes(match.route.meta);
+
+                            /* Add attributes to tracer */
+                            ctx.logger.setAttributes({
+                                'http.host': ctx.host,
+                                'http.method': method,
+                                'http.target': path,
+                                'http.route': match.route.path,
+                                'http.status_code': 200,
+                                'otel.status_code': 'OK',
+                                'user_agent.original': ctx.headers['user-agent'] ?? '',
+                            });
+
+                            /* Initialize Timeout */
+                            ctx.setTimeout(match.route.timeout);
+
+                            /* Initialize context with matched route data, check if triage is necessary (eg payload too large) */
+                            await ctx.init(match);
                             if (ctx.statusCode >= 400) return await runTriage(path, ctx);
+
+                            /* Run chain */
+                            for (let i = 0; i < match.route.middleware.length; i++) {
+                                const el = match.route.middleware[i];
+                                if (Reflect.get(el.handler, Sym_TriFrostSpan)) {
+                                    await el.handler(ctx);
+                                } else {
+                                    await ctx.logger.span(el.name, async () => el.handler(ctx as TriFrostContext<Env, State>));
+                                }
+
+                                /* If context is locked at this point, return as the route has been handled */
+                                if (ctx.isLocked) return;
+
+                                /* Check if triage is necessary */
+                                if (ctx.statusCode >= 400) return await runTriage(path, ctx);
+                            }
+
+                            /* Run handler */
+                            if (Reflect.get(match.route.fn, Sym_TriFrostSpan)) {
+                                await match.route.fn(ctx);
+                            } else {
+                                await ctx.logger.span(match.route.name, async () => match!.route.fn(ctx as TriFrostContext<Env, State>));
+                            }
+
+                            /* Let's run triage if context is not locked */
+                            if (!ctx.isLocked) await runTriage(path, ctx);
+                        } catch (err) {
+                            ctx.logger.error(err);
+
+                            /* Ensure status code is set as 500 if not >= 400, this ensures proper triaging */
+                            if (!ctx.isAborted && ctx.statusCode < 400) ctx.setStatus(500);
+
+                            if (!ctx.isLocked) await runTriage(path, ctx);
+                        } finally {
+                            /* Flush logger last */
+                            ctx.addAfter(() => ctx.logger.flush());
+
+                            /* Run ctx cleanup */
+                            ctx.runAfter();
                         }
-
-                        /* Run handler */
-                        if (Reflect.get(match.route.fn, Sym_TriFrostSpan)) {
-                            await match.route.fn(ctx);
-                        } else {
-                            await ctx.logger.span(match.route.name, async () => match!.route.fn(ctx as TriFrostContext<Env, State>));
-                        }
-
-                        /* Let's run triage if context is not locked */
-                        if (!ctx.isLocked) await runTriage(path, ctx);
-                    } catch (err) {
-                        ctx.logger.error(err);
-
-                        /* Ensure status code is set as 500 if not >= 400, this ensures proper triaging */
-                        if (!ctx.isAborted && ctx.statusCode < 400) ctx.setStatus(500);
-
-                        if (!ctx.isLocked) await runTriage(path, ctx);
-                    } finally {
-                        /* Flush logger last */
-                        ctx.addAfter(() => ctx.logger.flush());
-
-                        /* Run ctx cleanup */
-                        ctx.runAfter();
-                    }
+                    });
                 }) as TriFrostRuntimeOnIncoming,
             });
 
