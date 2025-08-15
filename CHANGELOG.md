@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Improved
+- **feat**: [Added support to run scripts on windows machines](https://github.com/trifrost-js/core/pull/3) by [@dennishavermans](https://github.com/dennishavermans)
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250813.0
+- **deps**: Upgrade @types/node to 22.17.2
+- **deps**: Upgrade bun-types to 1.2.20
+- **deps**: Upgrade eslint to 9.33.0
+- **deps**: Upgrade eslint-plugin-prettier to 5.5.4
+- **deps**: Upgrade typescript to 5.9.2
+- **deps**: Upgrade typescript-eslint to 8.39.1
+
+### Announcements
+- First contribution by [@dennishavermans](https://github.com/dennishavermans) 🚀
+
 ## [1.2.1] - 2025-07-22
 ### Improved
 - **feat**: Enhanced `$.goto` with ergonomic support for query-only shorthands. If the URL starts with `?`, the current `location.pathname` is automatically prepended. Example:
