@@ -6,12 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 ### Improved
-- **deps**: Upgrade @cloudflare/workers-types to 4.20250831.0
-- **deps**: Upgrade @types/node to 22.18.0
-- **deps**: Upgrade @valkyriestudios/utils to 12.44.0
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250913.0
+- **deps**: Upgrade @types/node to 22.18.3
+- **deps**: Upgrade @valkyriestudios/utils to 12.45.0
 - **deps**: Upgrade bun-types to 1.2.21
-- **deps**: Upgrade eslint to 9.34.0
-- **deps**: Upgrade typescript-eslint to 8.41.0
+- **deps**: Upgrade eslint to 9.35.0
+- **deps**: Upgrade typescript-eslint to 8.43.0
 
 ## [1.3.0] - 2025-08-15
 This release introduces `ctx()`, a lightweight utility with big ambitions. Access the active request context from anywhere in your code, no need to pass it through every method.
