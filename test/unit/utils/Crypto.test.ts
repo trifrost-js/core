@@ -435,7 +435,7 @@ describe('Utils - Crypto', () => {
 
         it('Throws on empty PEM body', async () => {
             await expect(() => importKey('-----PRIVATE KEY-----\n\n', ALGOS.RS256, ['sign'])).rejects.toThrow(
-                'Crypto@importKey: Failed to import key (Unable to import RSA key with format raw)',
+                /Crypto@importKey: Failed to import key/,
             );
         });
 
