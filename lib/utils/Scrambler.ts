@@ -133,7 +133,7 @@ function createScrambler<T extends Record<string, any> = Record<string, any>>(op
                 switch (typeof val) {
                     case 'string':
                     case 'number': {
-                        if ((paths !== null && paths.has(n_path) === true) || (props !== null && props.has(key) === true)) {
+                        if ((paths !== null && paths.has(n_path)) || (props !== null && props.has(key))) {
                             if (!result) result = {...input};
                             result![key] = repl;
                         } else if (values) {
