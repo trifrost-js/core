@@ -4,15 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.4.0] - 2025-09-14
+We hadn’t looked at JSX rendering performance since TriFrost [0.23.0](https://www.trifrost.dev/news/releases/0.23.0) (where we introduced a solid performance boost). As usual, stepping back for a while and then taking a fresh look revealed more opportunities for improvement.
+
 ### Improved
-- **perf**: Improved JSX render engine performance by anywhere from 15% to 49% (see benchmark below)
+- **perf**: Improved JSX render engine performance by anywhere from 15% to 49%
 - **deps**: Upgrade @cloudflare/workers-types to 4.20250913.0
 - **deps**: Upgrade @types/node to 22.18.3
 - **deps**: Upgrade @valkyriestudios/utils to 12.45.0
 - **deps**: Upgrade bun-types to 1.2.21
 - **deps**: Upgrade eslint to 9.35.0
 - **deps**: Upgrade typescript-eslint to 8.43.0
+
+---
+
+We’ve got more lined up for future versions, so keep your eyes open and go ship something cool.
+
+As always. Stay frosty ❄️
 
 ## [1.3.0] - 2025-08-15
 This release introduces `ctx()`, a lightweight utility with big ambitions. Access the active request context from anywhere in your code, no need to pass it through every method.
