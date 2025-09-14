@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2025-09-14
+### Fixed
+- Fix issue where hexId is no longer compatible with workerd runtime due to global crypto usage (which is not allowed unless within handler)
+
 ## [1.4.0] - 2025-09-14
 We hadn’t looked at JSX rendering performance since TriFrost [0.23.0](https://www.trifrost.dev/news/releases/0.23.0) (where we introduced a solid performance boost). As usual, stepping back for a while and then taking a fresh look revealed more opportunities for improvement.
 
