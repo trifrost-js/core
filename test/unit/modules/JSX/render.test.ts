@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 
-import * as Hash from '@valkyriestudios/utils/hash';
 import {describe, it, expect, beforeEach, vi, afterEach} from 'vitest';
 import {render, escape, rootRender, toLruCookie, fromLruCookie} from '../../../../lib/modules/JSX/render';
 import {Fragment} from '../../../../lib/modules/JSX/runtime';
@@ -10,6 +9,7 @@ import {env} from '../../../../lib/modules/JSX/ctx/env';
 import {state} from '../../../../lib/modules/JSX/ctx/state';
 import {Style} from '../../../../lib/modules/JSX/style/Style';
 import {Script} from '../../../../lib/modules/JSX/script/Script';
+import * as Generic from '../../../../lib/utils/Generic';
 import {MockContext} from '../../../MockContext';
 import {createModule, createScript} from '../../../../lib/modules/JSX/script/use';
 import {ARC_GLOBAL, ARC_GLOBAL_OBSERVER, ATOMIC_GLOBAL} from '../../../../lib/modules/JSX/script/atomic';
@@ -524,7 +524,7 @@ describe('Modules - JSX - Renderer', () => {
 
         it('Includes css root and script root when passed to render context and not in html', () => {
             let idCounter = 0;
-            vi.spyOn(Hash, 'hexId').mockImplementation(() => `id-${++idCounter}`);
+            vi.spyOn(Generic, 'hexId').mockImplementation(() => `id-${++idCounter}`);
 
             const ctx = new MockContext();
 
@@ -613,7 +613,7 @@ describe('Modules - JSX - Renderer', () => {
 
         it('Includes css root and script root when passed to render context and in html', () => {
             let idCounter = 0;
-            vi.spyOn(Hash, 'hexId').mockImplementation(() => `id-${++idCounter}`);
+            vi.spyOn(Generic, 'hexId').mockImplementation(() => `id-${++idCounter}`);
 
             const ctx = new MockContext();
 
@@ -718,7 +718,7 @@ describe('Modules - JSX - Renderer', () => {
 
         it('Includes css root and script root when passed to render context and in html BUT with mount paths set', () => {
             let idCounter = 0;
-            vi.spyOn(Hash, 'hexId').mockImplementation(() => `id-${++idCounter}`);
+            vi.spyOn(Generic, 'hexId').mockImplementation(() => `id-${++idCounter}`);
 
             const ctx = new MockContext();
 
@@ -887,7 +887,7 @@ describe('Modules - JSX - Renderer', () => {
 
             beforeEach(() => {
                 idCounter = 0;
-                vi.spyOn(Hash, 'hexId').mockImplementation(() => `id-${++idCounter}`);
+                vi.spyOn(Generic, 'hexId').mockImplementation(() => `id-${++idCounter}`);
             });
 
             afterEach(() => {

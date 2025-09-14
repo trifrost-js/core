@@ -1,11 +1,11 @@
 import {isNeArray} from '@valkyriestudios/utils/array';
 import {isBoolean} from '@valkyriestudios/utils/boolean';
-import {hexId} from '@valkyriestudios/utils/hash';
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {isObject} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
 import {Sym_TriFrostDescription, Sym_TriFrostFingerPrint, Sym_TriFrostName} from '../types/constants';
 import {type TriFrostContext} from '../types/context';
+import {hexId} from '../utils/Generic';
 
 const RGX_NONCE = /'nonce'/g;
 

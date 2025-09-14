@@ -1,9 +1,10 @@
 import {LRU} from '@valkyriestudios/utils/caching';
-import {hexId, djb2} from '@valkyriestudios/utils/hash';
+import {djb2} from '@valkyriestudios/utils/hash';
 import {isNeObject, merge} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
 import {StyleEngine} from './Engine';
 import {HTML_TAGS, styleToString} from './util';
+import {hexId} from '../../../utils/Generic';
 
 const RGX_SEPARATOR = /[:.#[]| /;
 

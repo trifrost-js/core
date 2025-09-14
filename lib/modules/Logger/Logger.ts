@@ -1,4 +1,4 @@
-import {hexId} from '@valkyriestudios/utils/hash';
+import {hexId} from '../../utils/Generic';
 import {
     type TriFrostLogger,
     type TriFrostLoggerSpan,

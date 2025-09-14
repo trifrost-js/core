@@ -2,7 +2,6 @@
 
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {HttpMethods} from '../../lib/types/constants';
-import {hexId} from '@valkyriestudios/utils/hash';
 import {Context, IP_HEADER_CANDIDATES} from '../../lib/Context';
 import {type TriFrostRootLogger} from '../../lib/modules/Logger/RootLogger';
 import {type TriFrostContextConfig} from '../../lib/types/context';
@@ -47,7 +46,7 @@ describe('Context', () => {
     let ctx: TestContext;
     const mockLogger = {
         spawn: vi.fn().mockReturnValue({
-            traceId: hexId(16),
+            traceId: Generic.hexId(16),
             setAttributes: vi.fn(),
             span: vi.fn((_, fn) => fn()),
             error: vi.fn(),

@@ -420,7 +420,7 @@ describe('Utils - Crypto', () => {
         });
 
         it('Throws on invalid algorithm', async () => {
-            /* @ts-expect-error This is what we're testing */
+            /* @ts-expect-error on purpose */
             await expect(() => importKey('mysecret', {}, ['sign'])).rejects.toThrow('Crypto@importKey: Invalid algorithm');
         });
 

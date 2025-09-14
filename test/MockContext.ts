@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import {hexId} from '@valkyriestudios/utils/hash';
 import {type TriFrostRateLimitLimitFunction} from '../lib/modules/RateLimit';
 import {type HttpMethod, type HttpStatusCode, type MimeType} from '../lib/types/constants';
 import {
@@ -18,6 +17,7 @@ import {Logger, type TriFrostLogger} from '../lib/modules/Logger';
 import {MemoryCache} from '../lib/storage/Memory';
 import {TriFrostBodyParserOptions, type ParsedBody} from '../lib/utils/BodyParser/types';
 import {Lazy} from '../lib/utils/Lazy';
+import {hexId} from '../lib/utils/Generic';
 
 export class MockContext<State extends Record<string | number, unknown> = Record<string | number, unknown>> implements TriFrostContext<any, State> { // eslint-disable-line prettier/prettier
 
