@@ -28,13 +28,12 @@ describe('Modules - JSX - style - use', () => {
             expect(html).toBe(`<div class="${cls}">Empty</div>`);
         });
 
-        it('Handles a non-object rule gracefully', () => {
-            for (const el of CONSTANTS.NOT_OBJECT) {
-                const cls = css(el as Record<string, unknown>);
-                expect(cls).toBe('');
-                const html = engine.inject(`${MARKER}<div class="${cls}">Blank</div>`);
-                expect(html).toBe(`<div class="${cls}">Blank</div>`);
-            }
+        it('Handles null rule gracefully', () => {
+            /* @ts-expect-error should be good */
+            const cls = css(null);
+            expect(cls).toBe('');
+            const html = engine.inject(`${MARKER}<div class="${cls}">Blank</div>`);
+            expect(html).toBe(`<div class="${cls}">Blank</div>`);
         });
 
         it('Generates deterministic class for flat styles', () => {

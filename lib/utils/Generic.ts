@@ -103,7 +103,7 @@ export function determineVersion(env: Record<string, unknown>): string {
  */
 export function determinePort(env?: Record<string, unknown>, port?: number | null): number {
     if (isIntBetween(port, 1, 65535)) return port;
-    if (Object.prototype.toString.call(env) !== '[object Object]') return 3000;
+    if (typeof env !== 'object') return 3000;
     let val = env?.TRIFROST_PORT ?? env?.SERVICE_PORT ?? env?.PORT;
     if (isNeString(val)) val = (val as unknown as number) | 0;
     if (isIntBetween(val, 1, 65535)) return val;

@@ -197,7 +197,7 @@ function flatten(obj: Record<string, unknown>, parent_query: string = '', parent
 
     for (const key in obj) {
         const val = obj[key];
-        if (Object.prototype.toString.call(val) === '[object Object]') {
+        if (typeof val === 'object' && Object.prototype.toString.call(val) === '[object Object]') {
             if (key[0] === '@') {
                 result.push(...flatten(val as Record<string, unknown>, key, parent_selector));
             } else {
@@ -255,8 +255,6 @@ function cssFactory<Breakpoints extends Record<string, string> = typeof DEFAULT_
      * @param {CSSOptions} opts - Options for css, eg: {inject:false} will simply return the unique classname rather than adding to engine
      */
     const mod = (style: Record<string, unknown>, opts?: CSSOptions) => {
-        if (Object.prototype.toString.call(style) !== '[object Object]') return '';
-
         const engine = active_engine || setActiveStyleEngine(new StyleEngine());
 
         const raw = JSON.stringify(style);
@@ -650,11 +648,7 @@ export function createCss<
         animations?: Animations;
     } = {},
 ): CssInstance<V, T, R, Breakpoints, Animations> {
-    const mod = cssFactory(
-        Object.prototype.toString.call(config.breakpoints) === '[object Object]'
-            ? (config.breakpoints as Breakpoints)
-            : DEFAULT_BREAKPOINTS,
-    ) as CssInstance<V, T, R, Breakpoints, Animations>;
+    const mod = cssFactory(config.breakpoints || DEFAULT_BREAKPOINTS) as CssInstance<V, T, R, Breakpoints, Animations>;
 
     /* Is mounted on */
     let mountPath: string | null = null;
@@ -674,7 +668,7 @@ export function createCss<
 
     /* Attach var tokens */
     mod.var = {} as any;
-    if (Object.prototype.toString.call(config.var) === '[object Object]') {
+    if (config.var) {
         for (const key in config.var) {
             const v_key = normalizeVariable(key, '--v-');
             mod.var[key] = ('var(' + v_key + ')') as VarVal<typeof key>;
@@ -685,7 +679,7 @@ export function createCss<
 
     /* Attach theme tokens */
     mod.theme = {} as any;
-    if (Object.prototype.toString.call(config.theme) === '[object Object]') {
+    if (config.theme) {
         for (const key in config.theme) {
             const entry = config.theme[key];
             if (isNeString(entry)) {
@@ -713,7 +707,7 @@ export function createCss<
 
     /* Define animation registry */
     const animations: Animations = config.animations ?? ({} as Animations);
-    if (Object.prototype.toString.call(config.animations) === '[object Object]') {
+    if (config.animations) {
         for (const key in config.animations!) (animations as any)[key] = config.animations[key];
     }
 
@@ -758,7 +752,7 @@ export function createCss<
             if (val) {
                 if (typeof val === 'string' && val in mod.defs) {
                     acc.push(mod.defs[val]());
-                } else if (Object.prototype.toString.call(val) === '[object Object]') {
+                } else if (typeof val === 'object') {
                     acc.push(val as Record<string, unknown>);
                 }
             }

@@ -30,10 +30,12 @@ function convertObjectToAttributes(obj: Record<string, unknown>, prefix: string 
             case 'boolean':
                 acc.push({key: prefix + key, value: {boolValue: val as boolean}});
                 break;
-            default:
+            case 'object':
                 if (Object.prototype.toString.call(val) === '[object Object]' || Array.isArray(val)) {
                     acc.push({key: prefix + key, value: {stringValue: JSON.stringify(val)}});
                 }
+                break;
+            default:
                 break;
         }
     }
