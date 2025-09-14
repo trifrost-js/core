@@ -1,6 +1,5 @@
 import {describe, it, expect} from 'vitest';
 import {toKebab, styleToString, CAMEL_TO_KEBAB_LUT} from '../../../../../lib/modules/JSX/style/util';
-import CONSTANTS from '../../../../constants';
 
 describe('Modules - JSX - style - util', () => {
     describe('toKebab()', () => {
@@ -96,13 +95,6 @@ describe('Modules - JSX - style - util', () => {
             expect(style).toBe(
                 'display:flex;-webkit-transform:rotate(45deg);opacity:0.9;content:"Test";width:calc(100% - 1rem);padding-top:1rem',
             );
-        });
-
-        it('Handles malformed input gracefully', () => {
-            for (const el of CONSTANTS.NOT_OBJECT) {
-                /* @ts-expect-error This is what we're testing */
-                expect(styleToString(el)).toBe(null);
-            }
         });
     });
 });

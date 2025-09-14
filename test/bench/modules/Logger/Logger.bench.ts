@@ -36,11 +36,11 @@ function isValidTraceIdOptimized(str: string): boolean {
     if (str.length !== 32) return false;
 
     let c: number;
-    for (let i = 31; i >= 0; i--) {
+    let i = 32;
+    while (--i >= 0) {
         c = str.charCodeAt(i);
         if ((c < 48 || c > 57) && (c < 97 || c > 102)) return false;
     }
-
     return true;
 }
 

@@ -1,7 +1,5 @@
 import {describe, it, expect} from 'vitest';
 import {
-    hexId,
-    djb2Hash,
     isDevMode,
     determineDebug,
     determineName,
@@ -15,99 +13,6 @@ import {
 import CONSTANTS from '../../constants';
 
 describe('Utils - Generic', () => {
-    describe('hexId', () => {
-        it('Returns empty string for non-numeric or non-positive lengths', () => {
-            for (const el of [...CONSTANTS.NOT_NUMERIC, -100, -1, 0, 0.5, 3.14]) {
-                expect(hexId(el as number)).toBe('');
-            }
-        });
-
-        it('Returns 16-char hex string for lng=8', () => {
-            const id = hexId(8);
-            expect(id).toMatch(/^[a-f0-9]{16}$/);
-        });
-
-        it('Returns 32-char hex string for lng=16', () => {
-            const id = hexId(16);
-            expect(id).toMatch(/^[a-f0-9]{32}$/);
-        });
-
-        it('Returns correct length for arbitrary valid lengths', () => {
-            expect(hexId(3)).toMatch(/^[a-f0-9]{6}$/);
-            expect(hexId(10)).toMatch(/^[a-f0-9]{20}$/);
-            expect(hexId(32)).toMatch(/^[a-f0-9]{64}$/);
-        });
-
-        it('Returns correct length for arbitrary small values', () => {
-            expect(hexId(1)).toMatch(/^[a-f0-9]{2}$/);
-            expect(hexId(2)).toMatch(/^[a-f0-9]{4}$/);
-            expect(hexId(7)).toMatch(/^[a-f0-9]{14}$/);
-            expect(hexId(9)).toMatch(/^[a-f0-9]{18}$/);
-        });
-
-        it('Handles long values without issue', () => {
-            const id = hexId(100); // 200 chars
-            expect(id.length).toBe(200);
-            expect(id).toMatch(/^[a-f0-9]{200}$/);
-        });
-
-        it('Returns different values on successive calls (non-repeating)', () => {
-            const id1 = hexId(8);
-            const id2 = hexId(8);
-            expect(id1).not.toBe(id2);
-        });
-
-        it('Returns different values on repeated calls (likely unique)', () => {
-            const seen = new Set<string>();
-            for (let i = 0; i < 1000; i++) {
-                const id = hexId(16);
-                expect(seen.has(id)).toBe(false);
-                seen.add(id);
-            }
-        });
-    });
-
-    describe('djb2Hash', () => {
-        it('Should produce a consistent hash for a given string', () => {
-            const hash1 = djb2Hash('hello world');
-            const hash2 = djb2Hash('hello world');
-            expect(hash1).toBe(hash2);
-        });
-
-        it('Should produce different hashes for different strings', () => {
-            const h1 = djb2Hash('a');
-            const h2 = djb2Hash('b');
-            expect(h1).not.toBe(h2);
-        });
-
-        it('Should return a base36 string', () => {
-            const hash = djb2Hash('example');
-            expect(hash).toMatch(/^[0-9a-z]+$/);
-        });
-
-        it('Should handle empty string', () => {
-            const hash = djb2Hash('');
-            expect(typeof hash).toBe('string');
-            expect(hash.length).toBeGreaterThan(0);
-        });
-
-        it('Should be case-sensitive', () => {
-            expect(djb2Hash('FOO')).not.toBe(djb2Hash('foo'));
-        });
-
-        it('Should handle unicode characters', () => {
-            expect(() => djb2Hash('🚀🌌')).not.toThrow();
-            expect(typeof djb2Hash('🚀🌌')).toBe('string');
-        });
-
-        it('Should handle very long strings', () => {
-            const long = 'a'.repeat(10_000);
-            const hash = djb2Hash(long);
-            expect(typeof hash).toBe('string');
-            expect(hash.length).toBeGreaterThan(0);
-        });
-    });
-
     describe('prependDocType', () => {
         it('Returns an empty string if provided a non-string', () => {
             for (const el of CONSTANTS.NOT_STRING) {

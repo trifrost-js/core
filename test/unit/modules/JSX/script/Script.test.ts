@@ -1,12 +1,12 @@
 /* eslint-disable no-console */
 
+import * as Hash from '@valkyriestudios/utils/hash';
 import {describe, it, expect, afterEach, beforeEach, vi} from 'vitest';
 import {Script, SCRIPT_MARKER} from '../../../../../lib/modules/JSX/script/Script';
 import {setActiveCtx} from '../../../../../lib/modules/JSX/ctx/use';
 import CONSTANTS from '../../../../constants';
 import {ScriptEngine} from '../../../../../lib/modules/JSX/script/Engine';
 import {setActiveScriptEngine} from '../../../../../lib/modules/JSX/script/use';
-import * as Generic from '../../../../../lib/utils/Generic';
 import {MockContext} from '../../../../MockContext';
 
 describe('Modules - JSX - script - <Script>', () => {
@@ -14,7 +14,7 @@ describe('Modules - JSX - script - <Script>', () => {
     let idcount = 0;
     beforeEach(() => {
         idcount = 0;
-        vi.spyOn(Generic, 'djb2Hash').mockImplementation(() => `id-${++idcount}`);
+        vi.spyOn(Hash, 'djb2').mockImplementation(() => `id-${++idcount}`);
         engine = new ScriptEngine();
         setActiveScriptEngine(engine);
         setActiveCtx(new MockContext({nonce: 'my-nonce'}));

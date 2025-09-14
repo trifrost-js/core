@@ -1,10 +1,10 @@
+import {djb2} from '@valkyriestudios/utils/hash';
 import {describe, it, expect, beforeEach, afterEach} from 'vitest';
 import {StyleEngine, OBSERVER, PRIME, SHARD} from '../../../../../lib/modules/JSX/style/Engine';
 import {MARKER} from '../../../../../lib/modules/JSX/style/Style';
 import {setActiveCtx} from '../../../../../lib/modules/JSX/ctx/use';
 import CONSTANTS from '../../../../constants';
 import {MockContext} from '../../../../MockContext';
-import {djb2Hash} from '../../../../../lib/utils/Generic';
 
 describe('Modules – JSX – style – Engine', () => {
     let engine: StyleEngine;
@@ -65,17 +65,17 @@ describe('Modules – JSX – style – Engine', () => {
 
     describe('register()', () => {
         it('Registers base styles correctly under default selector', () => {
-            const cls = 'tf' + djb2Hash('color:red');
+            const cls = 'tf' + djb2('color:red');
             engine.register('color:red', cls, {});
             expect(engine.flush({mode: 'file'})).toContain(`.${cls}{color:red}`);
         });
 
         it('Registers media query styles correctly', () => {
-            const cls = 'tf' + djb2Hash('font-size:1rem');
+            const cls = 'tf' + djb2('font-size:1rem');
             engine.register('font-size:1rem', cls, {
                 query: '@media (max-width: 600px)',
             });
-            expect(engine.flush({mode: 'file'})).toBe('@media (max-width: 600px){.tf1970c6n{font-size:1rem}}');
+            expect(engine.flush({mode: 'file'})).toBe('@media (max-width: 600px){.tf2732751023{font-size:1rem}}');
         });
 
         it('Registers multiple rules under the same media query correctly', () => {
@@ -118,10 +118,10 @@ describe('Modules – JSX – style – Engine', () => {
         });
 
         it('Deduplicates duplicate rules', () => {
-            const cls = 'tf' + djb2Hash('padding:1rem');
+            const cls = 'tf' + djb2('padding:1rem');
             engine.register('padding:1rem', cls, {});
             engine.register('padding:1rem', cls, {});
-            expect(engine.flush({mode: 'file'})).toBe('.tf3pou9x{padding:1rem}');
+            expect(engine.flush({mode: 'file'})).toBe('.tf224547909{padding:1rem}');
         });
 
         it('Trims input', () => {
@@ -208,81 +208,81 @@ describe('Modules – JSX – style – Engine', () => {
             });
 
             it('Wraps output in a <style> tag', () => {
-                const cls = 'tf' + djb2Hash('gap:2rem');
+                const cls = 'tf' + djb2('gap:2rem');
                 engine.register('gap:2rem', cls, {});
-                expect(engine.flush({mode: 'style'})).toBe([`<style>.tfjibc5d{gap:2rem}</style>`].join(''));
+                expect(engine.flush({mode: 'style'})).toBe([`<style>.tf1179619393{gap:2rem}</style>`].join(''));
             });
 
             it('Flushes large number of base rules correctly', () => {
                 for (let i = 0; i < 50; i++) {
                     const rule = `padding:${i}px`;
-                    const cls = 'tf' + djb2Hash(rule);
+                    const cls = 'tf' + djb2(rule);
                     engine.register(rule, cls, {});
                 }
 
                 expect(engine.flush({mode: 'style'})).toBe(
                     [
-                        `<style>`,
-                        '.tf1dma5fa{padding:0px}',
-                        '.tf1dma4mv{padding:1px}',
-                        '.tf1dma0hg{padding:2px}',
-                        '.tf1dma67p{padding:3px}',
-                        '.tf1dma22a{padding:4px}',
-                        '.tf1dma19v{padding:5px}',
-                        '.tf1dm9x4g{padding:6px}',
-                        '.tf1dma2up{padding:7px}',
-                        '.tf1dm9ypq{padding:8px}',
-                        '.tf1dm9xxb{padding:9px}',
-                        '.tf3pqeav{padding:10px}',
-                        '.tf3pqf3a{padding:11px}',
-                        '.tf3pqfvp{padding:12px}',
-                        '.tf3pqa5g{padding:13px}',
-                        '.tf3pqaxv{padding:14px}',
-                        '.tf3pqbqa{padding:15px}',
-                        '.tf3pqcip{padding:16px}',
-                        '.tf3pq6sg{padding:17px}',
-                        '.tf3pq7lb{padding:18px}',
-                        '.tf3pq8dq{padding:19px}',
-                        '.tf3pmlac{padding:20px}',
-                        '.tf3pmkhx{padding:21px}',
-                        '.tf3pmq86{padding:22px}',
-                        '.tf3pmpfr{padding:23px}',
-                        '.tf3pmhxc{padding:24px}',
-                        '.tf3pmh4x{padding:25px}',
-                        '.tf3pmmv6{padding:26px}',
-                        '.tf3pmm2r{padding:27px}',
-                        '.tf3pmeks{padding:28px}',
-                        '.tf3pmdsd{padding:29px}',
-                        '.tf3pouqt{padding:30px}',
-                        '.tf3povj8{padding:31px}',
-                        '.tf3pozon{padding:32px}',
-                        '.tf3potye{padding:33px}',
-                        '.tf3pordt{padding:34px}',
-                        '.tf3pos68{padding:35px}',
-                        '.tf3powbn{padding:36px}',
-                        '.tf3poqle{padding:37px}',
-                        '.tf3poo19{padding:38px}',
-                        '.tf3pooto{padding:39px}',
-                        '.tf3pl1qa{padding:40px}',
-                        '.tf3pl0xv{padding:41px}',
-                        '.tf3pl3b4{padding:42px}',
-                        '.tf3pl2ip{padding:43px}',
-                        '.tf3pl53a{padding:44px}',
-                        '.tf3pl4av{padding:45px}',
-                        '.tf3pl6o4{padding:46px}',
-                        '.tf3pl5vp{padding:47px}',
-                        '.tf3pkv0q{padding:48px}',
-                        '.tf3pku8b{padding:49px}',
+                        '<style>',
+                        '.tf3000267766{padding:0px}',
+                        '.tf3000266743{padding:1px}',
+                        '.tf3000261364{padding:2px}',
+                        '.tf3000268789{padding:3px}',
+                        '.tf3000263410{padding:4px}',
+                        '.tf3000262387{padding:5px}',
+                        '.tf3000257008{padding:6px}',
+                        '.tf3000264433{padding:7px}',
+                        '.tf3000259070{padding:8px}',
+                        '.tf3000258047{padding:9px}',
+                        '.tf224620519{padding:10px}',
+                        '.tf224621542{padding:11px}',
+                        '.tf224622565{padding:12px}',
+                        '.tf224615140{padding:13px}',
+                        '.tf224616163{padding:14px}',
+                        '.tf224617186{padding:15px}',
+                        '.tf224618209{padding:16px}',
+                        '.tf224610784{padding:17px}',
+                        '.tf224611823{padding:18px}',
+                        '.tf224612846{padding:19px}',
+                        '.tf224442948{padding:20px}',
+                        '.tf224441925{padding:21px}',
+                        '.tf224449350{padding:22px}',
+                        '.tf224448327{padding:23px}',
+                        '.tf224438592{padding:24px}',
+                        '.tf224437569{padding:25px}',
+                        '.tf224444994{padding:26px}',
+                        '.tf224443971{padding:27px}',
+                        '.tf224434252{padding:28px}',
+                        '.tf224433229{padding:29px}',
+                        '.tf224548517{padding:30px}',
+                        '.tf224549540{padding:31px}',
+                        '.tf224554919{padding:32px}',
+                        '.tf224547494{padding:33px}',
+                        '.tf224544161{padding:34px}',
+                        '.tf224545184{padding:35px}',
+                        '.tf224550563{padding:36px}',
+                        '.tf224543138{padding:37px}',
+                        '.tf224539821{padding:38px}',
+                        '.tf224540844{padding:39px}',
+                        '.tf224370946{padding:40px}',
+                        '.tf224369923{padding:41px}',
+                        '.tf224372992{padding:42px}',
+                        '.tf224371969{padding:43px}',
+                        '.tf224375302{padding:44px}',
+                        '.tf224374279{padding:45px}',
+                        '.tf224377348{padding:46px}',
+                        '.tf224376325{padding:47px}',
+                        '.tf224362250{padding:48px}',
+                        '.tf224361227{padding:49px}',
                         '</style>',
                     ].join(''),
                 );
             });
 
             it('Includes nonce attribute when active', () => {
-                const cls = 'tf' + djb2Hash('display:grid');
+                const cls = 'tf' + djb2('display:grid');
                 engine.register('display:grid', cls, {});
                 setActiveCtx(new MockContext({nonce: 'abc123'}));
-                expect(engine.flush({mode: 'style'})).toBe([`<style nonce="abc123">.tf18n9a1p{display:grid}</style>`].join(''));
+                expect(engine.flush({mode: 'style'})).toBe([`<style nonce="abc123">.tf2699575837{display:grid}</style>`].join(''));
             });
         });
 
@@ -299,73 +299,73 @@ describe('Modules – JSX – style – Engine', () => {
             });
 
             it('Wraps output in a <style> tag', () => {
-                const cls = 'tf' + djb2Hash('gap:2rem');
+                const cls = 'tf' + djb2('gap:2rem');
                 engine.register('gap:2rem', cls, {});
                 expect(engine.flush({mode: 'prime'})).toBe(
-                    [`<style ${PRIME}>.tfjibc5d{gap:2rem}</style>`, '<script>', OBSERVER, '</script>'].join(''),
+                    [`<style ${PRIME}>.tf1179619393{gap:2rem}</style>`, '<script>', OBSERVER, '</script>'].join(''),
                 );
             });
 
             it('Flushes large number of base rules correctly', () => {
                 for (let i = 0; i < 50; i++) {
                     const rule = `padding:${i}px`;
-                    const cls = 'tf' + djb2Hash(rule);
+                    const cls = 'tf' + djb2(rule);
                     engine.register(rule, cls, {});
                 }
 
                 expect(engine.flush({mode: 'prime'})).toBe(
                     [
-                        `<style ${PRIME}>`,
-                        '.tf1dma5fa{padding:0px}',
-                        '.tf1dma4mv{padding:1px}',
-                        '.tf1dma0hg{padding:2px}',
-                        '.tf1dma67p{padding:3px}',
-                        '.tf1dma22a{padding:4px}',
-                        '.tf1dma19v{padding:5px}',
-                        '.tf1dm9x4g{padding:6px}',
-                        '.tf1dma2up{padding:7px}',
-                        '.tf1dm9ypq{padding:8px}',
-                        '.tf1dm9xxb{padding:9px}',
-                        '.tf3pqeav{padding:10px}',
-                        '.tf3pqf3a{padding:11px}',
-                        '.tf3pqfvp{padding:12px}',
-                        '.tf3pqa5g{padding:13px}',
-                        '.tf3pqaxv{padding:14px}',
-                        '.tf3pqbqa{padding:15px}',
-                        '.tf3pqcip{padding:16px}',
-                        '.tf3pq6sg{padding:17px}',
-                        '.tf3pq7lb{padding:18px}',
-                        '.tf3pq8dq{padding:19px}',
-                        '.tf3pmlac{padding:20px}',
-                        '.tf3pmkhx{padding:21px}',
-                        '.tf3pmq86{padding:22px}',
-                        '.tf3pmpfr{padding:23px}',
-                        '.tf3pmhxc{padding:24px}',
-                        '.tf3pmh4x{padding:25px}',
-                        '.tf3pmmv6{padding:26px}',
-                        '.tf3pmm2r{padding:27px}',
-                        '.tf3pmeks{padding:28px}',
-                        '.tf3pmdsd{padding:29px}',
-                        '.tf3pouqt{padding:30px}',
-                        '.tf3povj8{padding:31px}',
-                        '.tf3pozon{padding:32px}',
-                        '.tf3potye{padding:33px}',
-                        '.tf3pordt{padding:34px}',
-                        '.tf3pos68{padding:35px}',
-                        '.tf3powbn{padding:36px}',
-                        '.tf3poqle{padding:37px}',
-                        '.tf3poo19{padding:38px}',
-                        '.tf3pooto{padding:39px}',
-                        '.tf3pl1qa{padding:40px}',
-                        '.tf3pl0xv{padding:41px}',
-                        '.tf3pl3b4{padding:42px}',
-                        '.tf3pl2ip{padding:43px}',
-                        '.tf3pl53a{padding:44px}',
-                        '.tf3pl4av{padding:45px}',
-                        '.tf3pl6o4{padding:46px}',
-                        '.tf3pl5vp{padding:47px}',
-                        '.tf3pkv0q{padding:48px}',
-                        '.tf3pku8b{padding:49px}',
+                        '<style data-tfs-p>',
+                        '.tf3000267766{padding:0px}',
+                        '.tf3000266743{padding:1px}',
+                        '.tf3000261364{padding:2px}',
+                        '.tf3000268789{padding:3px}',
+                        '.tf3000263410{padding:4px}',
+                        '.tf3000262387{padding:5px}',
+                        '.tf3000257008{padding:6px}',
+                        '.tf3000264433{padding:7px}',
+                        '.tf3000259070{padding:8px}',
+                        '.tf3000258047{padding:9px}',
+                        '.tf224620519{padding:10px}',
+                        '.tf224621542{padding:11px}',
+                        '.tf224622565{padding:12px}',
+                        '.tf224615140{padding:13px}',
+                        '.tf224616163{padding:14px}',
+                        '.tf224617186{padding:15px}',
+                        '.tf224618209{padding:16px}',
+                        '.tf224610784{padding:17px}',
+                        '.tf224611823{padding:18px}',
+                        '.tf224612846{padding:19px}',
+                        '.tf224442948{padding:20px}',
+                        '.tf224441925{padding:21px}',
+                        '.tf224449350{padding:22px}',
+                        '.tf224448327{padding:23px}',
+                        '.tf224438592{padding:24px}',
+                        '.tf224437569{padding:25px}',
+                        '.tf224444994{padding:26px}',
+                        '.tf224443971{padding:27px}',
+                        '.tf224434252{padding:28px}',
+                        '.tf224433229{padding:29px}',
+                        '.tf224548517{padding:30px}',
+                        '.tf224549540{padding:31px}',
+                        '.tf224554919{padding:32px}',
+                        '.tf224547494{padding:33px}',
+                        '.tf224544161{padding:34px}',
+                        '.tf224545184{padding:35px}',
+                        '.tf224550563{padding:36px}',
+                        '.tf224543138{padding:37px}',
+                        '.tf224539821{padding:38px}',
+                        '.tf224540844{padding:39px}',
+                        '.tf224370946{padding:40px}',
+                        '.tf224369923{padding:41px}',
+                        '.tf224372992{padding:42px}',
+                        '.tf224371969{padding:43px}',
+                        '.tf224375302{padding:44px}',
+                        '.tf224374279{padding:45px}',
+                        '.tf224377348{padding:46px}',
+                        '.tf224376325{padding:47px}',
+                        '.tf224362250{padding:48px}',
+                        '.tf224361227{padding:49px}',
                         '</style>',
                         '<script>',
                         OBSERVER,
@@ -375,12 +375,12 @@ describe('Modules – JSX – style – Engine', () => {
             });
 
             it('Includes nonce attribute when active', () => {
-                const cls = 'tf' + djb2Hash('display:grid');
+                const cls = 'tf' + djb2('display:grid');
                 engine.register('display:grid', cls, {});
                 setActiveCtx(new MockContext({nonce: 'abc123'}));
                 expect(engine.flush({mode: 'prime'})).toBe(
                     [
-                        `<style nonce="abc123" ${PRIME}>.tf18n9a1p{display:grid}</style>`,
+                        `<style nonce="abc123" ${PRIME}>.tf2699575837{display:grid}</style>`,
                         '<script nonce="abc123">',
                         OBSERVER,
                         '</script>',
@@ -395,70 +395,70 @@ describe('Modules – JSX – style – Engine', () => {
             });
 
             it('Wraps output in a <style> tag', () => {
-                const cls = 'tf' + djb2Hash('gap:2rem');
+                const cls = 'tf' + djb2('gap:2rem');
                 engine.register('gap:2rem', cls, {});
-                expect(engine.flush({mode: 'shards'})).toBe(`<style ${SHARD}="tfjibc5d">.tfjibc5d{gap:2rem}</style>`);
+                expect(engine.flush({mode: 'shards'})).toBe(`<style ${SHARD}="tf1179619393">.tf1179619393{gap:2rem}</style>`);
             });
 
             it('Flushes large number of base rules correctly', () => {
                 for (let i = 0; i < 50; i++) {
                     const rule = `padding:${i}px`;
-                    const cls = 'tf' + djb2Hash(rule);
+                    const cls = 'tf' + djb2(rule);
                     engine.register(rule, cls, {});
                 }
 
                 expect(engine.flush({mode: 'shards'})).toBe(
                     [
-                        `<style ${SHARD}="tf1dma5fa">.tf1dma5fa{padding:0px}</style>`,
-                        `<style ${SHARD}="tf1dma4mv">.tf1dma4mv{padding:1px}</style>`,
-                        `<style ${SHARD}="tf1dma0hg">.tf1dma0hg{padding:2px}</style>`,
-                        `<style ${SHARD}="tf1dma67p">.tf1dma67p{padding:3px}</style>`,
-                        `<style ${SHARD}="tf1dma22a">.tf1dma22a{padding:4px}</style>`,
-                        `<style ${SHARD}="tf1dma19v">.tf1dma19v{padding:5px}</style>`,
-                        `<style ${SHARD}="tf1dm9x4g">.tf1dm9x4g{padding:6px}</style>`,
-                        `<style ${SHARD}="tf1dma2up">.tf1dma2up{padding:7px}</style>`,
-                        `<style ${SHARD}="tf1dm9ypq">.tf1dm9ypq{padding:8px}</style>`,
-                        `<style ${SHARD}="tf1dm9xxb">.tf1dm9xxb{padding:9px}</style>`,
-                        `<style ${SHARD}="tf3pqeav">.tf3pqeav{padding:10px}</style>`,
-                        `<style ${SHARD}="tf3pqf3a">.tf3pqf3a{padding:11px}</style>`,
-                        `<style ${SHARD}="tf3pqfvp">.tf3pqfvp{padding:12px}</style>`,
-                        `<style ${SHARD}="tf3pqa5g">.tf3pqa5g{padding:13px}</style>`,
-                        `<style ${SHARD}="tf3pqaxv">.tf3pqaxv{padding:14px}</style>`,
-                        `<style ${SHARD}="tf3pqbqa">.tf3pqbqa{padding:15px}</style>`,
-                        `<style ${SHARD}="tf3pqcip">.tf3pqcip{padding:16px}</style>`,
-                        `<style ${SHARD}="tf3pq6sg">.tf3pq6sg{padding:17px}</style>`,
-                        `<style ${SHARD}="tf3pq7lb">.tf3pq7lb{padding:18px}</style>`,
-                        `<style ${SHARD}="tf3pq8dq">.tf3pq8dq{padding:19px}</style>`,
-                        `<style ${SHARD}="tf3pmlac">.tf3pmlac{padding:20px}</style>`,
-                        `<style ${SHARD}="tf3pmkhx">.tf3pmkhx{padding:21px}</style>`,
-                        `<style ${SHARD}="tf3pmq86">.tf3pmq86{padding:22px}</style>`,
-                        `<style ${SHARD}="tf3pmpfr">.tf3pmpfr{padding:23px}</style>`,
-                        `<style ${SHARD}="tf3pmhxc">.tf3pmhxc{padding:24px}</style>`,
-                        `<style ${SHARD}="tf3pmh4x">.tf3pmh4x{padding:25px}</style>`,
-                        `<style ${SHARD}="tf3pmmv6">.tf3pmmv6{padding:26px}</style>`,
-                        `<style ${SHARD}="tf3pmm2r">.tf3pmm2r{padding:27px}</style>`,
-                        `<style ${SHARD}="tf3pmeks">.tf3pmeks{padding:28px}</style>`,
-                        `<style ${SHARD}="tf3pmdsd">.tf3pmdsd{padding:29px}</style>`,
-                        `<style ${SHARD}="tf3pouqt">.tf3pouqt{padding:30px}</style>`,
-                        `<style ${SHARD}="tf3povj8">.tf3povj8{padding:31px}</style>`,
-                        `<style ${SHARD}="tf3pozon">.tf3pozon{padding:32px}</style>`,
-                        `<style ${SHARD}="tf3potye">.tf3potye{padding:33px}</style>`,
-                        `<style ${SHARD}="tf3pordt">.tf3pordt{padding:34px}</style>`,
-                        `<style ${SHARD}="tf3pos68">.tf3pos68{padding:35px}</style>`,
-                        `<style ${SHARD}="tf3powbn">.tf3powbn{padding:36px}</style>`,
-                        `<style ${SHARD}="tf3poqle">.tf3poqle{padding:37px}</style>`,
-                        `<style ${SHARD}="tf3poo19">.tf3poo19{padding:38px}</style>`,
-                        `<style ${SHARD}="tf3pooto">.tf3pooto{padding:39px}</style>`,
-                        `<style ${SHARD}="tf3pl1qa">.tf3pl1qa{padding:40px}</style>`,
-                        `<style ${SHARD}="tf3pl0xv">.tf3pl0xv{padding:41px}</style>`,
-                        `<style ${SHARD}="tf3pl3b4">.tf3pl3b4{padding:42px}</style>`,
-                        `<style ${SHARD}="tf3pl2ip">.tf3pl2ip{padding:43px}</style>`,
-                        `<style ${SHARD}="tf3pl53a">.tf3pl53a{padding:44px}</style>`,
-                        `<style ${SHARD}="tf3pl4av">.tf3pl4av{padding:45px}</style>`,
-                        `<style ${SHARD}="tf3pl6o4">.tf3pl6o4{padding:46px}</style>`,
-                        `<style ${SHARD}="tf3pl5vp">.tf3pl5vp{padding:47px}</style>`,
-                        `<style ${SHARD}="tf3pkv0q">.tf3pkv0q{padding:48px}</style>`,
-                        `<style ${SHARD}="tf3pku8b">.tf3pku8b{padding:49px}</style>`,
+                        '<style data-tfs-s="tf3000267766">.tf3000267766{padding:0px}</style>',
+                        '<style data-tfs-s="tf3000266743">.tf3000266743{padding:1px}</style>',
+                        '<style data-tfs-s="tf3000261364">.tf3000261364{padding:2px}</style>',
+                        '<style data-tfs-s="tf3000268789">.tf3000268789{padding:3px}</style>',
+                        '<style data-tfs-s="tf3000263410">.tf3000263410{padding:4px}</style>',
+                        '<style data-tfs-s="tf3000262387">.tf3000262387{padding:5px}</style>',
+                        '<style data-tfs-s="tf3000257008">.tf3000257008{padding:6px}</style>',
+                        '<style data-tfs-s="tf3000264433">.tf3000264433{padding:7px}</style>',
+                        '<style data-tfs-s="tf3000259070">.tf3000259070{padding:8px}</style>',
+                        '<style data-tfs-s="tf3000258047">.tf3000258047{padding:9px}</style>',
+                        '<style data-tfs-s="tf224620519">.tf224620519{padding:10px}</style>',
+                        '<style data-tfs-s="tf224621542">.tf224621542{padding:11px}</style>',
+                        '<style data-tfs-s="tf224622565">.tf224622565{padding:12px}</style>',
+                        '<style data-tfs-s="tf224615140">.tf224615140{padding:13px}</style>',
+                        '<style data-tfs-s="tf224616163">.tf224616163{padding:14px}</style>',
+                        '<style data-tfs-s="tf224617186">.tf224617186{padding:15px}</style>',
+                        '<style data-tfs-s="tf224618209">.tf224618209{padding:16px}</style>',
+                        '<style data-tfs-s="tf224610784">.tf224610784{padding:17px}</style>',
+                        '<style data-tfs-s="tf224611823">.tf224611823{padding:18px}</style>',
+                        '<style data-tfs-s="tf224612846">.tf224612846{padding:19px}</style>',
+                        '<style data-tfs-s="tf224442948">.tf224442948{padding:20px}</style>',
+                        '<style data-tfs-s="tf224441925">.tf224441925{padding:21px}</style>',
+                        '<style data-tfs-s="tf224449350">.tf224449350{padding:22px}</style>',
+                        '<style data-tfs-s="tf224448327">.tf224448327{padding:23px}</style>',
+                        '<style data-tfs-s="tf224438592">.tf224438592{padding:24px}</style>',
+                        '<style data-tfs-s="tf224437569">.tf224437569{padding:25px}</style>',
+                        '<style data-tfs-s="tf224444994">.tf224444994{padding:26px}</style>',
+                        '<style data-tfs-s="tf224443971">.tf224443971{padding:27px}</style>',
+                        '<style data-tfs-s="tf224434252">.tf224434252{padding:28px}</style>',
+                        '<style data-tfs-s="tf224433229">.tf224433229{padding:29px}</style>',
+                        '<style data-tfs-s="tf224548517">.tf224548517{padding:30px}</style>',
+                        '<style data-tfs-s="tf224549540">.tf224549540{padding:31px}</style>',
+                        '<style data-tfs-s="tf224554919">.tf224554919{padding:32px}</style>',
+                        '<style data-tfs-s="tf224547494">.tf224547494{padding:33px}</style>',
+                        '<style data-tfs-s="tf224544161">.tf224544161{padding:34px}</style>',
+                        '<style data-tfs-s="tf224545184">.tf224545184{padding:35px}</style>',
+                        '<style data-tfs-s="tf224550563">.tf224550563{padding:36px}</style>',
+                        '<style data-tfs-s="tf224543138">.tf224543138{padding:37px}</style>',
+                        '<style data-tfs-s="tf224539821">.tf224539821{padding:38px}</style>',
+                        '<style data-tfs-s="tf224540844">.tf224540844{padding:39px}</style>',
+                        '<style data-tfs-s="tf224370946">.tf224370946{padding:40px}</style>',
+                        '<style data-tfs-s="tf224369923">.tf224369923{padding:41px}</style>',
+                        '<style data-tfs-s="tf224372992">.tf224372992{padding:42px}</style>',
+                        '<style data-tfs-s="tf224371969">.tf224371969{padding:43px}</style>',
+                        '<style data-tfs-s="tf224375302">.tf224375302{padding:44px}</style>',
+                        '<style data-tfs-s="tf224374279">.tf224374279{padding:45px}</style>',
+                        '<style data-tfs-s="tf224377348">.tf224377348{padding:46px}</style>',
+                        '<style data-tfs-s="tf224376325">.tf224376325{padding:47px}</style>',
+                        '<style data-tfs-s="tf224362250">.tf224362250{padding:48px}</style>',
+                        '<style data-tfs-s="tf224361227">.tf224361227{padding:49px}</style>',
                     ].join(''),
                 );
             });
@@ -466,7 +466,7 @@ describe('Modules – JSX – style – Engine', () => {
             it('Flushes large number of base rules correctly with nonces', () => {
                 for (let i = 0; i < 50; i++) {
                     const rule = `padding:${i}px`;
-                    const cls = 'tf' + djb2Hash(rule);
+                    const cls = 'tf' + djb2(rule);
                     engine.register(rule, cls, {});
                 }
 
@@ -474,73 +474,73 @@ describe('Modules – JSX – style – Engine', () => {
 
                 expect(engine.flush({mode: 'shards'})).toBe(
                     [
-                        `<style ${SHARD}="tf1dma5fa" nonce="abc123">.tf1dma5fa{padding:0px}</style>`,
-                        `<style ${SHARD}="tf1dma4mv" nonce="abc123">.tf1dma4mv{padding:1px}</style>`,
-                        `<style ${SHARD}="tf1dma0hg" nonce="abc123">.tf1dma0hg{padding:2px}</style>`,
-                        `<style ${SHARD}="tf1dma67p" nonce="abc123">.tf1dma67p{padding:3px}</style>`,
-                        `<style ${SHARD}="tf1dma22a" nonce="abc123">.tf1dma22a{padding:4px}</style>`,
-                        `<style ${SHARD}="tf1dma19v" nonce="abc123">.tf1dma19v{padding:5px}</style>`,
-                        `<style ${SHARD}="tf1dm9x4g" nonce="abc123">.tf1dm9x4g{padding:6px}</style>`,
-                        `<style ${SHARD}="tf1dma2up" nonce="abc123">.tf1dma2up{padding:7px}</style>`,
-                        `<style ${SHARD}="tf1dm9ypq" nonce="abc123">.tf1dm9ypq{padding:8px}</style>`,
-                        `<style ${SHARD}="tf1dm9xxb" nonce="abc123">.tf1dm9xxb{padding:9px}</style>`,
-                        `<style ${SHARD}="tf3pqeav" nonce="abc123">.tf3pqeav{padding:10px}</style>`,
-                        `<style ${SHARD}="tf3pqf3a" nonce="abc123">.tf3pqf3a{padding:11px}</style>`,
-                        `<style ${SHARD}="tf3pqfvp" nonce="abc123">.tf3pqfvp{padding:12px}</style>`,
-                        `<style ${SHARD}="tf3pqa5g" nonce="abc123">.tf3pqa5g{padding:13px}</style>`,
-                        `<style ${SHARD}="tf3pqaxv" nonce="abc123">.tf3pqaxv{padding:14px}</style>`,
-                        `<style ${SHARD}="tf3pqbqa" nonce="abc123">.tf3pqbqa{padding:15px}</style>`,
-                        `<style ${SHARD}="tf3pqcip" nonce="abc123">.tf3pqcip{padding:16px}</style>`,
-                        `<style ${SHARD}="tf3pq6sg" nonce="abc123">.tf3pq6sg{padding:17px}</style>`,
-                        `<style ${SHARD}="tf3pq7lb" nonce="abc123">.tf3pq7lb{padding:18px}</style>`,
-                        `<style ${SHARD}="tf3pq8dq" nonce="abc123">.tf3pq8dq{padding:19px}</style>`,
-                        `<style ${SHARD}="tf3pmlac" nonce="abc123">.tf3pmlac{padding:20px}</style>`,
-                        `<style ${SHARD}="tf3pmkhx" nonce="abc123">.tf3pmkhx{padding:21px}</style>`,
-                        `<style ${SHARD}="tf3pmq86" nonce="abc123">.tf3pmq86{padding:22px}</style>`,
-                        `<style ${SHARD}="tf3pmpfr" nonce="abc123">.tf3pmpfr{padding:23px}</style>`,
-                        `<style ${SHARD}="tf3pmhxc" nonce="abc123">.tf3pmhxc{padding:24px}</style>`,
-                        `<style ${SHARD}="tf3pmh4x" nonce="abc123">.tf3pmh4x{padding:25px}</style>`,
-                        `<style ${SHARD}="tf3pmmv6" nonce="abc123">.tf3pmmv6{padding:26px}</style>`,
-                        `<style ${SHARD}="tf3pmm2r" nonce="abc123">.tf3pmm2r{padding:27px}</style>`,
-                        `<style ${SHARD}="tf3pmeks" nonce="abc123">.tf3pmeks{padding:28px}</style>`,
-                        `<style ${SHARD}="tf3pmdsd" nonce="abc123">.tf3pmdsd{padding:29px}</style>`,
-                        `<style ${SHARD}="tf3pouqt" nonce="abc123">.tf3pouqt{padding:30px}</style>`,
-                        `<style ${SHARD}="tf3povj8" nonce="abc123">.tf3povj8{padding:31px}</style>`,
-                        `<style ${SHARD}="tf3pozon" nonce="abc123">.tf3pozon{padding:32px}</style>`,
-                        `<style ${SHARD}="tf3potye" nonce="abc123">.tf3potye{padding:33px}</style>`,
-                        `<style ${SHARD}="tf3pordt" nonce="abc123">.tf3pordt{padding:34px}</style>`,
-                        `<style ${SHARD}="tf3pos68" nonce="abc123">.tf3pos68{padding:35px}</style>`,
-                        `<style ${SHARD}="tf3powbn" nonce="abc123">.tf3powbn{padding:36px}</style>`,
-                        `<style ${SHARD}="tf3poqle" nonce="abc123">.tf3poqle{padding:37px}</style>`,
-                        `<style ${SHARD}="tf3poo19" nonce="abc123">.tf3poo19{padding:38px}</style>`,
-                        `<style ${SHARD}="tf3pooto" nonce="abc123">.tf3pooto{padding:39px}</style>`,
-                        `<style ${SHARD}="tf3pl1qa" nonce="abc123">.tf3pl1qa{padding:40px}</style>`,
-                        `<style ${SHARD}="tf3pl0xv" nonce="abc123">.tf3pl0xv{padding:41px}</style>`,
-                        `<style ${SHARD}="tf3pl3b4" nonce="abc123">.tf3pl3b4{padding:42px}</style>`,
-                        `<style ${SHARD}="tf3pl2ip" nonce="abc123">.tf3pl2ip{padding:43px}</style>`,
-                        `<style ${SHARD}="tf3pl53a" nonce="abc123">.tf3pl53a{padding:44px}</style>`,
-                        `<style ${SHARD}="tf3pl4av" nonce="abc123">.tf3pl4av{padding:45px}</style>`,
-                        `<style ${SHARD}="tf3pl6o4" nonce="abc123">.tf3pl6o4{padding:46px}</style>`,
-                        `<style ${SHARD}="tf3pl5vp" nonce="abc123">.tf3pl5vp{padding:47px}</style>`,
-                        `<style ${SHARD}="tf3pkv0q" nonce="abc123">.tf3pkv0q{padding:48px}</style>`,
-                        `<style ${SHARD}="tf3pku8b" nonce="abc123">.tf3pku8b{padding:49px}</style>`,
+                        '<style data-tfs-s="tf3000267766" nonce="abc123">.tf3000267766{padding:0px}</style>',
+                        '<style data-tfs-s="tf3000266743" nonce="abc123">.tf3000266743{padding:1px}</style>',
+                        '<style data-tfs-s="tf3000261364" nonce="abc123">.tf3000261364{padding:2px}</style>',
+                        '<style data-tfs-s="tf3000268789" nonce="abc123">.tf3000268789{padding:3px}</style>',
+                        '<style data-tfs-s="tf3000263410" nonce="abc123">.tf3000263410{padding:4px}</style>',
+                        '<style data-tfs-s="tf3000262387" nonce="abc123">.tf3000262387{padding:5px}</style>',
+                        '<style data-tfs-s="tf3000257008" nonce="abc123">.tf3000257008{padding:6px}</style>',
+                        '<style data-tfs-s="tf3000264433" nonce="abc123">.tf3000264433{padding:7px}</style>',
+                        '<style data-tfs-s="tf3000259070" nonce="abc123">.tf3000259070{padding:8px}</style>',
+                        '<style data-tfs-s="tf3000258047" nonce="abc123">.tf3000258047{padding:9px}</style>',
+                        '<style data-tfs-s="tf224620519" nonce="abc123">.tf224620519{padding:10px}</style>',
+                        '<style data-tfs-s="tf224621542" nonce="abc123">.tf224621542{padding:11px}</style>',
+                        '<style data-tfs-s="tf224622565" nonce="abc123">.tf224622565{padding:12px}</style>',
+                        '<style data-tfs-s="tf224615140" nonce="abc123">.tf224615140{padding:13px}</style>',
+                        '<style data-tfs-s="tf224616163" nonce="abc123">.tf224616163{padding:14px}</style>',
+                        '<style data-tfs-s="tf224617186" nonce="abc123">.tf224617186{padding:15px}</style>',
+                        '<style data-tfs-s="tf224618209" nonce="abc123">.tf224618209{padding:16px}</style>',
+                        '<style data-tfs-s="tf224610784" nonce="abc123">.tf224610784{padding:17px}</style>',
+                        '<style data-tfs-s="tf224611823" nonce="abc123">.tf224611823{padding:18px}</style>',
+                        '<style data-tfs-s="tf224612846" nonce="abc123">.tf224612846{padding:19px}</style>',
+                        '<style data-tfs-s="tf224442948" nonce="abc123">.tf224442948{padding:20px}</style>',
+                        '<style data-tfs-s="tf224441925" nonce="abc123">.tf224441925{padding:21px}</style>',
+                        '<style data-tfs-s="tf224449350" nonce="abc123">.tf224449350{padding:22px}</style>',
+                        '<style data-tfs-s="tf224448327" nonce="abc123">.tf224448327{padding:23px}</style>',
+                        '<style data-tfs-s="tf224438592" nonce="abc123">.tf224438592{padding:24px}</style>',
+                        '<style data-tfs-s="tf224437569" nonce="abc123">.tf224437569{padding:25px}</style>',
+                        '<style data-tfs-s="tf224444994" nonce="abc123">.tf224444994{padding:26px}</style>',
+                        '<style data-tfs-s="tf224443971" nonce="abc123">.tf224443971{padding:27px}</style>',
+                        '<style data-tfs-s="tf224434252" nonce="abc123">.tf224434252{padding:28px}</style>',
+                        '<style data-tfs-s="tf224433229" nonce="abc123">.tf224433229{padding:29px}</style>',
+                        '<style data-tfs-s="tf224548517" nonce="abc123">.tf224548517{padding:30px}</style>',
+                        '<style data-tfs-s="tf224549540" nonce="abc123">.tf224549540{padding:31px}</style>',
+                        '<style data-tfs-s="tf224554919" nonce="abc123">.tf224554919{padding:32px}</style>',
+                        '<style data-tfs-s="tf224547494" nonce="abc123">.tf224547494{padding:33px}</style>',
+                        '<style data-tfs-s="tf224544161" nonce="abc123">.tf224544161{padding:34px}</style>',
+                        '<style data-tfs-s="tf224545184" nonce="abc123">.tf224545184{padding:35px}</style>',
+                        '<style data-tfs-s="tf224550563" nonce="abc123">.tf224550563{padding:36px}</style>',
+                        '<style data-tfs-s="tf224543138" nonce="abc123">.tf224543138{padding:37px}</style>',
+                        '<style data-tfs-s="tf224539821" nonce="abc123">.tf224539821{padding:38px}</style>',
+                        '<style data-tfs-s="tf224540844" nonce="abc123">.tf224540844{padding:39px}</style>',
+                        '<style data-tfs-s="tf224370946" nonce="abc123">.tf224370946{padding:40px}</style>',
+                        '<style data-tfs-s="tf224369923" nonce="abc123">.tf224369923{padding:41px}</style>',
+                        '<style data-tfs-s="tf224372992" nonce="abc123">.tf224372992{padding:42px}</style>',
+                        '<style data-tfs-s="tf224371969" nonce="abc123">.tf224371969{padding:43px}</style>',
+                        '<style data-tfs-s="tf224375302" nonce="abc123">.tf224375302{padding:44px}</style>',
+                        '<style data-tfs-s="tf224374279" nonce="abc123">.tf224374279{padding:45px}</style>',
+                        '<style data-tfs-s="tf224377348" nonce="abc123">.tf224377348{padding:46px}</style>',
+                        '<style data-tfs-s="tf224376325" nonce="abc123">.tf224376325{padding:47px}</style>',
+                        '<style data-tfs-s="tf224362250" nonce="abc123">.tf224362250{padding:48px}</style>',
+                        '<style data-tfs-s="tf224361227" nonce="abc123">.tf224361227{padding:49px}</style>',
                     ].join(''),
                 );
             });
 
             it('Includes nonce attribute when active', () => {
-                const cls = 'tf' + djb2Hash('display:grid');
+                const cls = 'tf' + djb2('display:grid');
                 engine.register('display:grid', cls, {});
                 setActiveCtx(new MockContext({nonce: 'abc123'}));
                 expect(engine.flush({mode: 'shards'})).toBe(
-                    '<style data-tfs-s="tf18n9a1p" nonce="abc123">.tf18n9a1p{display:grid}</style>',
+                    '<style data-tfs-s="tf2699575837" nonce="abc123">.tf2699575837{display:grid}</style>',
                 );
             });
         });
 
         describe('mode:file', () => {
             it('flush returns raw css string only, no tags or links', () => {
-                const cls = 'tf' + djb2Hash('color:blue');
+                const cls = 'tf' + djb2('color:blue');
                 engine.register('color:blue', cls, {});
                 const raw = engine.flush({mode: 'file'});
 
@@ -550,62 +550,62 @@ describe('Modules – JSX – style – Engine', () => {
             it('Flushes large number of base rules correctly', () => {
                 for (let i = 0; i < 50; i++) {
                     const rule = `padding:${i}px`;
-                    const cls = 'tf' + djb2Hash(rule);
+                    const cls = 'tf' + djb2(rule);
                     engine.register(rule, cls, {});
                 }
 
                 expect(engine.flush({mode: 'file'})).toBe(
                     [
-                        '.tf1dma5fa{padding:0px}',
-                        '.tf1dma4mv{padding:1px}',
-                        '.tf1dma0hg{padding:2px}',
-                        '.tf1dma67p{padding:3px}',
-                        '.tf1dma22a{padding:4px}',
-                        '.tf1dma19v{padding:5px}',
-                        '.tf1dm9x4g{padding:6px}',
-                        '.tf1dma2up{padding:7px}',
-                        '.tf1dm9ypq{padding:8px}',
-                        '.tf1dm9xxb{padding:9px}',
-                        '.tf3pqeav{padding:10px}',
-                        '.tf3pqf3a{padding:11px}',
-                        '.tf3pqfvp{padding:12px}',
-                        '.tf3pqa5g{padding:13px}',
-                        '.tf3pqaxv{padding:14px}',
-                        '.tf3pqbqa{padding:15px}',
-                        '.tf3pqcip{padding:16px}',
-                        '.tf3pq6sg{padding:17px}',
-                        '.tf3pq7lb{padding:18px}',
-                        '.tf3pq8dq{padding:19px}',
-                        '.tf3pmlac{padding:20px}',
-                        '.tf3pmkhx{padding:21px}',
-                        '.tf3pmq86{padding:22px}',
-                        '.tf3pmpfr{padding:23px}',
-                        '.tf3pmhxc{padding:24px}',
-                        '.tf3pmh4x{padding:25px}',
-                        '.tf3pmmv6{padding:26px}',
-                        '.tf3pmm2r{padding:27px}',
-                        '.tf3pmeks{padding:28px}',
-                        '.tf3pmdsd{padding:29px}',
-                        '.tf3pouqt{padding:30px}',
-                        '.tf3povj8{padding:31px}',
-                        '.tf3pozon{padding:32px}',
-                        '.tf3potye{padding:33px}',
-                        '.tf3pordt{padding:34px}',
-                        '.tf3pos68{padding:35px}',
-                        '.tf3powbn{padding:36px}',
-                        '.tf3poqle{padding:37px}',
-                        '.tf3poo19{padding:38px}',
-                        '.tf3pooto{padding:39px}',
-                        '.tf3pl1qa{padding:40px}',
-                        '.tf3pl0xv{padding:41px}',
-                        '.tf3pl3b4{padding:42px}',
-                        '.tf3pl2ip{padding:43px}',
-                        '.tf3pl53a{padding:44px}',
-                        '.tf3pl4av{padding:45px}',
-                        '.tf3pl6o4{padding:46px}',
-                        '.tf3pl5vp{padding:47px}',
-                        '.tf3pkv0q{padding:48px}',
-                        '.tf3pku8b{padding:49px}',
+                        '.tf3000267766{padding:0px}',
+                        '.tf3000266743{padding:1px}',
+                        '.tf3000261364{padding:2px}',
+                        '.tf3000268789{padding:3px}',
+                        '.tf3000263410{padding:4px}',
+                        '.tf3000262387{padding:5px}',
+                        '.tf3000257008{padding:6px}',
+                        '.tf3000264433{padding:7px}',
+                        '.tf3000259070{padding:8px}',
+                        '.tf3000258047{padding:9px}',
+                        '.tf224620519{padding:10px}',
+                        '.tf224621542{padding:11px}',
+                        '.tf224622565{padding:12px}',
+                        '.tf224615140{padding:13px}',
+                        '.tf224616163{padding:14px}',
+                        '.tf224617186{padding:15px}',
+                        '.tf224618209{padding:16px}',
+                        '.tf224610784{padding:17px}',
+                        '.tf224611823{padding:18px}',
+                        '.tf224612846{padding:19px}',
+                        '.tf224442948{padding:20px}',
+                        '.tf224441925{padding:21px}',
+                        '.tf224449350{padding:22px}',
+                        '.tf224448327{padding:23px}',
+                        '.tf224438592{padding:24px}',
+                        '.tf224437569{padding:25px}',
+                        '.tf224444994{padding:26px}',
+                        '.tf224443971{padding:27px}',
+                        '.tf224434252{padding:28px}',
+                        '.tf224433229{padding:29px}',
+                        '.tf224548517{padding:30px}',
+                        '.tf224549540{padding:31px}',
+                        '.tf224554919{padding:32px}',
+                        '.tf224547494{padding:33px}',
+                        '.tf224544161{padding:34px}',
+                        '.tf224545184{padding:35px}',
+                        '.tf224550563{padding:36px}',
+                        '.tf224543138{padding:37px}',
+                        '.tf224539821{padding:38px}',
+                        '.tf224540844{padding:39px}',
+                        '.tf224370946{padding:40px}',
+                        '.tf224369923{padding:41px}',
+                        '.tf224372992{padding:42px}',
+                        '.tf224371969{padding:43px}',
+                        '.tf224375302{padding:44px}',
+                        '.tf224374279{padding:45px}',
+                        '.tf224377348{padding:46px}',
+                        '.tf224376325{padding:47px}',
+                        '.tf224362250{padding:48px}',
+                        '.tf224361227{padding:49px}',
                     ].join(''),
                 );
             });
@@ -621,35 +621,37 @@ describe('Modules – JSX – style – Engine', () => {
         });
 
         it('Replaces marker if present', () => {
-            const cls = 'tf' + djb2Hash('color:red');
+            const cls = 'tf' + djb2('color:red');
             engine.register('color:red', cls, {});
             expect(engine.inject(`<div>${MARKER}Hello there</div>`)).toBe(
-                ['<div>', '<style data-tfs-s="tf1tlgz3l">.tf1tlgz3l{color:red}</style>', 'Hello there</div>'].join(''),
+                ['<div>', '<style data-tfs-s="tf3966365361">.tf3966365361{color:red}</style>', 'Hello there</div>'].join(''),
             );
         });
 
         it('Includes nonce attribute when active', () => {
-            const cls = 'tf' + djb2Hash('color:red');
+            const cls = 'tf' + djb2('color:red');
             setActiveCtx(new MockContext({nonce: 'abc123'}));
             engine.register('color:red', cls, {});
             expect(engine.inject(`<div>${MARKER}Hello there</div>`)).toBe(
-                ['<div>', '<style data-tfs-s="tf1tlgz3l" nonce="abc123">.tf1tlgz3l{color:red}</style>', 'Hello there</div>'].join(''),
+                ['<div>', '<style data-tfs-s="tf3966365361" nonce="abc123">.tf3966365361{color:red}</style>', 'Hello there</div>'].join(''),
             );
         });
 
         it('Prepends styles if marker is not present', () => {
-            const cls = 'tf' + djb2Hash('color:red');
+            const cls = 'tf' + djb2('color:red');
             engine.register('color:red', cls, {});
             expect(engine.inject('<main>hello</main>')).toBe(
-                ['<main>hello</main>', '<style data-tfs-s="tf1tlgz3l">.tf1tlgz3l{color:red}</style>'].join(''),
+                ['<main>hello</main>', '<style data-tfs-s="tf3966365361">.tf3966365361{color:red}</style>'].join(''),
             );
         });
 
         it('Only replaces the first occurrence of the style marker and strips the rest', () => {
-            const cls = 'tf' + djb2Hash('border:1px solid red');
+            const cls = 'tf' + djb2('border:1px solid red');
             engine.register('border:1px solid red', cls, {});
             expect(engine.inject(`<div>${MARKER}<span>${MARKER}</span></div>`)).toBe(
-                ['<div>', '<style data-tfs-s="tf12bzjpg">.tf12bzjpg{border:1px solid red}</style>', '<span></span>', '</div>'].join(''),
+                ['<div>', '<style data-tfs-s="tf2317848964">.tf2317848964{border:1px solid red}</style>', '<span></span>', '</div>'].join(
+                    '',
+                ),
             );
         });
 
@@ -659,7 +661,7 @@ describe('Modules – JSX – style – Engine', () => {
 
         it('Does not fail if passed a non/empty-string html', () => {
             for (const el of [...CONSTANTS.NOT_STRING, '']) {
-                const cls = 'tf' + djb2Hash('line-height:1.5');
+                const cls = 'tf' + djb2('line-height:1.5');
                 engine.register('line-height:1.5', cls, {});
 
                 const output = engine.inject(el as string);
@@ -672,7 +674,7 @@ describe('Modules – JSX – style – Engine', () => {
         });
 
         it('Injects <link> when mount_path is set and HTML starts with <!DOCTYPE>', () => {
-            const cls = 'tf' + djb2Hash('color:red');
+            const cls = 'tf' + djb2('color:red');
             engine.register('color:red', cls, {});
             engine.setMountPath('/styles.css');
 
@@ -680,7 +682,7 @@ describe('Modules – JSX – style – Engine', () => {
                 [
                     '<!DOCTYPE html><html>',
                     '<link rel="stylesheet" href="/styles.css">',
-                    `<style ${PRIME}>.tf1tlgz3l{color:red}</style>`,
+                    `<style ${PRIME}>.tf3966365361{color:red}</style>`,
                     `<script>${OBSERVER}</script>`,
                     '</html>',
                 ].join(''),
@@ -688,7 +690,7 @@ describe('Modules – JSX – style – Engine', () => {
         });
 
         it('Injects <link> when HTML starts with <html>', () => {
-            const cls = 'tf' + djb2Hash('margin:0');
+            const cls = 'tf' + djb2('margin:0');
             engine.register('margin:0', cls, {});
             engine.setMountPath('/styles.css');
 
@@ -696,7 +698,7 @@ describe('Modules – JSX – style – Engine', () => {
                 [
                     '<html>',
                     '<link rel="stylesheet" href="/styles.css">',
-                    `<style ${PRIME}>.tfpmr7gx{margin:0}</style>`,
+                    `<style ${PRIME}>.tf1549875345{margin:0}</style>`,
                     '<script>',
                     OBSERVER,
                     '</script>',
@@ -706,7 +708,7 @@ describe('Modules – JSX – style – Engine', () => {
         });
 
         it('Injects <link> with nonce when mount_path is set and nonce context is active', () => {
-            const cls = 'tf' + djb2Hash('color:red');
+            const cls = 'tf' + djb2('color:red');
             engine.register('color:red', cls, {});
             engine.setMountPath('/styles.css');
             setActiveCtx(new MockContext({nonce: 'abc123'}));
@@ -715,7 +717,7 @@ describe('Modules – JSX – style – Engine', () => {
                 [
                     '<!DOCTYPE html><html>',
                     '<link rel="stylesheet" nonce="abc123" href="/styles.css">',
-                    `<style nonce="abc123" ${PRIME}>.tf1tlgz3l{color:red}</style>`,
+                    `<style nonce="abc123" ${PRIME}>.tf3966365361{color:red}</style>`,
                     `<script nonce="abc123">${OBSERVER}</script>`,
                     '</html>',
                 ].join(''),
@@ -723,12 +725,12 @@ describe('Modules – JSX – style – Engine', () => {
         });
 
         it('Does not inject <link> if mount_path is set but HTML is not full document', () => {
-            const cls = 'tf' + djb2Hash('padding:0');
+            const cls = 'tf' + djb2('padding:0');
             engine.register('padding:0', cls, {});
             engine.setMountPath('/styles.css');
 
             expect(engine.inject(`<div>${MARKER}content</div>`)).toBe(
-                ['<div>', `<style ${SHARD}="tf8pxw5a">.tf8pxw5a{padding:0}</style>`, 'content</div>'].join(''),
+                ['<div>', `<style ${SHARD}="tf527301118">.tf527301118{padding:0}</style>`, 'content</div>'].join(''),
             );
         });
     });
@@ -743,32 +745,32 @@ describe('Modules – JSX – style – Engine', () => {
         it('Clears all rules even after large number of registrations', () => {
             for (let i = 0; i < 20; i++) {
                 const rule = `border-radius:${i}px`;
-                engine.register(rule, 'tf' + djb2Hash(rule), {});
+                engine.register(rule, 'tf' + djb2(rule), {});
             }
 
             expect(engine.flush({mode: 'style'})).toBe(
                 [
                     '<style>',
-                    '.tfn8zwv2{border-radius:0px}',
-                    '.tfn8zw2n{border-radius:1px}',
-                    '.tfn8zyfw{border-radius:2px}',
-                    '.tfn8zxnh{border-radius:3px}',
-                    '.tfn8zti2{border-radius:4px}',
-                    '.tfn8zspn{border-radius:5px}',
-                    '.tfn8zv2w{border-radius:6px}',
-                    '.tfn8zuah{border-radius:7px}',
-                    '.tfn903km{border-radius:8px}',
-                    '.tfn902s7{border-radius:9px}',
-                    '.tf1kxtfin{border-radius:10px}',
-                    '.tf1kxtgb2{border-radius:11px}',
-                    '.tf1kxtakt{border-radius:12px}',
-                    '.tf1kxtbd8{border-radius:13px}',
-                    '.tf1kxtc5n{border-radius:14px}',
-                    '.tf1kxtcy2{border-radius:15px}',
-                    '.tf1kxt77t{border-radius:16px}',
-                    '.tf1kxt808{border-radius:17px}',
-                    '.tf1kxtm87{border-radius:18px}',
-                    '.tf1kxtn0m{border-radius:19px}',
+                    '.tf1405834526{border-radius:0px}',
+                    '.tf1405833503{border-radius:1px}',
+                    '.tf1405836572{border-radius:2px}',
+                    '.tf1405835549{border-radius:3px}',
+                    '.tf1405830170{border-radius:4px}',
+                    '.tf1405829147{border-radius:5px}',
+                    '.tf1405832216{border-radius:6px}',
+                    '.tf1405831193{border-radius:7px}',
+                    '.tf1405843222{border-radius:8px}',
+                    '.tf1405842199{border-radius:9px}',
+                    '.tf3442906319{border-radius:10px}',
+                    '.tf3442907342{border-radius:11px}',
+                    '.tf3442899917{border-radius:12px}',
+                    '.tf3442900940{border-radius:13px}',
+                    '.tf3442901963{border-radius:14px}',
+                    '.tf3442902986{border-radius:15px}',
+                    '.tf3442895561{border-radius:16px}',
+                    '.tf3442896584{border-radius:17px}',
+                    '.tf3442915015{border-radius:18px}',
+                    '.tf3442916038{border-radius:19px}',
                     '</style>',
                 ].join(''),
             );
@@ -777,12 +779,17 @@ describe('Modules – JSX – style – Engine', () => {
         });
 
         it('Clears both base and media style maps', () => {
-            engine.register('font-weight:bold', 'tf' + djb2Hash('font-weight:bold'), {});
-            engine.register('font-size:0.9rem', 'tf' + djb2Hash('font-size:0.9rem'), {
+            engine.register('font-weight:bold', 'tf' + djb2('font-weight:bold'), {});
+            engine.register('font-size:0.9rem', 'tf' + djb2('font-size:0.9rem'), {
                 query: '@media (min-width: 800px)',
             });
             expect(engine.flush({mode: 'style'})).toBe(
-                ['<style>', '.tf9loqhw{font-weight:bold}', '@media (min-width: 800px){.tf1txfpkp{font-size:0.9rem}}', '</style>'].join(''),
+                [
+                    '<style>',
+                    '.tf580621604{font-weight:bold}',
+                    '@media (min-width: 800px){.tf3986461753{font-size:0.9rem}}',
+                    '</style>',
+                ].join(''),
             );
             engine.reset();
             expect(engine.flush()).toBe('');

@@ -14,67 +14,57 @@ import {setActiveCtx} from './ctx/use';
 const SCRIPT_LRU = 'tfscriptlru';
 const MODULES_LRU = 'tfmoduleslru';
 
-const VOID_TAGS = {
+const VOID_TAGS = new Set([
     /* HTML */
-    area: true,
-    base: true,
-    br: true,
-    col: true,
-    embed: true,
-    hr: true,
-    img: true,
-    input: true,
-    link: true,
-    meta: true,
-    source: true,
-    track: true,
-    wbr: true,
+    'area',
+    'base',
+    'br',
+    'col',
+    'embed',
+    'hr',
+    'img',
+    'input',
+    'link',
+    'meta',
+    'source',
+    'track',
+    'wbr',
     /* SVG */
-    path: true,
-    circle: true,
-    ellipse: true,
-    line: true,
-    polygon: true,
-    polyline: true,
-    rect: true,
-    stop: true,
-    use: true,
-} as const;
+    'path',
+    'circle',
+    'ellipse',
+    'line',
+    'polygon',
+    'polyline',
+    'rect',
+    'stop',
+    'use',
+]);
 
-const BOOL_PROPS = {
-    allowfullscreen: true,
-    async: true,
-    autofocus: true,
-    autoplay: true,
-    checked: true,
-    controls: true,
-    default: true,
-    defer: true,
-    disabled: true,
-    formnovalidate: true,
-    hidden: true,
-    ismap: true,
-    loop: true,
-    multiple: true,
-    muted: true,
-    nomodule: true,
-    novalidate: true,
-    open: true,
-    readonly: true,
-    required: true,
-    reversed: true,
-    selected: true,
-} as const;
-
-const ESCAPE_LOOKUP = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-} as const;
-
-const RGX_ESCAPE = /(?:&(?![a-z#0-9]+;))|[<>"']/gi;
+const BOOL_PROPS = new Set([
+    'allowfullscreen',
+    'async',
+    'autofocus',
+    'autoplay',
+    'checked',
+    'controls',
+    'default',
+    'defer',
+    'disabled',
+    'formnovalidate',
+    'hidden',
+    'ismap',
+    'loop',
+    'multiple',
+    'muted',
+    'nomodule',
+    'novalidate',
+    'open',
+    'readonly',
+    'required',
+    'reversed',
+    'selected',
+]);
 
 /**
  * Escape HTML entities in strings to prevent XSS attacks.
@@ -82,7 +72,35 @@ const RGX_ESCAPE = /(?:&(?![a-z#0-9]+;))|[<>"']/gi;
  * @param {string} str - Input string to escape.
  */
 export function escape(str: string): string {
-    return str.replace(RGX_ESCAPE, (ch: string) => ESCAPE_LOOKUP[ch as keyof typeof ESCAPE_LOOKUP]);
+    let out = '';
+    let last = 0;
+    for (let i = 0; i < str.length; i++) {
+        const ch = str.charCodeAt(i);
+        let esc: string | undefined;
+        switch (ch) {
+            case 38:
+                esc = '&amp;';
+                break; // &
+            case 60:
+                esc = '&lt;';
+                break; // <
+            case 62:
+                esc = '&gt;';
+                break; // >
+            case 34:
+                esc = '&quot;';
+                break; // "
+            case 39:
+                esc = '&#39;';
+                break; // '
+        }
+        if (esc) {
+            if (i > last) out += str.slice(last, i);
+            out += esc;
+            last = i + 1;
+        }
+    }
+    return last === 0 ? str : out + str.slice(last);
 }
 
 /**
@@ -118,28 +136,25 @@ export function toLruCookie(val: Set<string>) {
  * @param {Record<string, unknown>} props - Props to render
  */
 function renderProps(props: Record<string, unknown> | null) {
+    if (!props) return '';
+
     let acc = '';
     for (const key in props) {
         const val = props[key];
-        switch (key) {
-            case 'style':
+        if (val !== null && val !== undefined) {
+            if (key === 'style') {
                 if (Object.prototype.toString.call(val) === '[object Object]') {
                     const style = styleToString(val as Record<string, unknown>);
                     if (style) acc += ' style="' + escape(style) + '"';
                 }
-                break;
-            case 'children':
-            case 'dangerouslySetInnerHTML':
-                break;
-            case 'className': {
-                if (val !== undefined && val !== null) acc += ' class="' + escape(val + '') + '"';
-                break;
-            }
-            default: {
-                if (val !== undefined && val !== null) {
-                    acc += ' ' + key + (val !== true || !BOOL_PROPS[key as keyof typeof BOOL_PROPS] ? '="' + escape(val + '') + '"' : '');
+            } else if (key === 'className') {
+                acc += ' class="' + escape(String(val)) + '"';
+            } else if (key !== 'children' && key !== 'dangerouslySetInnerHTML') {
+                if (val === true && BOOL_PROPS.has(key)) {
+                    acc += ' ' + key;
+                } else {
+                    acc += ' ' + key + '="' + escape(String(val)) + '"';
                 }
-                break;
             }
         }
     }
@@ -164,7 +179,7 @@ function renderChildren(children: any, parentProps?: JSXProps): string {
 export function render(node: JSX.Element | string | number | boolean | null, parentProps: JSXProps = {}): string {
     switch (typeof node) {
         case 'string':
-            return node ? escape(node) : '';
+            return escape(node);
         case 'number':
             return node + '';
         case 'boolean':
@@ -187,7 +202,7 @@ export function render(node: JSX.Element | string | number | boolean | null, par
                             ? node.props!.dangerouslySetInnerHTML!.__html
                             : renderChildren(node.props!.children, node.props!);
 
-                    return VOID_TAGS[tag as keyof typeof VOID_TAGS]
+                    return VOID_TAGS.has(tag)
                         ? '<' + tag + renderProps(node.props) + ' />'
                         : '<' + tag + renderProps(node.props) + '>' + innerHTML + '</' + tag + '>';
                 }
@@ -196,9 +211,7 @@ export function render(node: JSX.Element | string | number | boolean | null, par
                         ? renderChildren(node.props!.children, parentProps)
                         : render(node.type(node.props), parentProps);
                 default: {
-                    if (!node) {
-                        return '';
-                    } else if (Array.isArray(node)) {
+                    if (Array.isArray(node)) {
                         let output = '';
                         for (let i = 0; i < node.length; i++) output += render(node[i], parentProps);
                         return output;

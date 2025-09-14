@@ -1,5 +1,5 @@
 import {LRU} from '@valkyriestudios/utils/caching';
-import {djb2Hash} from './Generic';
+import {djb2} from '@valkyriestudios/utils/hash';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder('utf-8', {fatal: true});
@@ -132,13 +132,7 @@ export async function importKey(
     if (key instanceof CryptoKey) return key;
 
     /* Generate an id for the key */
-    const id = [
-        algo.name,
-        (algo as any).hash!.name,
-        (algo as any).namedCurve || '',
-        usages.join('.'),
-        djb2Hash(typeof key === 'string' ? key : JSON.stringify(key)),
-    ].join(':');
+    const id = [algo.name, (algo as any).hash!.name, (algo as any).namedCurve || '', usages.join('.'), djb2(key)].join(':');
 
     /* If cached, return cached version */
     const cached = key_cache.get(id);

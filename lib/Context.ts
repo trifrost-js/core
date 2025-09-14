@@ -1,5 +1,6 @@
 import {isObject} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
+import {hexId} from '@valkyriestudios/utils/hash';
 import {type TriFrostCache} from './modules/Cache';
 import {Cookies} from './modules/Cookies';
 import {NONCE_WIN_SCRIPT, NONCEMARKER} from './modules/JSX/ctx/nonce';
@@ -28,7 +29,7 @@ import {
     type TriFrostContextRenderOptions,
 } from './types/context';
 import {encodeFilename, extractDomainFromHost} from './utils/Http';
-import {determineHost, hexId, injectBefore, prependDocType} from './utils/Generic';
+import {determineHost, injectBefore, prependDocType} from './utils/Generic';
 import {type TriFrostBodyParserOptions, type ParsedBody} from './utils/BodyParser/types';
 
 type RequestConfig = {

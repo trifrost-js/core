@@ -1,6 +1,6 @@
+import * as Hash from '@valkyriestudios/utils/hash';
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {ScriptEngine} from '../../../../../lib/modules/JSX/script/Engine';
-import * as Generic from '../../../../../lib/utils/Generic';
 import * as Nonce from '../../../../../lib/modules/JSX/ctx/nonce';
 import CONSTANTS from '../../../../constants';
 import {ARC_GLOBAL, ARC_GLOBAL_OBSERVER, ATOMIC_GLOBAL} from '../../../../../lib/modules/JSX/script/atomic';
@@ -25,7 +25,7 @@ describe('Modules - JSX - script - Engine', () => {
             const data = '{"msg":"Hi"}';
 
             const result = engine.register(fn, data);
-            expect(result).toEqual({fn_id: '1dmtm1c', data_id: '1auq0jl'});
+            expect(result).toEqual({fn_id: '3001175760', data_id: '2833046337'});
         });
 
         it('Deduplicates identical functions', () => {
@@ -37,7 +37,7 @@ describe('Modules - JSX - script - Engine', () => {
             expect(a.fn_id).toBe(b.fn_id);
 
             /* @ts-expect-error Should be good */
-            expect([...engine.map_fn.entries()]).toEqual([['function(){}', 'ptukow']]);
+            expect([...engine.map_fn.entries()]).toEqual([['function(){}', '1561789760']]);
 
             /* @ts-expect-error Should be good */
             expect([...engine.map_data.entries()]).toEqual([]);
@@ -55,12 +55,12 @@ describe('Modules - JSX - script - Engine', () => {
 
             /* @ts-expect-error Should be good */
             expect([...engine.map_fn.entries()]).toEqual([
-                ['function a(){}', '1uzw5kx'],
-                ['function b(){}', '1v0jxxe'],
+                ['function a(){}', '4051054401'],
+                ['function b(){}', '4052164226'],
             ]);
 
             /* @ts-expect-error Should be good */
-            expect([...engine.map_data.entries()]).toEqual([['{"foo":42}', '1f6vqhl']]);
+            expect([...engine.map_data.entries()]).toEqual([['{"foo":42}', '3095333337']]);
         });
 
         it('Handles null data by omitting data_id', () => {
@@ -84,12 +84,12 @@ describe('Modules - JSX - script - Engine', () => {
 
             const result = engine.register(fn, malformed);
 
-            expect(result).toEqual({fn_id: 'ptukow', data_id: '1dfze00'});
+            expect(result).toEqual({fn_id: '1561789760', data_id: '2989687968'});
             /* @ts-expect-error Should be good */
-            expect([...engine.map_fn.entries()]).toEqual([['function(){}', 'ptukow']]);
+            expect([...engine.map_fn.entries()]).toEqual([['function(){}', '1561789760']]);
 
             /* @ts-expect-error Should be good */
-            expect([...engine.map_data.entries()]).toEqual([[malformed, '1dfze00']]);
+            expect([...engine.map_data.entries()]).toEqual([[malformed, '2989687968']]);
         });
 
         it('Registers an empty function string without throwing', () => {
@@ -111,7 +111,7 @@ describe('Modules - JSX - script - Engine', () => {
             expect(a.data_id).toBeNull();
             expect(b.data_id).toBeNull();
             /* @ts-expect-error Should be good */
-            expect([...engine.map_fn.entries()]).toEqual([[fn, 'ptukow']]);
+            expect([...engine.map_fn.entries()]).toEqual([[fn, '1561789760']]);
 
             /* @ts-expect-error Should be good */
             expect([...engine.map_data.entries()]).toEqual([]);
@@ -144,7 +144,7 @@ describe('Modules - JSX - script - Engine', () => {
             const name = 'dashboard.module';
 
             const result = engine.registerModule(fn, data, name);
-            expect(result).toEqual({name: '1ywpved'});
+            expect(result).toEqual({name: '4287587125'});
         });
 
         it('Registers multiple modules with different names', () => {
@@ -156,12 +156,12 @@ describe('Modules - JSX - script - Engine', () => {
             const res1 = engine.registerModule(fn1, data1, 'foo');
             const res2 = engine.registerModule(fn2, data2, 'bar');
 
-            expect(res1).toEqual({name: '375gv7'});
-            expect(res2).toEqual({name: '375k38'});
+            expect(res1).toEqual({name: '193410979'});
+            expect(res2).toEqual({name: '193415156'});
             /* @ts-expect-error Should be good */
             expect([...engine.map_modules.entries()]).toEqual([
                 [
-                    '375gv7',
+                    '193410979',
                     {
                         data: data1,
                         fn: fn1,
@@ -169,7 +169,7 @@ describe('Modules - JSX - script - Engine', () => {
                     },
                 ],
                 [
-                    '375k38',
+                    '193415156',
                     {
                         data: data2,
                         fn: fn2,
@@ -188,12 +188,12 @@ describe('Modules - JSX - script - Engine', () => {
             const first = engine.registerModule(fn1, data1, 'mod-dup');
             const second = engine.registerModule(fn2, data2, 'mod-dup');
 
-            expect(first).toEqual({name: 'ir1inj'});
-            expect(second).toEqual({name: 'ir1inj'});
+            expect(first).toEqual({name: '1133811631'});
+            expect(second).toEqual({name: '1133811631'});
             /* @ts-expect-error Should be good */
             expect([...engine.map_modules.entries()]).toEqual([
                 [
-                    'ir1inj',
+                    '1133811631',
                     {
                         data: data1,
                         fn: fn1,
@@ -206,7 +206,7 @@ describe('Modules - JSX - script - Engine', () => {
         it('Handles null data correctly', () => {
             const fn = '({mod})=>mod.$publish("init")';
             const result = engine.registerModule(fn, null, 'mod-null');
-            expect(result).toEqual({name: '1ej6zed'});
+            expect(result).toEqual({name: '3055547317'});
         });
 
         it('Handles empty string module name (falls back to hashing empty string)', () => {
@@ -214,7 +214,7 @@ describe('Modules - JSX - script - Engine', () => {
             const data = '{"foo":"bar"}';
 
             const result = engine.registerModule(fn, data, '');
-            expect(result).toEqual({name: '45h'});
+            expect(result).toEqual({name: '5381'});
         });
 
         it('Handles empty string function body without crashing', () => {
@@ -230,14 +230,14 @@ describe('Modules - JSX - script - Engine', () => {
             const a = engine.registerModule(fn, null, 'mod-x');
             const b = engine.registerModule(fn, null, 'mod-x');
 
-            expect(a).toEqual({name: '2vxr2u'});
-            expect(b).toEqual({name: '2vxr2u'});
+            expect(a).toEqual({name: '174575190'});
+            expect(b).toEqual({name: '174575190'});
         });
 
         it('Hashes correctly even with complex module names', () => {
             const fn = '({mod})=>{}';
             const result = engine.registerModule(fn, null, 'component/user/profile/settings');
-            expect(result).toEqual({name: '1jagu2'});
+            expect(result).toEqual({name: '92867258'});
         });
     });
 
@@ -246,7 +246,7 @@ describe('Modules - JSX - script - Engine', () => {
 
         beforeEach(() => {
             idcount = 0;
-            vi.spyOn(Generic, 'djb2Hash').mockImplementation(() => `id-${++idcount}`);
+            vi.spyOn(Hash, 'djb2').mockImplementation(() => `id-${++idcount}`);
         });
 
         it('Returns empty string if nothing is registered', () => {
@@ -430,7 +430,8 @@ describe('Modules - JSX - script - Engine', () => {
         });
 
         it('Includes both spark and sparkModule if scripts and modules are registered', () => {
-            vi.spyOn(Generic, 'djb2Hash').mockImplementation((str: string) => {
+            /* @ts-expect-error Should be good */
+            vi.spyOn(Hash, 'djb2').mockImplementation((str: string) => {
                 if (str.includes('function')) return 'id-1';
                 if (str.includes('data')) return 'id-2';
                 if (str.includes('module')) return 'mod-1';
@@ -459,7 +460,8 @@ describe('Modules - JSX - script - Engine', () => {
         });
 
         it('Includes script referencing known module from setModules', () => {
-            vi.spyOn(Generic, 'djb2Hash').mockImplementation(str => {
+            /* @ts-expect-error Should be good */
+            vi.spyOn(Hash, 'djb2').mockImplementation((str: string) => {
                 if (str.includes('log')) return 'id-script';
                 return 'id-data';
             });
@@ -475,7 +477,7 @@ describe('Modules - JSX - script - Engine', () => {
         });
 
         it('Does not invoke known module factory if not matched in function body', () => {
-            vi.spyOn(Generic, 'djb2Hash').mockReturnValue('id-x');
+            vi.spyOn(Hash, 'djb2').mockReturnValue('id-x');
 
             const mockFn = vi.fn().mockReturnValue({});
             engine.setModules({ghost: mockFn});
@@ -493,7 +495,7 @@ describe('Modules - JSX - script - Engine', () => {
 
         beforeEach(() => {
             idcount = 0;
-            vi.spyOn(Generic, 'djb2Hash').mockImplementation(() => `id-${++idcount}`);
+            vi.spyOn(Hash, 'djb2').mockImplementation(() => `id-${++idcount}`);
         });
 
         it('Returns input unchanged if no script is registered', () => {

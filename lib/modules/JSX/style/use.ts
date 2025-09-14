@@ -1,9 +1,9 @@
 import {LRU} from '@valkyriestudios/utils/caching';
+import {hexId, djb2} from '@valkyriestudios/utils/hash';
 import {isNeObject, merge} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
 import {StyleEngine} from './Engine';
 import {HTML_TAGS, styleToString} from './util';
-import {djb2Hash, hexId} from '../../../utils/Generic';
 
 const RGX_SEPARATOR = /[:.#[]| /;
 
@@ -286,7 +286,7 @@ function cssFactory<Breakpoints extends Record<string, string> = typeof DEFAULT_
         }
 
         /* Get class name and register on engine */
-        const cname = 'tf' + djb2Hash(raw);
+        const cname = 'tf' + djb2(raw);
         engine.cache.set(raw, cname);
         if (!inject) return cname;
 
@@ -391,7 +391,7 @@ function cssFactory<Breakpoints extends Record<string, string> = typeof DEFAULT_
             return replay.cname;
         }
 
-        const cname = 'tf' + djb2Hash(raw);
+        const cname = 'tf' + djb2(raw);
         engine.cache.set(raw, cname);
 
         let rule = '@keyframes ' + cname + ' {';

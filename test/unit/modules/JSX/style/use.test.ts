@@ -442,7 +442,13 @@ describe('Modules - JSX - style - use', () => {
                     });
 
                     const html = getActiveStyleEngine()!.inject(`${MARKER}<div>Root Vars</div>`);
-                    expect(html).toBe('<style data-tfs-s="pavyd2">:root{--color-primary:blue;--spacing:1rem}</style><div>Root Vars</div>');
+                    expect(html).toBe(
+                        [
+                            '<style data-tfs-s="1529941430">',
+                            ':root{--color-primary:blue;--spacing:1rem}',
+                            '</style><div>Root Vars</div>',
+                        ].join(''),
+                    );
                 });
 
                 it('Injects simple CSS variables under :root', () => {
@@ -454,7 +460,7 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div>Root Vars</div>`);
                     expect(html).toBe(
                         [
-                            '<style data-tfs-s="pavyd2">',
+                            '<style data-tfs-s="1529941430">',
                             ':root{--color-primary:blue;--spacing:1rem}',
                             '</style>',
                             '<div>Root Vars</div>',
@@ -473,10 +479,10 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div>Media Root</div>`);
                     expect(html).toBe(
                         [
-                            '<style data-tfs-s="f3d8yt">',
+                            '<style data-tfs-s="912649637">',
                             '@media (prefers-color-scheme: dark){:root{--color:white}}',
                             '</style>',
-                            '<style data-tfs-s="eq01hh">',
+                            '<style data-tfs-s="890198405">',
                             ':root{--color:black}',
                             '</style>',
                             '<div>Media Root</div>',
@@ -497,10 +503,10 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div>Media Root</div>`);
                     expect(html).toBe(
                         [
-                            '<style data-tfs-s="mql0jb">:root[data-enabled]{opacity:1}</style>',
-                            '<style data-tfs-s="1424xjx">@media (prefers-color-scheme: dark){:root[data-enabled]{opacity:.5}}</style>',
-                            '<style data-tfs-s="f3d8yt">@media (prefers-color-scheme: dark){:root{--color:white}}</style>',
-                            '<style data-tfs-s="eq01hh">:root{--color:black}</style>',
+                            '<style data-tfs-s="1374906359">:root[data-enabled]{opacity:1}</style>',
+                            '<style data-tfs-s="2422236381">@media (prefers-color-scheme: dark){:root[data-enabled]{opacity:.5}}</style>',
+                            '<style data-tfs-s="912649637">@media (prefers-color-scheme: dark){:root{--color:white}}</style>',
+                            '<style data-tfs-s="890198405">:root{--color:black}</style>',
                             '<div>Media Root</div>',
                         ].join(''),
                     );
@@ -526,11 +532,11 @@ describe('Modules - JSX - style - use', () => {
                     const html = engine.inject(`${MARKER}<div>Nested Root</div>`);
                     expect(html).toBe(
                         [
-                            '<style data-tfs-s="1971uff">@media (min-width: 601px) and (max-width: 1199px){html{font-size:16px}}</style>',
-                            '<style data-tfs-s="1vkceam">html{font-family:sans-serif}</style>',
-                            '<style data-tfs-s="1qsvgh2">@media (prefers-color-scheme: dark){body{background-color:black}}</style>',
-                            '<style data-tfs-s="16ks6wb">@media (prefers-color-scheme: dark){:root{--font-size:16px}}</style>',
-                            '<style data-tfs-s="16ks8h5">:root{--font-size:14px}</style>',
+                            '<style data-tfs-s="2732821323">@media (min-width: 601px) and (max-width: 1199px){html{font-size:16px}}</style>',
+                            '<style data-tfs-s="4085404510">html{font-family:sans-serif}</style>',
+                            '<style data-tfs-s="3797399846">@media (prefers-color-scheme: dark){body{background-color:black}}</style>',
+                            '<style data-tfs-s="2574487019">@media (prefers-color-scheme: dark){:root{--font-size:16px}}</style>',
+                            '<style data-tfs-s="2574489065">:root{--font-size:14px}</style>',
                             '<div>Nested Root</div>',
                         ].join(''),
                     );
@@ -767,7 +773,7 @@ describe('Modules - JSX - style - use', () => {
 
             const html = engine.inject(`${MARKER}<div>Vars</div>`);
             expect(html).toBe(
-                ['<style data-tfs-s="10v96l9">', ':root{--v-spacing_m:1rem;--v-radius_l:8px}', '</style>', '<div>Vars</div>'].join(''),
+                ['<style data-tfs-s="2229278877">', ':root{--v-spacing_m:1rem;--v-radius_l:8px}', '</style>', '<div>Vars</div>'].join(''),
             );
         });
 
@@ -788,7 +794,7 @@ describe('Modules - JSX - style - use', () => {
             const html = engine.inject(`${MARKER}<div>Vars</div>`);
             expect(html).toBe(
                 [
-                    '<style data-tfs-s="e1ro7i">',
+                    '<style data-tfs-s="849497166">',
                     ':root{--v-spacing_m:1rem;--v-radius_l:8px;--someLib-spacing:2rem;--someLib--radius:16px}',
                     '</style>',
                     '<div>Vars</div>',
@@ -825,11 +831,11 @@ describe('Modules - JSX - style - use', () => {
             const html = engine.inject(`${MARKER}<div>Theme</div>`);
             expect(html).toBe(
                 [
-                    '<style data-tfs-s="xwilsj">',
+                    '<style data-tfs-s="2049999571">',
                     '@media (prefers-color-scheme: light){:root[data-theme="dark"]{--t-bg:#000;--t-text:#eee}}',
                     '@media (prefers-color-scheme: dark){:root{--t-bg:#000;--t-text:#eee}}',
                     '</style>',
-                    '<style data-tfs-s="m2a9zl">',
+                    '<style data-tfs-s="1334094609">',
                     '@media (prefers-color-scheme: light){:root{--t-bg:#fff;--t-text:#111}}',
                     '@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-bg:#fff;--t-text:#111}}',
                     '</style>',
@@ -853,11 +859,11 @@ describe('Modules - JSX - style - use', () => {
             const html = engine.inject(`${MARKER}<div>Attr Theme</div>`);
             expect(html).toBe(
                 [
-                    '<style data-tfs-s="1i9zcp1">',
+                    '<style data-tfs-s="3281939461">',
                     '@media (prefers-color-scheme: light){:root[data-theme="dark"]{--t-color:#333;--someLib-fg:#333}}',
                     '@media (prefers-color-scheme: dark){:root{--t-color:#333;--someLib-fg:#333}}',
                     '</style>',
-                    '<style data-tfs-s="sj79h">',
+                    '<style data-tfs-s="47925125">',
                     '@media (prefers-color-scheme: light){:root{--t-color:#ccc;--someLib-fg:#ccc}}',
                     '@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-color:#ccc;--someLib-fg:#ccc}}',
                     '</style>',
@@ -1042,12 +1048,12 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`${MARKER}<div>Multiple</div>`)).toBe(
                 [
-                    '<style data-tfs-s="i1gonk">@media (prefers-color-scheme: light){:root[data-theme="dark"]{--t-bg:#000}}@media (prefers-color-scheme: dark){:root{--t-bg:#000}}</style>',
-                    '<style data-tfs-s="i1ex52">@media (prefers-color-scheme: light){:root{--t-bg:#fff}}@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-bg:#fff}}</style>',
-                    '<style data-tfs-s="sklc0">:root{--v-radius:4px}</style>',
-                    '<style data-tfs-s="8taoua">@media (prefers-color-scheme: light){:root[data-theme="dark"]{--t-fg:#fff}}@media (prefers-color-scheme: dark){:root{--t-fg:#fff}}</style>',
-                    '<style data-tfs-s="8tcmvo">@media (prefers-color-scheme: light){:root{--t-fg:#000}}@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-fg:#000}}</style>',
-                    '<style data-tfs-s="1ivf8jx">:root{--v-spacing:2rem}</style>',
+                    '<style data-tfs-s="1090849232">@media (prefers-color-scheme: light){:root[data-theme="dark"]{--t-bg:#000}}@media (prefers-color-scheme: dark){:root{--t-bg:#000}}</style>',
+                    '<style data-tfs-s="1090766918">@media (prefers-color-scheme: light){:root{--t-bg:#fff}}@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-bg:#fff}}</style>',
+                    '<style data-tfs-s="47990016">:root{--v-radius:4px}</style>',
+                    '<style data-tfs-s="532937026">@media (prefers-color-scheme: light){:root[data-theme="dark"]{--t-fg:#fff}}@media (prefers-color-scheme: dark){:root{--t-fg:#fff}}</style>',
+                    '<style data-tfs-s="533027796">@media (prefers-color-scheme: light){:root{--t-fg:#000}}@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-fg:#000}}</style>',
+                    '<style data-tfs-s="3317952525">:root{--v-spacing:2rem}</style>',
                     '<div>Multiple</div>',
                 ].join(''),
             );
@@ -1125,7 +1131,7 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`${MARKER}<div>Global</div>`)).toBe(
                 [
-                    '<style data-tfs-s="i1gonk">',
+                    '<style data-tfs-s="1090849232">',
                     '@media (prefers-color-scheme: light){',
                     ':root[data-theme="dark"]{--t-bg:#000}',
                     '}',
@@ -1133,14 +1139,14 @@ describe('Modules - JSX - style - use', () => {
                     ':root{--t-bg:#000}',
                     '}',
                     '</style>',
-                    '<style data-tfs-s="i1ex52">',
+                    '<style data-tfs-s="1090766918">',
                     '@media (prefers-color-scheme: light){:root{--t-bg:#fff}}',
                     '@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-bg:#fff}}',
                     '</style>',
-                    '<style data-tfs-s="1971uff">',
+                    '<style data-tfs-s="2732821323">',
                     'html{font-size:16px}',
                     '</style>',
-                    '<style data-tfs-s="skhzg">:root{--v-radius:8px}</style>',
+                    '<style data-tfs-s="47985676">:root{--v-radius:8px}</style>',
                     '<div>Global</div>',
                 ].join(''),
             );
@@ -1172,10 +1178,10 @@ describe('Modules - JSX - style - use', () => {
 
             expect(html).toBe(
                 [
-                    '<style data-tfs-s="tfxlk7jb">',
-                    '.tfxlk7jb{background-color:var(--t-bg);color:var(--t-fg);padding:var(--v-spacing_m);border-radius:var(--v-radius_s)}',
+                    '<style data-tfs-s="tf2031598631">',
+                    '.tf2031598631{background-color:var(--t-bg);color:var(--t-fg);padding:var(--v-spacing_m);border-radius:var(--v-radius_s)}',
                     '</style>',
-                    '<style data-tfs-s="2br1fz">',
+                    '<style data-tfs-s="140669711">',
                     '@media (prefers-color-scheme: light){',
                     ':root[data-theme="dark"]{--t-bg:#000;--t-fg:#eee}',
                     '}',
@@ -1183,7 +1189,7 @@ describe('Modules - JSX - style - use', () => {
                     ':root{--t-bg:#000;--t-fg:#eee}',
                     '}',
                     '</style>',
-                    '<style data-tfs-s="15gmsel">',
+                    '<style data-tfs-s="2507050317">',
                     '@media (prefers-color-scheme: light){',
                     ':root{--t-bg:#fff;--t-fg:#111}',
                     '}',
@@ -1191,10 +1197,10 @@ describe('Modules - JSX - style - use', () => {
                     ':root[data-theme="light"]{--t-bg:#fff;--t-fg:#111}',
                     '}',
                     '</style>',
-                    '<style data-tfs-s="10mg49a">',
+                    '<style data-tfs-s="2214485902">',
                     ':root{--v-spacing_m:1rem;--v-radius_s:4px}',
                     '</style>',
-                    '<div class="tfxlk7jb">Vars in Use</div>',
+                    '<div class="tf2031598631">Vars in Use</div>',
                 ].join(''),
             );
         });
@@ -1225,19 +1231,19 @@ describe('Modules - JSX - style - use', () => {
 
             expect(html).toBe(
                 [
-                    '<style data-tfs-s="tfxlk7jb">',
-                    '.tfxlk7jb{background-color:var(--t-bg);color:var(--t-fg);padding:var(--v-spacing_m);border-radius:var(--v-radius_s)}',
+                    '<style data-tfs-s="tf2031598631">',
+                    '.tf2031598631{background-color:var(--t-bg);color:var(--t-fg);padding:var(--v-spacing_m);border-radius:var(--v-radius_s)}',
                     '</style>',
-                    '<style data-tfs-s="2br1fz">',
+                    '<style data-tfs-s="140669711">',
                     '@media (prefers-color-scheme: light){:root[data-theme="dark"]{--t-bg:#000;--t-fg:#eee}}',
                     '@media (prefers-color-scheme: dark){:root{--t-bg:#000;--t-fg:#eee}}',
                     '</style>',
-                    '<style data-tfs-s="15gmsel">',
+                    '<style data-tfs-s="2507050317">',
                     '@media (prefers-color-scheme: light){:root{--t-bg:#fff;--t-fg:#111}}',
                     '@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-bg:#fff;--t-fg:#111}}',
                     '</style>',
-                    '<style data-tfs-s="10mg49a">:root{--v-spacing_m:1rem;--v-radius_s:4px}</style>',
-                    '<div class="tfxlk7jb">Vars in Use</div>',
+                    '<style data-tfs-s="2214485902">:root{--v-spacing_m:1rem;--v-radius_s:4px}</style>',
+                    '<div class="tf2031598631">Vars in Use</div>',
                 ].join(''),
             );
         });
@@ -1251,7 +1257,7 @@ describe('Modules - JSX - style - use', () => {
             });
             css.root();
             expect(engine.inject(`${MARKER}<div>Theme</div>`)).toBe(
-                ['<style data-tfs-s="15gmq0c">:root{--t-bg:#fff;--t-fg:#000}</style>', '<div>Theme</div>'].join(''),
+                ['<style data-tfs-s="2507047212">:root{--t-bg:#fff;--t-fg:#000}</style>', '<div>Theme</div>'].join(''),
             );
         });
 
@@ -1266,14 +1272,14 @@ describe('Modules - JSX - style - use', () => {
             css.root();
             expect(engine.inject(`${MARKER}<div>Theme</div>`)).toBe(
                 [
-                    '<style data-tfs-s="10fxs27">',
+                    '<style data-tfs-s="2203552591">',
                     '@media (prefers-color-scheme: light){:root[data-theme="dark"]{--t-alt:#333}}',
                     '@media (prefers-color-scheme: dark){:root{--t-alt:#333}}',
-                    '</style><style data-tfs-s="9dv7er">',
+                    '</style><style data-tfs-s="567486531">',
                     '@media (prefers-color-scheme: light){:root{--t-alt:#f9f9f9}}',
                     '@media (prefers-color-scheme: dark){:root[data-theme="light"]{--t-alt:#f9f9f9}}',
                     '</style>',
-                    '<style data-tfs-s="15gmq0c">',
+                    '<style data-tfs-s="2507047212">',
                     ':root{--t-bg:#fff;--t-fg:#000}',
                     '</style><div>Theme</div>',
                 ].join(''),
@@ -1335,13 +1341,13 @@ describe('Modules - JSX - style - use', () => {
             const cls = css.use('base', 'padded');
             expect(engine.inject(`${MARKER}<div class="${cls}">Defined</div>`)).toBe(
                 [
-                    '<style data-tfs-s="qganbx">',
+                    '<style data-tfs-s="1599491229">',
                     ':root{--v-spacing:2rem;--t-bg:#fff;--t-fg:#222}',
                     '</style>',
-                    '<style data-tfs-s="tfcd4cfg">',
-                    '.tfcd4cfg{display:flex;align-items:center;color:var(--t-fg);background:var(--t-bg);padding:var(--v-spacing)}',
+                    '<style data-tfs-s="tf747631852">',
+                    '.tf747631852{display:flex;align-items:center;color:var(--t-fg);background:var(--t-bg);padding:var(--v-spacing)}',
                     '</style>',
-                    '<div class="tfcd4cfg">Defined</div>',
+                    '<div class="tf747631852">Defined</div>',
                 ].join(''),
             );
         });
@@ -1479,10 +1485,10 @@ describe('Modules - JSX - style - use', () => {
             expect(cls).toMatch(/^tf/);
             expect(engine.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe(
                 [
-                    '<style data-tfs-s="tf1v7zb4h">',
-                    '.tf1v7zb4h{display:flex;flex-direction:row;justify-content:center;align-items:center;gap:var(--v-x)}',
+                    '<style data-tfs-s="tf4064638481">',
+                    '.tf4064638481{display:flex;flex-direction:row;justify-content:center;align-items:center;gap:var(--v-x)}',
                     '</style>',
-                    '<div class="tf1v7zb4h">Mix</div>',
+                    '<div class="tf4064638481">Mix</div>',
                 ].join(''),
             );
         });
@@ -1550,18 +1556,18 @@ describe('Modules - JSX - style - use', () => {
             expect(cls).toMatch(/^tf/);
             expect(engine.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe(
                 [
-                    '<style data-tfs-s="tfoupfrh">',
-                    '.tfoupfrh{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                    '<style data-tfs-s="tf1502763533">',
+                    '.tf1502763533{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
                     '@media (min-width: 1200px){',
-                    '.tfoupfrh > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
-                    '.tfoupfrh{padding:var(--v-space_xl);justify-content:center}',
+                    '.tf1502763533 > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                    '.tf1502763533{padding:var(--v-space_xl);justify-content:center}',
                     '}',
                     '@media (max-width: 1199px){',
-                    '.tfoupfrh > span{display:none}',
-                    '.tfoupfrh{padding:var(--v-space_l);justify-content:space-around}',
+                    '.tf1502763533 > span{display:none}',
+                    '.tf1502763533{padding:var(--v-space_l);justify-content:space-around}',
                     '}',
                     '</style>',
-                    '<div class="tfoupfrh">Mix</div>',
+                    '<div class="tf1502763533">Mix</div>',
                 ].join(''),
             );
         });
@@ -1611,17 +1617,17 @@ describe('Modules - JSX - style - use', () => {
             expect(cls).toMatch(/^tf/);
             expect(engine.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe(
                 [
-                    '<style data-tfs-s="tf1wuvp3b">',
-                    '.tf1wuvp3b{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                    '<style data-tfs-s="tf4163567303">',
+                    '.tf4163567303{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
                     '@media (min-width: 1200px){',
-                    '.tf1wuvp3b > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
-                    '.tf1wuvp3b{padding:var(--v-space_xl);justify-content:center}',
+                    '.tf4163567303 > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                    '.tf4163567303{padding:var(--v-space_xl);justify-content:center}',
                     '}',
                     '@media (max-width: 1199px){',
-                    '.tf1wuvp3b{padding:var(--v-space_l);justify-content:space-around}',
+                    '.tf4163567303{padding:var(--v-space_l);justify-content:space-around}',
                     '}',
                     '</style>',
-                    '<div class="tf1wuvp3b">Mix</div>',
+                    '<div class="tf4163567303">Mix</div>',
                 ].join(''),
             );
         });
@@ -1672,17 +1678,17 @@ describe('Modules - JSX - style - use', () => {
             expect(cls).toMatch(/^tf/);
             expect(getActiveStyleEngine()!.inject(`${MARKER}<div class="${cls}">Mix</div>`)).toBe(
                 [
-                    '<style data-tfs-s="tfkn00o5">',
-                    '.tfkn00o5{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                    '<style data-tfs-s="tf1247955557">',
+                    '.tf1247955557{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
                     '@media (min-width: 1200px){',
-                    '.tfkn00o5 > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
-                    '.tfkn00o5{padding:var(--v-space_xl);justify-content:center}',
+                    '.tf1247955557 > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                    '.tf1247955557{padding:var(--v-space_xl);justify-content:center}',
                     '}',
                     '@media (max-width: 1199px){',
-                    '.tfkn00o5{padding:var(--v-space_l);justify-content:space-around}',
+                    '.tf1247955557{padding:var(--v-space_l);justify-content:space-around}',
                     '}',
                     '</style>',
-                    '<div class="tfkn00o5">Mix</div>',
+                    '<div class="tf1247955557">Mix</div>',
                 ].join(''),
             );
         });
@@ -1741,18 +1747,18 @@ describe('Modules - JSX - style - use', () => {
             for (const el of output) {
                 expect(el).toBe(
                     [
-                        '<style data-tfs-s="tfoupfrh">',
-                        '.tfoupfrh{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                        '<style data-tfs-s="tf1502763533">',
+                        '.tf1502763533{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
                         '@media (min-width: 1200px){',
-                        '.tfoupfrh > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
-                        '.tfoupfrh{padding:var(--v-space_xl);justify-content:center}',
+                        '.tf1502763533 > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                        '.tf1502763533{padding:var(--v-space_xl);justify-content:center}',
                         '}',
                         '@media (max-width: 1199px){',
-                        '.tfoupfrh > span{display:none}',
-                        '.tfoupfrh{padding:var(--v-space_l);justify-content:space-around}',
+                        '.tf1502763533 > span{display:none}',
+                        '.tf1502763533{padding:var(--v-space_l);justify-content:space-around}',
                         '}',
                         '</style>',
-                        '<div class="tfoupfrh">Mix</div>',
+                        '<div class="tf1502763533">Mix</div>',
                     ].join(''),
                 );
             }
@@ -1813,7 +1819,7 @@ describe('Modules - JSX - style - use', () => {
             const duration = Date.now() - start;
             expect(duration).toBeLessThan(100);
             for (const el of output) {
-                expect(el).toBe(['<div class="tfoupfrh">Mix</div>'].join(''));
+                expect(el).toBe(['<div class="tf1502763533">Mix</div>'].join(''));
             }
         });
 
@@ -2167,10 +2173,10 @@ describe('Modules - JSX - style - use', () => {
                 });
                 expect(engine.inject(`${MARKER}<div class="${cls}">Headers</div>`)).toBe(
                     [
-                        '<style data-tfs-s="tf1b6zzds">',
-                        '.tf1b6zzds *:is(h1, h2, h3){font-weight:bold}',
+                        '<style data-tfs-s="tf2853666784">',
+                        '.tf2853666784 *:is(h1, h2, h3){font-weight:bold}',
                         '</style>',
-                        '<div class="tf1b6zzds">Headers</div>',
+                        '<div class="tf2853666784">Headers</div>',
                     ].join(''),
                 );
             });
@@ -2183,10 +2189,10 @@ describe('Modules - JSX - style - use', () => {
                 });
                 expect(engine.inject(`${MARKER}<div class="${cls}">Direct Headers</div>`)).toBe(
                     [
-                        '<style data-tfs-s="tf4jrbvv">',
-                        '.tf4jrbvv > :is(h1, h2){font-size:2rem}',
+                        '<style data-tfs-s="tf275052523">',
+                        '.tf275052523 > :is(h1, h2){font-size:2rem}',
                         '</style>',
-                        '<div class="tf4jrbvv">Direct Headers</div>',
+                        '<div class="tf275052523">Direct Headers</div>',
                     ].join(''),
                 );
             });
@@ -2206,10 +2212,10 @@ describe('Modules - JSX - style - use', () => {
 
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Equals</div>`)).toBe(
                     [
-                        '<style data-tfs-s="tf1prf8nr">',
-                        '.tf1prf8nr[data-active="true"]{color:red}',
+                        '<style data-tfs-s="tf3734497431">',
+                        '.tf3734497431[data-active="true"]{color:red}',
                         '</style>',
-                        '<div class="tf1prf8nr">Attr Equals</div>',
+                        '<div class="tf3734497431">Attr Equals</div>',
                     ].join(''),
                 );
             });
@@ -2221,10 +2227,10 @@ describe('Modules - JSX - style - use', () => {
 
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Presence</div>`)).toBe(
                     [
-                        '<style data-tfs-s="tf10d7b0h">',
-                        '.tf10d7b0h[disabled]{opacity:0.5}',
+                        '<style data-tfs-s="tf2198958209">',
+                        '.tf2198958209[disabled]{opacity:0.5}',
                         '</style>',
-                        '<div class="tf10d7b0h">Attr Presence</div>',
+                        '<div class="tf2198958209">Attr Presence</div>',
                     ].join(''),
                 );
             });
@@ -2236,10 +2242,10 @@ describe('Modules - JSX - style - use', () => {
 
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Starts With</div>`)).toBe(
                     [
-                        '<style data-tfs-s="tf1i3yt6f">',
-                        '.tf1i3yt6f[data-role^="adm"]{font-weight:bold}',
+                        '<style data-tfs-s="tf3271836471">',
+                        '.tf3271836471[data-role^="adm"]{font-weight:bold}',
                         '</style>',
-                        '<div class="tf1i3yt6f">Attr Starts With</div>',
+                        '<div class="tf3271836471">Attr Starts With</div>',
                     ].join(''),
                 );
             });
@@ -2251,10 +2257,10 @@ describe('Modules - JSX - style - use', () => {
 
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Ends With</div>`)).toBe(
                     [
-                        '<style data-tfs-s="tfqboq1q">',
-                        '.tfqboq1q[data-id$="42"]{opacity:0.5}',
+                        '<style data-tfs-s="tf1591749854">',
+                        '.tf1591749854[data-id$="42"]{opacity:0.5}',
                         '</style>',
-                        '<div class="tfqboq1q">Attr Ends With</div>',
+                        '<div class="tf1591749854">Attr Ends With</div>',
                     ].join(''),
                 );
             });
@@ -2266,10 +2272,10 @@ describe('Modules - JSX - style - use', () => {
 
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Contains</div>`)).toBe(
                     [
-                        '<style data-tfs-s="tf9ofipt">',
-                        '.tf9ofipt[data-label*="part"]{text-decoration:underline}',
+                        '<style data-tfs-s="tf585230465">',
+                        '.tf585230465[data-label*="part"]{text-decoration:underline}',
                         '</style>',
-                        '<div class="tf9ofipt">Attr Contains</div>',
+                        '<div class="tf585230465">Attr Contains</div>',
                     ].join(''),
                 );
             });
@@ -2284,13 +2290,13 @@ describe('Modules - JSX - style - use', () => {
 
                 expect(engine.inject(`${MARKER}<div class="${cls}">Attr Combo</div>`)).toBe(
                     [
-                        '<style data-tfs-s="tfijybug">',
-                        '.tfijybug[data-active="true"]{color:green}',
-                        '.tfijybug[data-role^="adm"]{font-weight:bold}',
-                        '.tfijybug[data-id$="42"]{opacity:0.5}',
-                        '.tfijybug[data-label*="part"]{text-decoration:underline}',
+                        '<style data-tfs-s="tf1121905528">',
+                        '.tf1121905528[data-active="true"]{color:green}',
+                        '.tf1121905528[data-role^="adm"]{font-weight:bold}',
+                        '.tf1121905528[data-id$="42"]{opacity:0.5}',
+                        '.tf1121905528[data-label*="part"]{text-decoration:underline}',
                         '</style>',
-                        '<div class="tfijybug">Attr Combo</div>',
+                        '<div class="tf1121905528">Attr Combo</div>',
                     ].join(''),
                 );
             });
@@ -2317,17 +2323,17 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`${MARKER}<div class="${cls}">Drop</div>`)).toBe(
                 [
-                    '<style data-tfs-s="tfi13zsv">',
-                    '@keyframes tfi13zsv {',
+                    '<style data-tfs-s="tf1090257151">',
+                    '@keyframes tf1090257151 {',
                     '0%{top:-50%;opacity:1}',
                     '60%{top:110%;opacity:0}',
                     '100%{top:110%;opacity:0}',
                     '}',
                     '</style>',
-                    '<style data-tfs-s="tf1tizmdh">',
-                    '.tf1tizmdh{animation:tfi13zsv 10s infinite}',
+                    '<style data-tfs-s="tf4251720284">',
+                    '.tf4251720284{animation:tf1090257151 10s infinite}',
                     '</style>',
-                    '<div class="tf1tizmdh">Drop</div>',
+                    '<div class="tf4251720284">Drop</div>',
                 ].join(''),
             );
         });
@@ -2357,17 +2363,17 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`${MARKER}<div class="${cls}">Slide</div>`)).toBe(
                 [
-                    '<style data-tfs-s="tf18k37kf">',
-                    '@keyframes tf18k37kf {',
+                    '<style data-tfs-s="tf2694253839">',
+                    '@keyframes tf2694253839 {',
                     '0%{transform:translateX(-100%)}',
                     '50%{transform:translateX(0%)}',
                     '100%{transform:translateX(100%)}',
                     '}',
                     '</style>',
-                    '<style data-tfs-s="tfqy0903">',
-                    '.tfqy0903{animation:tf18k37kf 5s linear infinite}',
+                    '<style data-tfs-s="tf3636634839">',
+                    '.tf3636634839{animation:tf2694253839 5s linear infinite}',
                     '</style>',
-                    '<div class="tfqy0903">Slide</div>',
+                    '<div class="tf3636634839">Slide</div>',
                 ].join(''),
             );
         });
@@ -2385,16 +2391,16 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`<div class="${cls}">Slide</div>`)).toBe(
                 [
-                    '<div class="tfqy0903">Slide</div>',
-                    '<style data-tfs-s="tf18k37kf">',
-                    '@keyframes tf18k37kf {',
+                    '<div class="tf3636634839">Slide</div>',
+                    '<style data-tfs-s="tf2694253839">',
+                    '@keyframes tf2694253839 {',
                     '0%{transform:translateX(-100%)}',
                     '50%{transform:translateX(0%)}',
                     '100%{transform:translateX(100%)}',
                     '}',
                     '</style>',
-                    '<style data-tfs-s="tfqy0903">',
-                    '.tfqy0903{animation:tf18k37kf 5s linear infinite}',
+                    '<style data-tfs-s="tf3636634839">',
+                    '.tf3636634839{animation:tf2694253839 5s linear infinite}',
                     '</style>',
                 ].join(''),
             );
@@ -2413,17 +2419,17 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe(
                 [
-                    '<style data-tfs-s="tf9boemd">',
-                    '@keyframes tf9boemd {',
+                    '<style data-tfs-s="tf563810053">',
+                    '@keyframes tf563810053 {',
                     '0%{transform:translateY(0px) scale(1)}',
                     '50%{transform:translateY(-10px) scale(1.1)}',
                     '100%{transform:translateY(0px) scale(1)}',
                     '}',
                     '</style>',
-                    '<style data-tfs-s="tf1jpk5mp">',
-                    '.tf1jpk5mp{animation:tf9boemd 2s ease-in-out infinite}',
+                    '<style data-tfs-s="tf4283777638">',
+                    '.tf4283777638{animation:tf563810053 2s ease-in-out infinite}',
                     '</style>',
-                    '<div class="tf1jpk5mp">Bounce</div>',
+                    '<div class="tf4283777638">Bounce</div>',
                 ].join(''),
             );
         });
@@ -2439,17 +2445,17 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe(
                 [
-                    '<style data-tfs-s="tf9boemd">',
-                    '@keyframes tf9boemd {',
+                    '<style data-tfs-s="tf563810053">',
+                    '@keyframes tf563810053 {',
                     '0%{transform:translateY(0px) scale(1)}',
                     '50%{transform:translateY(-10px) scale(1.1)}',
                     '100%{transform:translateY(0px) scale(1)}',
                     '}',
                     '</style>',
-                    '<style data-tfs-s="tf1jpk5mp">',
-                    '.tf1jpk5mp{animation:tf9boemd 2s ease-in-out infinite}',
+                    '<style data-tfs-s="tf4283777638">',
+                    '.tf4283777638{animation:tf563810053 2s ease-in-out infinite}',
                     '</style>',
-                    '<div class="tf1jpk5mp">Bounce</div>',
+                    '<div class="tf4283777638">Bounce</div>',
                 ].join(''),
             );
         });
@@ -2474,29 +2480,29 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe(
                 [
-                    '<style data-tfs-s="tf9boemd">',
-                    '@keyframes tf9boemd {',
+                    '<style data-tfs-s="tf563810053">',
+                    '@keyframes tf563810053 {',
                     '0%{transform:translateY(0px) scale(1)}',
                     '50%{transform:translateY(-10px) scale(1.1)}',
                     '100%{transform:translateY(0px) scale(1)}',
                     '}',
                     '</style>',
-                    '<style data-tfs-s="tf17n8939">',
-                    '@keyframes tf17n8939 {',
+                    '<style data-tfs-s="tf2639061765">',
+                    '@keyframes tf2639061765 {',
                     '0%{transform:translateY(0px) scale(1)}',
                     '50%{transform:translateY(-5px) scale(1.05)}',
                     '100%{transform:translateY(0px) scale(1)}',
                     '}',
                     '</style>',
-                    '<style data-tfs-s="tfmp86ei">',
+                    '<style data-tfs-s="tf154765699">',
                     '@media (min-width: 1200px){',
-                    '.tfmp86ei{animation:tf9boemd 2s ease-in-out infinite}',
+                    '.tf154765699{animation:tf563810053 2s ease-in-out infinite}',
                     '}',
                     '@media (max-width: 1199px){',
-                    '.tfmp86ei{animation:tf17n8939 1s ease-in-out infinite}',
+                    '.tf154765699{animation:tf2639061765 1s ease-in-out infinite}',
                     '}',
                     '</style>',
-                    '<div class="tfmp86ei">Bounce</div>',
+                    '<div class="tf154765699">Bounce</div>',
                 ].join(''),
             );
         });
@@ -2521,22 +2527,22 @@ describe('Modules - JSX - style - use', () => {
 
             expect(engine.inject(`${MARKER}<div class="${cls}">Bounce</div>`)).toBe(
                 [
-                    '<style data-tfs-s="tf9boemd">',
-                    '@keyframes tf9boemd {',
+                    '<style data-tfs-s="tf563810053">',
+                    '@keyframes tf563810053 {',
                     '0%{transform:translateY(0px) scale(1)}',
                     '50%{transform:translateY(-10px) scale(1.1)}',
                     '100%{transform:translateY(0px) scale(1)}',
                     '}',
                     '</style>',
-                    '<style data-tfs-s="tfbh69jl">',
+                    '<style data-tfs-s="tf481483697">',
                     '@media (min-width: 1200px){',
-                    '.tfbh69jl{animation:tf9boemd 2s ease-in-out infinite}',
+                    '.tf481483697{animation:tf563810053 2s ease-in-out infinite}',
                     '}',
                     '@media (max-width: 1199px){',
-                    '.tfbh69jl{animation:tf9boemd 1s ease-in-out infinite}',
+                    '.tf481483697{animation:tf563810053 1s ease-in-out infinite}',
                     '}',
                     '</style>',
-                    '<div class="tfbh69jl">Bounce</div>',
+                    '<div class="tf481483697">Bounce</div>',
                 ].join(''),
             );
         });
@@ -2647,33 +2653,33 @@ describe('Modules - JSX - style - use', () => {
             for (const el of output) {
                 expect(el).toBe(
                     [
-                        '<style data-tfs-s="tf1w2hawo">',
-                        '@keyframes tf1w2hawo {',
+                        '<style data-tfs-s="tf4115866488">',
+                        '@keyframes tf4115866488 {',
                         '0%{transform:scale(1);opacity:0.5}',
                         '50%{transform:scale(1.1);opacity:0.2}',
                         '100%{transform:scale(1);opacity:0.1}',
                         '}',
                         '</style>',
-                        '<style data-tfs-s="tfbo5hof">',
-                        '@keyframes tfbo5hof {',
+                        '<style data-tfs-s="tf705694911">',
+                        '@keyframes tf705694911 {',
                         '0%{transform:scale(1)}',
                         '50%{transform:scale(1.1)}',
                         '100%{transform:scale(1)}',
                         '}',
                         '</style>',
-                        '<style data-tfs-s="tf1dg793l">',
-                        '.tf1dg793l{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
+                        '<style data-tfs-s="tf3039768720">',
+                        '.tf3039768720{display:flex;flex-direction:row;align-items:center;overflow:hidden;width:100%;background:var(--t-bg);color:var(--t-fg)}',
                         '@media (min-width: 1200px){',
-                        '.tf1dg793l > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
-                        '.tf1dg793l div{animation:tf1w2hawo 3s ease-in-out}',
-                        '.tf1dg793l{padding:var(--v-space_xl);justify-content:center}',
+                        '.tf3039768720 > span{padding-left:var(--v-space_l);padding-right:var(--v-space_l);font-size:1rem}',
+                        '.tf3039768720 div{animation:tf4115866488 3s ease-in-out}',
+                        '.tf3039768720{padding:var(--v-space_xl);justify-content:center}',
                         '}',
                         '@media (max-width: 1199px){',
-                        '.tf1dg793l > span{display:none}',
-                        '.tf1dg793l div{animation:tfbo5hof 3s ease-in-out}',
-                        '.tf1dg793l{padding:var(--v-space_l);justify-content:space-around}',
+                        '.tf3039768720 > span{display:none}',
+                        '.tf3039768720 div{animation:tf705694911 3s ease-in-out}',
+                        '.tf3039768720{padding:var(--v-space_l);justify-content:space-around}',
                         '}',
-                        '</style><div class="tf1dg793l">Mix</div>',
+                        '</style><div class="tf3039768720">Mix</div>',
                     ].join(''),
                 );
             }
@@ -2774,17 +2780,17 @@ describe('Modules - JSX - style - use', () => {
             css.use('animatedCard', css.animation('slide'));
             expect(engine.flush({mode: 'file'})).toBe(
                 [
-                    '@keyframes tf1cstwvb {',
+                    '@keyframes tf2950801319 {',
                     '0%{transform:translateX(0)}',
                     '100%{transform:translateX(100px)}',
                     '}',
-                    '.tf2f5i71:hover{transform:scale(1.02)}',
-                    '.tf2f5i71{',
+                    '.tf2655782119:hover{transform:scale(1.02)}',
+                    '.tf2655782119{',
                     'background-color:white;',
                     'border-radius:8px;',
                     'padding:1rem;',
                     'box-shadow:0 2px 8px rgba(0,0,0,0.1);',
-                    'animation-name:tf1cstwvb;',
+                    'animation-name:tf2950801319;',
                     'animation-delay:200ms;',
                     'animation-direction:alternate;',
                     'animation-fill-mode:forwards',
@@ -2819,13 +2825,13 @@ describe('Modules - JSX - style - use', () => {
             css.use(css.defs.padded('2rem'));
             expect(engine.flush({mode: 'file'})).toBe(
                 [
-                    '@keyframes tf5xp4qr {',
+                    '@keyframes tf358930755 {',
                     'from{opacity:0}',
                     'to{opacity:1}',
                     '}',
-                    '.tf1wol8mk{',
+                    '.tf3852598517{',
                     'padding:2rem;',
-                    'animation-name:tf5xp4qr;',
+                    'animation-name:tf358930755;',
                     'animation-duration:0.3s;',
                     'animation-timing-function:ease-in;',
                     'animation-delay:200ms',
@@ -2838,13 +2844,13 @@ describe('Modules - JSX - style - use', () => {
             css.use(css.defs.padded('1rem'));
             expect(engine.flush({mode: 'file'})).toBe(
                 [
-                    '@keyframes tf5xp4qr {',
+                    '@keyframes tf358930755 {',
                     'from{opacity:0}',
                     'to{opacity:1}',
                     '}',
-                    '.tfsp7ywf{',
+                    '.tf819552086{',
                     'padding:1rem;',
-                    'animation-name:tf5xp4qr;',
+                    'animation-name:tf358930755;',
                     'animation-duration:0.3s;',
                     'animation-timing-function:ease-in;',
                     'animation-delay:200ms',
@@ -2857,13 +2863,13 @@ describe('Modules - JSX - style - use', () => {
             css.use(css.defs.padded('0.5rem'), {color: 'blue'});
             expect(engine.flush({mode: 'file'})).toBe(
                 [
-                    '@keyframes tf5xp4qr {',
+                    '@keyframes tf358930755 {',
                     'from{opacity:0}',
                     'to{opacity:1}',
                     '}',
-                    '.tfwets00{',
+                    '.tf3582980953{',
                     'padding:0.5rem;',
-                    'animation-name:tf5xp4qr;',
+                    'animation-name:tf358930755;',
                     'animation-duration:0.3s;',
                     'animation-timing-function:ease-in;',
                     'animation-delay:200ms;',

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
+import {hexId} from '@valkyriestudios/utils/hash';
 import {type TriFrostRateLimitLimitFunction} from '../lib/modules/RateLimit';
 import {type HttpMethod, type HttpStatusCode, type MimeType} from '../lib/types/constants';
 import {
@@ -8,13 +9,13 @@ import {
     type TriFrostContextRedirectOptions,
     type TriFrostContextResponseOptions,
     type TriFrostContextFileOptions,
+    TriFrostContextRenderOptions,
 } from '../lib/types/context';
 import {type TriFrostRouteMatch} from '../lib/types/routing';
 import {Cookies} from '../lib/modules/Cookies';
 import {type TriFrostCache} from '../lib/modules/Cache';
 import {Logger, type TriFrostLogger} from '../lib/modules/Logger';
 import {MemoryCache} from '../lib/storage/Memory';
-import {hexId} from '../lib/utils/Generic';
 import {TriFrostBodyParserOptions, type ParsedBody} from '../lib/utils/BodyParser/types';
 import {Lazy} from '../lib/utils/Lazy';
 
@@ -39,7 +40,7 @@ export class MockContext<State extends Record<string | number, unknown> = Record
     #nonce: string | null;
     #requestId: string = '123456789';
     #cache: Lazy<TriFrostCache>;
-    #after: (() => Promise<void>)[];
+    #after: ((ctx: TriFrostContext<any, any>) => Promise<void>)[];
 
     constructor(
         opts: {
@@ -219,16 +220,20 @@ export class MockContext<State extends Record<string | number, unknown> = Record
         this.#locked = true;
     };
 
-    addAfter = (fn: () => Promise<void>): void => {
+    addAfter = (fn: (ctx: TriFrostContext<any, any>) => Promise<void>): void => {
         this.#after.push(fn);
     };
 
     runAfter = (): void => {
-        for (const el of this.#after) el();
+        for (const el of this.#after) el(this as unknown as TriFrostContext<any, any>);
+    };
+
+    render = async (body: any, opts?: TriFrostContextRenderOptions): Promise<string> => {
+        return 'hello world';
     };
 
     json = (_body?: Record<string, unknown> | unknown[], _opts?: TriFrostContextResponseOptions): void => {};
-    html = (_body?: string | any, _opts?: TriFrostContextResponseOptions): void => {};
+    html = async (_body?: string | any, _opts?: TriFrostContextResponseOptions): Promise<void> => {};
     text = (_body: string, _opts?: TriFrostContextResponseOptions): void => {};
     redirect = (_to: string, _opts?: TriFrostContextRedirectOptions): void => {};
     file = async (

@@ -2,7 +2,7 @@
 
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {HttpMethods} from '../../lib/types/constants';
-import {hexId} from '../../lib/utils/Generic';
+import {hexId} from '@valkyriestudios/utils/hash';
 import {Context, IP_HEADER_CANDIDATES} from '../../lib/Context';
 import {type TriFrostRootLogger} from '../../lib/modules/Logger/RootLogger';
 import {type TriFrostContextConfig} from '../../lib/types/context';

@@ -1,5 +1,4 @@
-const KEBAB_REGEX = /[A-Z]/g;
-const KEBAB_VENDOR_REGEX = /^(webkit|moz|ms|o)([A-Z])/;
+const UPPERCASE = /[A-Z]/g;
 
 /**
  * Known css functions
@@ -279,17 +278,26 @@ export const CAMEL_TO_KEBAB_LUT: Record<string, string> = {
  * @param {string} key - string to convert
  */
 export function toKebab(key: string): string {
-    if (CAMEL_TO_KEBAB_LUT[key]) return CAMEL_TO_KEBAB_LUT[key];
+    const cached = CAMEL_TO_KEBAB_LUT[key];
+    if (cached) return cached;
 
-    /* variables (--xxx) */
+    /* CSS variables */
     if (key[0] === '-' && key[1] === '-') return key;
 
-    /* Normalize vendor prefix (e.g. webkitTransform → -webkit-transform) */
-    if (KEBAB_VENDOR_REGEX.test(key))
-        key = key.replace(KEBAB_VENDOR_REGEX, (_, prefix, first) => '-' + prefix.toLowerCase() + '-' + first.toLowerCase());
+    /* Vendor prefix normalization */
+    if (
+        (key[0] === 'w' && key.startsWith('webkit')) ||
+        (key[0] === 'm' && (key.startsWith('moz') || key.startsWith('ms'))) ||
+        (key[0] === 'o' && key.startsWith('o'))
+    ) {
+        const prefixEnd = key.search(UPPERCASE);
+        if (prefixEnd > 0) {
+            key = '-' + key.slice(0, prefixEnd).toLowerCase() + '-' + key[prefixEnd].toLowerCase() + key.slice(prefixEnd + 1);
+        }
+    }
 
-    /* Convert and add to camel to kebab lookup table */
-    const result = key.replace(KEBAB_REGEX, m => '-' + m.toLowerCase());
+    /* Convert camel to kebab */
+    const result = key.replace(UPPERCASE, m => '-' + m.toLowerCase());
     CAMEL_TO_KEBAB_LUT[key] = result;
     return result;
 }
@@ -300,7 +308,7 @@ export function toKebab(key: string): string {
  * @param {Record<string, unknown>} obj - Props to render
  */
 export function styleToString(obj: Record<string, unknown> | null): string | null {
-    if (Object.prototype.toString.call(obj) !== '[object Object]') return null;
+    if (!obj || typeof obj !== 'object') return null;
 
     let style: string | null = '';
     for (const attr in obj) {

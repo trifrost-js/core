@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 ### Improved
+- **perf**: Improved JSX render engine performance by anywhere from 15% to 49% (see benchmark below)
 - **deps**: Upgrade @cloudflare/workers-types to 4.20250913.0
 - **deps**: Upgrade @types/node to 22.18.3
 - **deps**: Upgrade @valkyriestudios/utils to 12.45.0

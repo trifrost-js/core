@@ -1,4 +1,5 @@
-import {djb2Hash, isDevMode} from '../../../utils/Generic';
+import {djb2} from '@valkyriestudios/utils/hash';
+import {isDevMode} from '../../../utils/Generic';
 import {nonce} from '../ctx/nonce';
 import {getActiveCtx} from '../ctx/use';
 import {ATOMIC_GLOBAL, ARC_GLOBAL, GLOBAL_ARC_NAME, ARC_GLOBAL_OBSERVER} from './atomic';
@@ -60,7 +61,7 @@ export class ScriptEngine {
 
         let fn_id = this.map_fn.get(minified_fn);
         if (!fn_id) {
-            fn_id = djb2Hash(minified_fn);
+            fn_id = djb2(minified_fn);
             this.map_fn.set(minified_fn, fn_id);
             if (this.known_modules_rgx) {
                 const matches = minified_fn.matchAll(this.known_modules_rgx);
@@ -77,7 +78,7 @@ export class ScriptEngine {
         if (data) {
             data_id = this.map_data.get(data) || null;
             if (!data_id) {
-                data_id = djb2Hash(data);
+                data_id = djb2(data);
                 this.map_data.set(data, data_id);
             }
         }
@@ -93,7 +94,7 @@ export class ScriptEngine {
      * @param {string} name - Name for the module
      */
     registerModule(fn: string, data: string | null, name: string) {
-        const hash = djb2Hash(name);
+        const hash = djb2(name);
         if (this.map_modules.has(hash)) return {name: hash};
 
         const minified_fn = atomicMinify(fn);

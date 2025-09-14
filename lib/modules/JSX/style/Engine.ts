@@ -1,7 +1,8 @@
+import {djb2} from '@valkyriestudios/utils/hash';
 import {MARKER} from './Style';
 import {nonce, NONCEMARKER} from '../ctx/nonce';
 import {atomicMinify} from '../script/util';
-import {djb2Hash, injectBefore} from '../../../utils/Generic';
+import {injectBefore} from '../../../utils/Generic';
 
 type StyleEngineRegisterOptions = {
     /**
@@ -115,7 +116,7 @@ export class StyleEngine {
 
         const {query, selector} = opts;
 
-        const key = name || (rule.startsWith('@keyframes') ? rule.slice(11).split('{', 1)[0].trim() : djb2Hash(rule));
+        const key = name || (rule.startsWith('@keyframes') ? rule.slice(11).split('{', 1)[0].trim() : djb2(rule));
 
         let entry: RuleEntry = this.rules[key];
         if (!entry) {

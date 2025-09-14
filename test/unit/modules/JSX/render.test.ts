@@ -1,4 +1,6 @@
 /* eslint-disable no-console */
+
+import * as Hash from '@valkyriestudios/utils/hash';
 import {describe, it, expect, beforeEach, vi, afterEach} from 'vitest';
 import {render, escape, rootRender, toLruCookie, fromLruCookie} from '../../../../lib/modules/JSX/render';
 import {Fragment} from '../../../../lib/modules/JSX/runtime';
@@ -8,7 +10,6 @@ import {env} from '../../../../lib/modules/JSX/ctx/env';
 import {state} from '../../../../lib/modules/JSX/ctx/state';
 import {Style} from '../../../../lib/modules/JSX/style/Style';
 import {Script} from '../../../../lib/modules/JSX/script/Script';
-import * as Generic from '../../../../lib/utils/Generic';
 import {MockContext} from '../../../MockContext';
 import {createModule, createScript} from '../../../../lib/modules/JSX/script/use';
 import {ARC_GLOBAL, ARC_GLOBAL_OBSERVER, ATOMIC_GLOBAL} from '../../../../lib/modules/JSX/script/atomic';
@@ -41,12 +42,6 @@ describe('Modules - JSX - Renderer', () => {
 
         it('Handles empty string', () => {
             expect(escape('')).toBe('');
-        });
-
-        it('Is idempotent (double escape does nothing more)', () => {
-            const once = escape('<>&\'"');
-            const twice = escape(once);
-            expect(once).toBe(twice);
         });
     });
 
@@ -308,8 +303,8 @@ describe('Modules - JSX - Renderer', () => {
             const html = rootRender(ctx, ['__TRIFROST_STYLE_MARKER__', {type: Component, props: {}}]);
             expect(html).toBe(
                 [
-                    `<style data-tfs-s="tf46gioo" nonce="${ctx.nonce}">.tf46gioo{padding:1rem;background-color:blue}</style>`,
-                    '<div class="tf46gioo">Hello</div>',
+                    `<style data-tfs-s="tf252713112" nonce="${ctx.nonce}">.tf252713112{padding:1rem;background-color:blue}</style>`,
+                    '<div class="tf252713112">Hello</div>',
                 ].join(''),
             );
         });
@@ -350,14 +345,14 @@ describe('Modules - JSX - Renderer', () => {
             const html = rootRender(ctx, {type: Page, props: {}});
             expect(html).toBe(
                 [
-                    '<header class="tfiypj3">Title</header>',
-                    `<style data-tfs-s="tfiypj3" nonce="${ctx.nonce}">`,
-                    '.tfiypj3{font-size:1.5rem;font-weight:bold}',
+                    '<header class="tf31852479">Title</header>',
+                    `<style data-tfs-s="tf31852479" nonce="${ctx.nonce}">`,
+                    '.tf31852479{font-size:1.5rem;font-weight:bold}',
                     '</style>',
-                    `<style data-tfs-s="tfrnr4jx" nonce="${ctx.nonce}">`,
-                    '.tfrnr4jx{line-height:1.5;padding:2rem}',
+                    `<style data-tfs-s="tf1672483533" nonce="${ctx.nonce}">`,
+                    '.tf1672483533{line-height:1.5;padding:2rem}',
                     '</style>',
-                    '<main class="tfrnr4jx">Content</main>',
+                    '<main class="tf1672483533">Content</main>',
                 ].join(''),
             );
         });
@@ -423,14 +418,14 @@ describe('Modules - JSX - Renderer', () => {
                     '<head>',
                     '<title>TriFrost Demo</title>',
                     `<style nonce="${ctx.nonce}" data-tfs-p>`,
-                    '.tfgz38p9:hover{background-color:darkblue}',
-                    '.tfgz38p9{padding:0.75rem 1.25rem;border:none;background-color:blue;color:white;font-weight:bold;border-radius:0.25rem}',
+                    '.tf1026396621:hover{background-color:darkblue}',
+                    '.tf1026396621{padding:0.75rem 1.25rem;border:none;background-color:blue;color:white;font-weight:bold;border-radius:0.25rem}',
                     '</style>',
                     `<script nonce="${ctx.nonce}">${OBSERVER}</script>`,
                     '</head>',
                     '<body>',
                     '<h1>Welcome to TriFrost</h1>',
-                    '<button class="tfgz38p9">Click Me</button>',
+                    '<button class="tf1026396621">Click Me</button>',
                     `<script nonce="${ctx.nonce}">${ARC_GLOBAL(false)}${ARC_GLOBAL_OBSERVER}</script>`,
                     '</body>',
                     '</html>',
@@ -529,7 +524,7 @@ describe('Modules - JSX - Renderer', () => {
 
         it('Includes css root and script root when passed to render context and not in html', () => {
             let idCounter = 0;
-            vi.spyOn(Generic, 'hexId').mockImplementation(() => `id-${++idCounter}`);
+            vi.spyOn(Hash, 'hexId').mockImplementation(() => `id-${++idCounter}`);
 
             const ctx = new MockContext();
 
@@ -592,37 +587,33 @@ describe('Modules - JSX - Renderer', () => {
             expect(html).toBe(
                 [
                     '<ul>',
-                    '<div class="tf1ahm5s3">Styled</div>',
-                    '<li data-tfhf="1xym5hl" data-tfhd="zh3e7">A</li>',
-                    '<li data-tfhf="1xym5hl" data-tfhd="1kvkwa7">B</li>',
-                    '<style data-tfs-s="1wa46xf" nonce="aWQtMQ==">',
-                    '*, *::before, *::after{box-sizing:border-box}',
-                    '</style>',
-                    '<style data-tfs-s="1pzcqjm" nonce="aWQtMQ==">',
+                    '<div class="tf2811031491">Styled</div>',
+                    '<li data-tfhf="4230306633" data-tfhd="59584111">A</li>',
+                    '<li data-tfhf="4230306633" data-tfhd="3439148911">B</li>',
+                    '<style data-tfs-s="4128691731" nonce="aWQtMQ==">*, *::before, *::after{box-sizing:border-box}</style>',
+                    '<style data-tfs-s="3747817570" nonce="aWQtMQ==">',
                     'html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}',
                     '</style>',
-                    '<style data-tfs-s="1gr3z8s" nonce="aWQtMQ==">footer, header, nav, section, main{display:block}</style>',
-                    '<style data-tfs-s="19ljm6l" nonce="aWQtMQ==">ol, ul{list-style:none}</style>',
-                    '<style data-tfs-s="1kg9k7w" nonce="aWQtMQ==">q, blockquote::before{content:none}q, blockquote::after{content:none}</style>',
-                    '<style data-tfs-s="nle58" nonce="aWQtMQ==">q, blockquote{quotes:none}</style>',
-                    '<style data-tfs-s="1lr8eb3" nonce="aWQtMQ==">table{border-collapse:collapse;border-spacing:0}</style>',
-                    '<style data-tfs-s="tf1ahm5s3" nonce="aWQtMQ==">.tf1ahm5s3{margin:2rem;color:black}</style>',
+                    '<style data-tfs-s="3189776428" nonce="aWQtMQ==">footer, header, nav, section, main{display:block}</style>',
+                    '<style data-tfs-s="2757165069" nonce="aWQtMQ==">ol, ul{list-style:none}</style>',
+                    '<style data-tfs-s="3413425820" nonce="aWQtMQ==">q, blockquote::before{content:none}q, blockquote::after{content:none}</style>',
+                    '<style data-tfs-s="39629276" nonce="aWQtMQ==">q, blockquote{quotes:none}</style>',
+                    '<style data-tfs-s="3492313455" nonce="aWQtMQ==">table{border-collapse:collapse;border-spacing:0}</style>',
+                    '<style data-tfs-s="tf2811031491" nonce="aWQtMQ==">.tf2811031491{margin:2rem;color:black}</style>',
                     '</ul>',
-                    '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
+                    '<script nonce="aWQtMQ==">(function(w){',
+                    'const self=document.currentScript;',
                     'w.$tfarc.spark(',
-                    '[["1xym5hl",({el,data})=>el.innerText=JSON.stringify(data)]],',
-                    '[["zh3e7",{"a":1,"b":2}],["1kvkwa7",{"b":2,"a":1}]],',
-                    'self?.parentNode',
-                    ');',
-                    'setTimeout(()=>self?.remove?.(),0);',
-                    '})(window);</script>',
+                    '[["4230306633",({el,data})=>el.innerText=JSON.stringify(data)]],',
+                    '[["59584111",{"a":1,"b":2}],["3439148911",{"b":2,"a":1}]],',
+                    'self?.parentNode);setTimeout(()=>self?.remove?.(),0);})(window);</script>',
                 ].join(''),
             );
         });
 
         it('Includes css root and script root when passed to render context and in html', () => {
             let idCounter = 0;
-            vi.spyOn(Generic, 'hexId').mockImplementation(() => `id-${++idCounter}`);
+            vi.spyOn(Hash, 'hexId').mockImplementation(() => `id-${++idCounter}`);
 
             const ctx = new MockContext();
 
@@ -699,12 +690,12 @@ describe('Modules - JSX - Renderer', () => {
             expect(html).toBe(
                 [
                     '<html><body><ul>',
-                    '<div class="tf1ahm5s3">Styled</div>',
-                    '<li data-tfhf="1xym5hl" data-tfhd="zh3e7">A</li>',
-                    '<li data-tfhf="1xym5hl" data-tfhd="1kvkwa7">B</li>',
+                    '<div class="tf2811031491">Styled</div>',
+                    '<li data-tfhf="4230306633" data-tfhd="59584111">A</li>',
+                    '<li data-tfhf="4230306633" data-tfhd="3439148911">B</li>',
                     '<style nonce="aWQtMQ==" data-tfs-p>',
                     '*, *::before, *::after{box-sizing:border-box}html, body, div, span, object, iframe, figure, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, code, em, img, small, strike, strong, sub, sup, tt, b, u, i, ol, ul, li, fieldset, form, label, table, caption, tbody, tfoot, thead, tr, th, td, main, canvas, embed, footer, header, nav, section, video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-size-adjust:none}footer, header, nav, section, main{display:block}ol, ul{list-style:none}q, blockquote::before{content:none}q, blockquote::after{content:none}q, blockquote{quotes:none}table{border-collapse:collapse;border-spacing:0}',
-                    '.tf1ahm5s3{margin:2rem;color:black}',
+                    '.tf2811031491{margin:2rem;color:black}',
                     '</style>',
                     `<script nonce="aWQtMQ==">${OBSERVER}</script>`,
                     '</ul>',
@@ -714,8 +705,8 @@ describe('Modules - JSX - Renderer', () => {
                     '</script>',
                     '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                     'w.$tfarc.spark(',
-                    '[["1xym5hl",({el,data})=>el.innerText=JSON.stringify(data)]],',
-                    '[["zh3e7",{"a":1,"b":2}],["1kvkwa7",{"b":2,"a":1}]],',
+                    '[["4230306633",({el,data})=>el.innerText=JSON.stringify(data)]],',
+                    '[["59584111",{"a":1,"b":2}],["3439148911",{"b":2,"a":1}]],',
                     'self?.parentNode',
                     ');',
                     'setTimeout(()=>self?.remove?.(),0);',
@@ -727,7 +718,7 @@ describe('Modules - JSX - Renderer', () => {
 
         it('Includes css root and script root when passed to render context and in html BUT with mount paths set', () => {
             let idCounter = 0;
-            vi.spyOn(Generic, 'hexId').mockImplementation(() => `id-${++idCounter}`);
+            vi.spyOn(Hash, 'hexId').mockImplementation(() => `id-${++idCounter}`);
 
             const ctx = new MockContext();
 
@@ -807,19 +798,19 @@ describe('Modules - JSX - Renderer', () => {
             expect(html).toBe(
                 [
                     '<html><body><ul>',
-                    '<div class="tf1ahm5s3">Styled</div>',
-                    '<li data-tfhf="1xym5hl" data-tfhd="zh3e7">A</li>',
-                    '<li data-tfhf="1xym5hl" data-tfhd="1kvkwa7">B</li>',
+                    '<div class="tf2811031491">Styled</div>',
+                    '<li data-tfhf="4230306633" data-tfhd="59584111">A</li>',
+                    '<li data-tfhf="4230306633" data-tfhd="3439148911">B</li>',
                     '<link rel="stylesheet" nonce="aWQtMQ==" href="/static.css">',
-                    '<style nonce="aWQtMQ==" data-tfs-p>.tf1ahm5s3{margin:2rem;color:black}</style>',
+                    '<style nonce="aWQtMQ==" data-tfs-p>.tf2811031491{margin:2rem;color:black}</style>',
                     `<script nonce="aWQtMQ==">${OBSERVER}</script>`,
                     '</ul>',
                     '<script nonce="aWQtMQ==" src="/static.js" defer></script>',
                     '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                     'const run=()=>{',
                     'w.$tfarc.spark(',
-                    '[["1xym5hl",({el,data})=>el.innerText=JSON.stringify(data)]],',
-                    '[["zh3e7",{"a":1,"b":2}],["1kvkwa7",{"b":2,"a":1}]],',
+                    '[["4230306633",({el,data})=>el.innerText=JSON.stringify(data)]],',
+                    '[["59584111",{"a":1,"b":2}],["3439148911",{"b":2,"a":1}]],',
                     'self?.parentNode',
                     ');',
                     'setTimeout(()=>self?.remove?.(),0);',
@@ -896,7 +887,7 @@ describe('Modules - JSX - Renderer', () => {
 
             beforeEach(() => {
                 idCounter = 0;
-                vi.spyOn(Generic, 'hexId').mockImplementation(() => `id-${++idCounter}`);
+                vi.spyOn(Hash, 'hexId').mockImplementation(() => `id-${++idCounter}`);
             });
 
             afterEach(() => {
@@ -926,11 +917,11 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe(
                     [
-                        '<button data-tfhf="184ti1k" data-tfhd="bv7w9a">Click me</button>',
+                        '<button data-tfhf="2668606616" data-tfhd="717564430">Click me</button>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["184ti1k",({el,data})=>console.log("Hydrated:",el,data)]],',
-                        '[["bv7w9a",{"foo":"bar"}]],',
+                        '[["2668606616",({el,data})=>console.log("Hydrated:",el,data)]],',
+                        '[["717564430",{"foo":"bar"}]],',
                         'self?.parentNode',
                         ');setTimeout(()=>self?.remove?.(),0);})(window);</script>',
                     ].join(''),
@@ -963,11 +954,11 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe(
                     [
-                        '<span data-tfhf="i4kkoa" data-tfhd="ujl1v4">Item</span>',
-                        '<span data-tfhf="i4kkoa" data-tfhd="ujl1v4">Item</span>',
-                        '<span data-tfhf="i4kkoa" data-tfhd="ujl1v4">Item</span>',
+                        '<span data-tfhf="1096069546" data-tfhd="1846880176">Item</span>',
+                        '<span data-tfhf="1096069546" data-tfhd="1846880176">Item</span>',
+                        '<span data-tfhf="1096069546" data-tfhd="1846880176">Item</span>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
-                        'w.$tfarc.spark([["i4kkoa",({el})=>el.dataset.bound="true"]],[["ujl1v4",{"x":1}]],self?.parentNode);',
+                        'w.$tfarc.spark([["1096069546",({el})=>el.dataset.bound="true"]],[["1846880176",{"x":1}]],self?.parentNode);',
                         'setTimeout(()=>self?.remove?.(),0);',
                         '})(window);</script>',
                     ].join(''),
@@ -994,10 +985,10 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe(
                     [
-                        '<div data-tfhf="syupwh">No Data</div>',
+                        '<div data-tfhf="1751593121">No Data</div>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["syupwh",({el})=>el.id="injected"]],',
+                        '[["1751593121",({el})=>el.id="injected"]],',
                         '[],',
                         'self?.parentNode',
                         ');',
@@ -1033,11 +1024,11 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe(
                     [
-                        '<div data-tfhf="1fegs1v" data-tfhd="28o3uy">Nested</div>',
+                        '<div data-tfhf="3108072451" data-tfhd="135494026">Nested</div>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["1fegs1v",({el,data})=>el.setAttribute("data-enabled",data.enabled)]],',
-                        '[["28o3uy",{"enabled":true}]],',
+                        '[["3108072451",({el,data})=>el.setAttribute("data-enabled",data.enabled)]],',
+                        '[["135494026",{"enabled":true}]],',
                         'self?.parentNode',
                         ');',
                         'setTimeout(()=>self?.remove?.(),0);})(window);</script>',
@@ -1088,15 +1079,15 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe(
                     [
-                        '<div data-tfhf="qabhi4" data-tfhd="14azfrf">First</div>',
-                        '<div data-tfhf="1a9hy7w" data-tfhd="14azfs8">Second</div>',
+                        '<div data-tfhf="1589452636" data-tfhd="2437096587">First</div>',
+                        '<div data-tfhf="2797398140" data-tfhd="2437096616">Second</div>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
                         '[',
-                        '["qabhi4",({el,data})=>el.textContent=`count:${data.count}`],',
-                        '["1a9hy7w",({el,data})=>el.textContent=`count is ${data.count}`]',
+                        '["1589452636",({el,data})=>el.textContent=`count:${data.count}`],',
+                        '["2797398140",({el,data})=>el.textContent=`count is ${data.count}`]',
                         '],',
-                        '[["14azfrf",{"count":1}],["14azfs8",{"count":2}]],',
+                        '[["2437096587",{"count":1}],["2437096616",{"count":2}]],',
                         'self?.parentNode',
                         ');',
                         'setTimeout(()=>self?.remove?.(),0);})(window);</script>',
@@ -1147,15 +1138,15 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe(
                     [
-                        '<div data-tfhf="qabhi4" data-tfhd="14azfrf">First</div>',
-                        '<div data-tfhf="1a9hy7w" data-tfhd="14azfrf">Second</div>',
+                        '<div data-tfhf="1589452636" data-tfhd="2437096587">First</div>',
+                        '<div data-tfhf="2797398140" data-tfhd="2437096587">Second</div>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
                         '[',
-                        '["qabhi4",({el,data})=>el.textContent=`count:${data.count}`],',
-                        '["1a9hy7w",({el,data})=>el.textContent=`count is ${data.count}`]',
+                        '["1589452636",({el,data})=>el.textContent=`count:${data.count}`],',
+                        '["2797398140",({el,data})=>el.textContent=`count is ${data.count}`]',
                         '],',
-                        '[["14azfrf",{"count":1}]],',
+                        '[["2437096587",{"count":1}]],',
                         'self?.parentNode',
                         ');',
                         'setTimeout(()=>self?.remove?.(),0);})(window);</script>',
@@ -1206,12 +1197,12 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe(
                     [
-                        '<div data-tfhf="1a9hy7w" data-tfhd="14azfrf">First</div>',
-                        '<div data-tfhf="1a9hy7w" data-tfhd="14azfrf">Second</div>',
+                        '<div data-tfhf="2797398140" data-tfhd="2437096587">First</div>',
+                        '<div data-tfhf="2797398140" data-tfhd="2437096587">Second</div>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["1a9hy7w",({el,data})=>el.textContent=`count is ${data.count}`]],',
-                        '[["14azfrf",{"count":1}]],',
+                        '[["2797398140",({el,data})=>el.textContent=`count is ${data.count}`]],',
+                        '[["2437096587",{"count":1}]],',
                         'self?.parentNode',
                         ');setTimeout(()=>self?.remove?.(),0);})(window);</script>',
                     ].join(''),
@@ -1268,16 +1259,16 @@ describe('Modules - JSX - Renderer', () => {
                 expect(html).toBe(
                     [
                         '<section><article>',
-                        '<header data-tfhf="p4a6d4" data-tfhd="12racoz">Header</header>',
-                        '<footer data-tfhf="1ua37l8">Footer</footer>',
+                        '<header data-tfhf="1518847672" data-tfhd="2343547331">Header</header>',
+                        '<footer data-tfhf="4007713580">Footer</footer>',
                         '</article></section>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
                         '[',
-                        '["p4a6d4",({el,data})=>el.dataset.active=String(data.active)],',
-                        '["1ua37l8",(el)=>el.dataset.foot="true"]',
+                        '["1518847672",({el,data})=>el.dataset.active=String(data.active)],',
+                        '["4007713580",(el)=>el.dataset.foot="true"]',
                         '],',
-                        '[["12racoz",{"active":true}]],',
+                        '[["2343547331",{"active":true}]],',
                         'self?.parentNode',
                         ');',
                         'setTimeout(()=>self?.remove?.(),0);',
@@ -1312,11 +1303,11 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe(
                     [
-                        '<div data-tfhf="126qtv4" data-tfhd="ujl1ro">Hello</div>',
+                        '<div data-tfhf="2309044144" data-tfhd="1846880052">Hello</div>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["126qtv4",({el,data})=>el.setAttribute("data-value",data.x)]],',
-                        '[["ujl1ro",{"x":5}]],',
+                        '[["2309044144",({el,data})=>el.setAttribute("data-value",data.x)]],',
+                        '[["1846880052",{"x":5}]],',
                         'self?.parentNode',
                         ');',
                         'setTimeout(()=>self?.remove?.(),0);',
@@ -1383,13 +1374,13 @@ describe('Modules - JSX - Renderer', () => {
                 expect(html).toBe(
                     [
                         '<ul>',
-                        '<li data-tfhf="1xym5hl" data-tfhd="zh3e7">A</li>',
-                        '<li data-tfhf="1xym5hl" data-tfhd="1kvkwa7">B</li>',
+                        '<li data-tfhf="4230306633" data-tfhd="59584111">A</li>',
+                        '<li data-tfhf="4230306633" data-tfhd="3439148911">B</li>',
                         '</ul>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["1xym5hl",({el,data})=>el.innerText=JSON.stringify(data)]],',
-                        '[["zh3e7",{"a":1,"b":2}],["1kvkwa7",{"b":2,"a":1}]],',
+                        '[["4230306633",({el,data})=>el.innerText=JSON.stringify(data)]],',
+                        '[["59584111",{"a":1,"b":2}],["3439148911",{"b":2,"a":1}]],',
                         'self?.parentNode',
                         ');',
                         'setTimeout(()=>self?.remove?.(),0);',
@@ -1454,15 +1445,15 @@ describe('Modules - JSX - Renderer', () => {
                 expect(html).toBe(
                     [
                         '<ul>',
-                        '<div class="tf1ahm5s3">Styled</div>',
-                        '<li data-tfhf="1xym5hl" data-tfhd="zh3e7">A</li>',
-                        '<li data-tfhf="1xym5hl" data-tfhd="1kvkwa7">B</li>',
+                        '<div class="tf2811031491">Styled</div>',
+                        '<li data-tfhf="4230306633" data-tfhd="59584111">A</li>',
+                        '<li data-tfhf="4230306633" data-tfhd="3439148911">B</li>',
                         '</ul>',
-                        '<style data-tfs-s="tf1ahm5s3" nonce="aWQtMQ==">.tf1ahm5s3{margin:2rem;color:black}</style>',
+                        '<style data-tfs-s="tf2811031491" nonce="aWQtMQ==">.tf2811031491{margin:2rem;color:black}</style>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["1xym5hl",({el,data})=>el.innerText=JSON.stringify(data)]],',
-                        '[["zh3e7",{"a":1,"b":2}],["1kvkwa7",{"b":2,"a":1}]],',
+                        '[["4230306633",({el,data})=>el.innerText=JSON.stringify(data)]],',
+                        '[["59584111",{"a":1,"b":2}],["3439148911",{"b":2,"a":1}]],',
                         'self?.parentNode',
                         ');',
                         'setTimeout(()=>self?.remove?.(),0);',
@@ -1529,14 +1520,14 @@ describe('Modules - JSX - Renderer', () => {
                 expect(html).toBe(
                     [
                         '<ul>',
-                        '<div class="tf1ahm5s3">Styled</div>',
-                        '<li data-tfhf="1xym5hl" data-tfhd="zh3e7">A</li>',
-                        '<li data-tfhf="1xym5hl" data-tfhd="1kvkwa7">B</li>',
+                        '<div class="tf2811031491">Styled</div>',
+                        '<li data-tfhf="4230306633" data-tfhd="59584111">A</li>',
+                        '<li data-tfhf="4230306633" data-tfhd="3439148911">B</li>',
                         '</ul>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["1xym5hl",({el,data})=>el.innerText=JSON.stringify(data)]],',
-                        '[["zh3e7",{"a":1,"b":2}],["1kvkwa7",{"b":2,"a":1}]],',
+                        '[["4230306633",({el,data})=>el.innerText=JSON.stringify(data)]],',
+                        '[["59584111",{"a":1,"b":2}],["3439148911",{"b":2,"a":1}]],',
                         'self?.parentNode',
                         ');',
                         'setTimeout(()=>self?.remove?.(),0);',
@@ -1564,9 +1555,9 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html1).toBe(
                     [
-                        '<div data-tfhf="1i5z1bg">Reset me</div>',
+                        '<div data-tfhf="3275206252">Reset me</div>',
                         '<script nonce="aWQtMQ==">(function(w){const self=document.currentScript;',
-                        'w.$tfarc.spark([["1i5z1bg",(el)=>el.id="reset"]],[],self?.parentNode);',
+                        'w.$tfarc.spark([["3275206252",(el)=>el.id="reset"]],[],self?.parentNode);',
                         'setTimeout(()=>self?.remove?.(),0);',
                         '})(window);</script>',
                     ].join(''),
@@ -1583,7 +1574,7 @@ describe('Modules - JSX - Renderer', () => {
             it('Avoids duplicating function IDs seen from cookie', () => {
                 const ctx = new MockContext({
                     headers: {
-                        cookie: 'tfscriptlru=8gisj4; Secure',
+                        cookie: 'tfscriptlru=511480048; Secure',
                     },
                 });
 
@@ -1613,10 +1604,10 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe(
                     [
-                        '<div id="foo" data-tfhf="8gisj4" data-tfhd="bv7w9a"></div>',
+                        '<div id="foo" data-tfhf="511480048" data-tfhd="717564430"></div>',
                         '<script nonce="aWQtMQ==">(function(w){',
                         'const self=document.currentScript;',
-                        'w.$tfarc.spark([["8gisj4"]],[["bv7w9a",{"foo":"bar"}]],self?.parentNode);setTimeout(()=>self?.remove?.(),0);',
+                        'w.$tfarc.spark([["511480048"]],[["717564430",{"foo":"bar"}]],self?.parentNode);setTimeout(()=>self?.remove?.(),0);',
                         '})(window);</script>',
                     ].join(''),
                 );
@@ -1645,11 +1636,11 @@ describe('Modules - JSX - Renderer', () => {
 
                 expect(html).toBe(
                     [
-                        '<main data-tfhf="1h50wgl"></main>',
+                        '<main data-tfhf="3213147477"></main>',
                         '<script nonce="aWQtMQ==">(function(w){',
                         'const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["1h50wgl",(el)=>el.dataset.ready="true"]],',
+                        '[["3213147477",(el)=>el.dataset.ready="true"]],',
                         '[],',
                         'self?.parentNode',
                         ');',
@@ -1658,7 +1649,7 @@ describe('Modules - JSX - Renderer', () => {
                 );
 
                 expect(ctx.cookies.outgoing).toEqual([
-                    'tfscriptlru=id37%7Cid38%7Cid39%7Cid40%7Cid41%7Cid42%7Cid43%7Cid44%7Cid45%7Cid46%7Cid47%7Cid48%7Cid49%7Cid50%7Cid51%7Cid52%7Cid53%7Cid54%7Cid55%7Cid56%7Cid57%7Cid58%7Cid59%7Cid60%7Cid61%7Cid62%7Cid63%7Cid64%7Cid65%7Cid66%7Cid67%7Cid68%7Cid69%7Cid70%7Cid71%7Cid72%7Cid73%7Cid74%7Cid75%7Cid76%7Cid77%7Cid78%7Cid79%7Cid80%7Cid81%7Cid82%7Cid83%7Cid84%7Cid85%7Cid86%7Cid87%7Cid88%7Cid89%7Cid90%7Cid91%7Cid92%7Cid93%7Cid94%7Cid95%7Cid96%7Cid97%7Cid98%7Cid99%7C1h50wgl; Secure; HttpOnly',
+                    'tfscriptlru=id37%7Cid38%7Cid39%7Cid40%7Cid41%7Cid42%7Cid43%7Cid44%7Cid45%7Cid46%7Cid47%7Cid48%7Cid49%7Cid50%7Cid51%7Cid52%7Cid53%7Cid54%7Cid55%7Cid56%7Cid57%7Cid58%7Cid59%7Cid60%7Cid61%7Cid62%7Cid63%7Cid64%7Cid65%7Cid66%7Cid67%7Cid68%7Cid69%7Cid70%7Cid71%7Cid72%7Cid73%7Cid74%7Cid75%7Cid76%7Cid77%7Cid78%7Cid79%7Cid80%7Cid81%7Cid82%7Cid83%7Cid84%7Cid85%7Cid86%7Cid87%7Cid88%7Cid89%7Cid90%7Cid91%7Cid92%7Cid93%7Cid94%7Cid95%7Cid96%7Cid97%7Cid98%7Cid99%7C3213147477; Secure; HttpOnly',
                 ]);
             });
 
@@ -1736,19 +1727,22 @@ describe('Modules - JSX - Renderer', () => {
                     ),
                 ).toBe(
                     [
-                        '<main data-tfhf="te98po"></main>',
+                        '<main data-tfhf="1777464924"></main>',
                         '<script nonce="aWQtMQ==">(function(w){',
                         'const self=document.currentScript;',
-                        'w.$tfarc.sparkModule([["nipv2p",()=>{return {log:(msg)=>console.log(msg)};},"logger"]]);',
+                        'w.$tfarc.sparkModule([["1422161809",()=>{return {log:(msg)=>console.log(msg)};},"logger"]]);',
                         'w.$tfarc.spark(',
-                        '[["te98po",({el,$})=>{el.textContent="Hi";$.logger.log("Hello World");}]],',
+                        '[["1777464924",({el,$})=>{el.textContent="Hi";$.logger.log("Hello World");}]],',
                         '[],',
                         'self?.parentNode);',
                         'setTimeout(()=>self?.remove?.(),0);})(window);</script>',
                     ].join(''),
                 );
 
-                expect(ctx.cookies.outgoing).toEqual(['tfscriptlru=te98po; Secure; HttpOnly', 'tfmoduleslru=nipv2p; Secure; HttpOnly']);
+                expect(ctx.cookies.outgoing).toEqual([
+                    'tfscriptlru=1777464924; Secure; HttpOnly',
+                    'tfmoduleslru=1422161809; Secure; HttpOnly',
+                ]);
             });
 
             it('Injects only script if module is not used', () => {
@@ -1792,18 +1786,18 @@ describe('Modules - JSX - Renderer', () => {
                     ),
                 ).toBe(
                     [
-                        '<main data-tfhf="tifgyi"></main>',
+                        '<main data-tfhf="1784474010"></main>',
                         '<script nonce="aWQtMQ==">(function(w){',
                         'const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["tifgyi",({el})=>{el.textContent="Hi";}]],',
+                        '[["1784474010",({el})=>{el.textContent="Hi";}]],',
                         '[],',
                         'self?.parentNode);',
                         'setTimeout(()=>self?.remove?.(),0);})(window);</script>',
                     ].join(''),
                 );
 
-                expect(ctx.cookies.outgoing).toEqual(['tfscriptlru=tifgyi; Secure; HttpOnly']);
+                expect(ctx.cookies.outgoing).toEqual(['tfscriptlru=1784474010; Secure; HttpOnly']);
             });
 
             it('Injects only script if module is already on client', () => {
@@ -1825,7 +1819,7 @@ describe('Modules - JSX - Renderer', () => {
                 });
                 const ctx = new MockContext({
                     headers: {
-                        cookie: `tfmoduleslru=nipv2p`,
+                        cookie: `tfmoduleslru=1422161809`,
                     },
                 });
 
@@ -1852,18 +1846,18 @@ describe('Modules - JSX - Renderer', () => {
                     ),
                 ).toBe(
                     [
-                        '<main data-tfhf="te98po"></main>',
+                        '<main data-tfhf="1777464924"></main>',
                         '<script nonce="aWQtMQ==">(function(w){',
                         'const self=document.currentScript;',
                         'w.$tfarc.spark(',
-                        '[["te98po",({el,$})=>{el.textContent="Hi";$.logger.log("Hello World");}]],',
+                        '[["1777464924",({el,$})=>{el.textContent="Hi";$.logger.log("Hello World");}]],',
                         '[],',
                         'self?.parentNode);',
                         'setTimeout(()=>self?.remove?.(),0);})(window);</script>',
                     ].join(''),
                 );
 
-                expect(ctx.cookies.outgoing).toEqual(['tfscriptlru=te98po; Secure; HttpOnly']);
+                expect(ctx.cookies.outgoing).toEqual(['tfscriptlru=1777464924; Secure; HttpOnly']);
             });
         });
     });

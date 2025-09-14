@@ -152,7 +152,7 @@ describe('Modules - JSX - Script - use', () => {
             /* @ts-expect-error should be good */
             expect([...instance.map_modules.entries()]).toEqual([
                 [
-                    'yis70h',
+                    '2087398529',
                     {
                         data: '{"a":1}',
                         fn: '()=>({a:true})',
