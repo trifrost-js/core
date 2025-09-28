@@ -27,6 +27,7 @@ import {mount as mountScript} from './modules/JSX/script/mount';
 import {type CssGeneric, type CssInstance} from './modules/JSX/style/use';
 import {activateCtx} from './utils/Als';
 import {hexId} from './utils/Generic';
+import {type TFValidator} from './types/validation';
 
 const RGX_RID = /^[a-z0-9-]{8,64}$/i;
 
@@ -299,6 +300,26 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
                             /* Initialize context with matched route data, check if triage is necessary (eg payload too large) */
                             await ctx.init(match);
                             if (ctx.statusCode >= 400) return await runTriage(path, ctx);
+
+                            /* If route has a validator, run it */
+                            if (match.route.input) {
+                                try {
+                                    const parsed = match.route.input.parse({
+                                        body: ctx.body,
+                                        query: ctx.query,
+                                    });
+                                    // overwrite ctx.body/query with parsed values (safe cast)
+                                    (ctx as any).body = parsed.body;
+                                    (ctx as any).query = parsed.query;
+                                } catch (err) {
+                                    if (match.route.input.onInvalid) {
+                                        await match.route.input.onInvalid(ctx, err);
+                                    } else {
+                                        ctx.setStatus(400);
+                                    }
+                                    return await runTriage(path, ctx);
+                                }
+                            }
 
                             /* Run chain */
                             for (let i = 0; i < match.route.middleware.length; i++) {
