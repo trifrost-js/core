@@ -8,6 +8,7 @@ import {type Lazy} from '../utils/Lazy';
 import {type HttpMethod, Sym_TriFrostDescription, Sym_TriFrostName} from './constants';
 import {type TriFrostContext, type TriFrostContextKind} from './context';
 import {type Promisify} from './generic';
+import {type TFInput, type TFValidator, type ExtractInput} from './validation';
 
 export type TriFrostType = 'handler' | 'middleware';
 
@@ -29,6 +30,7 @@ export type PathParam<Path extends string> = string extends Path
           ? {'*': string}
           : {};
 
+/** Middleware type */
 export type TriFrostMiddleware<
     Env extends Record<string, any> = {},
     State extends Record<string, unknown> = {},
@@ -38,12 +40,21 @@ export type TriFrostMiddleware<
     [Sym_TriFrostName]?: string;
 };
 
-export type TriFrostHandler<Env extends Record<string, any>, State extends Record<string, unknown> = {}> = (
-    ctx: TriFrostContext<Env, State>,
-) => Promisify<void>;
+/** Handler type — ALWAYS parameterized by input shape */
+export type TriFrostHandler<
+    Env extends Record<string, any>,
+    State extends Record<string, unknown> = {},
+    TInput extends TFInput = TFInput,
+> = (ctx: TriFrostContext<Env, State, TInput>) => Promisify<void>;
 
-export type TriFrostHandlerConfig<Env extends Record<string, any> = {}, State extends Record<string, unknown> = {}> = {
-    fn: TriFrostHandler<Env, State>;
+/** Handler config (optional validator) */
+export type TriFrostHandlerConfig<
+    Env extends Record<string, any> = {},
+    State extends Record<string, unknown> = {},
+    TV extends TFValidator<any, Env, State> = TFValidator<any, Env, State>,
+> = {
+    fn: TriFrostHandler<Env, State, ExtractInput<TV>>;
+    input?: TV | null;
     name?: string;
     description?: string;
     timeout?: number | null;
@@ -53,14 +64,28 @@ export type TriFrostHandlerConfig<Env extends Record<string, any> = {}, State ex
     bodyParser?: TriFrostBodyParserOptions | null;
 };
 
-export type TriFrostRouteHandler<Env extends Record<string, any>, State extends Record<string, unknown> = {}> =
-    | TriFrostHandler<Env, State>
-    | TriFrostHandlerConfig<Env, State>;
+/** A route handler can be a bare handler or a config object */
+export type TriFrostRouteHandler<
+    Env extends Record<string, any>,
+    State extends Record<string, unknown> = {},
+    TV extends TFValidator<any, Env, State> = TFValidator<any, Env, State>,
+> = TriFrostHandler<Env, State, ExtractInput<TV>> | TriFrostHandlerConfig<Env, State, TV>;
 
-export type TriFrostRoute<Env extends Record<string, any>, State extends Record<string, unknown> = {}> = {
+/** Internal route representation (after registration) */
+export type TriFrostRoute<
+    Env extends Record<string, any> = {},
+    State extends Record<string, unknown> = {},
+    TInput extends TFInput = TFInput,
+> = {
     path: string;
-    middleware: {name: string; description: string | null; fingerprint: any; handler: TriFrostMiddleware<Env, State>}[];
-    fn: TriFrostHandler<Env, State>;
+    middleware: {
+        name: string;
+        description: string | null;
+        fingerprint: any;
+        handler: TriFrostMiddleware<Env, State>;
+    }[];
+    fn: TriFrostHandler<Env, State, TInput>;
+    input: TFValidator<TInput, Env, State> | null;
     timeout: number | null;
     kind: TriFrostContextKind;
     method: HttpMethod;
@@ -70,6 +95,7 @@ export type TriFrostRoute<Env extends Record<string, any>, State extends Record<
     meta: Record<string, unknown> | null;
 };
 
+/** Groupers (subrouter handlers) */
 export type TriFrostGrouper<Env extends Record<string, any>, State extends Record<string, unknown> = {}> = (
     router: TriFrostRouter<Env, State>,
 ) => Promisify<void | TriFrostRouter<Env, State>>;
@@ -83,10 +109,12 @@ export type TriFrostGrouperHandler<Env extends Record<string, any>, State extend
     | TriFrostGrouper<Env, State>
     | TriFrostGrouperConfig<Env, State>;
 
+/** Route builder handler */
 export type TriFrostRouteBuilderHandler<Env extends Record<string, any>, State extends Record<string, unknown> = {}> = (
     route: Route<Env, State>,
 ) => void;
 
+/** Router options */
 export type TriFrostRouterOptions<Env extends Record<string, any> = {}, State extends Record<string, unknown> = {}> = {
     /**
      * Tree passed by root router to register routes onto
@@ -115,9 +143,9 @@ export type TriFrostRouterOptions<Env extends Record<string, any> = {}, State ex
     bodyParser: TriFrostBodyParserOptions | null;
 };
 
+/** Router interface */
 export type TriFrostRouter<Env extends Record<string, any> = {}, State extends Record<string, unknown> = {}> = {
     get path(): string;
-
     get timeout(): number | null | undefined;
 
     use: <Patch extends Record<string, unknown> = {}>(val: TriFrostMiddleware<Env, State, Patch>) => TriFrostRouter<Env, State & Patch>;
@@ -138,38 +166,50 @@ export type TriFrostRouter<Env extends Record<string, any> = {}, State extends R
     ) => TriFrostRouter<Env, State>;
 
     onNotFound: (fn: TriFrostHandler<Env, State>) => TriFrostRouter<Env, State>;
-
     onError: (fn: TriFrostHandler<Env, State>) => TriFrostRouter<Env, State>;
 
-    get: <Path extends string = string>(
+    get<
+        Path extends string = string,
+        TV extends TFValidator<any, Env, State & PathParam<Path>> = TFValidator<any, Env, State & PathParam<Path>>,
+    >(
         path: Path,
-        handler: TriFrostRouteHandler<Env, State & PathParam<Path>>,
-    ) => TriFrostRouter<Env, State>;
+        handler: TriFrostRouteHandler<Env, State & PathParam<Path>, TV>,
+    ): TriFrostRouter<Env, State>;
 
-    post: <Path extends string = string>(
+    post<
+        Path extends string = string,
+        TV extends TFValidator<any, Env, State & PathParam<Path>> = TFValidator<any, Env, State & PathParam<Path>>,
+    >(
         path: Path,
-        handler: TriFrostRouteHandler<Env, State & PathParam<Path>>,
-    ) => TriFrostRouter<Env, State>;
+        handler: TriFrostRouteHandler<Env, State & PathParam<Path>, TV>,
+    ): TriFrostRouter<Env, State>;
 
-    put: <Path extends string = string>(
+    put<
+        Path extends string = string,
+        TV extends TFValidator<any, Env, State & PathParam<Path>> = TFValidator<any, Env, State & PathParam<Path>>,
+    >(
         path: Path,
-        handler: TriFrostRouteHandler<Env, State & PathParam<Path>>,
-    ) => TriFrostRouter<Env, State>;
+        handler: TriFrostRouteHandler<Env, State & PathParam<Path>, TV>,
+    ): TriFrostRouter<Env, State>;
 
-    patch: <Path extends string = string>(
+    patch<
+        Path extends string = string,
+        TV extends TFValidator<any, Env, State & PathParam<Path>> = TFValidator<any, Env, State & PathParam<Path>>,
+    >(
         path: Path,
-        handler: TriFrostRouteHandler<Env, State & PathParam<Path>>,
-    ) => TriFrostRouter<Env, State>;
+        handler: TriFrostRouteHandler<Env, State & PathParam<Path>, TV>,
+    ): TriFrostRouter<Env, State>;
 
-    del: <Path extends string = string>(
+    del<
+        Path extends string = string,
+        TV extends TFValidator<any, Env, State & PathParam<Path>> = TFValidator<any, Env, State & PathParam<Path>>,
+    >(
         path: Path,
-        handler: TriFrostRouteHandler<Env, State & PathParam<Path>>,
-    ) => TriFrostRouter<Env, State>;
+        handler: TriFrostRouteHandler<Env, State & PathParam<Path>, TV>,
+    ): TriFrostRouter<Env, State>;
 
-    health: <Path extends string = string>(
-        path: Path,
-        handler: TriFrostHandler<Env, State & PathParam<Path>>,
-    ) => TriFrostRouter<Env, State>;
+    /** Health doesn’t take a validator */
+    health<Path extends string = string>(path: Path, handler: TriFrostHandler<Env, State & PathParam<Path>>): TriFrostRouter<Env, State>;
 };
 
 /**

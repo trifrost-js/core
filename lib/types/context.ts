@@ -3,10 +3,11 @@ import {type TriFrostCache} from '../modules/Cache';
 import {type Cookies, type TriFrostCookieOptions} from '../modules/Cookies';
 import {type TriFrostLogger} from '../modules/Logger';
 import {type TriFrostRouteMatch} from './routing';
-import {type TriFrostBodyParserOptions, type ParsedBody} from '../utils/BodyParser/types';
+import {type TriFrostBodyParserOptions} from '../utils/BodyParser/types';
 import {type HttpRedirectStatusCode, type HttpStatusCode, type MimeType, type HttpMethod} from './constants';
 import {type createCss, type createScript} from '../modules';
 import {Lazy} from '../utils/Lazy';
+import {type TFInput} from './validation';
 
 export type TriFrostContextKind = 'std' | 'notfound' | 'error' | 'options' | 'health';
 
@@ -74,32 +75,39 @@ export type TriFrostContextRedirectOptions = {
     keep_query?: boolean;
 };
 
-export type TriFrostContext<Env extends Record<string, any> = {}, State extends Record<string, unknown> = {}> = {
-    get env(): Readonly<Env>;
-    get method(): HttpMethod;
-    get path(): string;
-    get name(): string;
-    get nonce(): string;
-    get kind(): TriFrostContextKind;
-    get host(): string;
-    get domain(): string | null;
-    get ip(): string | null;
-    get requestId(): string;
-    get query(): Readonly<URLSearchParams>;
-    get body(): Readonly<ParsedBody>;
-    get isInitialized(): boolean;
-    get isDone(): boolean;
-    get isAborted(): boolean;
-    get isLocked(): boolean;
-    get headers(): Readonly<Record<string, string>>;
-    get resHeaders(): Readonly<Record<string, string>>;
-    get logger(): TriFrostLogger;
-    get cookies(): Cookies;
-    get cache(): TriFrostCache;
-    get state(): Readonly<State>;
-    get statusCode(): HttpStatusCode;
-    get timeout(): number | null;
-    get afterHooks(): (<S extends State>(ctx: TriFrostContext<Env, S>) => Promise<void>)[];
+export type TriFrostContext<
+    Env extends Record<string, any> = {},
+    State extends Record<string, unknown> = {},
+    TInput extends TFInput = TFInput,
+> = {
+    readonly env: Env;
+    readonly method: HttpMethod;
+    readonly path: string;
+    readonly name: string;
+    readonly nonce: string;
+    readonly kind: TriFrostContextKind;
+    readonly host: string;
+    readonly domain: string | null;
+    readonly ip: string | null;
+    readonly requestId: string;
+
+    readonly query: TInput['query'];
+    readonly body: TInput['body'];
+
+    readonly isInitialized: boolean;
+    readonly isDone: boolean;
+    readonly isAborted: boolean;
+    readonly isLocked: boolean;
+
+    readonly headers: Readonly<Record<string, string>>;
+    readonly resHeaders: Readonly<Record<string, string>>;
+    readonly logger: TriFrostLogger;
+    readonly cookies: Cookies;
+    readonly cache: TriFrostCache;
+    readonly state: Readonly<State>;
+    readonly statusCode: HttpStatusCode;
+    readonly timeout: number | null;
+    readonly afterHooks: (<S extends State>(ctx: TriFrostContext<Env, S>) => Promise<void>)[];
 
     setState: <Patch extends Record<string, unknown>>(patch: Patch) => TriFrostContext<Env, State & Patch>;
     delState: <K extends keyof State>(keys: K[]) => TriFrostContext<Env, Omit<State, K>>;
@@ -117,7 +125,7 @@ export type TriFrostContext<Env extends Record<string, any> = {}, State extends 
 
     init: (
         match: TriFrostRouteMatch<Env>,
-        handler?: (config: TriFrostBodyParserOptions | null) => Promise<ParsedBody | null>,
+        handler?: (config: TriFrostBodyParserOptions | null) => Promise<TInput['body'] | null>,
     ) => Promise<void>;
     abort: (status?: HttpStatusCode) => void;
     fetch: (input: string | URL, init?: RequestInit) => Promise<Response>;

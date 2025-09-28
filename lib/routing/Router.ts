@@ -20,6 +20,7 @@ import {RouteTree} from './Tree';
 import {isValidBodyParser, isValidGrouper, isValidHandler, isValidLimit, isValidMiddleware, normalizeMiddleware} from './util';
 import {type TriFrostBodyParserOptions} from '../utils/BodyParser/types';
 import {Lazy} from '../utils/Lazy';
+import {type TFInput, type ExtractInput, TFValidator} from '../types/validation';
 
 const RGX_SLASH = /\/{2,}/g;
 
@@ -205,7 +206,8 @@ class Router<Env extends Record<string, any> = {}, State extends Record<string, 
 
         this.tree.addNotFound({
             path: this.#path + '/*',
-            fn: handler as unknown as TriFrostHandler<Env, {}>,
+            input: null,
+            fn: handler as unknown as TriFrostHandler<Env, {}, TFInput>,
             middleware: normalizeMiddleware<Env>(this.#middleware as TriFrostMiddleware<Env>[]),
             kind: 'notfound',
             timeout: this.#timeout,
@@ -228,7 +230,8 @@ class Router<Env extends Record<string, any> = {}, State extends Record<string, 
 
         this.tree.addError({
             path: this.#path + '/*',
-            fn: handler as unknown as TriFrostHandler<Env, {}>,
+            input: null,
+            fn: handler as unknown as TriFrostHandler<Env, {}, TFInput>,
             middleware: normalizeMiddleware<Env>(this.#middleware as TriFrostMiddleware<Env>[]),
             kind: 'error',
             timeout: this.#timeout,
@@ -243,46 +246,66 @@ class Router<Env extends Record<string, any> = {}, State extends Record<string, 
     /**
      * Configure a HTTP Get route
      */
-    get<Path extends string = string>(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+    get<
+        Path extends string = string,
+        TValidator extends TFValidator<any, Env, State & PathParam<Path>> = TFValidator<any, Env, State & PathParam<Path>>,
+    >(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>, TValidator>) {
         if (typeof path !== 'string') throw new Error('TriFrostRouter@get: Invalid path');
         if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@get: Invalid handler');
-        return this.#register(path, [handler], [HttpMethods.GET, HttpMethods.HEAD], this.#bodyParser);
+        this.#register(path, [handler], [HttpMethods.GET, HttpMethods.HEAD], this.#bodyParser);
+        return this;
     }
 
     /**
      * Configure a HTTP Post route
      */
-    post<Path extends string = string>(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+    post<
+        Path extends string = string,
+        TValidator extends TFValidator<any, Env, State & PathParam<Path>> = TFValidator<any, Env, State & PathParam<Path>>,
+    >(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>, TValidator>) {
         if (typeof path !== 'string') throw new Error('TriFrostRouter@post: Invalid path');
         if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@post: Invalid handler');
-        return this.#register(path, [handler], [HttpMethods.POST], this.#bodyParser);
+        this.#register(path, [handler], [HttpMethods.POST], this.#bodyParser);
+        return this;
     }
 
     /**
      * Configure a HTTP Put route
      */
-    put<Path extends string = string>(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+    put<
+        Path extends string = string,
+        TValidator extends TFValidator<any, Env, State & PathParam<Path>> = TFValidator<any, Env, State & PathParam<Path>>,
+    >(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>, TValidator>) {
         if (typeof path !== 'string') throw new Error('TriFrostRouter@put: Invalid path');
         if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@put: Invalid handler');
-        return this.#register(path, [handler], [HttpMethods.PUT], this.#bodyParser);
+        this.#register(path, [handler], [HttpMethods.PUT], this.#bodyParser);
+        return this;
     }
 
     /**
      * Configure a HTTP Patch route
      */
-    patch<Path extends string = string>(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+    patch<
+        Path extends string = string,
+        TValidator extends TFValidator<any, Env, State & PathParam<Path>> = TFValidator<any, Env, State & PathParam<Path>>,
+    >(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>, TValidator>) {
         if (typeof path !== 'string') throw new Error('TriFrostRouter@patch: Invalid path');
         if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@patch: Invalid handler');
-        return this.#register(path, [handler], [HttpMethods.PATCH], this.#bodyParser);
+        this.#register(path, [handler], [HttpMethods.PATCH], this.#bodyParser);
+        return this;
     }
 
     /**
      * Configure a HTTP Delete route
      */
-    del<Path extends string = string>(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+    del<
+        Path extends string = string,
+        TValidator extends TFValidator<any, Env, State & PathParam<Path>> = TFValidator<any, Env, State & PathParam<Path>>,
+    >(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>, TValidator>) {
         if (typeof path !== 'string') throw new Error('TriFrostRouter@del: Invalid path');
         if (!isValidHandler<Env, State & PathParam<Path>>(handler)) throw new Error('TriFrostRouter@del: Invalid handler');
-        return this.#register(path, [handler], [HttpMethods.DELETE], this.#bodyParser);
+        this.#register(path, [handler], [HttpMethods.DELETE], this.#bodyParser);
+        return this;
     }
 
     /**
@@ -342,6 +365,8 @@ class Router<Env extends Record<string, any> = {}, State extends Record<string, 
             ...normalizeMiddleware<Env, State>((config.middleware || []) as TriFrostMiddleware<Env, State>[]),
         ];
 
+        type TInputFromConfig = ExtractInput<(typeof config)['input']>;
+
         for (let i = 0; i < methods.length; i++) {
             const method = methods[i];
 
@@ -352,11 +377,12 @@ class Router<Env extends Record<string, any> = {}, State extends Record<string, 
                 method,
                 kind: n_kind,
                 path: n_path,
-                fn: config.fn as TriFrostHandler<Env>,
+                fn: config.fn as unknown as TriFrostHandler<Env, State, TInputFromConfig>,
+                input: (config.input ?? null) as unknown as TFValidator<TInputFromConfig, Env, State> | null,
                 middleware: n_middleware,
                 timeout: n_timeout,
                 bodyParser: n_bodyparser,
-            } as unknown as TriFrostRoute<Env>);
+            } as unknown as TriFrostRoute<Env, State, TInputFromConfig>);
         }
 
         return this;

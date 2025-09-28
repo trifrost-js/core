@@ -439,7 +439,10 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
     /**
      * Configure a HTTP Get route
      */
-    get<Path extends string = string>(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+    get<
+        Path extends string = string,
+        TV extends TFValidator<any, Env, State & PathParam<Path>> = TFValidator<any, Env, State & PathParam<Path>>,
+    >(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>, TV>) {
         super.get(path, handler);
         return this;
     }
@@ -447,7 +450,10 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
     /**
      * Configure a HTTP Post route
      */
-    post<Path extends string = string>(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+    post<
+        Path extends string = string,
+        TV extends TFValidator<any, Env, State & PathParam<Path>> = TFValidator<any, Env, State & PathParam<Path>>,
+    >(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>, TV>) {
         super.post(path, handler);
         return this;
     }
@@ -455,7 +461,10 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
     /**
      * Configure a HTTP Patch route
      */
-    patch<Path extends string = string>(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+    patch<
+        Path extends string = string,
+        TV extends TFValidator<any, Env, State & PathParam<Path>> = TFValidator<any, Env, State & PathParam<Path>>,
+    >(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>, TV>) {
         super.patch(path, handler);
         return this;
     }
@@ -463,7 +472,10 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
     /**
      * Configure a HTTP Put route
      */
-    put<Path extends string = string>(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+    put<
+        Path extends string = string,
+        TV extends TFValidator<any, Env, State & PathParam<Path>> = TFValidator<any, Env, State & PathParam<Path>>,
+    >(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>, TV>) {
         super.put(path, handler);
         return this;
     }
@@ -471,7 +483,10 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
     /**
      * Configure a HTTP Delete route
      */
-    del<Path extends string = string>(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>>) {
+    del<
+        Path extends string = string,
+        TV extends TFValidator<any, Env, State & PathParam<Path>> = TFValidator<any, Env, State & PathParam<Path>>,
+    >(path: Path, handler: TriFrostRouteHandler<Env, State & PathParam<Path>, TV>) {
         super.del(path, handler);
         return this;
     }
