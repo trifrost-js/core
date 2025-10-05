@@ -9,11 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **feat**: Route registration now supports setting up input validation schema. 
 
 ### Improved
-- **deps**: Upgrade @cloudflare/workers-types to 4.20250927.0
-- **deps**: Upgrade @types/node to 22.18.6
-- **deps**: Upgrade bun-types to 1.2.22
-- **deps**: Upgrade eslint to 9.36.0
-- **deps**: Upgrade typescript-eslint to 8.44.1
+- **deps**: Upgrade @valkyriestudios/utils to 12.47.0
+- **deps**: Upgrade @cloudflare/workers-types to 4.20251004.0
+- **deps**: Upgrade @types/node to 22.18.8
+- **deps**: Upgrade bun-types to 1.2.23
+- **deps**: Upgrade eslint to 9.37.0
+- **deps**: Upgrade typescript to 5.9.3
+- **deps**: Upgrade typescript-eslint to 8.45.0
 
 ## [1.4.1] - 2025-09-14
 ### Fixed
