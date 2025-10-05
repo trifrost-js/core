@@ -91,8 +91,11 @@ export type TriFrostContext<
     readonly ip: string | null;
     readonly requestId: string;
 
-    readonly query: TInput['query'];
-    readonly body: TInput['body'];
+    get query(): Readonly<TInput['query']>;
+    set query(val: TInput['query']);
+
+    get body(): Readonly<TInput['body']>;
+    set body(val: TInput['body']);
 
     readonly isInitialized: boolean;
     readonly isDone: boolean;

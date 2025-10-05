@@ -309,8 +309,8 @@ class App<Env extends Record<string, any>, State extends Record<string, unknown>
                                         query: ctx.query,
                                     });
                                     // overwrite ctx.body/query with parsed values (safe cast)
-                                    (ctx as any).body = parsed.body;
-                                    (ctx as any).query = parsed.query;
+                                    ctx.body = parsed.body;
+                                    ctx.query = parsed.query;
                                 } catch (err) {
                                     if (match.route.input.onInvalid) {
                                         await match.route.input.onInvalid(ctx, err);

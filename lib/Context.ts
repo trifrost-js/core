@@ -29,7 +29,9 @@ import {
 } from './types/context';
 import {encodeFilename, extractDomainFromHost} from './utils/Http';
 import {determineHost, injectBefore, prependDocType, hexId} from './utils/Generic';
-import {type TriFrostBodyParserOptions, type ParsedBody} from './utils/BodyParser/types';
+import {type TriFrostBodyParserOptions} from './utils/BodyParser/types';
+import {type TFInput} from './types/validation';
+import toObject from './utils/Query';
 
 type RequestConfig = {
     method: HttpMethod;
@@ -59,8 +61,12 @@ export const IP_HEADER_CANDIDATES: string[] = [
     'x-appengine-user-ip',
 ];
 
-// eslint-disable-next-line prettier/prettier
-export abstract class Context<Env extends Record<string, any> = {}, State extends Record<string, unknown> = {}> implements TriFrostContext<Env, State> {
+export abstract class Context<
+    Env extends Record<string, any> = {},
+    State extends Record<string, unknown> = {},
+    TInput extends TFInput = TFInput,
+> implements TriFrostContext<Env, State, TInput>
+{
     /**
      * MARK: Private
      */
@@ -90,7 +96,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
     #cache: TriFrostCache | null = null;
 
     /* TriFrost Route Query. We compute this on an as-needed basis */
-    #query: URLSearchParams | null = null;
+    #query: TInput['query'] | null = null;
 
     /* TriFrost logger instance */
     #logger: TriFrostLogger;
@@ -118,7 +124,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
     protected req_id: string | null = null;
 
     /* TriFrost Request body */
-    protected req_body: Readonly<ParsedBody> | null = null;
+    protected req_body: Readonly<TInput['body']> | null = null;
 
     /* Whether or not the context is initialized */
     protected is_initialized: boolean = false;
@@ -282,9 +288,13 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
     /**
      * Request Query parameters
      */
-    get query(): Readonly<URLSearchParams> {
-        if (!this.#query) this.#query = new URLSearchParams(this.req_config.query);
+    get query(): Readonly<TInput['query']> {
+        if (!this.#query) this.#query = toObject(this.req_config.query);
         return this.#query;
+    }
+
+    set query(val: TInput['query']) {
+        this.#query = val;
     }
 
     /**
@@ -330,8 +340,12 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
     /**
      * Request Body
      */
-    get body(): Readonly<NonNullable<ParsedBody>> {
-        return this.req_body || {};
+    get body(): Readonly<NonNullable<TInput['body']>> {
+        return (this.req_body || {}) as unknown as Readonly<NonNullable<TInput['body']>>;
+    }
+
+    set body(val: TInput['body']) {
+        this.req_body = val;
     }
 
     /**
@@ -532,7 +546,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
     /**
      * Initializes the request body and parses it into Json or FormData depending on its type
      */
-    async init(match: TriFrostRouteMatch<Env>, handler?: (config: TriFrostBodyParserOptions | null) => Promise<ParsedBody | null>) {
+    async init(match: TriFrostRouteMatch<Env>, handler?: (config: TriFrostBodyParserOptions | null) => Promise<TInput['body'] | null>) {
         try {
             /* No need to do anything if already initialized */
             if (this.is_initialized) return;
@@ -559,7 +573,7 @@ export abstract class Context<Env extends Record<string, any> = {}, State extend
                     if (body === null) {
                         this.setStatus(413);
                     } else {
-                        this.req_body = body;
+                        this.req_body = body as TInput['body'];
                     }
                     break;
                 }

@@ -5,16 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **feat**: Route registration now supports setting up input validation schema. 
+
 ### Improved
-- **deps**: Upgrade @valkyriestudios/utils to 12.47.0
-- **deps**: Upgrade @cloudflare/workers-types to 4.20251014.0
-- **deps**: Upgrade @types/node to 22.18.2
-- **deps**: Upgrade @vitest/coverage-v8 to 4.0.4
-- **deps**: Upgrade bun-types to 1.3.1
-- **deps**: Upgrade eslint to 9.38.0
-- **deps**: Upgrade typescript to 5.9.3
-- **deps**: Upgrade typescript-eslint to 8.46.2
-- **deps**: Upgrade vitest to 4.0.4
+- **deps**: Upgrade @cloudflare/workers-types to 4.20250927.0
+- **deps**: Upgrade @types/node to 22.18.6
+- **deps**: Upgrade bun-types to 1.2.22
+- **deps**: Upgrade eslint to 9.36.0
+- **deps**: Upgrade typescript-eslint to 8.44.1
 
 ## [1.4.1] - 2025-09-14
 ### Fixed
