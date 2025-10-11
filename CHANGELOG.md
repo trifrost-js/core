@@ -51,11 +51,16 @@ el.$subscribe('$store:token:expired', () => $.fetch('/auth/refresh'));
 ```
 ##### Dashboard auto-refresh
 ```typescript
-// Set and expire after 10 seconds
-$.storeSet('dashboard_data', data, { ttl: 10_000 });
+async function load () {
+  // Fetch dashboard data (example)
+  const data = await $.fetch('/api/dashboard');
+
+  // Set and expire after 10 seconds
+  $.storeSet('dashboard_data', data, { ttl: 10_000 });
+}
 
 // Subscribe within a VM
-el.$subscribe('$store:dashboard_data:expired', () => $.fetch('/api/dashboard'));
+el.$subscribe('$store:dashboard_data:expired', load);
 ```
 
 ## [1.4.1] - 2025-09-14
