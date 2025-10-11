@@ -35,11 +35,10 @@ This makes the atomic store **time-aware and reactive**, enabling token renewal,
 
 Atomic now natively handles **self-expiring state**, fully deterministic and zero-idle.
 
-> The provided TTL is **in milliseconds**
-
-> Like the `$store:{KEY}` events, the new `$store:{KEY}:expired` events are also automatically typed.
-
-> On expiry **only the** `$store:{KEY}:expired` is published, this to ensure components listening to `$store:{KEY}` for data feeding dont get sent an unnecessary event and allowing the component fetching/controlling the data for `{KEY}` to load up/set new fresh data.
+Additional notes:
+- The provided TTL is **in milliseconds**
+- Like the `$store:{KEY}` events, the new `$store:{KEY}:expired` events are also automatically typed.
+- On expiry **only the** `$store:{KEY}:expired` is published, this to ensure components listening to `$store:{KEY}` for data feeding dont get sent an unnecessary event and allowing the component fetching/controlling the data for `{KEY}` to load up/set new fresh data.
 
 ### Examples on TTL expiry
 ##### Auth token refresh
