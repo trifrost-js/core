@@ -6,7 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 ### Added
-- **feat**: Route registration now supports setting up input validation schema. 
+- **feat**: Route registration now supports setting up input validation schema.
+- **feat**: Global atomic store (accessed through `$.storeGet/Set/Del`) now supports **per-key TTLs (time-to-live)** and **reactive expiry events**. Entries automatically expire after their TTL, emit a `$store:<key>:expired` event, and cleanly remove themselves from memory and local storage.
+```typescript
+$.storeSet(key, value, {ttl?: number, persist?: boolean});
+```
 
 ### Improved
 - **deps**: Upgrade @valkyriestudios/utils to 12.47.0
@@ -16,6 +20,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **deps**: Upgrade eslint to 9.37.0
 - **deps**: Upgrade typescript to 5.9.3
 - **deps**: Upgrade typescript-eslint to 8.45.0
+
+### Fixed
+- Fixed an edge-case issue where if an entry to the atomic-store was previously set using `persist: true` and then set using `persist: false` it would still linger in local storage and only be removed during `storeDel`.
+
+---
+
+### More about TTL expiry
+Each key now emits:
+- **$store:<key>**: On set or manual delete
+- **$store:<key>:expired**: When its TTL elapses naturally
+
+This makes the atomic store **time-aware and reactive**, enabling token renewal, cache invalidation, live dashboards, ... **without polling or background loops**.
+
+Atomic now natively handles **self-expiring state**, fully deterministic and zero-idle.
+
+### Examples on TTL expiry
+##### Auth token refresh
+```typescript
+$.storeSet('token', 'abc123', { ttl: 3600_000, persist: true });
+
+// Subscribe within a VM
+el.$subscribe('$store:token:expired', () => $.fetch('/auth/refresh'));
+```
+##### Dashboard auto-refresh
+```typescript
+$.storeSet('dashboard_data', data, { ttl: 10_000 });
+
+// Subscribe within a VM
+el.$subscribe('$store:dashboard_data:expired', () => $.fetch('/api/dashboard'));
+```
 
 ## [1.4.1] - 2025-09-14
 ### Fixed

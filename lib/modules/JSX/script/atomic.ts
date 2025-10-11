@@ -22,7 +22,7 @@ const VM_RELAY_PUBLISH_NAME = '$publish';
 const VM_HOOK_UNMOUNT_NAME = '$unmount';
 const VM_HOOK_MOUNT_NAME = '$mount';
 
-type StoreTopics<K extends string> = `$store:${K}`;
+type StoreTopics<K extends string> = `$store:${K}` | `$store:${K}:expired`;
 
 type DotPathLevels = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; /* Up to depth 10, this prevents infinite recursion */
 
@@ -227,8 +227,8 @@ export type TriFrostAtomicUtils<
     storeGet<K extends keyof Store>(key: K): Store[K];
     storeGet(key: string): unknown;
     /* Store Set */
-    storeSet<K extends keyof Store>(key: K, value: Store[K], opts?: {persist?: boolean}): void;
-    storeSet(key: string, value: unknown, opts?: {persist?: boolean}): void;
+    storeSet<K extends keyof Store>(key: K, value: Store[K], opts?: {ttl?: number; persist?: boolean}): void;
+    storeSet(key: string, value: unknown, opts?: {ttl?: number; persist?: boolean}): void;
     /* Store Delete */
     storeDel: (key: keyof Store | string) => void;
     /* CSS variable access */
@@ -376,42 +376,97 @@ export const ATOMIC_GLOBAL = atomicMinify(`(function(w,d,loc){
     })());
 
     def("${GLOBAL_STORE_NAME}", (() => {
-        const s = Object.create(null);
+        const s = new M.create(null);
         const kP = "$tfs:";
-        const notify = (k, v) => w.${GLOBAL_RELAY_NAME}.publish("$store:" + k, v);
+        const pub = (k, v) => w.${GLOBAL_RELAY_NAME}.publish("$store:" + k, v);
+        const pubExp = (k, v) => w.${GLOBAL_RELAY_NAME}.publish("$store:" + k + ":expired", v);
+        let gttl = null;
+        let t = null;
+        let scanning = false;
+
+        // Hydrate persisted
         try {
             for (let i = 0; i < localStorage.length; i++) {
                 const k = localStorage.key(i);
                 if (k?.startsWith(kP)) {
-                    const kN = k.slice(kP.length);
+                    const n = k.slice(kP.length);
                     const r = localStorage.getItem(k);
-                    if (r !== null) s[kN] = JSON.parse(r).v;
+                    if (r !== null) {
+                        const {v, e} = JSON.parse(r);
+                        s[n] = {v, exp: e || null};
+                        if (e && (!gttl || e < gttl)) gttl = e;
+                    }
                 }
             }
         } catch {}
 
+        const delPersist = (k) => {
+            try { localStorage.removeItem(kP + k); } catch {}
+        };
+
+
+        const expire = (k, e, isTTL = false) => {
+            delete s[k];
+            if (e.persist) delPersist(k);
+            isTTL ? pubExp(k, e.v) : pub(k, undefined);
+            if (!scanning && e.exp === gttl) scan();
+        };
+
+        const scan = () => {
+            if (t) clearTimeout(t);
+            t = null;
+            scanning = true;
+            let ttl = null, now = Date.now();
+            for (const k in s) {
+                const e = s[k];
+                if (e.exp && e.exp <= now) expire(k, e, true);
+                else if (e.exp && (!ttl || e.exp < ttl)) ttl = e.exp;
+            }
+            gttl = ttl;
+            scanning = false;
+            if (ttl) t = setTimeout(scan, Math.max(0, ttl - Date.now()));
+        };
+
         return Object.freeze({
             get: k => {
                 if (!isStr(k) || !k) return undefined;
-                return s[k]
+                const e = s[k];
+                if (!e) return undefined;
+                if (e.exp && e.exp <= Date.now()) {
+                    expire(k, e, true);
+                    return undefined;
+                }
+                return e.v;
             },
             set: (k, v, o = {}) => {
-                if (!isStr(k) || !k || eq(s[k], v)) return;
-                s[k] = v;
-                if (o?.persist === true) {
-                    try {
-                        localStorage.setItem(kP + k, JSON.stringify({v}));
-                    } catch {}
+                if (!isStr(k) || !k) return;
+                const e = s[k];
+                const ttl = o.ttl ? Date.now() + o.ttl : null;
+                const persist = o.persist === true;
+
+                // skip if value + ttl + persist identical
+                if (e && eq(e.v, v) && e.exp === ttl && e.persist === persist) return;
+
+                // if previously persisted but now ephemeral, remove persisted copy
+                if (e?.persist && !persist) delPersist(k);
+
+                s[k] = {v, exp: ttl, persist};
+                if (persist) {
+                    try { localStorage.setItem(kP + k, JSON.stringify({v, e: ttl})); } catch {}
                 }
-                notify(k,v);
+                pub(k, v);
+
+                if (ttl && (!gttl || ttl < gttl)) {
+                    gttl = ttl;
+                    if (t) clearTimeout(t);
+                    t = setTimeout(scan, Math.max(0, ttl - Date.now()));
+                }
             },
             del: k => {
                 if (!isStr(k) || !k) return;
-                delete s[k];
-                try {
-                    localStorage.removeItem(kP + k);
-                } catch {}
-                notify(k,undefined);
+                const e = s[k];
+                if (!e) return;
+                expire(k, e, false);
             },
         });
     })());
