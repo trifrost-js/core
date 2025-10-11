@@ -37,8 +37,8 @@ Atomic now natively handles **self-expiring state**, fully deterministic and zer
 
 **Additional notes**:
 - The provided TTL is **in milliseconds**
-- Like the `$store:{KEY}` events, the new `$store:{KEY}:expired` events are also automatically typed.
-- On expiry **only the** `$store:{KEY}:expired` is published, this to ensure components listening to `$store:{KEY}` for data feeding dont get sent an unnecessary event and allowing the component fetching/controlling the data for `{KEY}` to load up/set new fresh data.
+- Like the `$store:{KEY}` events, the new `$store:{KEY}:expired` events are **fully typed**.
+- On expiry, **only** `$store:{KEY}:expired` is emitted, this prevents unnecessary updates for consumers of `$store:{KEY}`, allowing refresh logic to remain isolated..
 
 ### Examples on TTL expiry
 ##### Auth token refresh
