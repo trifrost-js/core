@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ## [Unreleased]
 ### Added
 - **feat**: Route registration now supports setting up input validation schema.
-- **feat**: Global atomic store (accessed through `$.storeGet/Set/Del`) now supports **per-key TTLs (time-to-live)** and **reactive expiry events**. Entries automatically expire after their TTL, emit a `$store:<key>:expired` event, and cleanly remove themselves from memory and local storage.
+- **feat**: Global atomic store (accessed through `$.storeGet/Set/Del`) now supports **per-key TTLs (time-to-live)** and **reactive expiry events**. Entries automatically expire after their TTL, emit a `$store:{KEY}:expired` event, and cleanly remove themselves from memory and local storage.
 ```typescript
 $.storeSet(key, value, {ttl?: number /* in milliseconds */, persist?: boolean});
 ```
@@ -28,8 +28,8 @@ $.storeSet(key, value, {ttl?: number /* in milliseconds */, persist?: boolean});
 
 ### More about TTL expiry
 Each key now emits:
-- **$store:<key>**: On set or manual delete
-- **$store:<key>:expired**: When its TTL elapses naturally
+- **$store:{KEY}**: On set or manual delete
+- **$store:{KEY}:expired**: When its TTL elapses naturally
 
 This makes the atomic store **time-aware and reactive**, enabling token renewal, cache invalidation, live dashboards, ... **without polling or background loops**.
 
@@ -37,7 +37,7 @@ Atomic now natively handles **self-expiring state**, fully deterministic and zer
 
 > The provided TTL is **in milliseconds**
 
-> On expiry **only the** `$store:<key>:expired` is published, this to ensure components listening to `$store:<key>` for data feeding dont get sent an unnecessary event and allowing the component fetching/controlling the data for `<key>` to load up/set new fresh data.
+> On expiry **only the** `$store:{KEY}:expired` is published, this to ensure components listening to `$store:{KEY}` for data feeding dont get sent an unnecessary event and allowing the component fetching/controlling the data for `{KEY}` to load up/set new fresh data.
 
 ### Examples on TTL expiry
 ##### Auth token refresh
