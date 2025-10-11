@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **feat**: Route registration now supports setting up input validation schema.
 - **feat**: Global atomic store (accessed through `$.storeGet/Set/Del`) now supports **per-key TTLs (time-to-live)** and **reactive expiry events**. Entries automatically expire after their TTL, emit a `$store:<key>:expired` event, and cleanly remove themselves from memory and local storage.
 ```typescript
-$.storeSet(key, value, {ttl?: number, persist?: boolean});
+$.storeSet(key, value, {ttl?: number /* in milliseconds */, persist?: boolean});
 ```
 
 ### Improved
@@ -35,18 +35,22 @@ This makes the atomic store **time-aware and reactive**, enabling token renewal,
 
 Atomic now natively handles **self-expiring state**, fully deterministic and zero-idle.
 
+> The provided TTL is **in milliseconds**
+
 > On expiry **only the** `$store:<key>:expired` is published, this to ensure components listening to `$store:<key>` for data feeding dont get sent an unnecessary event and allowing the component fetching/controlling the data for `<key>` to load up/set new fresh data.
 
 ### Examples on TTL expiry
 ##### Auth token refresh
 ```typescript
-$.storeSet('token', 'abc123', { ttl: 3600_000, persist: true });
+// Expire after 1 hour
+$.storeSet('token', 'abc123', { ttl: 3_600_000, persist: true });
 
 // Subscribe within a VM
 el.$subscribe('$store:token:expired', () => $.fetch('/auth/refresh'));
 ```
 ##### Dashboard auto-refresh
 ```typescript
+// Set and expire after 10 seconds
 $.storeSet('dashboard_data', data, { ttl: 10_000 });
 
 // Subscribe within a VM
