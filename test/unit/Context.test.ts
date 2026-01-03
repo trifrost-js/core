@@ -75,7 +75,6 @@ describe('Context', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
-        mockLogger.spawn.mockClear();
     });
 
     describe('Constructor', () => {
@@ -811,16 +810,6 @@ describe('Context', () => {
     });
 
     describe('host', () => {
-        const spyDetermine = vi.spyOn(Generic, 'determineHost');
-
-        beforeEach(() => {
-            spyDetermine.mockClear();
-        });
-
-        afterAll(() => {
-            spyDetermine.mockRestore();
-        });
-
         it('Uses getHostFromHeaders() result if available', () => {
             const ctx = new TestContext(mockLogger as any, baseConfig as any, {
                 ...baseRequest,
@@ -829,6 +818,7 @@ describe('Context', () => {
 
             /* @ts-expect-error should be good */
             const spy = vi.spyOn(ctx, 'getHostFromHeaders');
+            const spyDetermine = vi.spyOn(Generic, 'determineHost');
 
             expect(ctx.host).toBe('proxy.example.com');
 
@@ -844,6 +834,7 @@ describe('Context', () => {
 
             /* @ts-expect-error should be good */
             const spy = vi.spyOn(ctx, 'getHostFromHeaders');
+            const spyDetermine = vi.spyOn(Generic, 'determineHost');
 
             expect(ctx.host).toBe('proxy.example.com');
             expect(ctx.host).toBe('proxy.example.com');
@@ -861,6 +852,7 @@ describe('Context', () => {
 
             /* @ts-expect-error should be good */
             const spy = vi.spyOn(ctx, 'getHostFromHeaders');
+            const spyDetermine = vi.spyOn(Generic, 'determineHost');
 
             expect(ctx.host).toBe('0.0.0.0');
             expect(spy).toHaveBeenCalledTimes(1);
@@ -875,6 +867,7 @@ describe('Context', () => {
 
             /* @ts-expect-error should be good */
             const spy = vi.spyOn(ctx, 'getHostFromHeaders');
+            const spyDetermine = vi.spyOn(Generic, 'determineHost');
 
             expect(ctx.host).toBe('0.0.0.0');
             expect(ctx.host).toBe('0.0.0.0');
@@ -892,6 +885,7 @@ describe('Context', () => {
 
             /* @ts-expect-error should be good */
             const spy = vi.spyOn(ctx, 'getHostFromHeaders');
+            const spyDetermine = vi.spyOn(Generic, 'determineHost');
 
             expect(ctx.host).toBe('0.0.0.0');
             expect(spy).toHaveBeenCalledTimes(1);
@@ -906,6 +900,7 @@ describe('Context', () => {
 
             /* @ts-expect-error should be good */
             const spy = vi.spyOn(ctx, 'getHostFromHeaders');
+            const spyDetermine = vi.spyOn(Generic, 'determineHost');
 
             const host1 = ctx.host;
             const host2 = ctx.host;
