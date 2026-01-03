@@ -13,13 +13,16 @@ $.storeSet(key, value, {ttl?: number /* in milliseconds */, persist?: boolean});
 ```
 
 ### Improved
-- **deps**: Upgrade @valkyriestudios/utils to 12.47.0
-- **deps**: Upgrade @cloudflare/workers-types to 4.20251004.0
-- **deps**: Upgrade @types/node to 22.18.8
-- **deps**: Upgrade bun-types to 1.2.23
-- **deps**: Upgrade eslint to 9.37.0
+- **deps**: Upgrade @valkyriestudios/utils to 12.48.0
+- **deps**: Upgrade @cloudflare/workers-types to 4.20260103.0
+- **deps**: Upgrade @types/node to 22.19.3
+- **deps**: Upgrade @vitest/coverage-v8 to 4.0.16
+- **deps**: Upgrade bun-types to 1.3.5
+- **deps**: Upgrade eslint to 9.39.2
+- **deps**: Upgrade prettier to 3.7.4
 - **deps**: Upgrade typescript to 5.9.3
-- **deps**: Upgrade typescript-eslint to 8.45.0
+- **deps**: Upgrade typescript-eslint to 8.51.0
+- **deps**: Upgrade vitest to 4.0.16
 
 ### Fixed
 - Fixed an edge-case issue where if an entry to the atomic-store was previously set using `persist: true` and then set using `persist: false` it would still linger in local storage and only be removed during `storeDel`.

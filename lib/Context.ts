@@ -1,5 +1,6 @@
-import {isObject} from '@valkyriestudios/utils/object';
+import {isNeObject, isObject} from '@valkyriestudios/utils/object';
 import {isNeString} from '@valkyriestudios/utils/string';
+import {hexId} from '@valkyriestudios/utils/hash';
 import {type TriFrostCache} from './modules/Cache';
 import {Cookies} from './modules/Cookies';
 import {NONCE_WIN_SCRIPT, NONCEMARKER} from './modules/JSX/ctx/nonce';
@@ -28,7 +29,7 @@ import {
     type TriFrostContextRenderOptions,
 } from './types/context';
 import {encodeFilename, extractDomainFromHost} from './utils/Http';
-import {determineHost, injectBefore, prependDocType, hexId} from './utils/Generic';
+import {determineHost, injectBefore, prependDocType} from './utils/Generic';
 import {type TriFrostBodyParserOptions} from './utils/BodyParser/types';
 import {type TFInput} from './types/validation';
 import toObject from './utils/Query';
@@ -97,6 +98,9 @@ export abstract class Context<
 
     /* TriFrost Route Query. We compute this on an as-needed basis */
     #query: TInput['query'] | null = null;
+
+    /* Whether or not a query exists */
+    #query_has: boolean = false;
 
     /* TriFrost logger instance */
     #logger: TriFrostLogger;
@@ -167,6 +171,9 @@ export abstract class Context<
             }
         }
         if (!this.req_id) this.req_id = hexId(16);
+
+        /* Set this.#query_has */
+        this.#query_has = this.req_config.query.length > 0;
 
         /* Instantiate logger */
         this.#logger = logger.spawn({
@@ -250,7 +257,7 @@ export abstract class Context<
      * Returns the host of the context.
      */
     get host(): string {
-        if (this.#host) return this.#host;
+        if (this.#host !== null) return this.#host;
         this.#host = this.getHostFromHeaders() ?? determineHost(this.ctx_config.env);
         return this.#host;
     }
@@ -289,12 +296,16 @@ export abstract class Context<
      * Request Query parameters
      */
     get query(): Readonly<TInput['query']> {
-        if (!this.#query) this.#query = toObject(this.req_config.query);
+        if (!this.#query) {
+            this.#query = toObject(this.req_config.query);
+            this.#query_has = isNeObject(this.#query);
+        }
         return this.#query;
     }
 
     set query(val: TInput['query']) {
         this.#query = val;
+        this.#query_has = isNeObject(val);
     }
 
     /**
@@ -893,9 +904,9 @@ export abstract class Context<
             }
 
             /* If keep_query is passed as true and a query exists add it to normalized to */
-            if (this.query.size && opts?.keep_query !== false) {
+            if (this.#query_has && opts?.keep_query !== false) {
                 const prefix = url.indexOf('?') >= 0 ? '&' : '?';
-                url += prefix + this.query.toString();
+                url += prefix + this.req_config.query;
             }
 
             /* This is a redirect, as such a body should not be present */

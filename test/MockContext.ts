@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
+import {hexId} from '@valkyriestudios/utils/hash';
 import {type TriFrostRateLimitLimitFunction} from '../lib/modules/RateLimit';
 import {type HttpMethod, type HttpStatusCode, type MimeType} from '../lib/types/constants';
 import {
@@ -15,9 +16,8 @@ import {Cookies} from '../lib/modules/Cookies';
 import {type TriFrostCache} from '../lib/modules/Cache';
 import {Logger, type TriFrostLogger} from '../lib/modules/Logger';
 import {MemoryCache} from '../lib/storage/Memory';
-import {TriFrostBodyParserOptions, type ParsedBody} from '../lib/utils/BodyParser/types';
+import {TriFrostBodyParserOptions} from '../lib/utils/BodyParser/types';
 import {Lazy} from '../lib/utils/Lazy';
-import {hexId} from '../lib/utils/Generic';
 
 export class MockContext<State extends Record<string | number, unknown> = Record<string | number, unknown>> implements TriFrostContext<any, State> { // eslint-disable-line prettier/prettier
 
@@ -111,7 +111,7 @@ export class MockContext<State extends Record<string | number, unknown> = Record
         return this.#ip;
     }
     get query() {
-        return this.#query;
+        return this.#query as unknown as Record<string, unknown>;
     }
     get body() {
         return {};
@@ -204,7 +204,7 @@ export class MockContext<State extends Record<string | number, unknown> = Record
     setTimeout = (_: number | null): void => {};
     clearTimeout = (): void => {};
 
-    init = async (_: TriFrostRouteMatch<any>, _handler?: (options: TriFrostBodyParserOptions | null) => Promise<ParsedBody | null>) => {};
+    init = async (_: TriFrostRouteMatch<any>, _handler?: (options: TriFrostBodyParserOptions | null) => Promise<unknown>) => {};
 
     abort = (_?: HttpStatusCode): void => {};
 

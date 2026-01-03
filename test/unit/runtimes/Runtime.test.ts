@@ -41,7 +41,7 @@ describe('Modules - JSX - getRuntime', () => {
         /* @ts-expect-error Should be good */
         vi.spyOn(process, 'versions', 'get').mockReturnValue({node: '22.0.0'});
 
-        vi.doMock('../../../lib/runtimes/Node/Runtime.js', () => ({
+        vi.mock('../../../lib/runtimes/Node/Runtime.js', () => ({
             NodeRuntime: vi.fn().mockImplementation(function NodeRuntime(this: any) {
                 this.name = 'NodeRuntime';
             }),

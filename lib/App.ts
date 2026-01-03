@@ -1,5 +1,6 @@
 import {isIntGt} from '@valkyriestudios/utils/number';
 import {isObject} from '@valkyriestudios/utils/object';
+import {hexId} from '@valkyriestudios/utils/hash';
 import {type TriFrostCache} from './modules/Cache';
 import {type TriFrostCookieOptions} from './modules/Cookies';
 import {TriFrostRateLimit, type TriFrostRateLimitLimitFunction} from './modules/RateLimit/_RateLimit';
@@ -26,7 +27,6 @@ import {mount as mountCss} from './modules/JSX/style/mount';
 import {mount as mountScript} from './modules/JSX/script/mount';
 import {type CssGeneric, type CssInstance} from './modules/JSX/style/use';
 import {activateCtx} from './utils/Als';
-import {hexId} from './utils/Generic';
 import {type TFValidator} from './types/validation';
 
 const RGX_RID = /^[a-z0-9-]{8,64}$/i;

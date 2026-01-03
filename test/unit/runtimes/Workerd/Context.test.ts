@@ -64,8 +64,8 @@ describe('Runtimes - Workerd - Context', () => {
             expect(context.path).toBe('/foo/bar');
 
             const query = context.query;
-            expect(query.getAll('x')).toEqual(['1', '2']);
-            expect(query.get('y')).toBe('3');
+            expect(query.x).toEqual([1, 2]);
+            expect(query.y).toBe(3);
         });
 
         it('Normalizes headers into plain object', () => {

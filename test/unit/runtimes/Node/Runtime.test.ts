@@ -54,6 +54,7 @@ describe('Runtimes - Node - Runtime', () => {
                 error: vi.fn(),
             }),
         };
+        vi.clearAllMocks();
     });
 
     afterEach(() => {

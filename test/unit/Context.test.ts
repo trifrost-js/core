@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
+import * as Hash from '@valkyriestudios/utils/hash';
 import {describe, it, expect, vi, beforeEach, afterEach, afterAll} from 'vitest';
 import {HttpMethods} from '../../lib/types/constants';
 import {Context, IP_HEADER_CANDIDATES} from '../../lib/Context';
@@ -46,7 +47,7 @@ describe('Context', () => {
     let ctx: TestContext;
     const mockLogger = {
         spawn: vi.fn().mockReturnValue({
-            traceId: Generic.hexId(16),
+            traceId: Hash.hexId(16),
             setAttributes: vi.fn(),
             span: vi.fn((_, fn) => fn()),
             error: vi.fn(),
@@ -70,6 +71,11 @@ describe('Context', () => {
 
     beforeEach(() => {
         ctx = new TestContext(mockLogger as any, baseConfig as any, baseRequest);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        mockLogger.spawn.mockClear();
     });
 
     describe('Constructor', () => {
@@ -424,8 +430,8 @@ describe('Context', () => {
                 ...baseRequest,
                 query: 'foo=bar&baz=1',
             });
-            expect(c2.query.get('foo')).toBe('bar');
-            expect(c2.query.get('baz')).toBe('1');
+            expect(c2.query.foo).toBe('bar');
+            expect(c2.query.baz).toBe(1);
         });
     });
 

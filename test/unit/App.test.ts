@@ -816,7 +816,7 @@ describe('App', () => {
         it('Propagates bodyParser to route()', () => {
             const cfg = {limit: 999_999};
             app.bodyParser(cfg).route('/files', r => {
-                r.post(vi.fn());
+                r.post(vi.fn() as any);
             });
 
             const route = tree.stack.find(r => r.path === '/files' && r.method === 'POST');
@@ -1304,6 +1304,7 @@ describe('App', () => {
                 description: 'Healthcheck Route',
                 fn: handler,
                 kind: 'health',
+                input: null,
                 meta: null,
                 method: 'GET',
                 middleware: [],
@@ -1317,6 +1318,7 @@ describe('App', () => {
                 description: 'Healthcheck Route',
                 fn: handler,
                 kind: 'health',
+                input: null,
                 meta: null,
                 method: 'HEAD',
                 middleware: [],
@@ -1352,6 +1354,7 @@ describe('App', () => {
                 description: 'Healthcheck Route',
                 fn: handler,
                 kind: 'health',
+                input: null,
                 meta: null,
                 method: 'GET',
                 middleware: [
@@ -1372,6 +1375,7 @@ describe('App', () => {
                 description: 'Healthcheck Route',
                 fn: handler,
                 kind: 'health',
+                input: null,
                 meta: null,
                 method: 'HEAD',
                 middleware: [

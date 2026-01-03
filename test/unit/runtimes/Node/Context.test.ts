@@ -65,7 +65,7 @@ describe('Runtimes - Node - Context', () => {
         it('Parses method, path, headers and query correctly', () => {
             expect(ctx.method).toBe('POST');
             expect(ctx.path).toBe('/test/path');
-            expect(ctx.query.get('foo')).toBe('bar');
+            expect(ctx.query.foo).toBe('bar');
             expect(ctx.headers).toEqual({'content-type': 'application/json'});
         });
     });

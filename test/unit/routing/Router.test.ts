@@ -594,6 +594,7 @@ describe('routing - Router', () => {
                 {
                     path: '/api/*',
                     kind: 'notfound',
+                    input: null,
                     fn: handler,
                     timeout: null,
                     middleware: [],
@@ -626,6 +627,7 @@ describe('routing - Router', () => {
                 {
                     path: '/api/*',
                     kind: 'notfound',
+                    input: null,
                     fn: handler,
                     timeout: null,
                     middleware: [
@@ -678,6 +680,7 @@ describe('routing - Router', () => {
                     path: '/api/*',
                     kind: 'error',
                     fn: handler,
+                    input: null,
                     timeout: null,
                     middleware: [],
                     method: 'GET' /* This is a stub */,
@@ -709,6 +712,7 @@ describe('routing - Router', () => {
                 {
                     path: '/api/*',
                     kind: 'error',
+                    input: null,
                     fn: handler,
                     timeout: null,
                     middleware: [
@@ -764,6 +768,7 @@ describe('routing - Router', () => {
                 path: '/api/users',
                 method: 'GET',
                 kind: 'std',
+                input: null,
                 fn: getHandler,
                 timeout: null,
                 middleware: [],
@@ -789,6 +794,7 @@ describe('routing - Router', () => {
                 path: '/api/users',
                 method: 'HEAD',
                 kind: 'std',
+                input: null,
                 fn: getHandler,
                 timeout: null,
                 middleware: [],
@@ -801,6 +807,7 @@ describe('routing - Router', () => {
                 path: '/api/users',
                 method: 'POST',
                 kind: 'std',
+                input: null,
                 fn: postHandler,
                 timeout: null,
                 middleware: [],
@@ -840,6 +847,7 @@ describe('routing - Router', () => {
                 path: '/api/secure',
                 method: 'GET',
                 kind: 'std',
+                input: null,
                 fn: getHandler,
                 timeout: null,
                 middleware: [
@@ -868,6 +876,7 @@ describe('routing - Router', () => {
                 path: '/api/secure',
                 method: 'HEAD',
                 kind: 'std',
+                input: null,
                 fn: getHandler,
                 timeout: null,
                 middleware: [
@@ -883,6 +892,7 @@ describe('routing - Router', () => {
                 path: '/api/secure',
                 method: 'POST',
                 kind: 'std',
+                input: null,
                 fn: postHandler,
                 timeout: null,
                 middleware: [
@@ -940,6 +950,7 @@ describe('routing - Router', () => {
                 path: '/api/meta',
                 method: 'GET',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: 5000,
                 middleware: [],
@@ -965,6 +976,7 @@ describe('routing - Router', () => {
                 path: '/api/meta',
                 method: 'HEAD',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: 5000,
                 middleware: [],
@@ -1002,6 +1014,7 @@ describe('routing - Router', () => {
                 path: '/hello/test',
                 method: 'GET',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: null,
                 middleware: [],
@@ -1027,6 +1040,7 @@ describe('routing - Router', () => {
                 path: '/hello/test',
                 method: 'HEAD',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: null,
                 middleware: [],
@@ -1060,6 +1074,7 @@ describe('routing - Router', () => {
                 path: '/with-mware',
                 method: 'GET',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: null,
                 middleware: [
@@ -1088,6 +1103,7 @@ describe('routing - Router', () => {
                 path: '/with-mware',
                 method: 'HEAD',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: null,
                 middleware: [
@@ -1131,6 +1147,7 @@ describe('routing - Router', () => {
                 path: '/hello/meta',
                 method: 'GET',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: 5000,
                 middleware: [],
@@ -1157,6 +1174,7 @@ describe('routing - Router', () => {
                 method: 'HEAD',
                 kind: 'std',
                 fn: handler,
+                input: null,
                 timeout: 5000,
                 middleware: [],
                 bodyParser: null,
@@ -1179,6 +1197,7 @@ describe('routing - Router', () => {
                 path: '/hello/chained',
                 method: 'GET',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: null,
                 middleware: [
@@ -1207,6 +1226,7 @@ describe('routing - Router', () => {
                 path: '/hello/chained',
                 method: 'HEAD',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: null,
                 middleware: [
@@ -1255,6 +1275,7 @@ describe('routing - Router', () => {
                 path: '/hello/test',
                 method: 'POST',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: null,
                 middleware: [],
@@ -1301,6 +1322,7 @@ describe('routing - Router', () => {
                 path: '/with-mware',
                 method: 'POST',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: null,
                 middleware: [
@@ -1357,6 +1379,7 @@ describe('routing - Router', () => {
                 path: '/hello/meta',
                 method: 'POST',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: 5000,
                 middleware: [],
@@ -1393,6 +1416,7 @@ describe('routing - Router', () => {
                 path: '/hello/chained',
                 method: 'POST',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: null,
                 middleware: [
@@ -1455,6 +1479,7 @@ describe('routing - Router', () => {
                 path: '/hello/test',
                 method: 'PUT',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: null,
                 middleware: [],
@@ -1501,6 +1526,7 @@ describe('routing - Router', () => {
                 path: '/with-mware',
                 method: 'PUT',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: null,
                 middleware: [
@@ -1557,6 +1583,7 @@ describe('routing - Router', () => {
                 path: '/hello/meta',
                 method: 'PUT',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: 5000,
                 middleware: [],
@@ -1593,6 +1620,7 @@ describe('routing - Router', () => {
                 path: '/hello/chained',
                 method: 'PUT',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: null,
                 middleware: [
@@ -1655,6 +1683,7 @@ describe('routing - Router', () => {
                 path: '/hello/test',
                 method: 'PATCH',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: null,
                 middleware: [],
@@ -1701,6 +1730,7 @@ describe('routing - Router', () => {
                 path: '/with-mware',
                 method: 'PATCH',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: null,
                 middleware: [
@@ -1757,6 +1787,7 @@ describe('routing - Router', () => {
                 path: '/hello/meta',
                 method: 'PATCH',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: 5000,
                 middleware: [],
@@ -1793,6 +1824,7 @@ describe('routing - Router', () => {
                 path: '/hello/chained',
                 method: 'PATCH',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: null,
                 middleware: [
@@ -1855,6 +1887,7 @@ describe('routing - Router', () => {
                 path: '/hello/test',
                 method: 'DELETE',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: null,
                 middleware: [],
@@ -1901,6 +1934,7 @@ describe('routing - Router', () => {
                 path: '/with-mware',
                 method: 'DELETE',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: null,
                 middleware: [
@@ -1957,6 +1991,7 @@ describe('routing - Router', () => {
                 path: '/hello/meta',
                 method: 'DELETE',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: 5000,
                 middleware: [],
@@ -1993,6 +2028,7 @@ describe('routing - Router', () => {
                 path: '/hello/chained',
                 method: 'DELETE',
                 kind: 'std',
+                input: null,
                 fn: handler,
                 timeout: null,
                 middleware: [
@@ -2055,6 +2091,7 @@ describe('routing - Router', () => {
             expect(stack.find(r => r.method === 'GET')).toEqual({
                 path: '/api/ping',
                 method: 'GET',
+                input: null,
                 kind: 'health',
                 fn: handler,
                 timeout: 30000,
@@ -2069,6 +2106,7 @@ describe('routing - Router', () => {
                 path: '/api/ping',
                 method: 'HEAD',
                 kind: 'health',
+                input: null,
                 fn: handler,
                 timeout: 30000,
                 middleware: [],
@@ -2180,7 +2218,7 @@ describe('routing - Router', () => {
         const handlerGroup = vi.fn();
         const handlerRouteGet = vi.fn();
         const handlerRoutePost = vi.fn();
-        let limitMock;
+        let limitMock: any;
         beforeEach(() => {
             tree = new RouteTree();
             limitMock = new Lazy(() => ({limit: vi.fn(() => dummyMiddleware)}));
